@@ -1,0 +1,36 @@
+[build-system]
+requires = [
+    "setuptools>=70.1",
+    "setuptools_scm>=8.1"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swak"
+dynamic = ["version"]
+authors = [
+    {name = "yedivanseven", email = "yedivanseven@icloud.com"}
+]
+description='Toolbox for functional data science projects.'
+readme = "PEADME.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2"
+]
+keywords = ["functional", "tools", "utilities", "helpers"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities"
+]
+
+[project.optional-dependencies]
+torch = ["torch>=2.3"]
+
+[tool.setuptools.packages.find]
+exclude = ["test*"]
+
+[tool.setuptools_scm]
+version_file = "version.env"
+version_file_template = 'SETUPTOOLS_SCM_PRETEND_VERSION={version}'

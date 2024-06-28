@@ -1,0 +1,2 @@
+prune tests
+exclude .dockerignore .gitignore Dockerfile
