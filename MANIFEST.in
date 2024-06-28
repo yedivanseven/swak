@@ -1,3 +1,3 @@
 prune tests
 prune Notebooks
-exclude .dockerignore .gitignore Dockerfile
+exclude .gitignore
