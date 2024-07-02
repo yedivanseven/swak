@@ -10,12 +10,13 @@ setup(
     long_description_content_type='text/markdown',
     license='MIT License',
     license_files=['LICEN[CS]E*'],
-    keywords=["functional", "tools", "utilities", "helpers"],
+    keywords=['functional', 'tools', 'utilities', 'helpers'],
     classifiers=[
-        "Development Status :: 1 - Planning",
-        "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3.12",
-        "Topic :: Utilities"
+        'Development Status :: 1 - Planning',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python :: 3.12',
+        'Topic :: Utilities',
+        'License :: OSI Approved :: MIT License'
     ],
     author='yedivanseven',
     author_email='yedivanseven@icloud.com',
