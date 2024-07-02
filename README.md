@@ -1,4 +1,4 @@
-# swak
+# Swiss Army Knife
 _Toolbox for functional data science projects._
 
-## WIP
+Work in progress ...
