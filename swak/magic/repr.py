@@ -27,8 +27,8 @@ class ArgRepr(_ReprName):
 
     This class is not meant to be instantiated by itself. Rather, it is meant
     to be inherited from. Its constructor is then meant to be called in the
-    child's constructor (with ``super``), passing the (keyword) arguments
-    that are desired to appear in the child's representation.
+    child's constructor (with ``super().__init__(...)``), passing the (keyword)
+    arguments that are desired to appear in the child's representation.
 
     Parameters
     ----------
@@ -59,10 +59,11 @@ class IndentRepr(_ReprName):
 
     This class is not meant to be instantiated by itself. Rather, it is meant
     to be inherited from. Its constructor is then meant to be called in the
-    child's constructor (with ``super``), passing as arguments all objects
-    that are desired to appear in a (zero-based) numbered-list representation.
-    If any of these objects have inherited from ``IndentRepr`` themselves,
-    their representation will recursively be indented by another level.
+    child's constructor (with ``super().__init__(...)```), passing as arguments
+    all objects that are desired to appear in a (zero-based) numbered-list
+    representation. If any of these objects have inherited from ``IndentRepr``
+    themselves, their representation will recursively be indented by another
+    level.
 
     Parameters
     ----------

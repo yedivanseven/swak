@@ -9,6 +9,8 @@ pandas = "*"
 [dev-packages]
 jupyter = "*"
 ruff = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
 
 [requires]
 python_version = "3.12"
