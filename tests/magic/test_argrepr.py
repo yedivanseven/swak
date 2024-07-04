@@ -255,7 +255,7 @@ class TestCallables(unittest.TestCase):
 
     def test_lambda(self):
         test = self.Test(lambda x: x + 1)
-        self.assertEqual('Test(<lambda>)', repr(test))
+        self.assertEqual('Test(lambda)', repr(test))
 
     def test_function(self):
         test = self.Test(f)
@@ -264,16 +264,16 @@ class TestCallables(unittest.TestCase):
     def test_method(self):
         cls = Cls()
         test = self.Test(cls.m)
-        self.assertEqual('Test(m)', repr(test))
+        self.assertEqual('Test(Cls.m)', repr(test))
 
     def test_classmethod(self):
         test = self.Test(Cls.c)
-        self.assertEqual('Test(c)', repr(test))
+        self.assertEqual('Test(Cls.c)', repr(test))
 
     def test_staticmethod(self):
         cls = Cls()
         test = self.Test(cls.s)
-        self.assertEqual('Test(s)', repr(test))
+        self.assertEqual('Test(Cls.s)', repr(test))
 
     def test_class(self):
         test = self.Test(Cls)

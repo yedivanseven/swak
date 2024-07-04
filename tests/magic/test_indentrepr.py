@@ -62,8 +62,8 @@ class TestArgumentTypes(unittest.TestCase):
             cls.c,
             cls.s
         )
-        expected = ("Args:\n[ 0] f\n[ 1] Cls\n[ 2] <lambda>\n[ 3] Call(...)\n"
-                    "[ 4] m\n[ 5] c\n[ 6] s")
+        expected = ("Args:\n[ 0] f\n[ 1] Cls\n[ 2] lambda\n[ 3] Call(...)\n"
+                    "[ 4] Cls.m\n[ 5] Cls.c\n[ 6] Cls.s")
         self.assertEqual(expected, repr(string_args))
 
     def test_custom_object_args(self):
@@ -151,7 +151,7 @@ class TestInheritance(unittest.TestCase):
         self.assertEqual(1, child.a)
 
 
-class TestNice(unittest.TestCase):
+class TestName(unittest.TestCase):
 
     class Indent(IndentRepr):
         pass
@@ -160,45 +160,45 @@ class TestNice(unittest.TestCase):
         self.i = self.Indent()
 
     def test_method_present(self):
-        self.assertTrue(hasattr(self.i, '_nice'))
+        self.assertTrue(hasattr(self.i, '_name'))
 
     def test_method_callable(self):
-        self.assertTrue(callable(self.i._nice))
+        self.assertTrue(callable(self.i._name))
 
     def test_return_type(self):
-        actual = self.i._nice(1)
+        actual = self.i._name(1)
         self.assertIsInstance(actual, str)
 
     def test_name_of_lambda(self):
-        actual = self.i._nice(lambda x: x)
-        self.assertEqual('<lambda>', actual)
+        actual = self.i._name(lambda x: x)
+        self.assertEqual('lambda', actual)
 
     def test_name_of_function(self):
-        actual = self.i._nice(f)
+        actual = self.i._name(f)
         self.assertEqual('f', actual)
 
     def test_name_of_class(self):
-        actual = self.i._nice(Cls)
+        actual = self.i._name(Cls)
         self.assertEqual('Cls', actual)
 
     def test_name_of_object(self):
         cls = Cls()
-        actual = self.i._nice(cls)
+        actual = self.i._name(cls)
         self.assertEqual('Cls(...)', actual)
 
     def test_name_of_method(self):
         cls = Cls()
-        actual = self.i._nice(cls.m)
-        self.assertEqual('m', actual)
+        actual = self.i._name(cls.m)
+        self.assertEqual('Cls.m', actual)
 
     def test_name_of_staticmethod(self):
         cls = Cls()
-        actual = self.i._nice(cls.s)
-        self.assertEqual('s', actual)
+        actual = self.i._name(cls.s)
+        self.assertEqual('Cls.s', actual)
 
     def test_name_of_classmethod(self):
-        actual = self.i._nice(Cls.c)
-        self.assertEqual('c', actual)
+        actual = self.i._name(Cls.c)
+        self.assertEqual('Cls.c', actual)
 
     def test_argrepr(self):
 
@@ -209,7 +209,7 @@ class TestNice(unittest.TestCase):
 
         arg = Arg('foo', 42)
         expected = "Arg('foo', 42)"
-        actual = self.i._nice(arg)
+        actual = self.i._name(arg)
         self.assertEqual(expected, actual)
 
     def test_indentrepr(self):
@@ -221,7 +221,7 @@ class TestNice(unittest.TestCase):
 
         ind = Ind('foo', 42)
         expected = "Ind:\n[ 0] 'foo'\n[ 1] 42"
-        actual = self.i._nice(ind)
+        actual = self.i._name(ind)
         self.assertEqual(expected, actual)
 
 

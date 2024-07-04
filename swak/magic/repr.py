@@ -6,20 +6,20 @@ class _ReprName:
 
     def _repr(self, obj: Any, _: int = 0) -> str:
         """Representation for any object."""
-        if isinstance(obj, (str, ArgRepr)):
-            return repr(obj)
         if callable(obj):
             return self._name(obj)
-        return str(obj)
+        return repr(obj)
 
     @staticmethod
     def _name(obj: Any) -> str:
         """Representation for callable objects."""
+        if isinstance(obj, _ReprName):
+            return repr(obj)
         try:
-            name = obj.__name__
+            name = obj.__qualname__
         except AttributeError:
             name = obj.__class__.__name__ + '(...)'
-        return name
+        return 'lambda' if '<lambda>' in name else name
 
 
 class ArgRepr(_ReprName):
@@ -85,14 +85,8 @@ class IndentRepr(_ReprName):
 
     def _indented_repr(self, level: int) -> str:
         """Construct indented object representation."""
-        name = f'{self.__class__.__name__}:\n'
+        cls = f'{self.__class__.__name__}:\n'
         indent = 5 * level * ' '
         args = enumerate(self._repr(arg, level) for arg in self.args)
-        lines = '\n'.join(f'{indent}[{i:>2}] {arg}' for i, arg in args)
-        return name + lines
-
-    def _nice(self, obj: Any) -> str:
-        """Return a type-dependent object representation for error messages."""
-        if isinstance(obj, (ArgRepr, IndentRepr)):
-            return repr(obj)
-        return self._name(obj)
+        items = '\n'.join(f'{indent}[{i:>2}] {arg}' for i, arg in args)
+        return cls + items
