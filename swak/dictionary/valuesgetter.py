@@ -6,13 +6,13 @@ from ..magic import ArgRepr
 class ValuesGetter[T](ArgRepr):
     """Extract the sequence of dictionary values according to the given `keys`.
 
-    Instances can be type annotated with the return type of `wrap`.
+    Generic type annotation with the (return) type of `wrapper` is recommended.
 
     Parameters
     ----------
     *keys: hashable
         Arbitrary number of dictionary keys.
-    wrap: callable, optional
+    wrapper: callable, optional
         A type or some other callable that transforms a tuple of dictionary
         values into some other type of sequence. The type of the sequence
         should be annotated. Instances can be type annotated with the type
@@ -23,11 +23,11 @@ class ValuesGetter[T](ArgRepr):
     def __init__(
             self,
             *keys: Hashable,
-            wrap: type[T] | Callable[[tuple], T] = list
+            wrapper: type[T] | Callable[[tuple], T] = list
     ) -> None:
-        super().__init__(*keys, wrap=wrap)
+        super().__init__(*keys, wrapper=wrapper)
         self.keys = keys
-        self.wrap = wrap
+        self.wrapper = wrapper
 
     @property
     def n_items(self) -> int:
@@ -56,4 +56,4 @@ class ValuesGetter[T](ArgRepr):
                 values = itemgetter(*self.keys)(mapping),
             case _:
                 values = itemgetter(*self.keys)(mapping)
-        return self.wrap(values)
+        return self.wrapper(values)

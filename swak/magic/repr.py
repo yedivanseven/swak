@@ -13,6 +13,8 @@ class _ReprName:
     @staticmethod
     def _name(obj: Any) -> str:
         """Representation for callable objects."""
+        if obj is None:
+            return 'None'
         if isinstance(obj, _ReprName):
             return repr(obj)
         try:

@@ -12,6 +12,7 @@ Welcome to swak's documentation!
 
    magic
    dictionary
+   funcflow
 
 
 Indices and tables

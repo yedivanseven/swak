@@ -1,4 +1,5 @@
 import unittest
+import pickle
 from swak.magic import IndentRepr, ArgRepr
 
 
@@ -200,6 +201,10 @@ class TestName(unittest.TestCase):
         actual = self.i._name(Cls.c)
         self.assertEqual('Cls.c', actual)
 
+    def test_name_of_None(self):
+        actual = self.i._name(None)
+        self.assertEqual('None', actual)
+
     def test_argrepr(self):
 
         class Arg(ArgRepr):
@@ -223,6 +228,23 @@ class TestName(unittest.TestCase):
         expected = "Ind:\n[ 0] 'foo'\n[ 1] 42"
         actual = self.i._name(ind)
         self.assertEqual(expected, actual)
+
+
+class TestMisc(unittest.TestCase):
+
+    class Args(IndentRepr):
+
+        def __init__(self, *args) -> None:
+            super().__init__(*args)
+
+    def test_pickle_works(self):
+        test = self.Args(f)
+        _ = pickle.dumps(test)
+
+    def test_pickle_raised_lambda(self):
+        test = self.Args(lambda x: x + 1)
+        with self.assertRaises(AttributeError):
+            _ = pickle.dumps(test)
 
 
 if __name__ == '__main__':

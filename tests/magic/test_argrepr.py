@@ -1,4 +1,5 @@
 import unittest
+import pickle
 from swak.magic import ArgRepr
 
 
@@ -283,6 +284,23 @@ class TestCallables(unittest.TestCase):
         cls = Call()
         test = self.Test(cls)
         self.assertEqual('Test(Call(...))', repr(test))
+
+
+class TestMisc(unittest.TestCase):
+
+    class Test(ArgRepr):
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+    def test_pickle_works(self):
+        test = self.Test(f)
+        _ = pickle.dumps(test)
+
+    def test_pickle_raised_lambda(self):
+        test = self.Test(lambda x: x + 1)
+        with self.assertRaises(AttributeError):
+            _ = pickle.dumps(test)
 
 
 if __name__ == '__main__':
