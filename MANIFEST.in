@@ -1,3 +1,4 @@
 prune tests
 prune Notebooks
+prune docs
 exclude .gitignore
