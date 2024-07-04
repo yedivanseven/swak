@@ -11,6 +11,7 @@ Welcome to swak's documentation!
    :caption: Subpackages:
 
    magic
+   dictionary
 
 
 Indices and tables
