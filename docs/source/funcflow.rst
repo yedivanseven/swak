@@ -1,7 +1,7 @@
 funcflow
 ========
 
-.. autoclass:: swak.funcflow.Filter
+.. automodule:: swak.funcflow
    :members:
    :special-members: __call__
    :undoc-members:

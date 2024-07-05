@@ -1,7 +1,7 @@
 dictionary
 ==========
 
-.. autoclass:: swak.dictionary.ValuesGetter
+.. automodule:: swak.dictionary
    :members:
    :special-members: __call__
    :undoc-members:

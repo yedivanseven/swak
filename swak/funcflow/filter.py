@@ -48,8 +48,9 @@ class Filter[T](ArgRepr):
 
         Returns
         -------
-        Same type as `iterable` if `wrapper` was not specified on
-        instantiation or the (return) type of `wrapper`.
+        Sequence
+            Same type as `iterable` if `wrapper` was not specified on
+            instantiation or the (return) type of `wrapper`.
 
         Raises
         ------

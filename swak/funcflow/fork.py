@@ -7,21 +7,14 @@ from ..magic import IndentRepr
 class Fork[**P, T](IndentRepr):
     """Call any number of callables with the same argument(s).
 
-    This class is instantiated with one or more callables. The (callable)
-    object is then called with one or more arguments compatible with the
-    call signature of all these callables. The return value(s) of all
-    callables are concatenated to a tuple, ordered in the same order as
-    the callables are given.
+    Generic type annotation of instances is recommended. Provide a list of
+    one or more input types that all callables take, followed by a ``tuple``
+    specifying the concatenation of the return types of all callables.
 
     Parameters
     ----------
     *calls: callable
         Callables to call with the same argument(s).
-
-    Notes
-    -----
-    Upon instantiation, the generic class can be type-annotated with the
-    Tuple of return types of all `calls`.
 
     """
 
@@ -95,7 +88,7 @@ class Fork[**P, T](IndentRepr):
                 return NotImplemented
 
     def __call__(self, *args: P.args) -> T:
-        """Call all specified callables with the same argument(s).
+        """Call all specified `calls` with the same argument(s).
 
         Parameters
         ----------
@@ -105,8 +98,7 @@ class Fork[**P, T](IndentRepr):
         Returns
         -------
         tuple
-            Concatenation of all return values of all `calls` orders in the
-            order of `calls`.
+            Concatenation of all return values of all `calls` in order.
 
         Raises
         ------
