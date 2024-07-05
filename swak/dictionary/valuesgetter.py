@@ -1,5 +1,6 @@
 from operator import itemgetter
-from typing import Hashable, Mapping, Callable
+from typing import Hashable, Mapping, Callable, Self, Iterator, Iterable
+from functools import singledispatchmethod
 from ..magic import ArgRepr
 
 
@@ -29,10 +30,68 @@ class ValuesGetter[T](ArgRepr):
         self.keys = keys
         self.wrapper = wrapper
 
-    @property
-    def n_items(self) -> int:
-        """Number of values to extract from dictionary."""
+    def __len__(self) -> int:
         return len(self.keys)
+
+    def __bool__(self) -> bool:
+        return len(self) > 0
+
+    def __reversed__(self) -> Self:
+        return self.__class__(*reversed(self.keys))
+
+    def __iter__(self) -> Iterator[Self]:
+        return iter(self.__class__(key) for key in self.keys)
+
+    def __contains__(self, key: Hashable) -> bool:
+        return key in self.keys
+
+    @singledispatchmethod
+    def __getitem__(self, index: int) -> Self:
+        return self.__class__(self.keys[index])
+
+    @__getitem__.register
+    def _(self, index: slice) -> Self:
+        return self.__class__(*self.keys[index])
+
+    def __eq__(self, other: Self) -> bool:
+        if isinstance(other, ValuesGetter):
+            return self.keys == other.keys
+        return NotImplemented
+
+    def __ne__(self, other: Self) -> bool:
+        if isinstance(other, ValuesGetter):
+            return self.keys != other.keys
+        return NotImplemented
+
+    def __add__(self, other: Hashable | Iterable[Hashable] | Self) -> Self:
+        if isinstance(other, ValuesGetter):
+            return self.__class__(*self.keys, *other.keys)
+        if isinstance(other, str):
+            return self.__class__(*self.keys, other)
+        try:
+            _ = [hash(key) for key in other]
+            return self.__class__(*self.keys, *other)
+        except TypeError:
+            try:
+                _ = hash(other)
+                return self.__class__(*self.keys, other)
+            except TypeError:
+                return NotImplemented
+
+    def __radd__(self, other: Hashable | Iterable[Hashable] | Self) -> Self:
+        if isinstance(other, ValuesGetter):
+            return self.__class__(*other.keys, *self.keys)
+        if isinstance(other, str):
+            return self.__class__(other, *self.keys)
+        try:
+            _ = [hash(key) for key in other]
+            return self.__class__(*other, *self.keys)
+        except TypeError:
+            try:
+                _ = hash(other)
+                return self.__class__(other, *self.keys)
+            except TypeError:
+                return NotImplemented
 
     def __call__(self, mapping: Mapping) -> T:
         """Extract sequence of dictionary values for given keys.
@@ -49,7 +108,7 @@ class ValuesGetter[T](ArgRepr):
             is determined by the return type of `wrap`. Defaults to ``list``.
 
         """
-        match self.n_items:
+        match len(self):
             case 0:
                 values = tuple()
             case 1:

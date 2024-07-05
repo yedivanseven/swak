@@ -60,7 +60,7 @@ class TestArgumentTypes(unittest.TestCase):
             lambda x: x,
             Call(),
             cls.m,
-            cls.c,
+            Cls.c,
             cls.s
         )
         expected = ("Args:\n[ 0] f\n[ 1] Cls\n[ 2] lambda\n[ 3] Call(...)\n"

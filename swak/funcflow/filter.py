@@ -18,8 +18,13 @@ class Filter[T](ArgRepr):
         If not given, an attempt will be made to return the same type of
         iterable the callable instance is being called with (by calling its
         class with a list of the filtered elements). If explicitly given,
-        `wrapper` will be called with the filtered elements. Consequently, the
-        return type will the (return) type of `wrapper`.
+        `wrapper` will be called with the list filtered elements. Consequently,
+        the return type will the (return) type of `wrapper`.
+
+    Notes
+    -----
+    In contrast to python's builtin lazy ``filter`` function, the filtered
+    iterable is fully manifested first here and only then wrapped.
 
     """
 
@@ -33,7 +38,7 @@ class Filter[T](ArgRepr):
         self.wrapper = wrapper
 
     def __call__(self, iterable: Iterable) -> T:
-        """Filter a sequence according to the specified criterion.
+        """Filter an iterable according to the specified criterion.
 
         Parameters
         ----------
