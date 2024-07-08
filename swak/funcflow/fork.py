@@ -120,5 +120,4 @@ class Fork[**P, T](IndentRepr):
                     results.extend(result)
                 else:
                     results.append(result)
-        n_res = len(results)
-        return tuple(results) if n_res == 0 or n_res > 1 else results[0]
+        return results[0] if len(results) == 1 else tuple(results)
