@@ -9,7 +9,10 @@ class Fork[**P, T](IndentRepr):
 
     Generic type annotation of instances is recommended. Provide a list of
     one or more input types that all callables take, followed by a ``tuple``
-    specifying the concatenation of the return types of all callables.
+    specifying the concatenation of the return types of all callables, ignoring
+    empty tuples. If only a single object remains, the type of that object
+    should be annotated.
+
 
     Parameters
     ----------
@@ -97,8 +100,10 @@ class Fork[**P, T](IndentRepr):
 
         Returns
         -------
-        tuple
-            Concatenation of all return values of all `calls` in order.
+        tuple or object
+            Concatenation of all return values of all `calls` in order. If only
+            one of the `calls` returns something other than an empty tuple, that
+            object is returned.
 
         Raises
         ------
