@@ -1,12 +1,14 @@
-from typing import Callable, Iterable, Any
+from typing import Callable, Iterable
 from .exceptions import FilterError
 from ..magic import ArgRepr
 
 
-class Filter[T](ArgRepr):
-    """Partial of the python builtin ``filter`` function.
+class Filter[S, T](ArgRepr):
+    """Equivalent to a partial of the python builtin ``filter`` function.
 
-    Generic type annotation with the (return) type of `wrapper` is recommended.
+    Upon subclassing and/or instantiation, type annotation with the type of the
+    elements in the iterator to be filtered and the return type of `wrapper`
+    is recommended.
 
     Parameters
     ----------
@@ -18,26 +20,27 @@ class Filter[T](ArgRepr):
         If not given, an attempt will be made to return the same type of
         iterable the callable instance is being called with (by calling its
         class with a list of the filtered elements). If explicitly given,
-        `wrapper` will be called with the list filtered elements. Consequently,
-        the return type will the (return) type of `wrapper`.
+        `wrapper` will be called with a list of filtered elements.
+        Consequently, the return type will be the (return) type of `wrapper`.
 
     Notes
     -----
-    In contrast to python's builtin lazy ``filter`` function, the filtered
-    iterable is fully manifested first here and only then wrapped.
+    In contrast to python's builtin lazy ``filter`` function, which returns a
+    generator object, the filtered iterable is fully manifested first and only
+    then wrapped.
 
     """
 
     def __init__(
             self,
-            criterion: Callable[[Any], bool] | None = None,
-            wrapper: type[T] | Callable[[list], T] | None = None
+            criterion: Callable[[S], bool] | None = None,
+            wrapper: type[T] | Callable[[list[S]], T] | None = None
     ) -> None:
         super().__init__(criterion, wrapper)
         self.criterion = criterion
         self.wrapper = wrapper
 
-    def __call__(self, iterable: Iterable) -> T:
+    def __call__(self, iterable: Iterable[S]) -> T:
         """Filter an iterable according to the specified criterion.
 
         Parameters
@@ -59,15 +62,23 @@ class Filter[T](ArgRepr):
             an exception or if wrapping the results leads to an exception.
 
         """
-        try:
-            filtered = list(filter(self.criterion, iterable))
-        except Exception:
-            msg = 'Could not call {} on all elements of the sequence!'
-            raise FilterError(msg.format(self._name(self.criterion)))
+        criterion = bool if self.criterion is None else self.criterion
+        filtered = []
+        for i, element in enumerate(iterable):
+            try:
+                criterion_is_fulfilled = criterion(element)
+            except Exception as error:
+                msg = 'Error calling\n{}\non element #{}:\n{}\n{}:\n{}'
+                name = self._name(criterion)
+                err_cls = error.__class__.__name__
+                fmt = msg.format(name, i, element, err_cls, error)
+                raise FilterError(fmt)
+            if criterion_is_fulfilled:
+                filtered.append(element)
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(filtered)
         except Exception:
-            msg = 'Could not wrap the results into a instance of {}!'
+            msg = 'Could not wrap filter results into a instance of {}!'
             raise FilterError(msg.format(self._name(wrap)))
         return wrapped

@@ -5,7 +5,7 @@ from swak.funcflow import Filter
 from swak.funcflow.exceptions import FilterError
 
 
-def greater_3(x):
+def greater_3(x: int) -> bool:
     return x > 3
 
 
@@ -112,6 +112,18 @@ class TestCriterionUsage(unittest.TestCase):
         actual = self.f(set())
         self.assertSetEqual(set(), actual)
 
+    def test_criterion_called(self):
+        mock = Mock()
+        f = Filter(mock)
+        _ = f([1])
+        mock.assert_called_once()
+
+    def test_criterion_called_correctly(self):
+        mock = Mock()
+        f = Filter(mock)
+        _ = f([1])
+        mock.assert_called_once_with(1)
+
     def test_list(self):
         actual = self.f([1, 2, 3, 4, 5])
         self.assertListEqual([4, 5], actual)
@@ -213,10 +225,10 @@ class TestWrapperUsage(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_annotate_wrapper(self):
-        _ = Filter[list]()
+        _ = Filter[int, list](greater_3)
 
     def test_annotate_wrapped_elements(self):
-        _ = Filter[list[int]]()
+        _ = Filter[int, list[int]](greater_3)
 
     def test_default_pickle_works(self):
         f = Filter()

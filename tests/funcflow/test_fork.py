@@ -111,6 +111,9 @@ class TestInstantiation(unittest.TestCase):
         self.assertTupleEqual((f, Cls, call), fork.calls)
 
     def test_type_annotation(self):
+        _ = Fork[[int, bool, str], float](f, Cls)
+
+    def test_type_annotation_tuple(self):
         _ = Fork[[int, bool, str], tuple[float, dict]](f, Cls)
 
 
