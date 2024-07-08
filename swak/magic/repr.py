@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 
 class _ReprName:
@@ -11,8 +11,20 @@ class _ReprName:
         return repr(obj)
 
     @staticmethod
-    def _name(obj: Any) -> str:
-        """Representation for callable objects."""
+    def _name(obj: None | type | Callable) -> str:
+        """Representation for callable objects used for, e.g., error messages.
+
+        Parameters
+        ----------
+        obj: callable
+            Any callable object, e.g., a class, function, method, or lambda
+
+        Returns
+        -------
+        str
+            A human-readable representation of the callable `obj`.
+
+        """
         if obj is None:
             return 'None'
         if isinstance(obj, _ReprName):
