@@ -1,10 +1,20 @@
 from typing import Iterator, Any, Callable, Self, Iterable, ParamSpec
 from functools import singledispatchmethod
 from .exceptions import PipeError
-from ..magic import IndentRepr
+from ..magic import ArgRepr, IndentRepr
 
 P = ParamSpec('P')
 CallT = type | Callable[..., Any]
+CallsT = tuple[CallT, ...]
+SidesT = dict[int, tuple[int, ...]]
+CacheT = dict[int, Any]
+
+
+class Side(ArgRepr):
+
+    def __init__(self, *steps: int) -> None:
+        super().__init__(steps)
+        self.steps = steps
 
 
 class Pipe[**P, T](IndentRepr):
@@ -29,9 +39,23 @@ class Pipe[**P, T](IndentRepr):
 
     """
 
-    def __init__(self, *calls: CallT) -> None:
+    def __init__(self, *calls: CallT | Side) -> None:
+        self.calls, self.__sides, self.__cache = self.__parse(*calls)
         super().__init__(*calls)
-        self.calls = calls
+
+    @staticmethod
+    def __parse(*calls: CallT) -> tuple[CallsT, SidesT, CacheT]:
+        sides = {}
+        callables = []
+        n_callables = 0
+        for item in calls:
+            if isinstance(item, Side):
+                sides.update({n_callables: item.steps})
+            else:
+                callables.append(item)
+                n_callables += 1
+        cache = {k: None for k in set(sum(sides.values(), ()))}
+        return tuple(callables), sides, cache
 
     def __iter__(self) -> Iterator[CallT]:
         return iter(self.calls)
@@ -117,8 +141,14 @@ class Pipe[**P, T](IndentRepr):
 
         """
         for i, call in enumerate(self):
+            if i in self.__cache:
+                self.__cache[i] = args if isinstance(args, tuple) else (args,)
+            cached = sum([self.__cache[j] for j in self.__sides.get(i, ())], ())
             try:
-                args = call(*args) if isinstance(args, tuple) else call(args)
+                if isinstance(args, tuple):
+                    args = call(*args, *cached)
+                else:
+                    args = call(args, *cached)
             except Exception as error:
                 msg = 'Error executing\n{}\nin step {} of\n{}\n{}:\n{}'
                 err_cls = error.__class__.__name__

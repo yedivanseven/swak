@@ -1,7 +1,7 @@
 import unittest
 import pickle
 from unittest.mock import Mock
-from swak.funcflow import Pipe
+from swak.funcflow import Side, Pipe
 from swak.funcflow.exceptions import PipeError
 from swak.magic import ArgRepr
 
@@ -403,6 +403,13 @@ class TestRepr(unittest.TestCase):
             "     [ 7] A('foo')"
         )
         self.assertEqual(expected, repr(outer))
+
+
+class TestSide(unittest.TestCase):
+
+    def test_susi(self):
+        pipe = Pipe(lambda x: x + 1, Side(0), lambda x, y: x + y)
+        print(pipe(5))
 
 
 if __name__ == '__main__':
