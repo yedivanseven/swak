@@ -10,6 +10,7 @@ SidesT = dict[int, tuple[int, ...]]
 CacheT = dict[int, Any]
 
 
+# ToDo: Allow side-loading kwargs!
 class Side(ArgRepr):
 
     def __init__(self, *steps: int) -> None:
