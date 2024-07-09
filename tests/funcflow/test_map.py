@@ -34,16 +34,16 @@ class TestDefaultAttributes(unittest.TestCase):
         m = Map(plus_2)
         self.assertIsNone(m.wrapper)
 
-    def test_callable(self):
-        m = Map(plus_2)
-        self.assertTrue(callable(m))
-
 
 class TestDefaultUsage(unittest.TestCase):
 
     def setUp(self):
         self.m1 = Map(plus_2)
         self.m2 = Map(plus)
+
+    def test_callable(self):
+        self.assertTrue(callable(self.m1))
+        self.assertTrue(callable(self.m2))
 
     def test_empty_list(self):
         actual = self.m1([])
@@ -126,13 +126,23 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertListEqual([2, 4, 6], actual)
 
     def test_wrong_call_raises(self):
+        expected = ('Error calling\n'
+                    'lambda\n'
+                    'on element #1:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'division by zero')
         m = Map(lambda x: 1 / x)
-        with self.assertRaises(MapError):
+        with self.assertRaises(MapError) as error:
             _ = m([1, 0, 2])
+        self.assertEqual(expected, str(error.exception))
 
     def test_wrong_iterable_raises(self):
-        with self.assertRaises(MapError):
+        expected = ('Could not wrap map results into'
+                    ' an instance of list_iterator!')
+        with self.assertRaises(MapError) as error:
             _ = self.m1(iter([1, 2, 3]))
+        self.assertEqual(expected, str(error.exception))
 
 
 class TestWrapperAttributes(unittest.TestCase):
@@ -156,16 +166,16 @@ class TestWrapperAttributes(unittest.TestCase):
         m = Map(plus_2, tuple)
         self.assertIs(m.wrapper, tuple)
 
-    def test_callable(self):
-        m = Map(plus_2, tuple)
-        self.assertTrue(callable(m))
-
 
 class TestWrapperUsage(unittest.TestCase):
 
     def setUp(self):
         self.m1 = Map(plus_2, list)
         self.m2 = Map(plus, list)
+
+    def test_callable(self):
+        self.assertTrue(callable(self.m1))
+        self.assertTrue(callable(self.m2))
 
     def test_wrapper_called(self):
         mock = Mock()
@@ -208,9 +218,11 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertListEqual([2, 4, 6], actual)
 
     def test_wrong_wrapper_raises(self):
+        expected = 'Could not wrap map results into an instance of int!'
         m = Map(plus_2, int)
-        with self.assertRaises(MapError):
+        with self.assertRaises(MapError) as error:
             _ = m([1, 2, 3])
+        self.assertEqual(expected, str(error.exception))
 
 
 class TestMisc(unittest.TestCase):

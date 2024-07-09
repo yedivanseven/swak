@@ -80,6 +80,6 @@ class Map[**P, S, T](ArgRepr):
         try:
             wrapped = wrap(mapped)
         except Exception:
-            msg = 'Could not wrap map results into a instance of {}!'
+            msg = 'Could not wrap map results into an instance of {}!'
             raise MapError(msg.format(self._name(wrap)))
         return wrapped

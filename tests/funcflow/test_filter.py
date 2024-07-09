@@ -30,15 +30,14 @@ class TestDefaultAttributes(unittest.TestCase):
         f = Filter()
         self.assertIsNone(f.wrapper)
 
-    def test_callable(self):
-        f = Filter()
-        self.assertTrue(callable(f))
-
 
 class TestDefaultUsage(unittest.TestCase):
 
     def setUp(self):
         self.f = Filter()
+
+    def test_callable(self):
+        self.assertTrue(callable(self.f))
 
     def test_empty_list(self):
         actual = self.f([])
@@ -65,8 +64,11 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertSetEqual({1, 2}, actual)
 
     def test_wrong_iterable_raises(self):
-        with self.assertRaises(FilterError):
+        expected = ('Could not wrap filter results '
+                    'into an instance of list_iterator!')
+        with self.assertRaises(FilterError) as error:
             _ = self.f(iter([1, 2, 0, 2, 1]))
+        self.assertEqual(expected, str(error.exception))
 
 
 class TestCriterionAttributes(unittest.TestCase):
@@ -90,15 +92,14 @@ class TestCriterionAttributes(unittest.TestCase):
         f = Filter(greater_3)
         self.assertIsNone(f.wrapper)
 
-    def test_callable(self):
-        f = Filter(greater_3)
-        self.assertTrue(callable(f))
-
 
 class TestCriterionUsage(unittest.TestCase):
 
     def setUp(self):
         self.f = Filter(greater_3)
+
+    def test_callable(self):
+        self.assertTrue(callable(self.f))
 
     def test_empty_list(self):
         actual = self.f([])
@@ -141,9 +142,16 @@ class TestCriterionUsage(unittest.TestCase):
             _ = self.f(iter([1, 2, 3, 4, 5]))
 
     def test_wrong_criterion_raises(self):
+        expected = ('Error calling\n'
+                    'lambda\n'
+                    'on element #2:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'division by zero')
         f = Filter(lambda x: 1 / x)
-        with self.assertRaises(FilterError):
+        with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 0, 2, 1])
+        self.assertEqual(expected, str(error.exception))
 
 
 class TestWrapperAttributes(unittest.TestCase):
@@ -217,9 +225,11 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertTupleEqual((4, 5), actual)
 
     def test_wrong_wrapper_raises(self):
+        expected = 'Could not wrap filter results into an instance of int!'
         f = Filter(greater_3, int)
-        with self.assertRaises(FilterError):
+        with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
+        self.assertEqual(expected, str(error.exception))
 
 
 class TestMisc(unittest.TestCase):

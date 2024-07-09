@@ -1,26 +1,31 @@
 from typing import Iterator, Any, Callable, Self, Iterable, ParamSpec
 from functools import singledispatchmethod
-from .exceptions import ForkError
+from .exceptions import PipeError
 from ..magic import IndentRepr
 
 P = ParamSpec('P')
-CallT = type | Callable[P, Any]
+CallT = type | Callable[..., Any]
 
 
-class Fork[**P, T](IndentRepr):
-    """Call any number of callables with the same argument(s).
+class Pipe[**P, T](IndentRepr):
+    """Chain any number of callable objects into a single callable object.
 
-    Generic type annotation of instances is recommended. Provide a list of
-    one or more input types that all callables take, followed by a ``tuple``
-    specifying the concatenation of the return types of all callables, ignoring
-    empty tuples. If only a single object remains, the type of that object
-    should be annotated.
-
+    Arguments passed to the functional composition will be forwarded to the
+    first callable in the chain. Subsequent callables will be called with
+    the return value(s) of the previous callable in the chain. The return
+    value of the functional composition is the return value of the last
+    callable in the chain.
 
     Parameters
     ----------
     *calls: callable
-        Callables to call with the same argument(s).
+        Callables to chain one after another.
+
+    Notes
+    -----
+    Upon instantiation, the generic class can be type-annotated with the list
+    of argument types of the first callable in the chain, followed by the
+    return type of the last callable.
 
     """
 
@@ -37,11 +42,11 @@ class Fork[**P, T](IndentRepr):
     def __bool__(self) -> bool:
         return self.__len__() > 0
 
-    def __contains__(self, call: CallT) -> bool:
-        return call in self.calls
+    def __contains__(self, item: CallT) -> bool:
+        return item in self.calls
 
-    def __reversed__(self) -> Self:
-        return self.__class__(*reversed(self.calls))
+    def __reversed__(self) -> NotImplemented:
+        return NotImplemented
 
     @singledispatchmethod
     def __getitem__(self, index: int) -> CallT:
@@ -52,12 +57,12 @@ class Fork[**P, T](IndentRepr):
         return self.__class__(*self.calls[index])
 
     def __eq__(self, other: Self) -> bool:
-        if isinstance(other, Fork):
+        if isinstance(other, Pipe):
             return self.calls == other.calls
         return NotImplemented
 
     def __ne__(self, other: Self) -> bool:
-        if isinstance(other, Fork):
+        if isinstance(other, Pipe):
             return self.calls != other.calls
         return NotImplemented
 
@@ -65,7 +70,7 @@ class Fork[**P, T](IndentRepr):
             self,
             other: CallT | Iterable[CallT] | Self
     ) -> Self:
-        if isinstance(other, Fork):
+        if isinstance(other, Pipe):
             return self.__class__(*self.calls, *other.calls)
         try:
             _ = [callable(call) for call in other]
@@ -81,7 +86,7 @@ class Fork[**P, T](IndentRepr):
             self,
             other: CallT | Iterable[CallT] | Self
     ) -> Self:
-        if isinstance(other, Fork):
+        if isinstance(other, Pipe):
             return self.__class__(*other.calls, *self.calls)
         try:
             _ = [callable(call) for call in other]
@@ -94,38 +99,29 @@ class Fork[**P, T](IndentRepr):
                 return NotImplemented
 
     def __call__(self, *args: P.args) -> T:
-        """Call all specified `calls` with the same argument(s).
+        """Call the functional composition this object was instantiated with.
 
         Parameters
         ----------
         *args
-            Arguments to call all `calls` with.
+            Arguments to pass to the first callable in `calls`.
 
         Returns
         -------
-        tuple or object
-            Concatenation of all return values of all `calls` in order. If only
-            one of the `calls` returns something other than an empty tuple, that
-            object is returned.
+        Whatever the last callable of `calls` returns.
 
         Raises
         ------
-        ForkError
-            When one of the `calls` raises an exception.
+        PipeError
+            When one of the callables in the chain raises an exception.
 
         """
-        results = []
         for i, call in enumerate(self):
             try:
-                result = call(*args)
+                args = call(*args) if isinstance(args, tuple) else call(args)
             except Exception as error:
-                msg = 'Error executing\n{}\nin fork {} of\n{}\n{}:\n{}'
-                name = error.__class__.__name__
-                fmt = msg.format(self._name(call), i, self, name, error)
-                raise ForkError(fmt)
-            else:
-                if isinstance(result, tuple):
-                    results.extend(result)
-                else:
-                    results.append(result)
-        return results[0] if len(results) == 1 else tuple(results)
+                msg = 'Error executing\n{}\nin step {} of\n{}\n{}:\n{}'
+                err_cls = error.__class__.__name__
+                fmt = msg.format(self._name(call), i, self, err_cls, error)
+                raise PipeError(fmt)
+        return args

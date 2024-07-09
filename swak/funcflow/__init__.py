@@ -2,6 +2,7 @@ from .filter import Filter
 from .fork import Fork
 from .map import Map
 from .partial import Partial
+from .pipe import Pipe
 from .misc import exit_ok, unit, identity
 
 __all__ = [
@@ -9,6 +10,7 @@ __all__ = [
     'Fork',
     'Map',
     'Partial',
+    'Pipe',
     'exit_ok',
     'unit',
     'identity'

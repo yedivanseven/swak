@@ -44,37 +44,89 @@ class A(ArgRepr):
         pass
 
 
-class TestInstantiation(unittest.TestCase):
+class TestAttributes(unittest.TestCase):
 
     def test_empty(self):
-        _ = Fork()
+        fork = Fork()
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((), fork.calls)
 
     def test_function(self):
-        _ = Fork(f)
+        fork = Fork(f)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((f, ), fork.calls)
 
     def test_functions(self):
-        _ = Fork(f, g)
+        fork = Fork(f, g)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((f, g), fork.calls)
 
     def test_lambda(self):
-        _ = Fork(lambda x: x)
+        fork = Fork(lambda x: x)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertEqual(1, len(fork.calls))
 
     def test_lambdas(self):
-        _ = Fork(lambda x: x, lambda y: ())
+        fork = Fork(lambda x: x, lambda y: ())
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertEqual(2, len(fork.calls))
 
     def test_class(self):
-        _ = Fork(Cls)
+        fork = Fork(Cls)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((Cls,), fork.calls)
 
     def test_classes(self):
-        _ = Fork(Cls, Call)
+        fork = Fork(Cls, Call, A)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((Cls, Call, A), fork.calls)
 
     def test_object(self):
-        _ = Fork(Call())
+        call = Call()
+        fork = Fork(call)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((call,), fork.calls)
 
     def test_objects(self):
-        _ = Fork(Call(), Call())
+        call = Call()
+        cls = Cls()
+        fork = Fork(call, cls)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((call, cls), fork.calls)
+
+    def test_method(self):
+        cls = Cls()
+        fork = Fork(cls.m)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((cls.m,), fork.calls)
+
+    def test_methods(self):
+        cls = Cls()
+        fork = Fork(Cls.c, cls.m, cls.s)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((Cls.c, cls.m, cls.s), fork.calls)
 
     def test_mix(self):
-        _ = Fork(f, lambda x: x, Cls, Call())
+        cls = Cls()
+        call = Call()
+        fork = Fork(f, g, Cls, call, Cls.c, cls.m, cls.s)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual(
+            (f, g, Cls, call, Cls.c, cls.m, cls.s),
+            fork.calls
+        )
 
     def test_decorator(self):
 
@@ -83,41 +135,16 @@ class TestInstantiation(unittest.TestCase):
             return x
 
         self.assertIsInstance(h, Fork)
+        self.assertTrue(hasattr(h, 'calls'))
+        self.assertIsInstance(h.calls, tuple)
+        self.assertEqual(1, len(h.calls))
 
-    def test_pickle_works(self):
-        fork = Fork(f, Cls, Call())
-        _ = pickle.dumps(fork)
 
-    def test_pickle_raises_with_lambdas(self):
-        fork = Fork(f, Cls, Call(), lambda x: x)
-        with self.assertRaises(AttributeError):
-            _ = pickle.dumps(fork)
+class TestUsage(unittest.TestCase):
 
     def test_callable(self):
         fork = Fork(f, lambda x: x, Cls, Call())
         self.assertTrue(callable(fork))
-
-    def test_attribute_empty(self):
-        fork = Fork()
-        self.assertTrue(hasattr(fork, 'calls'))
-        self.assertIsInstance(fork.calls, tuple)
-        self.assertTupleEqual((), fork.calls)
-
-    def test_attribute(self):
-        call = Call()
-        fork = Fork(f, Cls, call)
-        self.assertTrue(hasattr(fork, 'calls'))
-        self.assertIsInstance(fork.calls, tuple)
-        self.assertTupleEqual((f, Cls, call), fork.calls)
-
-    def test_type_annotation(self):
-        _ = Fork[[int, bool, str], float](f, Cls)
-
-    def test_type_annotation_tuple(self):
-        _ = Fork[[int, bool, str], tuple[float, dict]](f, Cls)
-
-
-class TestFunctionality(unittest.TestCase):
 
     def test_empty_no_arg(self):
         fork = Fork()
@@ -347,7 +374,22 @@ class TestMagic(unittest.TestCase):
         self.assertTupleEqual((f, g, *self.calls), fork.calls)
 
 
-class TestRepr(unittest.TestCase):
+class TestMisc(unittest.TestCase):
+
+    def test_pickle_works(self):
+        fork = Fork(f, Cls, Call())
+        _ = pickle.dumps(fork)
+
+    def test_pickle_raises_with_lambdas(self):
+        fork = Fork(f, Cls, Call(), lambda x: x)
+        with self.assertRaises(AttributeError):
+            _ = pickle.dumps(fork)
+
+    def test_type_annotation(self):
+        _ = Fork[[int, bool, str], float](f, Cls)
+
+    def test_type_annotation_tuple(self):
+        _ = Fork[[int, bool, str], tuple[float, dict]](f, Cls)
 
     def test_flat(self):
         fork = Fork(

@@ -79,6 +79,6 @@ class Filter[S, T](ArgRepr):
         try:
             wrapped = wrap(filtered)
         except Exception:
-            msg = 'Could not wrap filter results into a instance of {}!'
+            msg = 'Could not wrap filter results into an instance of {}!'
             raise FilterError(msg.format(self._name(wrap)))
         return wrapped
