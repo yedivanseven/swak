@@ -38,7 +38,7 @@ class Reduce[T, S](ArgRepr):
 
         Returns
         -------
-        The reduced sequence.
+        The reduced iterable.
 
         """
         iterator = iter(iterable)
