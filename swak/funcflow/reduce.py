@@ -4,27 +4,22 @@ from .exceptions import ReduceError
 
 
 class Reduce[T, S](ArgRepr):
-    """Partial of the ``functools`` module ``reduce`` function.
+    """Equivalent to a partial of the ``functools.reduce`` function.
 
-    This class is instantiated with a function that takes two arguments
-    (an accumulator of type T and an element of type S) and returns a single
-    object of type T. An initial value for the accumulator can also be
-    provided. The (callable) object is then called on a sequence with elements
-    of type S, returning a single object of type T.
+    Upon subclassing and/or instantiation, type annotation with the return type
+    of `call` (which must be the same as the type of its first argument as well
+    as the type of the accumulator `acc`) and the type ot its second argument
+    (which must be the same as the type of the elements in the iterable acted
+    upon) is recommended.
 
     Parameters
     ----------
     call: callable
-        Callable accepting two arguments, returning one.
+        Callable accepting the current `acc` and the next element of iterable,
+        returning the updated value of `acc`.
     acc: optional
-        Initial value for the accumulator in the reduce operation.
-
-    Notes
-    -----
-    Upon instantiation, the generic class can be type-annotated with two
-    types, the first for the type of the elements in the sequence to
-    reduce, the second with the type of the accumulator, i.e., the return
-    value of the reduction.
+        Initial value for the accumulator in the reduce operation. If not given
+        calling reduce on an empty iterable wii fail.
 
     """
 
@@ -34,12 +29,12 @@ class Reduce[T, S](ArgRepr):
         self.acc = acc
 
     def __call__(self, iterable: Iterable[S]) -> T:
-        """Reduce a sequence by accumulating elements with the specified call.
+        """Reduce an iterable by accumulating elements with the specified call.
 
         Parameters
         ----------
         iterable
-            A sequence of elements to reduce.
+            An iterable of elements to reduce.
 
         Returns
         -------
