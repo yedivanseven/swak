@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import Mock
 from swak.funcflow import Fork
 from swak.funcflow.exceptions import ForkError
-from swak.magic import ArgRepr
+from swak.magic import ArgRepr, IndentRepr
 
 
 def f():
@@ -40,8 +40,17 @@ class A(ArgRepr):
         super().__init__(a)
         self.a = a
 
-    def __call__(self):
-        pass
+    def __call__(self, *xs):
+        raise AttributeError('Test!')
+
+
+class Ind(IndentRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __call__(self, *ys):
+        raise AttributeError('Test!')
 
 
 class TestAttributes(unittest.TestCase):
@@ -262,6 +271,36 @@ class TestUsage(unittest.TestCase):
                     'in fork 1 of\n'
                     'Fork:\n'
                     '[ 0] lambda\n'
+                    '[ 1] g\n'
+                    'AttributeError:\n'
+                    'Test!')
+        with self.assertRaises(ForkError) as error:
+            _ = fork('foo', 1)
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_argrepr(self):
+        fork = Fork(A(1), g)
+        expected = ('Error executing\n'
+                    'A(1)\n'
+                    'in fork 0 of\n'
+                    'Fork:\n'
+                    '[ 0] A(1)\n'
+                    '[ 1] g\n'
+                    'AttributeError:\n'
+                    'Test!')
+        with self.assertRaises(ForkError) as error:
+            _ = fork('foo', 1)
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_indentrepr(self):
+        fork = Fork(Ind(1), g)
+        expected = ('Error executing\n'
+                    'Ind:\n'
+                    '[ 0] 1\n'
+                    'in fork 0 of\n'
+                    'Fork:\n'
+                    '[ 0] Ind:\n'
+                    '     [ 0] 1\n'
                     '[ 1] g\n'
                     'AttributeError:\n'
                     'Test!')

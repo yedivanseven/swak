@@ -2,10 +2,29 @@ import unittest
 import pickle
 from unittest.mock import Mock
 from swak.funcflow import Partial
+from swak.magic import ArgRepr, IndentRepr
 
 
 def f(x, y):
     return x + y
+
+
+class A(ArgRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __call__(self):
+        pass
+
+
+class Ind(IndentRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __call__(self):
+        pass
 
 
 class TestInstantiation(unittest.TestCase):
@@ -117,9 +136,17 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(partial)
 
-    def test_representation(self):
+    def test_repr(self):
         partial = Partial(f, 'foo', answer=42)
         self.assertEqual("Partial(f, 'foo', answer=42)", repr(partial))
+
+    def test_argrepr(self):
+        partial = Partial(A(1), A(2), answer=42)
+        self.assertEqual("Partial(A(1), A(2), answer=42)", repr(partial))
+
+    def test_indentrepr(self):
+        partial = Partial(Ind(1, 2, 3), Ind(1, 2, 3), answer=42)
+        self.assertEqual("Partial(Ind[3], Ind[3], answer=42)", repr(partial))
 
     def test_type_annotation(self):
         _ = Partial[int](f, 42)

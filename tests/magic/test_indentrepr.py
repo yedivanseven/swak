@@ -27,6 +27,21 @@ class Call:
         pass
 
 
+class A(ArgRepr):
+
+    def __init__(self, a):
+        super().__init__(a)
+
+
+class CallA(ArgRepr):
+
+    def __init__(self, a):
+        super().__init__(a)
+
+    def __call__(self):
+        pass
+
+
 class TestArgumentTypes(unittest.TestCase):
 
     class Empty(IndentRepr):
@@ -40,43 +55,49 @@ class TestArgumentTypes(unittest.TestCase):
             super().__init__(*args)
 
     def test_empty_super_init(self):
-        empty = self.Empty()
-        self.assertEqual('Empty:\n', repr(empty))
+        actual = self.Empty()
+        self.assertEqual('Empty', repr(actual))
 
     def test_no_args(self):
-        no_args = self.Args()
-        self.assertEqual('Args:\n', repr(no_args))
+        actual = self.Args()
+        self.assertEqual('Args', repr(actual))
 
-    def test_int_args(self):
-        int_args = self.Args(1, 2, 3)
+    def test_int(self):
+        actual = self.Args(1, 2, 3)
         expected = "Args:\n[ 0] 1\n[ 1] 2\n[ 2] 3"
-        self.assertEqual(expected, repr(int_args))
+        self.assertEqual(expected, repr(actual))
 
-    def test_callable_args(self):
+    def test_string(self):
+        actual = self.Args('a', 'b', 'c')
+        expected = "Args:\n[ 0] 'a'\n[ 1] 'b'\n[ 2] 'c'"
+        self.assertEqual(expected, repr(actual))
+
+    def test_custom_object(self):
         cls = Cls()
-        string_args = self.Args(
+        actual = self.Args(cls)
+        expected = f"Args:\n[ 0] {str(cls)}"
+        self.assertEqual(expected, repr(actual))
+
+    def test_argrepr(self):
+        actual = self.Args(A(1))
+        expected = "Args:\n[ 0] A(1)"
+        self.assertEqual(expected, repr(actual))
+
+    def test_callable(self):
+        cls = Cls()
+        actual = self.Args(
             f,
             Cls,
             lambda x: x,
             Call(),
+            CallA(1),
             cls.m,
             Cls.c,
             cls.s
         )
         expected = ("Args:\n[ 0] f\n[ 1] Cls\n[ 2] lambda\n[ 3] Call(...)\n"
-                    "[ 4] Cls.m\n[ 5] Cls.c\n[ 6] Cls.s")
-        self.assertEqual(expected, repr(string_args))
-
-    def test_custom_object_args(self):
-        cls = Cls()
-        string_args = self.Args(cls)
-        expected = f"Args:\n[ 0] {str(cls)}"
-        self.assertEqual(expected, repr(string_args))
-
-    def test_string_args(self):
-        string_args = self.Args('a', 'b', 'c')
-        expected = "Args:\n[ 0] 'a'\n[ 1] 'b'\n[ 2] 'c'"
-        self.assertEqual(expected, repr(string_args))
+                    "[ 4] CallA(1)\n[ 5] Cls.m\n[ 6] Cls.c\n[ 7] Cls.s")
+        self.assertEqual(expected, repr(actual))
 
     def test_nested_once(self):
         child = self.Args(2, 3)

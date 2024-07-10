@@ -2,13 +2,11 @@ from typing import Any, Callable
 
 
 class _ReprName:
-    """Auxiliary Mixin providing object representation logic."""
+    """Auxiliary mixin providing representations for (callable) objects."""
 
     def _repr(self, obj: Any, _: int = 0) -> str:
         """Representation for any object."""
-        if callable(obj):
-            return self._name(obj)
-        return repr(obj)
+        return self._name(obj) if callable(obj) else repr(obj)
 
     @staticmethod
     def _name(obj: None | type | Callable) -> str:
@@ -27,7 +25,7 @@ class _ReprName:
         """
         if obj is None:
             return 'None'
-        if isinstance(obj, ArgRepr):
+        if isinstance(obj, _ReprName):
             return repr(obj)
         try:
             name = obj.__qualname__
@@ -67,6 +65,13 @@ class ArgRepr(_ReprName):
         signature = ', '.join(filter(None, [args, kwargs]))
         return f'{cls}({signature})'
 
+    def _repr(self, obj: Any, _: int = 0) -> str:
+        """Representation for any object."""
+        if isinstance(obj, IndentRepr):
+            suffix = f'[{len(repr(obj).splitlines()) - 1}]'
+            return obj.__class__.__name__ + suffix
+        return super()._repr(obj)
+
 
 class IndentRepr(_ReprName):
     """Base class for a representation with numbered and indented children.
@@ -100,7 +105,7 @@ class IndentRepr(_ReprName):
 
     def _indented_repr(self, level: int) -> str:
         """Construct indented object representation."""
-        cls = f'{self.__class__.__name__}:\n'
+        cls = f'{self.__class__.__name__}{":\n" if self.__args else ""}'
         indent = 5 * level * ' '
         args = enumerate(self._repr(arg, level) for arg in self.__args)
         items = '\n'.join(f'{indent}[{i:>2}] {arg}' for i, arg in args)

@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import Mock
 from swak.funcflow import Pipe
 from swak.funcflow.exceptions import PipeError
-from swak.magic import ArgRepr
+from swak.magic import ArgRepr, IndentRepr
 
 
 def f():
@@ -40,8 +40,17 @@ class A(ArgRepr):
         super().__init__(a)
         self.a = a
 
-    def __call__(self):
-        pass
+    def __call__(self, *_):
+        raise AttributeError('Test!')
+
+
+class Ind(IndentRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __call__(self, *_):
+        raise AttributeError('Test!')
 
 
 class TestAttributes(unittest.TestCase):
@@ -215,7 +224,6 @@ class TestFunctionality(unittest.TestCase):
         self.assertTupleEqual((), result)
 
     def test_raises(self):
-        pipe = Pipe(f, g, f)
         expected = ("Error executing\n"
                     "g\n"
                     "in step 1 of\n"
@@ -225,6 +233,39 @@ class TestFunctionality(unittest.TestCase):
                     "[ 2] f\n"
                     "AttributeError:\n"
                     "Test!")
+        pipe = Pipe(f, g, f)
+        with self.assertRaises(PipeError) as error:
+            _ = pipe()
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_argrepr(self):
+        expected = ("Error executing\n"
+                    "A(1)\n"
+                    "in step 1 of\n"
+                    "Pipe:\n"
+                    "[ 0] f\n"
+                    "[ 1] A(1)\n"
+                    "[ 2] f\n"
+                    "AttributeError:\n"
+                    "Test!")
+        pipe = Pipe(f, A(1), f)
+        with self.assertRaises(PipeError) as error:
+            _ = pipe()
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_indentrepr(self):
+        expected = ("Error executing\n"
+                    "Ind:\n"
+                    "[ 0] 1\n"
+                    "in step 1 of\n"
+                    "Pipe:\n"
+                    "[ 0] f\n"
+                    "[ 1] Ind:\n"
+                    "     [ 0] 1\n"
+                    "[ 2] f\n"
+                    "AttributeError:\n"
+                    "Test!")
+        pipe = Pipe(f, Ind(1), f)
         with self.assertRaises(PipeError) as error:
             _ = pipe()
         self.assertEqual(expected, str(error.exception))

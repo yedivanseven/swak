@@ -1,6 +1,6 @@
 from typing import Callable, Iterable
-from .exceptions import FilterError
 from ..magic import ArgRepr
+from .exceptions import FilterError
 
 
 class Filter[S, T](ArgRepr):

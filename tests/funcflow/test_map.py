@@ -3,6 +3,7 @@ import pickle
 from unittest.mock import Mock
 from swak.funcflow import Map
 from swak.funcflow.exceptions import MapError
+from swak.magic import ArgRepr, IndentRepr
 
 
 def plus_2(x: int) -> int:
@@ -11,6 +12,24 @@ def plus_2(x: int) -> int:
 
 def plus(x: int, y: int) -> int:
     return x + y
+
+
+class A(ArgRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __call__(self, x: int) -> bool:
+        return 1 / x
+
+
+class Ind(IndentRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __call__(self, x: int) -> bool:
+        return 1 / x
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -137,6 +156,31 @@ class TestDefaultUsage(unittest.TestCase):
             _ = m([1, 0, 2])
         self.assertEqual(expected, str(error.exception))
 
+    def test_error_msg_argrepr(self):
+        expected = ('Error calling\n'
+                    'A(1)\n'
+                    'on element #1:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'division by zero')
+        m = Map(A(1))
+        with self.assertRaises(MapError) as error:
+            _ = m([1, 0, 2])
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_indentrepr(self):
+        expected = ('Error calling\n'
+                    'Ind:\n'
+                    '[ 0] 1\n'
+                    'on element #1:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'division by zero')
+        m = Map(Ind(1))
+        with self.assertRaises(MapError) as error:
+            _ = m([1, 0, 2])
+        self.assertEqual(expected, str(error.exception))
+
     def test_wrong_iterable_raises(self):
         expected = ('Could not wrap map results into'
                     ' an instance of list_iterator!')
@@ -224,6 +268,21 @@ class TestWrapperUsage(unittest.TestCase):
             _ = m([1, 2, 3])
         self.assertEqual(expected, str(error.exception))
 
+    def test_wrapper_error_msg_argrepr(self):
+        expected = 'Could not wrap map results into an instance of A(1)!'
+        m = Map(plus_2, A(1))
+        with self.assertRaises(MapError) as error:
+            _ = m([1, 2, 3])
+        self.assertEqual(expected, str(error.exception))
+
+    def test_wrapper_error_msg_indentrepr(self):
+        expected = ('Could not wrap map results into an instance of Ind:\n'
+                    '[ 0] 1!')
+        m = Map(plus_2, Ind(1))
+        with self.assertRaises(MapError) as error:
+            _ = m([1, 2, 3])
+        self.assertEqual(expected, str(error.exception))
+
 
 class TestMisc(unittest.TestCase):
 
@@ -254,14 +313,30 @@ class TestMisc(unittest.TestCase):
         m = Map(plus_2)
         self.assertEqual('Map(plus_2, None)', repr(m))
 
+    def test_default_argrepr(self):
+        m = Map(A(1))
+        self.assertEqual('Map(A(1), None)', repr(m))
+
+    def test_default_indentrepr(self):
+        m = Map(Ind(1, 2, 3))
+        self.assertEqual('Map(Ind[3], None)', repr(m))
+
     def test_wrapper_repr(self):
         m = Map(plus_2, tuple)
         self.assertEqual('Map(plus_2, tuple)', repr(m))
 
-    def test_annotated(self):
+    def test_wrapper_argrepr(self):
+        m = Map(plus_2, A(1))
+        self.assertEqual('Map(plus_2, A(1))', repr(m))
+
+    def test_wrapper_indentrepr(self):
+        m = Map(plus_2, Ind(1, 2, 3))
+        self.assertEqual('Map(plus_2, Ind[3])', repr(m))
+
+    def test_type_annotation_wrapper(self):
         _ = Map[[int, bool], float, list]
 
-    def test_annotated_return_elements(self):
+    def test_type_annotation_wrapped_elements(self):
         _ = Map[[int, bool], float, list[float]]
 
 

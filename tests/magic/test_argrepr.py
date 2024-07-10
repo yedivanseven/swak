@@ -1,6 +1,6 @@
 import unittest
 import pickle
-from swak.magic import ArgRepr
+from swak.magic import ArgRepr, IndentRepr
 
 
 def f():
@@ -22,6 +22,21 @@ class Cls:
 
 
 class Call:
+
+    def __call__(self):
+        pass
+
+
+class Ind(IndentRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+
+class CallInd(IndentRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
 
     def __call__(self):
         pass
@@ -220,6 +235,14 @@ class TestArgumentTypes(unittest.TestCase):
         test = self.Test(b=self.Test(a=1))
         self.assertEqual('Test(b=Test(a=1))', repr(test))
 
+    def test_indentrepr_arg(self):
+        test = self.Test(Ind(1, 2, 3))
+        self.assertEqual('Test(Ind[3])', repr(test))
+
+    def test_indentrepr_kwarg(self):
+        test = self.Test(b=Ind(1, 2, 3))
+        self.assertEqual('Test(b=Ind[3])', repr(test))
+
     def test_none_arg(self):
         test = self.Test(None)
         self.assertEqual('Test(None)', repr(test))
@@ -284,6 +307,24 @@ class TestCallables(unittest.TestCase):
         cls = Call()
         test = self.Test(cls)
         self.assertEqual('Test(Call(...))', repr(test))
+
+    def test_callable_argrepr(self):
+
+        class A(ArgRepr):
+
+            def __init__(self, a):
+                super().__init__(a)
+                self.a = a
+
+            def __call__(self):
+                pass
+
+        test = self.Test(A(1))
+        self.assertEqual('Test(A(1))', repr(test))
+
+    def test_callable_indentrepr(self):
+        test = self.Test(CallInd(1, 2, 3))
+        self.assertEqual('Test(CallInd[3])', repr(test))
 
 
 class TestMisc(unittest.TestCase):

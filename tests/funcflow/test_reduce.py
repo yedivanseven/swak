@@ -2,6 +2,7 @@ import unittest
 import pickle
 from unittest.mock import Mock
 from swak.funcflow import Reduce
+from swak.funcflow.exceptions import ReduceError
 from swak.magic import ArgRepr, IndentRepr
 
 
@@ -9,119 +10,301 @@ def f(x, y):
     return x + y
 
 
-class TestInstantiation(unittest.TestCase):
-
-    def test_default(self):
-        red = Reduce(f)
-        self.assertTrue(hasattr(red, 'call'))
-        self.assertIs(red.call, f)
-        self.assertTrue(hasattr(red, 'acc'))
-        self.assertIsNone(red.acc)
-
-    def test_acc(self):
-        red = Reduce(f, ())
-        self.assertTrue(hasattr(red, 'acc'))
-        self.assertIsInstance(red.acc, tuple)
-        self.assertTupleEqual((), red.acc)
-
-    def test_pickle_works(self):
-        red = Reduce(f)
-        _ = pickle.dumps(red)
-
-    def test_pickle_raises_lambda(self):
-        red = Reduce(lambda x, y: x + y)
-        with self.assertRaises(AttributeError):
-            _ = pickle.dumps(red)
+def g(x, y):
+    return x / y
 
 
-class TestCall(unittest.TestCase):
+class A(ArgRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __bool__(self) -> bool:
+        raise TypeError('Test!')
+
+    def __call__(self, x, y):
+        return x / y
+
+
+class Ind(IndentRepr):
+
+    def __init__(self, *xs):
+        super().__init__(*xs)
+
+    def __call__(self, x, y):
+        return x / y
+
+
+class TestDefaultAttributes(unittest.TestCase):
+
+    def test_instantiation(self):
+        _ = Reduce(f)
+
+    def test_has_call(self):
+        r = Reduce(f)
+        self.assertTrue(hasattr(r, 'call'))
+
+    def test_call_correct(self):
+        r = Reduce(f)
+        self.assertIs(r.call, f)
+
+    def test_has_acc(self):
+        r = Reduce(f)
+        self.assertTrue(hasattr(r, 'acc'))
+
+    def test_acc_correct(self):
+        r = Reduce(f)
+        self.assertIsNone(r.acc)
+
+
+class TestDefaultUsage(unittest.TestCase):
+
+    def setUp(self):
+        self.r = Reduce(f)
 
     def test_callable(self):
-        red = Reduce(f)
-        self.assertTrue(callable(red))
+        self.assertTrue(callable(self.r))
 
-    def test_call_called_no_acc(self):
-        mock = Mock(return_value=3)
-        red = Reduce[int, int](mock)
-        _ = red([1, 2, 4])
+    def test_no_call_single(self):
+        mock = Mock()
+        _ = Reduce(mock)([1])
+        mock.assert_not_called()
+
+    def test_called_once(self):
+        mock = Mock()
+        _ = Reduce(mock)([1, 2])
+        mock.assert_called_once()
+
+    def test_called_once_correctly(self):
+        mock = Mock()
+        _ = Reduce(mock)([1, 2])
+        mock.assert_called_once_with(1, 2)
+
+    def test_called_twice(self):
+        mock = Mock()
+        _ = Reduce(mock)([1, 2, 3])
+        mock.assert_called()
         self.assertEqual(2, mock.call_count)
+
+    def test_called_twice_correctly(self):
+        mock = Mock(return_value=3)
+        _ = Reduce(mock)([1, 2, 3])
         (a, _), (b, _) = mock.call_args_list
         self.assertTupleEqual((1, 2), a)
-        self.assertTupleEqual((3, 4), b)
+        self.assertTupleEqual((3, 3), b)
 
-    def test_call_called_acc(self):
+    def test_empty_raises(self):
+        with self.assertRaises(StopIteration):
+            _ = self.r([])
+
+    def test_single_returns_first_element(self):
+        actual = self.r([1])
+        self.assertEqual(1, actual)
+
+    def test_return_correct(self):
+        actual = self.r([1, 2, 3])
+        self.assertEqual(6, actual)
+
+    def test_wrong_iterator_raises(self):
+        with self.assertRaises(TypeError):
+            _ = self.r(1)
+
+    def test_wrong_call_raises(self):
+        expected = ('Error calling\n'
+                    'g\n'
+                    'on element #2:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'float division by zero')
+        r = Reduce(g)
+        with self.assertRaises(ReduceError) as error:
+            _ = r([1, 2, 0])
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_argrepr(self):
+        expected = ('Error calling\n'
+                    'A(1)\n'
+                    'on element #2:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'float division by zero')
+        r = Reduce(A(1))
+        with self.assertRaises(ReduceError) as error:
+            _ = r([1, 2, 0])
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_indentrepr(self):
+        expected = ('Error calling\n'
+                    'Ind:\n'
+                    '[ 0] 1\n'
+                    'on element #2:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'float division by zero')
+        r = Reduce(Ind(1))
+        with self.assertRaises(ReduceError) as error:
+            _ = r([1, 2, 0])
+        self.assertEqual(expected, str(error.exception))
+
+
+class TestAccAttributes(unittest.TestCase):
+
+    def test_instantiation(self):
+        _ = Reduce(f, 1)
+
+    def test_has_call(self):
+        r = Reduce(f, 1)
+        self.assertTrue(hasattr(r, 'call'))
+
+    def test_call_correct(self):
+        r = Reduce(f, 1)
+        self.assertIs(r.call, f)
+
+    def test_has_acc(self):
+        r = Reduce(f, 1)
+        self.assertTrue(hasattr(r, 'acc'))
+
+    def test_acc_correct(self):
+        r = Reduce(f, 1)
+        self.assertIsInstance(r.acc, int)
+        self.assertEqual(1, r.acc)
+
+
+class TestAccUsage(unittest.TestCase):
+
+    def setUp(self):
+        self.r = Reduce(f, 1)
+
+    def test_callable(self):
+        self.assertTrue(callable(self.r))
+
+    def test_no_call_empty(self):
+        mock = Mock()
+        _ = Reduce(mock, 1)([])
+        mock.assert_not_called()
+
+    def test_called_once(self):
+        mock = Mock()
+        _ = Reduce(mock, 1)([2])
+        mock.assert_called_once()
+
+    def test_called_once_correctly(self):
+        mock = Mock()
+        _ = Reduce(mock, 1)([2])
+        mock.assert_called_once_with(1, 2)
+
+    def test_called_twice(self):
+        mock = Mock()
+        _ = Reduce(mock, 1)([2, 3])
+        mock.assert_called()
+        self.assertEqual(2, mock.call_count)
+
+    def test_called_twice_correctly(self):
         mock = Mock(return_value=3)
-        red = Reduce[int, int](mock, 1)
-        _ = red([2, 4, 5])
-        self.assertEqual(3, mock.call_count)
-        (a, _), (b, _), (c, _) = mock.call_args_list
+        _ = Reduce(mock, 1)([2, 3])
+        (a, _), (b, _) = mock.call_args_list
         self.assertTupleEqual((1, 2), a)
-        self.assertTupleEqual((3, 4), b)
-        self.assertTupleEqual((3, 5), c)
+        self.assertTupleEqual((3, 3), b)
 
-    def test_return_value_no_acc(self):
-        red = Reduce[int, int](f)
-        value = red([1, 2, 3])
-        self.assertIsInstance(value, int)
-        self.assertEqual(6, value)
+    def test_empty_returns_acc(self):
+        actual = self.r([])
+        self.assertEqual(1, actual)
 
-    def test_return_value_acc(self):
-        red = Reduce[tuple, tuple](f)
-        value = red([(1,), (2,), (3, )])
-        self.assertIsInstance(value, tuple)
-        self.assertTupleEqual((1, 2, 3), value)
+    def test_return_correct(self):
+        actual = self.r([2, 3])
+        self.assertEqual(6, actual)
+
+    def test_wrong_iterator_raises(self):
+        with self.assertRaises(TypeError):
+            _ = self.r(1)
+
+    def test_wrong_call_raises(self):
+        expected = ('Error calling\n'
+                    'g\n'
+                    'on element #2:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'float division by zero')
+        r = Reduce(g)
+        with self.assertRaises(ReduceError) as error:
+            _ = r([1, 2, 0])
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_argrepr(self):
+        expected = ('Error calling\n'
+                    'A(1)\n'
+                    'on element #2:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'float division by zero')
+        r = Reduce(A(1))
+        with self.assertRaises(ReduceError) as error:
+            _ = r([1, 2, 0])
+        self.assertEqual(expected, str(error.exception))
+
+    def test_error_msg_indentrepr(self):
+        expected = ('Error calling\n'
+                    'Ind:\n'
+                    '[ 0] 1\n'
+                    'on element #2:\n'
+                    '0\n'
+                    'ZeroDivisionError:\n'
+                    'float division by zero')
+        r = Reduce(Ind(1))
+        with self.assertRaises(ReduceError) as error:
+            _ = r([1, 2, 0])
+        self.assertEqual(expected, str(error.exception))
 
 
-class TestRepresentation(unittest.TestCase):
+class TestMisc(unittest.TestCase):
 
-    def test_lambda(self):
-        red = Reduce(lambda x: x)
-        self.assertEqual('Reduce(<lambda>, None)', repr(red))
+    def test_default_pickle_works(self):
+        r = Reduce(f)
+        _ = pickle.dumps(r)
 
-    def test_function(self):
-        red = Reduce(f)
-        self.assertEqual('Reduce(f, None)', repr(red))
+    def test_default_pickle_raises_lambda(self):
+        r = Reduce(lambda x, y: x + y)
+        with self.assertRaises(AttributeError):
+            _ = pickle.dumps(r)
 
-    def test_class(self):
+    def test_acc_pickle_works(self):
+        r = Reduce(f, 1)
+        _ = pickle.dumps(r)
 
-        class C:
-            pass
+    def test_acc_pickle_raises_lambda(self):
+        r = Reduce(lambda x, y: x + y, 1)
+        with self.assertRaises(AttributeError):
+            _ = pickle.dumps(r)
 
-        red = Reduce(C)
-        self.assertEqual('Reduce(C, None)', repr(red))
+    def test_default_repr(self):
+        r = Reduce(f)
+        self.assertEqual('Reduce(f, None)', repr(r))
 
-    def test_argrepr(self):
+    def test_acc_repr(self):
+        r = Reduce(f, 1)
+        self.assertEqual('Reduce(f, 1)', repr(r))
 
-        class C(ArgRepr):
+    def test_default_argrepr(self):
+        r = Reduce(A(1))
+        self.assertEqual("Reduce(A(1), None)", repr(r))
 
-            def __init__(self, a):
-                super().__init__(a)
+    def test_default_indentrepr(self):
+        r = Reduce(Ind(1, 2, 3))
+        self.assertEqual("Reduce(Ind[3], None)", repr(r))
 
-            def __call__(self):
-                pass
+    def test_acc_argrepr(self):
+        r = Reduce(A(1), A(2))
+        self.assertEqual("Reduce(A(1), A(2))", repr(r))
 
-        red = Reduce(C('foo'))
-        self.assertEqual("Reduce(C('foo'), None)", repr(red))
+    def test_acc_indentrepr(self):
+        r = Reduce(Ind(1, 2, 3), Ind(1, 2))
+        self.assertEqual("Reduce(Ind[3], Ind[2])", repr(r))
 
-    def test_indentrepr(self):
-        class C(IndentRepr):
+    def test_type_annotation(self):
+        _ = Reduce[int, str](lambda x: x)
 
-            def __init__(self, *xs):
-                super().__init__(*xs)
-
-            def __call__(self):
-                pass
-
-        red = Reduce(C(1, 2, 3))
-        self.assertEqual("Reduce(C, None)", repr(red))
-
-    def test_type(self):
-        red = Reduce[int, str](lambda x: x)
-        self.assertEqual('Reduce[int, str](<lambda>, None)', repr(red))
-
-    def test_acc(self):
-        red = Reduce[int, str](lambda x: x, tuple)
-        self.assertEqual('Reduce[int, str](<lambda>, tuple)', repr(red))
+    def test_type_annotation_acc(self):
+        _ = Reduce[int, str](f, tuple)
 
 
 if __name__ == '__main__':

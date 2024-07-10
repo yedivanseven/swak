@@ -1,10 +1,7 @@
 magic
 =====
 
-repr
-----
-
-.. automodule:: swak.magic.repr
+.. automodule:: swak.magic
    :members:
    :inherited-members: _name
    :private-members: _name
