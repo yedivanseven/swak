@@ -1,16 +1,11 @@
-from typing import Iterator, Any, Callable, Self, Iterable, ParamSpec
+from typing import Iterator, Any, Callable, Self, Iterable
 from functools import singledispatchmethod
 from .exceptions import PipeError
 from ..magic import ArgRepr, IndentRepr
 
-P = ParamSpec('P')
-CallT = type | Callable[..., Any]
-CallsT = tuple[CallT, ...]
-SidesT = dict[int, tuple[int, ...]]
-CacheT = dict[int, Any]
+type Call = type | Callable[..., Any]
 
 
-# ToDo: Allow side-loading kwargs!
 class Side(ArgRepr):
 
     def __init__(self, *steps: int) -> None:
@@ -40,25 +35,11 @@ class Pipe[**P, T](IndentRepr):
 
     """
 
-    def __init__(self, *calls: CallT | Side) -> None:
-        self.calls, self.__sides, self.__cache = self.__parse(*calls)
+    def __init__(self, *calls: Call) -> None:
         super().__init__(*calls)
+        self.calls = calls
 
-    @staticmethod
-    def __parse(*calls: CallT) -> tuple[CallsT, SidesT, CacheT]:
-        sides = {}
-        callables = []
-        n_callables = 0
-        for item in calls:
-            if isinstance(item, Side):
-                sides.update({n_callables: item.steps})
-            else:
-                callables.append(item)
-                n_callables += 1
-        cache = {k: None for k in set(sum(sides.values(), ()))}
-        return tuple(callables), sides, cache
-
-    def __iter__(self) -> Iterator[CallT]:
+    def __iter__(self) -> Iterator[Call]:
         return iter(self.calls)
 
     def __len__(self) -> int:
@@ -67,14 +48,14 @@ class Pipe[**P, T](IndentRepr):
     def __bool__(self) -> bool:
         return self.__len__() > 0
 
-    def __contains__(self, item: CallT) -> bool:
+    def __contains__(self, item: Call) -> bool:
         return item in self.calls
 
     def __reversed__(self) -> NotImplemented:
         return NotImplemented
 
     @singledispatchmethod
-    def __getitem__(self, index: int) -> CallT:
+    def __getitem__(self, index: int) -> Call:
         return self.calls[index]
 
     @__getitem__.register
@@ -91,10 +72,7 @@ class Pipe[**P, T](IndentRepr):
             return self.calls != other.calls
         return NotImplemented
 
-    def __add__(
-            self,
-            other: CallT | Iterable[CallT] | Self
-    ) -> Self:
+    def __add__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, Pipe):
             return self.__class__(*self.calls, *other.calls)
         try:
@@ -107,10 +85,7 @@ class Pipe[**P, T](IndentRepr):
             except TypeError:
                 return NotImplemented
 
-    def __radd__(
-            self,
-            other: CallT | Iterable[CallT] | Self
-    ) -> Self:
+    def __radd__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, Pipe):
             return self.__class__(*other.calls, *self.calls)
         try:
@@ -142,14 +117,8 @@ class Pipe[**P, T](IndentRepr):
 
         """
         for i, call in enumerate(self):
-            if i in self.__cache:
-                self.__cache[i] = args if isinstance(args, tuple) else (args,)
-            cached = sum([self.__cache[j] for j in self.__sides.get(i, ())], ())
             try:
-                if isinstance(args, tuple):
-                    args = call(*args, *cached)
-                else:
-                    args = call(args, *cached)
+                args = call(*args) if isinstance(args, tuple) else call(args)
             except Exception as error:
                 msg = 'Error executing\n{}\nin step {} of\n{}\n{}:\n{}'
                 err_cls = error.__class__.__name__
