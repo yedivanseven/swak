@@ -29,7 +29,7 @@ class Reduce[T, S](ArgRepr):
         self.acc = acc
 
     def __call__(self, iterable: Iterable[S]) -> T:
-        """Reduce an iterable by accumulating elements with the specified call.
+        """Reduce an iterable by accumulating elements with the cached `call`.
 
         Parameters
         ----------
