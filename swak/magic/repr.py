@@ -27,7 +27,7 @@ class _ReprName:
         """
         if obj is None:
             return 'None'
-        if isinstance(obj, _ReprName):
+        if isinstance(obj, ArgRepr):
             return repr(obj)
         try:
             name = obj.__qualname__
@@ -87,21 +87,21 @@ class IndentRepr(_ReprName):
     """
 
     def __init__(self, *args: Any) -> None:
-        self.args = args
+        self.__args = args
 
     def __repr__(self) -> str:
         return self._indented_repr(0)
 
-    def _repr(self, item: Any, level: int = 0) -> str:
+    def _repr(self, obj: Any, level: int = 0) -> str:
         """Return (potentially) indented object representations."""
-        if isinstance(item, IndentRepr):
-            return item._indented_repr(level + 1)
-        return super()._repr(item)
+        if isinstance(obj, IndentRepr):
+            return obj._indented_repr(level + 1)
+        return super()._repr(obj)
 
     def _indented_repr(self, level: int) -> str:
         """Construct indented object representation."""
         cls = f'{self.__class__.__name__}:\n'
         indent = 5 * level * ' '
-        args = enumerate(self._repr(arg, level) for arg in self.args)
+        args = enumerate(self._repr(arg, level) for arg in self.__args)
         items = '\n'.join(f'{indent}[{i:>2}] {arg}' for i, arg in args)
         return cls + items

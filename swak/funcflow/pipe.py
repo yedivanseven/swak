@@ -1,16 +1,9 @@
 from typing import Iterator, Any, Callable, Self, Iterable
 from functools import singledispatchmethod
 from .exceptions import PipeError
-from ..magic import ArgRepr, IndentRepr
+from ..magic import IndentRepr
 
 type Call = type | Callable[..., Any]
-
-
-class Side(ArgRepr):
-
-    def __init__(self, *steps: int) -> None:
-        super().__init__(steps)
-        self.steps = steps
 
 
 class Pipe[**P, T](IndentRepr):

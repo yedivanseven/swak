@@ -2,7 +2,7 @@ class FilterError(Exception):
     pass
 
 
-class PipeError(Exception):
+class ForkError(Exception):
     pass
 
 
@@ -10,7 +10,11 @@ class MapError(Exception):
     pass
 
 
-class ForkError(Exception):
+class PipeError(Exception):
+    pass
+
+
+class ReduceError(Exception):
     pass
 
 
