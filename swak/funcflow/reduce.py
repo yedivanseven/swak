@@ -19,7 +19,7 @@ class Reduce[T, S](ArgRepr):
         returning the updated value of `acc`.
     acc: optional
         Initial value for the accumulator in the reduce operation. If not given
-        calling reduce on an empty iterable wii fail.
+        calling reduce on an empty iterable will fail.
 
     """
 
@@ -38,7 +38,8 @@ class Reduce[T, S](ArgRepr):
 
         Returns
         -------
-        The reduced iterable.
+        object
+            The reduced iterable.
 
         """
         iterator = iter(iterable)

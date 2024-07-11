@@ -43,7 +43,8 @@ class Partial[T](ArgRepr):
 
         Returns
         -------
-        Whatever `call` returns. Can be annotated on subclassing/instantiation.
+        object
+            Whatever `call` returns.
 
         """
         return self.call(*(*self.args, *args), **{**self.kwargs, **kwargs})

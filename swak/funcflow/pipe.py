@@ -33,6 +33,7 @@ class Pipe[**P, T](IndentRepr):
         self.calls = calls
 
     def __iter__(self) -> Iterator[Call]:
+        # We could also iterate over instances of self ...
         return iter(self.calls)
 
     def __len__(self) -> int:
@@ -49,6 +50,7 @@ class Pipe[**P, T](IndentRepr):
 
     @singledispatchmethod
     def __getitem__(self, index: int) -> Call:
+        # We could also return instances of self ...
         return self.calls[index]
 
     @__getitem__.register
@@ -101,7 +103,8 @@ class Pipe[**P, T](IndentRepr):
 
         Returns
         -------
-        Whatever the last callable of `calls` returns.
+        object
+            Whatever the last callable of `calls` returns.
 
         Raises
         ------

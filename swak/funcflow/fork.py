@@ -3,8 +3,8 @@ from functools import singledispatchmethod
 from .exceptions import ForkError
 from ..magic import IndentRepr
 
-P = ParamSpec('P')
-CallT = type | Callable[P, Any]
+type P = ParamSpec('P')
+type Call = type | Callable[P, Any]
 
 
 class Fork[**P, T](IndentRepr):
@@ -24,11 +24,12 @@ class Fork[**P, T](IndentRepr):
 
     """
 
-    def __init__(self, *calls: CallT) -> None:
+    def __init__(self, *calls: Call) -> None:
         super().__init__(*calls)
         self.calls = calls
 
-    def __iter__(self) -> Iterator[CallT]:
+    def __iter__(self) -> Iterator[Call]:
+        # We could also iterate over instances of self ...
         return iter(self.calls)
 
     def __len__(self) -> int:
@@ -37,14 +38,15 @@ class Fork[**P, T](IndentRepr):
     def __bool__(self) -> bool:
         return self.__len__() > 0
 
-    def __contains__(self, call: CallT) -> bool:
+    def __contains__(self, call: Call) -> bool:
         return call in self.calls
 
     def __reversed__(self) -> Self:
         return self.__class__(*reversed(self.calls))
 
     @singledispatchmethod
-    def __getitem__(self, index: int) -> CallT:
+    def __getitem__(self, index: int) -> Call:
+        # We could also return instances of self ...
         return self.calls[index]
 
     @__getitem__.register
@@ -61,10 +63,7 @@ class Fork[**P, T](IndentRepr):
             return self.calls != other.calls
         return NotImplemented
 
-    def __add__(
-            self,
-            other: CallT | Iterable[CallT] | Self
-    ) -> Self:
+    def __add__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, Fork):
             return self.__class__(*self.calls, *other.calls)
         try:
@@ -77,10 +76,7 @@ class Fork[**P, T](IndentRepr):
             except TypeError:
                 return NotImplemented
 
-    def __radd__(
-            self,
-            other: CallT | Iterable[CallT] | Self
-    ) -> Self:
+    def __radd__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, Fork):
             return self.__class__(*other.calls, *self.calls)
         try:

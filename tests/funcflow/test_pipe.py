@@ -147,7 +147,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(1, len(h.calls))
 
 
-class TestFunctionality(unittest.TestCase):
+class TestUsage(unittest.TestCase):
 
     def test_callable(self):
         pipe = Pipe(f, lambda x: x, Cls, Call())

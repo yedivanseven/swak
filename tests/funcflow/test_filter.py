@@ -108,7 +108,7 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_wrong_iterable_raises(self):
         expected = ('Could not wrap filter results '
-                    'into an instance of list_iterator!')
+                    'into an instance of list_iterator')
         with self.assertRaises(FilterError) as error:
             _ = self.f(iter([1, 2, 0, 2, 1]))
         self.assertEqual(expected, str(error.exception))
@@ -182,7 +182,7 @@ class TestCriterionUsage(unittest.TestCase):
 
     def test_wrong_iterable_raises(self):
         expected = ('Could not wrap filter results into'
-                    ' an instance of list_iterator!')
+                    ' an instance of list_iterator')
         with self.assertRaises(FilterError) as error:
             _ = self.f(iter([1, 2, 3, 4, 5]))
         self.assertEqual(expected, str(error.exception))
@@ -310,7 +310,7 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertTupleEqual((4, 5), actual)
 
     def test_wrong_wrapper_raises(self):
-        expected = 'Could not wrap filter results into an instance of int!'
+        expected = 'Could not wrap filter results into an instance of int'
         f = Filter(g, int)
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
@@ -318,7 +318,7 @@ class TestWrapperUsage(unittest.TestCase):
 
     def test_wrapper_error_msg_argrepr(self):
         expected = ('Could not wrap filter results into'
-                    ' an instance of A(1)!')
+                    ' an instance of A(1)')
         f = Filter(g, A(1))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
@@ -326,7 +326,7 @@ class TestWrapperUsage(unittest.TestCase):
 
     def test_wrapper_error_msg_indentrepr(self):
         expected = ('Could not wrap filter results into'
-                    ' an instance of Ind:\n[ 0] 1!')
+                    ' an instance of Ind:\n[ 0] 1')
         f = Filter(g, Ind(1))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
