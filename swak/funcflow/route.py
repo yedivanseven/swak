@@ -19,23 +19,20 @@ class Route[**P, T](IndentRepr):
 
     Parameters
     ----------
-    routes: sequence of int or sequence of sequences of int
+    routes: sequence of int or sequence of sequences of int, optional
         Specified as, e.g., ``[2, 0, 1]`` means that the first callable will be
         called with the third argument (index 2), the second with the first,
         and the third with the second. If callables take more than one
-        argument, `routes` can be specified as ``[(2, 0), (0, 1), 1]``, which
+        argument, `routes` can be specified as ``[(2, 0), (), 1]``, which
         means that the first callable will be called with the third and first
-        arguments, the second with the first and second, and the third with
-        the second.
+        arguments, the second with no arguments, and the third with the second
+        argument. Defaults to an empty tuple, meaning that no callables can be
+        specified and, that, therefore, nothing is returned when calling the
+        instance, no matter how many arguments it is called with.
     *calls: callable
         Callable objects (functions, classes, etc.) that will be called with
         the arguments according to `routes`. There must be the same number
         of `calls` as there are routes.
-
-    Properties
-    ----------
-    n_args: int
-        The minimum number of arguments that instance must be called with.
 
     Raises
     ------
@@ -142,7 +139,7 @@ class Route[**P, T](IndentRepr):
 
     @property
     def n_args(self) -> int:
-        """The number of arguments required for calling."""
+        """The minimum number of arguments required for calling instances."""
         # Routes could be an empty tuple.
         if self.routes:
             # Each route could be an empty tuple.

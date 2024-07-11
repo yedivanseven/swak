@@ -228,6 +228,11 @@ class TestUsage(unittest.TestCase):
         actual = route()
         self.assertTupleEqual((), actual)
 
+    def test_empty_args(self):
+        route = Route()
+        actual = route(1, 2, 3)
+        self.assertTupleEqual((), actual)
+
     def test_raises_on_too_few_args(self):
         expected = 'Number of arguments must be at least 4, not 3!'
         route = Route([3, (2, 0)], f, g)
@@ -244,12 +249,37 @@ class TestUsage(unittest.TestCase):
         actual = route()
         self.assertTupleEqual((), actual)
 
+    def test_empty_routes_args(self):
+        route = Route([])
+        actual = route(1, 2, 3)
+        self.assertTupleEqual((), actual)
+
     def test_empty_route(self):
         mock = Mock()
         route = Route([()], mock)
         _ = route()
         mock.assert_called_once()
         mock.assert_called_once_with()
+
+    def test_empty_route_args(self):
+        mock = Mock()
+        route = Route([()], mock)
+        _ = route(1, 2, 3)
+        mock.assert_called_once()
+        mock.assert_called_once_with()
+
+    def test_multiple_empty_routes_args(self):
+        mock1 = Mock()
+        mock2 = Mock()
+        mock3 = Mock()
+        route = Route([(), (), ()], mock1, mock2, mock3)
+        _ = route(1, 2, 3)
+        mock1.assert_called_once()
+        mock1.assert_called_once_with()
+        mock2.assert_called_once()
+        mock2.assert_called_once_with()
+        mock3.assert_called_once()
+        mock3.assert_called_once_with()
 
     def test_routing(self):
         mock1 = Mock()
