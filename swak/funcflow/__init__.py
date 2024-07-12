@@ -7,6 +7,7 @@ from .reduce import Reduce
 from .route import Route
 from .split import Split
 from .sum import Sum
+from .safe import Safe
 from .misc import exit_ok, unit, identity
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     'Route',
     'Split',
     'Sum',
+    'Safe',
     'exit_ok',
     'unit',
     'identity'

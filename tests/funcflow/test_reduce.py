@@ -41,9 +41,6 @@ class A(ArgRepr):
         super().__init__(a)
         self.a = a
 
-    def __bool__(self) -> bool:
-        raise TypeError('Test!')
-
     def __call__(self, x, y):
         return x / y
 

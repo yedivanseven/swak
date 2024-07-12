@@ -49,6 +49,9 @@ class Ind(IndentRepr):
     def __init__(self, *xs):
         super().__init__(*xs)
 
+    def __bool__(self) -> bool:
+        raise TypeError('Test!')
+
     def __call__(self, x: int) -> bool:
         return 1 / x
 
@@ -111,7 +114,7 @@ class TestDefaultUsage(unittest.TestCase):
         actual = self.f([0, 0, 0])
         self.assertListEqual([], actual)
 
-    def test_bool_criterion_raises(self):
+    def test_bool_criterion_raises_argrepr(self):
         expected = ('Error calling\n'
                     'bool\n'
                     'on element #2:\n'
@@ -121,6 +124,19 @@ class TestDefaultUsage(unittest.TestCase):
         f = Filter()
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, A(1), 2, 1])
+        self.assertEqual(expected, str(error.exception))
+
+    def test_bool_criterion_raises_indentrepr(self):
+        expected = ('Error calling\n'
+                    'bool\n'
+                    'on element #2:\n'
+                    'Ind:\n'
+                    '[ 0] 1\n'
+                    'TypeError:\n'
+                    'Test!')
+        f = Filter()
+        with self.assertRaises(FilterError) as error:
+            _ = f([1, 2, Ind(1), 2, 1])
         self.assertEqual(expected, str(error.exception))
 
     def test_wrong_iterable_raises(self):
