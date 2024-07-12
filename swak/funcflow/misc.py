@@ -1,5 +1,24 @@
 import os
-from typing import Any, overload
+from typing import Any, overload, Callable
+
+
+def apply[**P, T](call: type[T] | Callable[P, T], *args: P.args) -> T:
+    """Call a callable object with the specified arguments.
+
+    Parameters
+    ----------
+    call: callable
+        The callable object to call with `args`.
+    *args
+        The arguments to call `call` with.
+
+    Returns
+    -------
+    object
+        Whatever `call` returns.
+
+    """
+    return call(*args)
 
 
 def exit_ok(*_: Any) -> int:

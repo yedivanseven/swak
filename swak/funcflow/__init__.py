@@ -8,7 +8,7 @@ from .route import Route
 from .split import Split
 from .sum import Sum
 from .safe import Safe
-from .misc import exit_ok, unit, identity
+from .misc import apply, exit_ok, unit, identity
 
 __all__ = [
     'Filter',
@@ -21,6 +21,7 @@ __all__ = [
     'Split',
     'Sum',
     'Safe',
+    'apply',
     'exit_ok',
     'unit',
     'identity'
