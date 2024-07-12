@@ -14,12 +14,34 @@ def plus(x: int, y: int) -> int:
     return x + y
 
 
+class Cls:
+
+    @classmethod
+    def c(cls, x: int) -> int:
+        return x + 2
+
+    def m(self, x: int) -> int:
+        _ = self.__class__.__name__
+        return x + 2
+
+    @staticmethod
+    def s(x: int) -> int:
+        return x + 2
+
+
+class Call:
+
+    def __call__(self, x: int) -> int:
+        return x + 2
+
+
 class A(ArgRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
+    def __init__(self, a):
+        super().__init__(a)
+        self.a = a
 
-    def __call__(self, x: int) -> bool:
+    def __call__(self, x: int) -> int:
         return 1 / x
 
 
@@ -28,7 +50,7 @@ class Ind(IndentRepr):
     def __init__(self, *xs):
         super().__init__(*xs)
 
-    def __call__(self, x: int) -> bool:
+    def __call__(self, x: int) -> int:
         return 1 / x
 
 
@@ -73,12 +95,12 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertListEqual([], actual)
 
     def test_empty_tuple(self):
-        actual = self.m1(tuple())
-        self.assertTupleEqual(tuple(), actual)
+        actual = self.m1(())
+        self.assertTupleEqual((), actual)
 
     def test_empty_tuples(self):
-        actual = self.m1(tuple(), tuple())
-        self.assertTupleEqual(tuple(), actual)
+        actual = self.m1((), ())
+        self.assertTupleEqual((), actual)
 
     def test_empty_set(self):
         actual = self.m1(set())
@@ -89,7 +111,7 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertSetEqual(set(), actual)
 
     def test_empty_mixed(self):
-        actual = self.m1([], tuple(), set())
+        actual = self.m1([], (), set())
         self.assertListEqual([], actual)
 
     def test_call_called(self):
@@ -309,9 +331,33 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(m)
 
-    def test_default_repr(self):
+    def test_default_lambda_repr(self):
+        m = Map(lambda x: x > 3)
+        self.assertEqual('Map(lambda, None)', repr(m))
+
+    def test_default_function_repr(self):
         m = Map(plus_2)
         self.assertEqual('Map(plus_2, None)', repr(m))
+
+    def test_default_class_repr(self):
+        m = Map(Cls)
+        self.assertEqual('Map(Cls, None)', repr(m))
+
+    def test_default_obj_repr(self):
+        m = Map(Call())
+        self.assertEqual('Map(Call(...), None)', repr(m))
+
+    def test_default_classmethod_repr(self):
+        m = Map(Cls.c)
+        self.assertEqual('Map(Cls.c, None)', repr(m))
+
+    def test_default_staticmethod_repr(self):
+        m = Map(Cls().s)
+        self.assertEqual('Map(Cls.s, None)', repr(m))
+
+    def test_default_method_repr(self):
+        m = Map(Cls().m)
+        self.assertEqual('Map(Cls.m, None)', repr(m))
 
     def test_default_argrepr(self):
         m = Map(A(1))

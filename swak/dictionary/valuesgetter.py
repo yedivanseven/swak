@@ -110,7 +110,7 @@ class ValuesGetter[T](ArgRepr):
         """
         match len(self):
             case 0:
-                values = tuple()
+                values = ()
             case 1:
                 values = itemgetter(*self.keys)(mapping),
             case _:

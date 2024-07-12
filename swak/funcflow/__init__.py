@@ -5,6 +5,7 @@ from .partial import Partial
 from .pipe import Pipe
 from .reduce import Reduce
 from .route import Route
+from .split import Split
 from .misc import exit_ok, unit, identity
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     'Pipe',
     'Reduce',
     'Route',
+    'Split',
     'exit_ok',
     'unit',
     'identity'

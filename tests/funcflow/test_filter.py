@@ -33,8 +33,9 @@ class Call:
 
 class A(ArgRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
+    def __init__(self, a):
+        super().__init__(a)
+        self.a = a
 
     def __bool__(self) -> bool:
         raise TypeError('Test!')
@@ -87,8 +88,8 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertListEqual([], actual)
 
     def test_empty_tuple(self):
-        actual = self.f(tuple())
-        self.assertTupleEqual(tuple(), actual)
+        actual = self.f(())
+        self.assertTupleEqual((), actual)
 
     def test_empty_set(self):
         actual = self.f(set())
@@ -105,6 +106,22 @@ class TestDefaultUsage(unittest.TestCase):
     def test_set(self):
         actual = self.f({1, 2, 0, 2, 1})
         self.assertSetEqual({1, 2}, actual)
+
+    def test_empty_result(self):
+        actual = self.f([0, 0, 0])
+        self.assertListEqual([], actual)
+
+    def test_bool_criterion_raises(self):
+        expected = ('Error calling\n'
+                    'bool\n'
+                    'on element #2:\n'
+                    'A(1)\n'
+                    'TypeError:\n'
+                    'Test!')
+        f = Filter()
+        with self.assertRaises(FilterError) as error:
+            _ = f([1, 2, A(1), 2, 1])
+        self.assertEqual(expected, str(error.exception))
 
     def test_wrong_iterable_raises(self):
         expected = ('Could not wrap filter results '
@@ -123,7 +140,7 @@ class TestCriterionAttributes(unittest.TestCase):
         f = Filter(g)
         self.assertTrue(hasattr(f, 'criterion'))
 
-    def test_criterion_is_none(self):
+    def test_criterion_correct(self):
         f = Filter(g)
         self.assertIs(f.criterion, g)
 
@@ -149,12 +166,18 @@ class TestCriterionUsage(unittest.TestCase):
         self.assertListEqual([], actual)
 
     def test_empty_tuple(self):
-        actual = self.f(tuple())
-        self.assertTupleEqual(tuple(), actual)
+        actual = self.f(())
+        self.assertTupleEqual((), actual)
 
     def test_empty_set(self):
         actual = self.f(set())
         self.assertSetEqual(set(), actual)
+
+    def test_criterion_not_called(self):
+        mock = Mock()
+        f = Filter(mock)
+        _ = f([])
+        mock.assert_not_called()
 
     def test_criterion_called(self):
         mock = Mock()
@@ -199,26 +222,14 @@ class TestCriterionUsage(unittest.TestCase):
             _ = f([1, 2, 0, 2, 1])
         self.assertEqual(expected, str(error.exception))
 
-    def test_bool_criterion_raises(self):
-        expected = ('Error calling\n'
-                    'bool\n'
-                    'on element #2:\n'
-                    'A(1)\n'
-                    'TypeError:\n'
-                    'Test!')
-        f = Filter()
-        with self.assertRaises(FilterError) as error:
-            _ = f([1, 2, A(1), 2, 1])
-        self.assertEqual(expected, str(error.exception))
-
     def test_criterion_error_msg_argrepr(self):
         expected = ('Error calling\n'
-                    'A(1, 2, 3)\n'
+                    'A(1)\n'
                     'on element #2:\n'
                     '0\n'
                     'ZeroDivisionError:\n'
                     'division by zero')
-        f = Filter(A(1, 2, 3))
+        f = Filter(A(1))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 0, 2, 1])
         self.assertEqual(expected, str(error.exception))
@@ -248,7 +259,7 @@ class TestWrapperAttributes(unittest.TestCase):
         f = Filter(g, tuple)
         self.assertTrue(hasattr(f, 'criterion'))
 
-    def test_criterion_is_none(self):
+    def test_criterion_correct(self):
         f = Filter(g, tuple)
         self.assertIs(f.criterion, g)
 
@@ -256,16 +267,22 @@ class TestWrapperAttributes(unittest.TestCase):
         f = Filter(g, tuple)
         self.assertTrue(hasattr(f, 'wrapper'))
 
-    def test_wrapper_is_none(self):
+    def test_wrapper_correct(self):
         f = Filter(g, tuple)
         self.assertIs(tuple, f.wrapper)
+
+
+class TestWrapperUsage(unittest.TestCase):
 
     def test_callable(self):
         f = Filter(g, tuple)
         self.assertTrue(callable(f))
 
-
-class TestWrapperUsage(unittest.TestCase):
+    def test_wrapper_called_once_empty(self):
+        mock = Mock()
+        f = Filter(g, mock)
+        _ = f([])
+        mock.assert_called_once()
 
     def test_wrapper_called_once(self):
         mock = Mock()
@@ -282,17 +299,17 @@ class TestWrapperUsage(unittest.TestCase):
     def test_empty_list(self):
         f = Filter(g, tuple)
         actual = f([])
-        self.assertTupleEqual(tuple(), actual)
+        self.assertTupleEqual((), actual)
 
     def test_empty_tuple(self):
         f = Filter(g, tuple)
-        actual = f(tuple())
-        self.assertTupleEqual(tuple(), actual)
+        actual = f(())
+        self.assertTupleEqual((), actual)
 
     def test_empty_set(self):
         f = Filter(g, tuple)
         actual = f(set())
-        self.assertTupleEqual(tuple(), actual)
+        self.assertTupleEqual((), actual)
 
     def test_list(self):
         f = Filter(g, tuple)
@@ -317,8 +334,7 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_wrapper_error_msg_argrepr(self):
-        expected = ('Could not wrap filter results into'
-                    ' an instance of A(1)')
+        expected = 'Could not wrap filter results into an instance of A(1)'
         f = Filter(g, A(1))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
@@ -384,7 +400,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Filter(Call(...), None)', repr(f))
 
     def test_criterion_classmethod_repr(self):
-        f = Filter(Cls().c)
+        f = Filter(Cls.c)
         self.assertEqual('Filter(Cls.c, None)', repr(f))
 
     def test_criterion_staticmethod_repr(self):
