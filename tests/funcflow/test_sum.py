@@ -180,10 +180,10 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Sum(Ind[3])', repr(s))
 
     def test_type_annotation(self):
-        _ = Sum[int]()
+        _ = Sum[int, float]()
 
     def test_type_annotation_acc(self):
-        _ = Sum[int](1)
+        _ = Sum[int, bool](1)
 
 
 if __name__ == '__main__':

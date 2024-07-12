@@ -17,8 +17,11 @@ class Pipe[**P, T](IndentRepr):
 
     Parameters
     ----------
+    call: callable or iterable of callables, optional
+        One callable or an iterator of callables to chain one after another.
+        Defaults to an empty tuple.
     *calls: callable
-        Callables to chain one after another.
+        Additional callables to chain one after another.
 
     Notes
     -----
@@ -28,9 +31,9 @@ class Pipe[**P, T](IndentRepr):
 
     """
 
-    def __init__(self, *calls: Call) -> None:
-        super().__init__(*calls)
-        self.calls = calls
+    def __init__(self, call: Call | Iterable[Call] = (), *calls: Call) -> None:
+        self.calls = ((call,) if callable(call) else tuple(call)) + calls
+        super().__init__(*self.calls)
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...

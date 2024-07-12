@@ -61,6 +61,12 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(fork.calls, tuple)
         self.assertTupleEqual((), fork.calls)
 
+    def test_empty_list(self):
+        fork = Fork([])
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((), fork.calls)
+
     def test_function(self):
         fork = Fork(f)
         self.assertTrue(hasattr(fork, 'calls'))
@@ -136,6 +142,19 @@ class TestAttributes(unittest.TestCase):
             (f, g, Cls, call, Cls.c, cls.m, cls.s),
             fork.calls
         )
+
+    def test_list(self):
+        fork = Fork([f, g])
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((f, g), fork.calls)
+
+    def test_list_and_calls(self):
+        call = Call()
+        fork = Fork([f, g], Cls, call)
+        self.assertTrue(hasattr(fork, 'calls'))
+        self.assertIsInstance(fork.calls, tuple)
+        self.assertTupleEqual((f, g, Cls, call), fork.calls)
 
     def test_decorator(self):
 

@@ -61,6 +61,12 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(pipe.calls, tuple)
         self.assertTupleEqual((), pipe.calls)
 
+    def test_empty_list(self):
+        pipe = Pipe([])
+        self.assertTrue(hasattr(pipe, 'calls'))
+        self.assertIsInstance(pipe.calls, tuple)
+        self.assertTupleEqual((), pipe.calls)
+
     def test_function(self):
         pipe = Pipe(f)
         self.assertTrue(hasattr(pipe, 'calls'))
@@ -134,6 +140,18 @@ class TestAttributes(unittest.TestCase):
             (f, g, Cls, call, Cls.c, cls.m, cls.s),
             pipe.calls
         )
+
+    def test_list(self):
+        pipe = Pipe([f, g])
+        self.assertTrue(hasattr(pipe, 'calls'))
+        self.assertIsInstance(pipe.calls, tuple)
+        self.assertTupleEqual((f, g), pipe.calls)
+
+    def test_list_and_calls(self):
+        pipe = Pipe([f, g], Cls, Cls.c)
+        self.assertTrue(hasattr(pipe, 'calls'))
+        self.assertIsInstance(pipe.calls, tuple)
+        self.assertTupleEqual((f, g, Cls, Cls.c), pipe.calls)
 
     def test_decorator(self):
 

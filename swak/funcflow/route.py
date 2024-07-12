@@ -1,4 +1,4 @@
-from typing import Any, Iterator, Callable, Self, Sequence
+from typing import Any, Iterator, Callable, Self, Sequence, Iterable
 from functools import singledispatchmethod
 from ..magic import IndentRepr
 from .exceptions import RouteError
@@ -29,23 +29,32 @@ class Route[**P, T](IndentRepr):
         argument. Defaults to an empty tuple, meaning that no callables can be
         specified and, that, therefore, nothing is returned when calling the
         instance, no matter how many arguments it is called with.
+    call: callable or iterable of callables, optional
+        One callable or an iterator of callables that will be called with
+        the arguments according to `routes`. Defaults to an empty tuple.
     *calls: callable
-        Callable objects (functions, classes, etc.) that will be called with
-        the arguments according to `routes`. There must be the same number
-        of `calls` as there are routes.
+        Additional callables that will be called with the arguments according
+        to `routes`. Together with `call`, there must be the same number
+        of callables as there are routes.
 
     Raises
     ------
     RouteError
         If the `routes` cannot be parsed or if the number of `routes` does not
-        match the number of `calls`.
+        match the number of callables specified with `call` and `calls`.
 
     """
 
-    def __init__(self, routes: Routes = (), *calls: Call) -> None:
+    def __init__(
+            self,
+            routes: Routes = (),
+            call: Call | Iterable[Call] = (),
+            *calls: Call
+    ) -> None:
         self.routes = self.__packed(routes)
-        self.calls = self.__compatible(*calls)
-        super().__init__(*calls)
+        callables = ((call,) if callable(call) else tuple(call)) + calls
+        self.calls = self.__compatible(*callables)
+        super().__init__(*self.calls)
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...

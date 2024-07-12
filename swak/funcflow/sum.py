@@ -3,11 +3,11 @@ from ..magic import ArgRepr
 from .exceptions import SumError
 
 
-class Sum[T](ArgRepr):
+class Sum[S, T](ArgRepr):
     """Equivalent to a partial of the python builtin ``sum`` function.
 
     Upon subclassing and/or instantiation, type annotation with the type of
-    the final sum is recommended.
+    the elements in the iterable and the type of the final sum is recommended.
 
     Parameters
     ----------
@@ -22,7 +22,7 @@ class Sum[T](ArgRepr):
         super().__init__(acc)
         self.acc = acc
 
-    def __call__(self, iterable: Iterable[T]) -> T:
+    def __call__(self, iterable: Iterable[S]) -> T:
         """Sum up the elements of an iterable.
 
         Parameters

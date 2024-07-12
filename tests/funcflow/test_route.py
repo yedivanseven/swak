@@ -91,6 +91,16 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(route.n_args, int)
         self.assertEqual(0, route.n_args)
 
+    def test_routes_empty_call_empty(self):
+        route = Route([], [])
+        self.assertTrue(hasattr(route, 'routes'))
+        self.assertTupleEqual((), route.routes)
+        self.assertTrue(hasattr(route, 'calls'))
+        self.assertTupleEqual((), route.calls)
+        self.assertTrue(hasattr(route, 'n_args'))
+        self.assertIsInstance(route.n_args, int)
+        self.assertEqual(0, route.n_args)
+
     def test_empty_route(self):
         route = Route([()], f)
         self.assertTrue(hasattr(route, 'routes'))
@@ -101,7 +111,17 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(route.n_args, int)
         self.assertEqual(0, route.n_args)
 
-    def test_empty_routes(self):
+    def test_empty_routes_call(self):
+        route = Route([(), ()], [f, g])
+        self.assertTrue(hasattr(route, 'routes'))
+        self.assertTupleEqual(((), ()), route.routes)
+        self.assertTrue(hasattr(route, 'calls'))
+        self.assertTupleEqual((f, g), route.calls)
+        self.assertTrue(hasattr(route, 'n_args'))
+        self.assertIsInstance(route.n_args, int)
+        self.assertEqual(0, route.n_args)
+
+    def test_empty_routes_calls(self):
         route = Route([(), ()], f, g)
         self.assertTrue(hasattr(route, 'routes'))
         self.assertTupleEqual(((), ()), route.routes)
@@ -111,11 +131,55 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(route.n_args, int)
         self.assertEqual(0, route.n_args)
 
+    def test_raises_on_route_empty_but_call(self):
+        expected = ('Number of callables (=1) must '
+                    'match the number of routes (=0)!')
+        with self.assertRaises(RouteError) as error:
+            _ = Route([], [f])
+        self.assertEqual(expected, str(error.exception))
+
     def test_raises_on_route_empty_but_calls(self):
         expected = ('Number of callables (=1) must '
                     'match the number of routes (=0)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([], f)
+        self.assertEqual(expected, str(error.exception))
+
+    def test_int_routes_call(self):
+        route = Route([0, 3], [f, g])
+        self.assertTrue(hasattr(route, 'routes'))
+        self.assertTupleEqual(((0,), (3,)), route.routes)
+        self.assertTrue(hasattr(route, 'calls'))
+        self.assertTupleEqual((f, g), route.calls)
+        self.assertTrue(hasattr(route, 'n_args'))
+        self.assertIsInstance(route.n_args, int)
+        self.assertEqual(4, route.n_args)
+
+    def test_int_routes_calls(self):
+        route = Route([0, 3], f, g)
+        self.assertTrue(hasattr(route, 'routes'))
+        self.assertTupleEqual(((0,), (3,)), route.routes)
+        self.assertTrue(hasattr(route, 'calls'))
+        self.assertTupleEqual((f, g), route.calls)
+        self.assertTrue(hasattr(route, 'n_args'))
+        self.assertIsInstance(route.n_args, int)
+        self.assertEqual(4, route.n_args)
+
+    def test_int_routes_call_calls(self):
+        route = Route([0, 3], [f], g)
+        self.assertTrue(hasattr(route, 'routes'))
+        self.assertTupleEqual(((0,), (3,)), route.routes)
+        self.assertTrue(hasattr(route, 'calls'))
+        self.assertTupleEqual((f, g), route.calls)
+        self.assertTrue(hasattr(route, 'n_args'))
+        self.assertIsInstance(route.n_args, int)
+        self.assertEqual(4, route.n_args)
+
+    def test_raises_on_route_but_no_call(self):
+        expected = ('Number of callables (=0) must '
+                    'match the number of routes (=2)!')
+        with self.assertRaises(RouteError) as error:
+            _ = Route([1, 2], [])
         self.assertEqual(expected, str(error.exception))
 
     def test_raises_on_route_but_no_calls(self):
@@ -125,22 +189,26 @@ class TestAttributes(unittest.TestCase):
             _ = Route([1, 2], )
         self.assertEqual(expected, str(error.exception))
 
+    def test_raises_on_route_call_mismatch(self):
+        expected = ('Number of callables (=3) must '
+                    'match the number of routes (=2)!')
+        with self.assertRaises(RouteError) as error:
+            _ = Route([1, 2], [f, g, f])
+        self.assertEqual(expected, str(error.exception))
+
     def test_raises_on_route_calls_mismatch(self):
         expected = ('Number of callables (=3) must '
                     'match the number of routes (=2)!')
         with self.assertRaises(RouteError) as error:
-            _ = Route([1, 2], f, f, f)
+            _ = Route([1, 2], f, g, f)
         self.assertEqual(expected, str(error.exception))
 
-    def test_int_routes(self):
-        route = Route([0, 3], f, g)
-        self.assertTrue(hasattr(route, 'routes'))
-        self.assertTupleEqual(((0,), (3,)), route.routes)
-        self.assertTrue(hasattr(route, 'calls'))
-        self.assertTupleEqual((f, g), route.calls)
-        self.assertTrue(hasattr(route, 'n_args'))
-        self.assertIsInstance(route.n_args, int)
-        self.assertEqual(4, route.n_args)
+    def test_raises_on_route_call_calls_mismatch(self):
+        expected = ('Number of callables (=3) must '
+                    'match the number of routes (=2)!')
+        with self.assertRaises(RouteError) as error:
+            _ = Route([1, 2], [f, g], f)
+        self.assertEqual(expected, str(error.exception))
 
     def test_int_empty_routes(self):
         route = Route([2, ()], f, g)
