@@ -24,3 +24,7 @@ class RouteError(Exception):
 
 class SplitError(Exception):
     pass
+
+
+class SumError(Exception):
+    pass

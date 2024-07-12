@@ -14,10 +14,32 @@ def g(x, y):
     return x / y
 
 
+class Cls:
+
+    @classmethod
+    def c(cls, x, y):
+        return x + y
+
+    def m(self, x, y):
+        _ = self.__class__.__name__
+        return x + y
+
+    @staticmethod
+    def s(x, y):
+        return x + y
+
+
+class Call:
+
+    def __call__(self, x, y):
+        return x + y
+
+
 class A(ArgRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
+    def __init__(self, a):
+        super().__init__(a)
+        self.a = a
 
     def __bool__(self) -> bool:
         raise TypeError('Test!')
@@ -276,13 +298,33 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(r)
 
-    def test_default_repr(self):
+    def test_default_lambda_repr(self):
+        r = Reduce(lambda x, y: x + y)
+        self.assertEqual('Reduce(lambda, None)', repr(r))
+
+    def test_default_function_repr(self):
         r = Reduce(f)
         self.assertEqual('Reduce(f, None)', repr(r))
 
-    def test_acc_repr(self):
-        r = Reduce(f, 1)
-        self.assertEqual('Reduce(f, 1)', repr(r))
+    def test_default_class_repr(self):
+        r = Reduce(Cls)
+        self.assertEqual('Reduce(Cls, None)', repr(r))
+
+    def test_default_obj_repr(self):
+        r = Reduce(Call())
+        self.assertEqual('Reduce(Call(...), None)', repr(r))
+
+    def test_default_classmethod_repr(self):
+        r = Reduce(Cls.c)
+        self.assertEqual('Reduce(Cls.c, None)', repr(r))
+
+    def test_default_staticmethod_repr(self):
+        r = Reduce(Cls().s)
+        self.assertEqual('Reduce(Cls.s, None)', repr(r))
+
+    def test_default_method_repr(self):
+        r = Reduce(Cls().m)
+        self.assertEqual('Reduce(Cls.m, None)', repr(r))
 
     def test_default_argrepr(self):
         r = Reduce(A(1))
@@ -291,6 +333,10 @@ class TestMisc(unittest.TestCase):
     def test_default_indentrepr(self):
         r = Reduce(Ind(1, 2, 3))
         self.assertEqual("Reduce(Ind[3], None)", repr(r))
+
+    def test_acc_repr(self):
+        r = Reduce(f, 1)
+        self.assertEqual('Reduce(f, 1)', repr(r))
 
     def test_acc_argrepr(self):
         r = Reduce(A(1), A(2))
