@@ -328,6 +328,7 @@ class TestUsage(unittest.TestCase):
     def test_call_empty_return(self):
         route = Route([()], h)
         actual = route(1, 2, 3)
+        self.assertIsInstance(actual, int)
         self.assertEqual(3, actual)
 
     def test_call_no_return(self):

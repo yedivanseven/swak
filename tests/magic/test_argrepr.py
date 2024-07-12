@@ -41,6 +41,17 @@ class CallInd(IndentRepr):
     def __call__(self):
         pass
 
+    @classmethod
+    def c(cls):
+        pass
+
+    def m(self):
+        pass
+
+    @staticmethod
+    def s():
+        pass
+
 
 class TestSuperCallSignatures(unittest.TestCase):
 
@@ -277,6 +288,20 @@ class TestCallables(unittest.TestCase):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
+        def __call__(self):
+            pass
+
+        @classmethod
+        def c(cls):
+            pass
+
+        def m(self):
+            pass
+
+        @staticmethod
+        def s():
+            pass
+
     def test_lambda(self):
         test = self.Test(lambda x: x + 1)
         self.assertEqual('Test(lambda)', repr(test))
@@ -309,22 +334,36 @@ class TestCallables(unittest.TestCase):
         self.assertEqual('Test(Call(...))', repr(test))
 
     def test_callable_argrepr(self):
+        test = self.Test(self.Test(1))
+        self.assertEqual('Test(Test(1))', repr(test))
 
-        class A(ArgRepr):
+    def test_argrepr_method(self):
+        test = self.Test(self.Test(1, 2, 3).m)
+        self.assertEqual('Test(TestCallables.Test.m)', repr(test))
 
-            def __init__(self, a):
-                super().__init__(a)
-                self.a = a
+    def test_argrepr_classmethod(self):
+        test = self.Test(self.Test.c)
+        self.assertEqual('Test(TestCallables.Test.c)', repr(test))
 
-            def __call__(self):
-                pass
-
-        test = self.Test(A(1))
-        self.assertEqual('Test(A(1))', repr(test))
+    def test_argrepr_staticmethod(self):
+        test = self.Test(self.Test(1, 2, 3).s)
+        self.assertEqual('Test(TestCallables.Test.s)', repr(test))
 
     def test_callable_indentrepr(self):
         test = self.Test(CallInd(1, 2, 3))
         self.assertEqual('Test(CallInd[3])', repr(test))
+
+    def test_indentrepr_method(self):
+        test = self.Test(CallInd(1, 2, 3).m)
+        self.assertEqual('Test(CallInd.m)', repr(test))
+
+    def test_indentrepr_classmethod(self):
+        test = self.Test(CallInd.c)
+        self.assertEqual('Test(CallInd.c)', repr(test))
+
+    def test_indentrepr_staticmethod(self):
+        test = self.Test(CallInd(1, 2, 3).s)
+        self.assertEqual('Test(CallInd.s)', repr(test))
 
 
 class TestMisc(unittest.TestCase):

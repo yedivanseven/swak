@@ -9,6 +9,26 @@ def f(x, y):
     return x + y
 
 
+class Cls:
+
+    @classmethod
+    def c(cls):
+        pass
+
+    def m(self):
+        pass
+
+    @staticmethod
+    def s(x):
+        pass
+
+
+class Call:
+
+    def __call__(self):
+        pass
+
+
 class A(ArgRepr):
 
     def __init__(self, *xs):
@@ -27,32 +47,55 @@ class Ind(IndentRepr):
         pass
 
 
-class TestInstantiation(unittest.TestCase):
+class TestAttributes(unittest.TestCase):
 
     def test_call_only(self):
-        _ = Partial(f)
+        p = Partial(f)
+        self.assertTrue(hasattr(p, 'call'))
+        self.assertIs(f, p.call)
+        self.assertTrue(hasattr(p, 'args'))
+        self.assertTupleEqual((), p.args)
+        self.assertTrue(hasattr(p, 'kwargs'))
+        self.assertDictEqual({}, p.kwargs)
 
     def test_args(self):
-        _ = Partial(f, 42, 'foo', 1.23)
+        p = Partial(f, 42, 'foo', 1.23)
+        self.assertTrue(hasattr(p, 'call'))
+        self.assertIs(f, p.call)
+        self.assertTrue(hasattr(p, 'args'))
+        self.assertTupleEqual((42, 'foo', 1.23), p.args)
+        self.assertTrue(hasattr(p, 'kwargs'))
+        self.assertDictEqual({}, p.kwargs)
 
     def test_kwargs(self):
-        _ = Partial(f, answer=42, bar='foo')
+        p = Partial(f, answer=42, bar='foo')
+        self.assertTrue(hasattr(p, 'call'))
+        self.assertIs(f, p.call)
+        self.assertTrue(hasattr(p, 'args'))
+        self.assertTupleEqual((), p.args)
+        self.assertTrue(hasattr(p, 'kwargs'))
+        self.assertDictEqual({'answer': 42, 'bar': 'foo'}, p.kwargs)
 
     def test_args_and_kwargs(self):
-        _ = Partial(f, 5, 'baz', 6.7, answer=42, bar='foo')
+        p = Partial(f, 5, 'baz', 6.7, answer=42, bar='foo')
+        self.assertTrue(hasattr(p, 'call'))
+        self.assertIs(f, p.call)
+        self.assertTrue(hasattr(p, 'args'))
+        self.assertTupleEqual((5, 'baz', 6.7), p.args)
+        self.assertTrue(hasattr(p, 'kwargs'))
+        self.assertDictEqual({'answer': 42, 'bar': 'foo'}, p.kwargs)
 
-    def test_type_args_and_kwargs(self):
-        _ = Partial[int](f, 5, 'baz', 6.7, answer=42, bar='foo')
 
-    def test_callable(self):
-        partial = Partial(f, 'foo', answer=42)
-        self.assertTrue(callable(partial))
-
-
-class TestCall(unittest.TestCase):
+class TestUsage(unittest.TestCase):
 
     def setUp(self) -> None:
         self.call = Mock()
+
+    def test_callable(self):
+        args = 5, 'baz', 6.7
+        kwargs = {'answer': 42, 'bar': 'foo', 'susi': 1.23}
+        partial = Partial(self.call, *args, **kwargs)
+        self.assertTrue(callable(partial))
 
     def test_call_called(self):
         partial = Partial(self.call)
@@ -136,9 +179,33 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(partial)
 
-    def test_repr(self):
+    def test_lambda_repr(self):
+        partial = Partial(lambda x: x, 'foo', answer=42)
+        self.assertEqual("Partial(lambda, 'foo', answer=42)", repr(partial))
+
+    def test_function_repr(self):
         partial = Partial(f, 'foo', answer=42)
         self.assertEqual("Partial(f, 'foo', answer=42)", repr(partial))
+
+    def test_class_repr(self):
+        partial = Partial(Cls, 'foo', answer=42)
+        self.assertEqual("Partial(Cls, 'foo', answer=42)", repr(partial))
+
+    def test_obj_repr(self):
+        partial = Partial(Call(), 'foo', answer=42)
+        self.assertEqual("Partial(Call(...), 'foo', answer=42)", repr(partial))
+
+    def test_classmethod_repr(self):
+        partial = Partial(Cls.m, 'foo', answer=42)
+        self.assertEqual("Partial(Cls.m, 'foo', answer=42)", repr(partial))
+
+    def test_staticmethod_repr(self):
+        partial = Partial(Cls().s, 'foo', answer=42)
+        self.assertEqual("Partial(Cls.s, 'foo', answer=42)", repr(partial))
+
+    def test_method_repr(self):
+        partial = Partial(Cls().m, 'foo', answer=42)
+        self.assertEqual("Partial(Cls.m, 'foo', answer=42)", repr(partial))
 
     def test_argrepr(self):
         partial = Partial(A(1), A(2), answer=42)

@@ -46,10 +46,12 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_single_returns_first_element(self):
         actual = self.s([1])
+        self.assertIsInstance(actual, int)
         self.assertEqual(1, actual)
 
     def test_return_correct(self):
         actual = self.s([1, 2, 3])
+        self.assertIsInstance(actual, int)
         self.assertEqual(6, actual)
 
     def test_wrong_iterator_raises(self):
@@ -110,10 +112,12 @@ class TestAccUsage(unittest.TestCase):
 
     def test_empty_returns_acc(self):
         actual = self.s([])
+        self.assertIsInstance(actual, int)
         self.assertEqual(1, actual)
 
     def test_return_correct(self):
         actual = self.s([2, 3])
+        self.assertIsInstance(actual, int)
         self.assertEqual(6, actual)
 
     def test_wrong_iterator_raises(self):

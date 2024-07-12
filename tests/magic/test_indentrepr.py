@@ -41,6 +41,17 @@ class CallA(ArgRepr):
     def __call__(self):
         pass
 
+    @classmethod
+    def c(cls):
+        pass
+
+    def m(self):
+        pass
+
+    @staticmethod
+    def s():
+        pass
+
 
 class TestArgumentTypes(unittest.TestCase):
 
@@ -53,6 +64,25 @@ class TestArgumentTypes(unittest.TestCase):
 
         def __init__(self, *args) -> None:
             super().__init__(*args)
+
+    class CallInd(IndentRepr):
+
+        def __init__(self, *args) -> None:
+            super().__init__(*args)
+
+        def __call__(self):
+            pass
+
+        @classmethod
+        def c(cls):
+            pass
+
+        def m(self):
+            pass
+
+        @staticmethod
+        def s():
+            pass
 
     def test_empty_super_init(self):
         actual = self.Empty()
@@ -93,10 +123,20 @@ class TestArgumentTypes(unittest.TestCase):
             CallA(1),
             cls.m,
             Cls.c,
-            cls.s
+            cls.s,
+            CallA(1).m,
+            CallA.c,
+            CallA(1).s,
+            self.CallInd(1, 2, 3).m,
+            self.CallInd.c,
+            self.CallInd(1, 2, 3).s
         )
         expected = ("Args:\n[ 0] f\n[ 1] Cls\n[ 2] lambda\n[ 3] Call(...)\n"
-                    "[ 4] CallA(1)\n[ 5] Cls.m\n[ 6] Cls.c\n[ 7] Cls.s")
+                    "[ 4] CallA(1)\n[ 5] Cls.m\n[ 6] Cls.c\n[ 7] Cls.s\n"
+                    "[ 8] CallA.m\n[ 9] CallA.c\n[10] CallA.s\n"
+                    "[11] TestArgumentTypes.CallInd.m\n"
+                    "[12] TestArgumentTypes.CallInd.c\n"
+                    "[13] TestArgumentTypes.CallInd.s")
         self.assertEqual(expected, repr(actual))
 
     def test_nested_once(self):
@@ -113,6 +153,22 @@ class TestArgumentTypes(unittest.TestCase):
         ch = "     [ 1] Args:\n          [ 0] 3\n          [ 1] 4\n"
         pa = f"[ 1] Args:\n     [ 0] 2\n{ch}     [ 2] 5\n"
         expected = f"Args:\n[ 0] 1\n{pa}[ 2] 6"
+        self.assertEqual(expected, repr(grand))
+
+    def test_callable_nested_once(self):
+        child = self.CallInd(2, 3)
+        parent = self.CallInd(1, child, 4)
+        expected_child = "[ 1] CallInd:\n     [ 0] 2\n     [ 1] 3\n"
+        expected = f"CallInd:\n[ 0] 1\n{expected_child}[ 2] 4"
+        self.assertEqual(expected, repr(parent))
+
+    def test_callable_nested_twice(self):
+        child = self.CallInd(3, 4)
+        parent = self.CallInd(2, child, 5)
+        grand = self.CallInd(1, parent, 6)
+        ch = "     [ 1] CallInd:\n          [ 0] 3\n          [ 1] 4\n"
+        pa = f"[ 1] CallInd:\n     [ 0] 2\n{ch}     [ 2] 5\n"
+        expected = f"CallInd:\n[ 0] 1\n{pa}[ 2] 6"
         self.assertEqual(expected, repr(grand))
 
 

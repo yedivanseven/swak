@@ -118,10 +118,12 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_single_returns_first_element(self):
         actual = self.r([1])
+        self.assertIsInstance(actual, int)
         self.assertEqual(1, actual)
 
     def test_return_correct(self):
         actual = self.r([1, 2, 3])
+        self.assertIsInstance(actual, int)
         self.assertEqual(6, actual)
 
     def test_wrong_iterator_raises(self):
@@ -184,9 +186,9 @@ class TestAccAttributes(unittest.TestCase):
         self.assertTrue(hasattr(r, 'acc'))
 
     def test_acc_correct(self):
-        r = Reduce(f, 1)
-        self.assertIsInstance(r.acc, int)
-        self.assertEqual(1, r.acc)
+        cls = Cls()
+        r = Reduce(f, cls)
+        self.assertIs(r.acc, cls)
 
 
 class TestAccUsage(unittest.TestCase):
@@ -227,10 +229,12 @@ class TestAccUsage(unittest.TestCase):
 
     def test_empty_returns_acc(self):
         actual = self.r([])
+        self.assertIsInstance(actual, int)
         self.assertEqual(1, actual)
 
     def test_return_correct(self):
         actual = self.r([2, 3])
+        self.assertIsInstance(actual, int)
         self.assertEqual(6, actual)
 
     def test_wrong_iterator_raises(self):
