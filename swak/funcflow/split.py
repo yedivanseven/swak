@@ -55,7 +55,7 @@ class Split[S, T](ArgRepr):
         Raises
         ------
         SplitError
-            If calling the criterion on any element of `iterable` raises
+            If calling the `criterion` on any element of `iterable` raises
             an exception or if wrapping the results leads to an exception.
 
         """
