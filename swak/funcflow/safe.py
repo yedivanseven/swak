@@ -2,6 +2,7 @@ from typing import Callable
 from ..magic import ArgRepr
 
 
+# ToDo: Add optional arg exception (single exception or tuple thereof)
 class Safe[**P, T](ArgRepr):
     """Wrap callable to catch any errors it might raise and return them instead.
 
