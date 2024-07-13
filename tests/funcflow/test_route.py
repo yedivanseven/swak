@@ -436,7 +436,7 @@ class TestUsage(unittest.TestCase):
         expected = ("Error executing\n"
                     "r\n"
                     "in route #1 (2, 0) of\n"
-                    "Route:\n"
+                    "Route[3, (2, 0)]:\n"
                     "[ 0] f\n"
                     "[ 1] r\n"
                     "AttributeError:\n"
@@ -450,7 +450,7 @@ class TestUsage(unittest.TestCase):
         expected = ("Error executing\n"
                     "A(1)\n"
                     "in route #1 (2, 0) of\n"
-                    "Route:\n"
+                    "Route[3, (2, 0)]:\n"
                     "[ 0] f\n"
                     "[ 1] A(1)\n"
                     "AttributeError:\n"
@@ -465,7 +465,7 @@ class TestUsage(unittest.TestCase):
                     "Ind:\n"
                     "[ 0] 1\n"
                     "in route #1 (2, 0) of\n"
-                    "Route:\n"
+                    "Route[3, (2, 0)]:\n"
                     "[ 0] f\n"
                     "[ 1] Ind:\n"
                     "     [ 0] 1\n"
@@ -603,7 +603,7 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(route)
 
-    def test_flat(self):
+    def test_flat_repr(self):
         route = Route(
             [0, 1, 2, 3, 4, 5, 6, 7],
             lambda x: x,
@@ -616,7 +616,7 @@ class TestMisc(unittest.TestCase):
             A('foo')
         )
         expected = (
-            "Route:\n"
+            "Route[0, 1, 2, 3, 4, 5, 6, 7]:\n"
             "[ 0] lambda\n"
             "[ 1] f\n"
             "[ 2] Cls\n"
@@ -628,7 +628,7 @@ class TestMisc(unittest.TestCase):
         )
         self.assertEqual(expected, repr(route))
 
-    def test_nested(self):
+    def test_nested_repr(self):
         route = Route(
             [0, 1, 2, 3, 4, 5, 6, 7],
             lambda x: x,
@@ -642,8 +642,8 @@ class TestMisc(unittest.TestCase):
         )
         outer = Route([0, 1], route, route)
         expected = (
-            "Route:\n"
-            "[ 0] Route:\n"
+            "Route[0, 1]:\n"
+            "[ 0] Route[0, 1, 2, 3, 4, 5, 6, 7]:\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -652,7 +652,7 @@ class TestMisc(unittest.TestCase):
             "     [ 5] Cls.s\n"
             "     [ 6] Call(...)\n"
             "     [ 7] A('foo')\n"
-            "[ 1] Route:\n"
+            "[ 1] Route[0, 1, 2, 3, 4, 5, 6, 7]:\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -663,6 +663,56 @@ class TestMisc(unittest.TestCase):
             "     [ 7] A('foo')"
         )
         self.assertEqual(expected, repr(outer))
+
+    def test_empty_repr(self):
+        route = Route()
+        self.assertEqual('Route[]', repr(route))
+
+    def test_int_empty_repr(self):
+        expected = (
+            "Route[2, ()]:\n"
+            "[ 0] f\n"
+            "[ 1] g"
+        )
+        route = Route([2, ()], f, g)
+        self.assertEqual(expected, repr(route))
+
+    def test_tuple_empty_repr(self):
+        expected = (
+            "Route[(), (2, 0)]:\n"
+            "[ 0] f\n"
+            "[ 1] g"
+        )
+        route = Route([(), (2, 0)], f, g)
+        self.assertEqual(expected, repr(route))
+
+    def test_tuple_repr(self):
+        expected = (
+            "Route[(1, 3), (2, 0)]:\n"
+            "[ 0] f\n"
+            "[ 1] g"
+        )
+        route = Route([(1, 3), (2, 0)], f, g)
+        self.assertEqual(expected, repr(route))
+
+    def test_mixed_repr(self):
+        expected = (
+            "Route[3, (2, 0)]:\n"
+            "[ 0] f\n"
+            "[ 1] g"
+        )
+        route = Route([3, (2, 0)], f, g)
+        self.assertEqual(expected, repr(route))
+
+    def test_mixed_empty_repr(self):
+        expected = (
+            "Route[3, (2, 0), ()]:\n"
+            "[ 0] f\n"
+            "[ 1] g\n"
+            "[ 2] f"
+        )
+        route = Route([3, (2, 0), ()], f, g, f)
+        self.assertEqual(expected, repr(route))
 
 
 if __name__ == '__main__':

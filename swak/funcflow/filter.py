@@ -68,17 +68,19 @@ class Filter[S, T](ArgRepr):
             try:
                 criterion_is_fulfilled = criterion(element)
             except Exception as error:
-                msg = 'Error calling\n{}\non element #{}:\n{}\n{}:\n{}'
+                msg = '\n{} calling criterion\n{}\non element #{}:\n{}\n{}'
                 name = self._name(criterion)
                 err_cls = error.__class__.__name__
-                fmt = msg.format(name, i, element, err_cls, error)
+                fmt = msg.format(err_cls, name, i, element, error)
                 raise FilterError(fmt)
             if criterion_is_fulfilled:
                 filtered.append(element)
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(filtered)
-        except Exception:
-            msg = 'Could not wrap filter results into an instance of {}'
-            raise FilterError(msg.format(self._name(wrap)))
+        except Exception as error:
+            msg = '\n{} calling wrapper\n{}\non filter results:\n{}'
+            name = self._name(wrap)
+            err_cls = error.__class__.__name__
+            raise FilterError(msg.format(err_cls, name, error))
         return wrapped

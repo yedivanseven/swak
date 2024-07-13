@@ -115,11 +115,10 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertListEqual([], actual)
 
     def test_bool_criterion_raises_argrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nTypeError calling criterion\n'
                     'bool\n'
                     'on element #2:\n'
                     'A(1)\n'
-                    'TypeError:\n'
                     'Test!')
         f = Filter()
         with self.assertRaises(FilterError) as error:
@@ -127,12 +126,11 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_bool_criterion_raises_indentrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nTypeError calling criterion\n'
                     'bool\n'
                     'on element #2:\n'
                     'Ind:\n'
                     '[ 0] 1\n'
-                    'TypeError:\n'
                     'Test!')
         f = Filter()
         with self.assertRaises(FilterError) as error:
@@ -140,8 +138,10 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_wrong_iterable_raises(self):
-        expected = ('Could not wrap filter results '
-                    'into an instance of list_iterator')
+        expected = ("\nTypeError calling wrapper\n"
+                    "list_iterator\n"
+                    "on filter results:\n"
+                    "cannot create 'list_iterator' instances")
         with self.assertRaises(FilterError) as error:
             _ = self.f(iter([1, 2, 0, 2, 1]))
         self.assertEqual(expected, str(error.exception))
@@ -220,18 +220,19 @@ class TestCriterionUsage(unittest.TestCase):
         self.assertSetEqual({4, 5}, actual)
 
     def test_wrong_iterable_raises(self):
-        expected = ('Could not wrap filter results into'
-                    ' an instance of list_iterator')
+        expected = ("\nTypeError calling wrapper\n"
+                    "list_iterator\n"
+                    "on filter results:\n"
+                    "cannot create 'list_iterator' instances")
         with self.assertRaises(FilterError) as error:
             _ = self.f(iter([1, 2, 3, 4, 5]))
         self.assertEqual(expected, str(error.exception))
 
     def test_wrong_criterion_raises(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling criterion\n'
                     'lambda\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'division by zero')
         f = Filter(lambda x: 1 / x)
         with self.assertRaises(FilterError) as error:
@@ -239,11 +240,10 @@ class TestCriterionUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_criterion_error_msg_argrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling criterion\n'
                     'A(1)\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'division by zero')
         f = Filter(A(1))
         with self.assertRaises(FilterError) as error:
@@ -251,14 +251,13 @@ class TestCriterionUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_criterion_error_msg_indentrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling criterion\n'
                     'Ind:\n'
                     '[ 0] 1\n'
                     '[ 1] 2\n'
                     '[ 2] 3\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'division by zero')
         f = Filter(Ind(1, 2, 3))
         with self.assertRaises(FilterError) as error:
@@ -343,22 +342,32 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertTupleEqual((4, 5), actual)
 
     def test_wrong_wrapper_raises(self):
-        expected = 'Could not wrap filter results into an instance of int'
+        expected = ("\nTypeError calling wrapper\n"
+                    "int\n"
+                    "on filter results:\n"
+                    "int() argument must be a string, a bytes-like"
+                    " object or a real number, not 'list'")
         f = Filter(g, int)
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
         self.assertEqual(expected, str(error.exception))
 
     def test_wrapper_error_msg_argrepr(self):
-        expected = 'Could not wrap filter results into an instance of A(1)'
+        expected = ("\nTypeError calling wrapper\n"
+                    "A(1)\n"
+                    "on filter results:\n"
+                    "unsupported operand type(s) for /: 'int' and 'list'")
         f = Filter(g, A(1))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
         self.assertEqual(expected, str(error.exception))
 
     def test_wrapper_error_msg_indentrepr(self):
-        expected = ('Could not wrap filter results into'
-                    ' an instance of Ind:\n[ 0] 1')
+        expected = ("\nTypeError calling wrapper\n"
+                    "Ind:\n"
+                    "[ 0] 1\n"
+                    "on filter results:\n"
+                    "unsupported operand type(s) for /: 'int' and 'list'")
         f = Filter(g, Ind(1))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
