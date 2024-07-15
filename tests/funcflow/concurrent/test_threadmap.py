@@ -201,8 +201,10 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_wrong_iterable_raises(self):
-        expected = ('Could not wrap map results into'
-                    ' an instance of list_iterator!')
+        expected = ("\nTypeError calling wrapper\n"
+                    "list_iterator\n"
+                    "on map results:\n"
+                    "cannot create 'list_iterator' instances")
         with self.assertRaises(MapError) as error:
             _ = self.m1(iter([1, 2, 3]))
         self.assertEqual(expected, str(error.exception))
@@ -281,22 +283,32 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertListEqual([2, 4, 6], actual)
 
     def test_wrong_wrapper_raises(self):
-        expected = 'Could not wrap map results into an instance of int!'
+        expected = ("\nTypeError calling wrapper\n"
+                    "int\n"
+                    "on map results:\n"
+                    "int() argument must be a string, a bytes-like"
+                    " object or a real number, not 'list'")
         m = ThreadMap(plus_2, int)
         with self.assertRaises(MapError) as error:
             _ = m([1, 2, 3])
         self.assertEqual(expected, str(error.exception))
 
     def test_wrapper_error_msg_argrepr(self):
-        expected = 'Could not wrap map results into an instance of A(1)!'
+        expected = ("\nTypeError calling wrapper\n"
+                    "A(1)\n"
+                    "on map results:\n"
+                    "unsupported operand type(s) for /: 'int' and 'list'")
         m = ThreadMap(plus_2, A(1))
         with self.assertRaises(MapError) as error:
             _ = m([1, 2, 3])
         self.assertEqual(expected, str(error.exception))
 
     def test_wrapper_error_msg_indentrepr(self):
-        expected = ('Could not wrap map results into an instance of Ind:\n'
-                    '[ 0] 1!')
+        expected = ("\nTypeError calling wrapper\n"
+                    "Ind:\n"
+                    "[ 0] 1\n"
+                    "on map results:\n"
+                    "unsupported operand type(s) for /: 'int' and 'list'")
         m = ThreadMap(plus_2, Ind(1))
         with self.assertRaises(MapError) as error:
             _ = m([1, 2, 3])

@@ -100,7 +100,9 @@ class ThreadMap[**P, S, T](ArgRepr):
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(mapped)
-        except Exception:
-            msg = 'Could not wrap map results into an instance of {}!'
-            raise MapError(msg.format(self._name(wrap)))
+        except Exception as error:
+            msg = '\n{} calling wrapper\n{}\non map results:\n{}'
+            name = self._name(wrap)
+            err_cls = error.__class__.__name__
+            raise MapError(msg.format(err_cls, name, error))
         return wrapped
