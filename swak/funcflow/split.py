@@ -14,7 +14,7 @@ class Split[S, T](ArgRepr):
     ----------
     criterion: callable, optional
         The `condition` is called with one object at a time and must return a
-        boolean value. Objects on which it evaluates to ``True` are sorted
+        boolean value. Objects on which it evaluates to ``True`` are sorted
         into one container and those where it evaluates to ``False`` end up
         in a second container. Defaults to ``None``, which returns the inherent
         truth values of the object in the iterable.

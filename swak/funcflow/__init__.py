@@ -8,6 +8,7 @@ from .route import Route
 from .split import Split
 from .sum import Sum
 from .safe import Safe
+from .exceptions import Caught
 from .misc import apply, exit_ok, unit, identity
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     'Split',
     'Sum',
     'Safe',
+    'Caught',
     'apply',
     'exit_ok',
     'unit',

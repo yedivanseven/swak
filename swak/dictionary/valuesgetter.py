@@ -11,8 +11,10 @@ class ValuesGetter[T](ArgRepr):
 
     Parameters
     ----------
-    *keys: hashable
-        Arbitrary number of dictionary keys.
+    key: optional
+        Dictionary key or iterable thereof. Defaults to an empy tuple.
+    *keys: Hashable
+        Additional dictionary keys.
     wrapper: callable, optional
         A type or some other callable that transforms a tuple of dictionary
         values into some other type of sequence. The type of the sequence
@@ -23,12 +25,17 @@ class ValuesGetter[T](ArgRepr):
 
     def __init__(
             self,
+            key: Hashable | Iterable[Hashable] = (),
             *keys: Hashable,
             wrapper: type[T] | Callable[[tuple], T] = list
     ) -> None:
-        super().__init__(*keys, wrapper=wrapper)
-        self.keys = keys
         self.wrapper = wrapper
+        try:
+            key = tuple(key)
+        except TypeError:
+            key = key,
+        self.keys: tuple[Hashable, ...] = key + keys
+        super().__init__(*self.keys, wrapper=wrapper)
 
     def __len__(self) -> int:
         return len(self.keys)

@@ -1,7 +1,7 @@
 import unittest
 import pickle
 from unittest.mock import Mock
-from swak.funcflow import Safe
+from swak.funcflow import Safe, Caught
 from swak.magic import ArgRepr, IndentRepr
 
 
@@ -100,28 +100,37 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_caught_correct_exception(self):
         actual = Safe(g)(1, 0)
-        self.assertIsInstance(actual, ZeroDivisionError)
+        self.assertIsInstance(actual, Caught)
 
 
 class TestExceptionsAttributes(unittest.TestCase):
 
-    def test_instantiation(self):
-        _ = Safe(f, ZeroDivisionError, StopIteration)
+    def test_empty_exceptions(self):
+        s = Safe(f, [])
+        self.assertTrue(hasattr(s, 'call'))
+        self.assertIs(s.call, f)
+        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTupleEqual((Exception, ), s.exceptions)
 
-    def test_has_call(self):
+    def test_list_two_exceptions(self):
+        s = Safe(f, [ZeroDivisionError, StopIteration])
+        self.assertTrue(hasattr(s, 'call'))
+        self.assertIs(s.call, f)
+        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTupleEqual((ZeroDivisionError, StopIteration), s.exceptions)
+
+    def test_list_one_exception_one_exception(self):
+        s = Safe(f, [ZeroDivisionError], StopIteration)
+        self.assertTrue(hasattr(s, 'call'))
+        self.assertIs(s.call, f)
+        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTupleEqual((ZeroDivisionError, StopIteration), s.exceptions)
+
+    def test_two_exceptions(self):
         s = Safe(f, ZeroDivisionError, StopIteration)
         self.assertTrue(hasattr(s, 'call'))
-
-    def test_call_correct(self):
-        s = Safe(f, ZeroDivisionError, StopIteration)
         self.assertIs(s.call, f)
-
-    def test_has_exceptions(self):
-        s = Safe(f, ZeroDivisionError, StopIteration)
         self.assertTrue(hasattr(s, 'exceptions'))
-
-    def test_exceptions_correct(self):
-        s = Safe(f, ZeroDivisionError, StopIteration)
         self.assertTupleEqual((ZeroDivisionError, StopIteration), s.exceptions)
 
 
@@ -150,7 +159,7 @@ class TestExceptionsUsage(unittest.TestCase):
 
     def test_caught_correct_exception(self):
         actual = Safe(g, ZeroDivisionError, StopIteration)(1, 0)
-        self.assertIsInstance(actual, ZeroDivisionError)
+        self.assertIsInstance(actual, Caught)
 
     def test_lets_wrong_exception_through(self):
         with self.assertRaises(AttributeError):

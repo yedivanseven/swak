@@ -1,10 +1,10 @@
-from typing import Callable
+from typing import Callable, Iterable
 from ..magic import ArgRepr
+from .exceptions import Caught
 
 
-# ToDo: Add optional arg exception (single exception or tuple thereof)
 class Safe[**P, T](ArgRepr):
-    """Wrap callable to catch any errors it might raise and return them instead.
+    """Wrap callable to catch potential errors and safely return them.
 
     Generic type annotation of instances is recommended. Provide a list of
     one or more input types that the callable takes, followed by the return type
@@ -14,22 +14,34 @@ class Safe[**P, T](ArgRepr):
     ----------
     call: callable
         Callable to wrap.
+    exception: optional
+        Specific exception to catch (or an iterable of exceptions).
+        Defaults to ``Exception``.
     *exceptions
-        Specific Exceptions to catch. If none are given all subclasses of
-        ``Exception`` will be caught and returned indiscriminately.
+        Additional exceptions to catch.
+
+    See Also
+    --------
+    Caught
 
     """
 
     def __init__(
             self,
             call: type[T] | Callable[P, T],
+            exception: type[Exception] | Iterable[type[Exception]] = (),
             *exceptions: type[Exception]
     ) -> None:
-        super().__init__(call, *exceptions)
         self.call = call
-        self.exceptions = exceptions if exceptions else (Exception, )
+        try:
+            exception = tuple(exception)
+        except TypeError:
+            exception = exception,
+        self.exceptions = tuple(set(exception + exceptions))
+        super().__init__(call, *self.exceptions)
+        self.exceptions = self.exceptions if self.exceptions else (Exception, )
 
-    def __call__(self, *args: P.args) -> T | Exception:
+    def __call__(self, *args: P.args) -> T | Caught:
         """Call the cached callable, catching any or all exceptions raised.
 
         Parameters
@@ -39,12 +51,12 @@ class Safe[**P, T](ArgRepr):
 
         Returns
         -------
-        object or Exception
-            Either the return value(s) of the cached `call` or any of the
-            specified `exceptions` should `call` raise any.
+        object or Caught
+            Either the return value(s) of the cached `call` or an instance of
+            ``Caught`` wrapping one of the specified `exceptions`.
 
         """
         try:
             return self.call(*args)
         except self.exceptions as error:
-            return error
+            return Caught(error, self._name(self.call), self.call, args)

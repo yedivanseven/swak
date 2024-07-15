@@ -1,33 +1,69 @@
 import unittest
 import pickle
+from unittest.mock import Mock
 from swak.dictionary import ValuesGetter
 
 
-class TestBasicAttributes(unittest.TestCase):
+class TestDefaultAttributes(unittest.TestCase):
 
-    def setUp(self) -> None:
-        self.getter = ValuesGetter(1, 2, 3)
+    def test_empty(self):
+        values_from = ValuesGetter()
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual((), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
 
-    def test_has_keys(self):
-        self.assertTrue(hasattr(self.getter, 'keys'))
+    def test_empty_list(self):
+        values_from = ValuesGetter([])
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual((), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
 
-    def test_keys_correct(self):
-        self.assertTupleEqual((1, 2, 3), self.getter.keys)
+    def test_one_key(self):
+        values_from = ValuesGetter(1)
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual((1,), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
 
-    def test_has_wrapper(self):
-        self.assertTrue(hasattr(self.getter, 'wrapper'))
+    def test_three_keys(self):
+        values_from = ValuesGetter(1, 2, 3)
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual((1, 2, 3), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
 
-    def test_wrapper_callable(self):
-        self.assertTrue(callable(self.getter.wrapper))
+    def test_list_one_key_two_keys(self):
+        values_from = ValuesGetter([1], 2, 3)
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual((1, 2, 3), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
 
-    def test_wrap_callable_with_tuple(self):
-        _ = self.getter.wrapper((1, 2))
+    def test_list_two_keys_one_key(self):
+        values_from = ValuesGetter([1, 2], 3)
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual((1, 2, 3), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
+
+    def test_list_three_keys(self):
+        values_from = ValuesGetter([1, 2, 3])
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual((1, 2, 3), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
 
 
-class TestBasicUsage(unittest.TestCase):
+class TestDefaultUsage(unittest.TestCase):
 
     def setUp(self) -> None:
         self.d = {1: 'hello', 2: 'world', 3: 'foo', 4: 'bar'}
+
+    def test_callable(self):
+        values_from = ValuesGetter()
+        self.assertTrue(callable(values_from))
 
     def test_empty(self):
         values_from = ValuesGetter()
@@ -60,21 +96,13 @@ class TestBasicUsage(unittest.TestCase):
         expected = [self.d[2], self.d[4], self.d[4], self.d[1]]
         self.assertListEqual(expected, actual)
 
-    def test_representation(self):
-        get = ValuesGetter(1, '2', 3, '4', 5)
-        expected = "ValuesGetter(1, '2', 3, '4', 5, wrapper=list)"
-        self.assertEqual(expected, repr(get))
-
 
 class TestWrapperAttribute(unittest.TestCase):
 
-    def test_wrapper_default(self):
-        getter = ValuesGetter(2, 3)
-        self.assertIs(getter.wrapper, list)
-
     def test_wrapper_correct(self):
-        getter = ValuesGetter(2, 3, wrapper=set)
-        self.assertIs(getter.wrapper, set)
+        values_from = ValuesGetter(2, 3, wrapper=set)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertIs(values_from.wrapper, set)
 
 
 class TestWrapperUsage(unittest.TestCase):
@@ -82,16 +110,131 @@ class TestWrapperUsage(unittest.TestCase):
     def setUp(self) -> None:
         self.d = {1: 'hello', 2: 'world', 3: 'foo', 4: 'bar'}
 
-    def test_takes_wrap_kwarg(self):
-        _ = ValuesGetter(2, 3, wrapper=set)
+    def test_wrapper_called_once(self):
+        mock = Mock()
+        values_from = ValuesGetter[mock](2, 3, wrapper=mock)
+        _ = values_from(self.d)
+        mock.assert_called_once()
+        mock.assert_called_once_with((self.d[2], self.d[3]))
 
-    def test_takes_generic_default(self):
-        _ = ValuesGetter[list](2, 3)
+    def test_wrapper_called_correctly(self):
+        mock = Mock()
+        values_from = ValuesGetter[mock](2, 3, wrapper=mock)
+        _ = values_from(self.d)
+        mock.assert_called_once_with((self.d[2], self.d[3]))
 
-    def test_wrapper_wraps(self):
+    def test_wrapper_wraps_example(self):
         values_from = ValuesGetter[set](2, 3, wrapper=set)
         actual = values_from(self.d)
         self.assertSetEqual({self.d[2], self.d[3]}, actual)
+
+
+class TestMagic(unittest.TestCase):
+
+    def setUp(self):
+        self.keys = 1, 2, 3
+        self.empty = ValuesGetter()
+        self.values_from = ValuesGetter(*self.keys)
+
+    def test_len(self):
+        self.assertEqual(0, len(self.empty))
+        self.assertEqual(len(self.keys), len(self.values_from))
+
+    def test_bool(self):
+        self.assertFalse(self.empty)
+        self.assertTrue(self.values_from)
+
+    def test_reversed(self):
+        expected = tuple(reversed(self.keys))
+        actual = reversed(self.values_from)
+        self.assertIsInstance(actual, ValuesGetter)
+        self.assertTupleEqual(expected, actual.keys)
+
+    def test_iter(self):
+        for i, g in enumerate(self.values_from):
+            self.assertIsInstance(g, ValuesGetter)
+            self.assertEqual(1, len(g))
+            self.assertEqual(self.keys[i], g.keys[0])
+
+    def test_contains(self):
+        self.assertTrue(1 in self.values_from)
+        self.assertFalse(4 in self.values_from)
+
+    def test_getitem_int(self):
+        g = self.values_from[0]
+        self.assertIsInstance(g, ValuesGetter)
+        self.assertEqual(1, len(g))
+        self.assertEqual(self.keys[0], g.keys[0])
+
+    def test_getitem_slice(self):
+        g = self.values_from[:2]
+        self.assertIsInstance(g, ValuesGetter)
+        self.assertEqual(2, len(g))
+        self.assertTupleEqual(self.keys[:2], g.keys[:2])
+
+    def test_equality_true_other(self):
+        self.assertEqual(self.values_from, ValuesGetter(*self.keys))
+
+    def test_equality_true_self(self):
+        self.assertEqual(self.values_from, ValuesGetter(*self.keys))
+
+    def test_equality_false_wrong_type(self):
+        self.assertFalse(self.values_from == 4)
+
+    def test_equality_false_wrong_content(self):
+        self.assertFalse(self.values_from == ValuesGetter(4, 5))
+
+    def test_inequality_false_other(self):
+        self.assertFalse(self.values_from != ValuesGetter(*self.keys))
+
+    def test_inequality_false_self(self):
+        self.assertFalse(self.values_from != self.values_from)
+
+    def test_inequality_true_wrong_type(self):
+        self.assertNotEqual(self.values_from, 4)
+
+    def test_inequality_true_wrong_content(self):
+        self.assertNotEqual(self.values_from, ValuesGetter(4, 5))
+
+    def test_add_key(self):
+        getter = self.values_from + 4
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual((*self.keys, 4), getter.keys)
+
+    def test_add_empty_keys(self):
+        getter = self.values_from + []
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual(self.keys, getter.keys)
+
+    def test_add_keys(self):
+        getter = self.values_from + [4, 5]
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual((*self.keys, 4, 5), getter.keys)
+
+    def test_add_empty_self(self):
+        getter = self.values_from + ValuesGetter()
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual(self.keys, getter.keys)
+
+    def test_add_self(self):
+        getter = self.values_from + ValuesGetter(4, 5)
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual((*self.keys, 4, 5), getter.keys)
+
+    def test_radd_key(self):
+        getter = 4 + self.values_from
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual((4, *self.keys), getter.keys)
+
+    def test_radd_empty_keys(self):
+        getter = [] + self.values_from
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual(self.keys, getter.keys)
+
+    def test_radd_keys(self):
+        getter = [4, 5] + self.values_from
+        self.assertIsInstance(getter, ValuesGetter)
+        self.assertTupleEqual((4, 5, *self.keys), getter.keys)
 
 
 class TestMisc(unittest.TestCase):
@@ -110,113 +253,21 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(values_from)
 
+    def test_default_representation(self):
+        get = ValuesGetter(1, '2', 3, '4', 5)
+        expected = "ValuesGetter(1, '2', 3, '4', 5, wrapper=list)"
+        self.assertEqual(expected, repr(get))
 
-class TestMagic(unittest.TestCase):
+    def test_wrapper_representation(self):
+        get = ValuesGetter(1, '2', 3, '4', 5, wrapper=set)
+        expected = "ValuesGetter(1, '2', 3, '4', 5, wrapper=set)"
+        self.assertEqual(expected, repr(get))
 
-    def setUp(self):
-        self.keys = 1, 2, 3
-        self.empty = ValuesGetter()
-        self.getter = ValuesGetter(*self.keys)
+    def test_type_annotation(self):
+        _ = ValuesGetter[list](2, 3)
 
-    def test_len(self):
-        self.assertEqual(0, len(self.empty))
-        self.assertEqual(len(self.keys), len(self.getter))
-
-    def test_bool(self):
-        self.assertFalse(self.empty)
-        self.assertTrue(self.getter)
-
-    def test_reversed(self):
-        expected = tuple(reversed(self.keys))
-        actual = reversed(self.getter)
-        self.assertIsInstance(actual, ValuesGetter)
-        self.assertTupleEqual(expected, actual.keys)
-
-    def test_iter(self):
-        for i, g in enumerate(self.getter):
-            self.assertIsInstance(g, ValuesGetter)
-            self.assertEqual(1, len(g))
-            self.assertEqual(self.keys[i], g.keys[0])
-
-    def test_contains(self):
-        self.assertTrue(1 in self.getter)
-        self.assertFalse(4 in self.getter)
-
-    def test_getitem_int(self):
-        g = self.getter[0]
-        self.assertIsInstance(g, ValuesGetter)
-        self.assertEqual(1, len(g))
-        self.assertEqual(self.keys[0], g.keys[0])
-
-    def test_getitem_slice(self):
-        g = self.getter[:2]
-        self.assertIsInstance(g, ValuesGetter)
-        self.assertEqual(2, len(g))
-        self.assertTupleEqual(self.keys[:2], g.keys[:2])
-
-    def test_equality_true_other(self):
-        self.assertEqual(self.getter, ValuesGetter(*self.keys))
-
-    def test_equality_true_self(self):
-        self.assertEqual(self.getter, ValuesGetter(*self.keys))
-
-    def test_equality_false_wrong_type(self):
-        self.assertFalse(self.getter == 4)
-
-    def test_equality_false_wrong_content(self):
-        self.assertFalse(self.getter == ValuesGetter(4, 5))
-
-    def test_inequality_false_other(self):
-        self.assertFalse(self.getter != ValuesGetter(*self.keys))
-
-    def test_inequality_false_self(self):
-        self.assertFalse(self.getter != self.getter)
-
-    def test_inequality_true_wrong_type(self):
-        self.assertNotEqual(self.getter, 4)
-
-    def test_inequality_true_wrong_content(self):
-        self.assertNotEqual(self.getter, ValuesGetter(4, 5))
-
-    def test_add_key(self):
-        getter = self.getter + 4
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual((*self.keys, 4), getter.keys)
-
-    def test_add_empty_keys(self):
-        getter = self.getter + []
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual(self.keys, getter.keys)
-
-    def test_add_keys(self):
-        getter = self.getter + [4, 5]
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual((*self.keys, 4, 5), getter.keys)
-
-    def test_add_empty_self(self):
-        getter = self.getter + ValuesGetter()
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual(self.keys, getter.keys)
-
-    def test_add_self(self):
-        getter = self.getter + ValuesGetter(4, 5)
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual((*self.keys, 4, 5), getter.keys)
-
-    def test_radd_key(self):
-        getter = 4 + self.getter
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual((4, *self.keys), getter.keys)
-
-    def test_radd_empty_keys(self):
-        getter = [] + self.getter
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual(self.keys, getter.keys)
-
-    def test_radd_keys(self):
-        getter = [4, 5] + self.getter
-        self.assertIsInstance(getter, ValuesGetter)
-        self.assertTupleEqual((4, 5, *self.keys), getter.keys)
+    def test_wrapper_type_annotation(self):
+        _ = ValuesGetter[set](2, 3, wrapper=set)
 
 
 if __name__ == '__main__':
