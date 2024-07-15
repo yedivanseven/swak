@@ -118,9 +118,10 @@ class Fork[**P, T](IndentRepr):
             try:
                 result = call(*args)
             except Exception as error:
-                msg = 'Error executing\n{}\nin fork {} of\n{}\n{}:\n{}'
-                name = error.__class__.__name__
-                fmt = msg.format(self._name(call), i, self, name, error)
+                msg = '\n{} executing\n{}\nin fork {} of\n{}\n{}'
+                err_cls = error.__class__.__name__
+                name = self._name(call)
+                fmt = msg.format(err_cls, name, i, self, error)
                 raise ForkError(fmt)
             else:
                 if isinstance(result, tuple):

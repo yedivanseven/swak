@@ -119,8 +119,9 @@ class Pipe[**P, T](IndentRepr):
             try:
                 args = call(*args) if isinstance(args, tuple) else call(args)
             except Exception as error:
-                msg = 'Error executing\n{}\nin step {} of\n{}\n{}:\n{}'
+                msg = '\n{} executing\n{}\nin step {} of\n{}\n{}'
                 err_cls = error.__class__.__name__
-                fmt = msg.format(self._name(call), i, self, err_cls, error)
+                name = self._name(call)
+                fmt = msg.format(err_cls, name, i, self, error)
                 raise PipeError(fmt)
         return args

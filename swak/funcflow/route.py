@@ -140,18 +140,17 @@ class Route[**P, T](IndentRepr):
             try:
                 result = call(*tuple(args[r] for r in route))
             except Exception as error:
-                msg = 'Error executing\n{}\nin route #{} {} of\n{}\n{}:\n{}'
+                msg = '\n{} executing\n{}\nin route #{} {} of\n{}\n{}'
                 err_cls = error.__class__.__name__
                 name = self._name(call)
-                fmt = msg.format(name, i, route, self, err_cls, error)
+                fmt = msg.format(err_cls, name, i, route, self, error)
                 raise RouteError(fmt)
             else:
                 if isinstance(result, tuple):
                     results.extend(result)
                 else:
                     results.append(result)
-        n_res = len(results)
-        return tuple(results) if n_res == 0 or n_res > 1 else results[0]
+        return results[0] if len(results) == 1 else tuple(results)
 
     @property
     def n_args(self) -> int:

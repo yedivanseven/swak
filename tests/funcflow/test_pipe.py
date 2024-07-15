@@ -242,14 +242,13 @@ class TestUsage(unittest.TestCase):
         self.assertTupleEqual((), result)
 
     def test_raises(self):
-        expected = ("Error executing\n"
+        expected = ("\nAttributeError executing\n"
                     "g\n"
                     "in step 1 of\n"
                     "Pipe:\n"
                     "[ 0] f\n"
                     "[ 1] g\n"
                     "[ 2] f\n"
-                    "AttributeError:\n"
                     "Test!")
         pipe = Pipe(f, g, f)
         with self.assertRaises(PipeError) as error:
@@ -257,14 +256,13 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ("Error executing\n"
+        expected = ("\nAttributeError executing\n"
                     "A(1)\n"
                     "in step 1 of\n"
                     "Pipe:\n"
                     "[ 0] f\n"
                     "[ 1] A(1)\n"
                     "[ 2] f\n"
-                    "AttributeError:\n"
                     "Test!")
         pipe = Pipe(f, A(1), f)
         with self.assertRaises(PipeError) as error:
@@ -272,7 +270,7 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ("Error executing\n"
+        expected = ("\nAttributeError executing\n"
                     "Ind:\n"
                     "[ 0] 1\n"
                     "in step 1 of\n"
@@ -281,7 +279,6 @@ class TestUsage(unittest.TestCase):
                     "[ 1] Ind:\n"
                     "     [ 0] 1\n"
                     "[ 2] f\n"
-                    "AttributeError:\n"
                     "Test!")
         pipe = Pipe(f, Ind(1), f)
         with self.assertRaises(PipeError) as error:

@@ -70,16 +70,18 @@ class Map[**P, S, T](ArgRepr):
             try:
                 mapped.append(self.transform(*elements))
             except Exception as error:
-                msg = 'Error calling\n{}\non element #{}:\n{}\n{}:\n{}'
+                msg = '\n{} calling\n{}\non element #{}:\n{}\n{}'
                 name = self._name(self.transform)
                 err_cls = error.__class__.__name__
                 display = elements[0] if len(elements) == 1 else elements
-                fmt = msg.format(name, i, display, err_cls, error)
+                fmt = msg.format(err_cls, name, i, display, error)
                 raise MapError(fmt)
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(mapped)
-        except Exception:
-            msg = 'Could not wrap map results into an instance of {}!'
-            raise MapError(msg.format(self._name(wrap)))
+        except Exception as error:
+            msg = '\n{} calling wrapper\n{}\non map results:\n{}'
+            name = self._name(wrap)
+            err_cls = error.__class__.__name__
+            raise MapError(msg.format(err_cls, name, error))
         return wrapped

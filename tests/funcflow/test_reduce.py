@@ -131,11 +131,10 @@ class TestDefaultUsage(unittest.TestCase):
             _ = self.r(1)
 
     def test_wrong_call_raises(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling\n'
                     'g\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'float division by zero')
         r = Reduce(g)
         with self.assertRaises(ReduceError) as error:
@@ -143,11 +142,10 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling\n'
                     'A(1)\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'float division by zero')
         r = Reduce(A(1))
         with self.assertRaises(ReduceError) as error:
@@ -155,12 +153,11 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling\n'
                     'Ind:\n'
                     '[ 0] 1\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'float division by zero')
         r = Reduce(Ind(1))
         with self.assertRaises(ReduceError) as error:
@@ -242,11 +239,10 @@ class TestAccUsage(unittest.TestCase):
             _ = self.r(1)
 
     def test_wrong_call_raises(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling\n'
                     'g\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'float division by zero')
         r = Reduce(g)
         with self.assertRaises(ReduceError) as error:
@@ -254,11 +250,10 @@ class TestAccUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling\n'
                     'A(1)\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'float division by zero')
         r = Reduce(A(1))
         with self.assertRaises(ReduceError) as error:
@@ -266,12 +261,11 @@ class TestAccUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ('Error calling\n'
+        expected = ('\nZeroDivisionError calling\n'
                     'Ind:\n'
                     '[ 0] 1\n'
                     'on element #2:\n'
                     '0\n'
-                    'ZeroDivisionError:\n'
                     'float division by zero')
         r = Reduce(Ind(1))
         with self.assertRaises(ReduceError) as error:

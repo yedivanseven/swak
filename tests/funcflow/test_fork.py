@@ -285,13 +285,12 @@ class TestUsage(unittest.TestCase):
 
     def test_raises(self):
         fork = Fork(lambda *x: x, g)
-        expected = ('Error executing\n'
+        expected = ('\nAttributeError executing\n'
                     'g\n'
                     'in fork 1 of\n'
                     'Fork:\n'
                     '[ 0] lambda\n'
                     '[ 1] g\n'
-                    'AttributeError:\n'
                     'Test!')
         with self.assertRaises(ForkError) as error:
             _ = fork('foo', 1)
@@ -299,13 +298,12 @@ class TestUsage(unittest.TestCase):
 
     def test_error_msg_argrepr(self):
         fork = Fork(A(1), g)
-        expected = ('Error executing\n'
+        expected = ('\nAttributeError executing\n'
                     'A(1)\n'
                     'in fork 0 of\n'
                     'Fork:\n'
                     '[ 0] A(1)\n'
                     '[ 1] g\n'
-                    'AttributeError:\n'
                     'Test!')
         with self.assertRaises(ForkError) as error:
             _ = fork('foo', 1)
@@ -313,7 +311,7 @@ class TestUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         fork = Fork(Ind(1), g)
-        expected = ('Error executing\n'
+        expected = ('\nAttributeError executing\n'
                     'Ind:\n'
                     '[ 0] 1\n'
                     'in fork 0 of\n'
@@ -321,7 +319,6 @@ class TestUsage(unittest.TestCase):
                     '[ 0] Ind:\n'
                     '     [ 0] 1\n'
                     '[ 1] g\n'
-                    'AttributeError:\n'
                     'Test!')
         with self.assertRaises(ForkError) as error:
             _ = fork('foo', 1)

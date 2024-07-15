@@ -48,9 +48,9 @@ class Reduce[T, S](ArgRepr):
             try:
                 acc = self.call(acc, element)
             except Exception as error:
-                msg = 'Error calling\n{}\non element #{}:\n{}\n{}:\n{}'
+                msg = '\n{} calling\n{}\non element #{}:\n{}\n{}'
                 name = self._name(self.call)
                 err_cls = error.__class__.__name__
-                fmt = msg.format(name, i + 1, element, err_cls, error)
+                fmt = msg.format(err_cls, name, i + 1, element, error)
                 raise ReduceError(fmt)
         return acc

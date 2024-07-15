@@ -66,10 +66,10 @@ class Split[S, T](ArgRepr):
             try:
                 criterion_is_fulfilled = criterion(element)
             except Exception as error:
-                msg = 'Error calling\n{}\non element #{}:\n{}\n{}:\n{}'
+                msg = '\n{} calling\n{}\non element #{}:\n{}\n{}'
                 name = self._name(criterion)
                 err_cls = error.__class__.__name__
-                fmt = msg.format(name, i, element, err_cls, error)
+                fmt = msg.format(err_cls, name, i, element, error)
                 raise SplitError(fmt)
             if criterion_is_fulfilled:
                 true.append(element)
@@ -79,7 +79,9 @@ class Split[S, T](ArgRepr):
         try:
             true = wrap(true)
             false = wrap(false)
-        except Exception:
-            msg = 'Could not wrap split results into instances of {}'
-            raise SplitError(msg.format(self._name(wrap)))
+        except Exception as error:
+            msg = '\n{} calling wrapper\n{}\non split results:\n{}'
+            name = self._name(wrap)
+            err_cls = error.__class__.__name__
+            raise SplitError(msg.format(err_cls, name, error))
         return true, false

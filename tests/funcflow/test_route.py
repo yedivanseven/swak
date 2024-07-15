@@ -433,13 +433,12 @@ class TestUsage(unittest.TestCase):
 
     def test_raises(self):
         route = Route([3, (2, 0)], f, r)
-        expected = ("Error executing\n"
+        expected = ("\nAttributeError executing\n"
                     "r\n"
                     "in route #1 (2, 0) of\n"
                     "Route[3, (2, 0)]:\n"
                     "[ 0] f\n"
                     "[ 1] r\n"
-                    "AttributeError:\n"
                     "Test!")
         with self.assertRaises(RouteError) as error:
             _ = _ = route(1, 2, 3, 4)
@@ -447,13 +446,12 @@ class TestUsage(unittest.TestCase):
 
     def test_error_msg_argrepr(self):
         route = Route([3, (2, 0)], f, A(1))
-        expected = ("Error executing\n"
+        expected = ("\nAttributeError executing\n"
                     "A(1)\n"
                     "in route #1 (2, 0) of\n"
                     "Route[3, (2, 0)]:\n"
                     "[ 0] f\n"
                     "[ 1] A(1)\n"
-                    "AttributeError:\n"
                     "Test!")
         with self.assertRaises(RouteError) as error:
             _ = _ = route(1, 2, 3, 4)
@@ -461,7 +459,7 @@ class TestUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         route = Route([3, (2, 0)], f, Ind(1))
-        expected = ("Error executing\n"
+        expected = ("\nAttributeError executing\n"
                     "Ind:\n"
                     "[ 0] 1\n"
                     "in route #1 (2, 0) of\n"
@@ -469,7 +467,6 @@ class TestUsage(unittest.TestCase):
                     "[ 0] f\n"
                     "[ 1] Ind:\n"
                     "     [ 0] 1\n"
-                    "AttributeError:\n"
                     "Test!")
         with self.assertRaises(RouteError) as error:
             _ = _ = route(1, 2, 3, 4)
