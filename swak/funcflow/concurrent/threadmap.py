@@ -5,7 +5,7 @@ from ...magic import ArgRepr
 
 
 class ThreadMap[**P, S, T](ArgRepr):
-    """Equivalent to a partial of the python builtin ``map`` function.
+    """Partial of ``concurrent.futures.ThreadPoolExecutor.map``.
 
     Upon subclassing and/or instantiation, type annotation with a list of the
     argument type(s) of `transform`, the return type of `call`, and the return
@@ -21,12 +21,28 @@ class ThreadMap[**P, S, T](ArgRepr):
         class with a list of the mapped elements). If explicitly given,
         `wrapper` will be called with a list mapped elements. Consequently,
         the return type will be the (return) type of `wrapper`.
+    max_workers: int, optional
+        Maximum number of workers threads used in the pool to execute
+        `transform` asynchronously. Will be forwarded to the constructor of
+        ``ThreadPoolExecutor``. Defaults to 16.
+    thread_name_prefix: str, optional
+        Will be forwarded to the constructor of ``ThreadPoolExecutor``.
+        Defaults to an empty string.
+    initializer: callable, optional
+        Called at the start of each worker thread. Will be forwarded to the
+        constructor of ``ThreadPoolExecutor``. Defaults to ``None``.
+    initargs: tuple, optional
+        Arguments passed to the initializer. Will be forwarded to the
+        constructor of ``ThreadPoolExecutor``. Defaults to an empty tuple.
+    timeout: int or float, optional
+        Maximum time (in seconds) to wait for results to be available. Defaults
+        to ``None``, which means there is no limit for the time to wait. Will
+        be forwarded to the ``map`` method of the ``ThreadPoolExecutor``.
 
-    Notes
-    -----
-    In contrast to python's builtin lazy ``map`` function, which returns a
-    generator object, the mapped iterable is fully manifested first and only
-    then wrapped.
+
+    See Also
+    --------
+    concurrent.futures.ThreadPoolExecutor
 
     """
 
@@ -40,17 +56,25 @@ class ThreadMap[**P, S, T](ArgRepr):
             initargs: tuple[Any, ...] = (),
             timeout: int | float | None = None,
     ) -> None:
-        super().__init__(transform, wrapper)
+        super().__init__(
+            transform,
+            wrapper,
+            max_workers,
+            thread_name_prefix,
+            initializer,
+            initargs,
+            timeout
+        )
         self.transform = transform
         self.wrapper = wrapper
         self.max_workers = max_workers
         self.thread_name_prefix = thread_name_prefix
         self.initializer = initializer
-        self.initargs = initargs,
+        self.initargs = initargs
         self.timeout = timeout
 
     def __call__(self, iterable: Iterable, *iterables: Iterable) -> T:
-        """Transform the element(s) of the given iterable(s).
+        """Concurrently transform the element(s) of the given iterable(s).
 
         Parameters
         ----------
@@ -71,9 +95,8 @@ class ThreadMap[**P, S, T](ArgRepr):
         Raises
         ------
         MapError
-            If calling the cached `transform` on any element(s) of the given
-            iterable(s) raises an exception or if wrapping the results leads
-            to an exception.
+            If calling the ``ThreadPoolExecutor``'s ``map`` method raises an
+            exception or if wrapping the results leads to an exception.
 
         """
         with ThreadPoolExecutor(

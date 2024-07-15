@@ -1,6 +1,6 @@
 import unittest
 import pickle
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from swak.funcflow.concurrent import ThreadMap
 from swak.funcflow.exceptions import MapError
 from swak.magic import ArgRepr, IndentRepr
@@ -74,6 +74,47 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_wrapper_is_none(self):
         m = ThreadMap(plus_2)
         self.assertIsNone(m.wrapper)
+
+    def test_has_max_workers(self):
+        m = ThreadMap(plus_2)
+        self.assertTrue(hasattr(m, 'max_workers'))
+
+    def test_max_workers_correct(self):
+        m = ThreadMap(plus_2)
+        self.assertIsInstance(m.max_workers, int)
+        self.assertGreater(m.max_workers, 0)
+
+    def test_has_thread_name_prefix(self):
+        m = ThreadMap(plus_2)
+        self.assertTrue(hasattr(m, 'thread_name_prefix'))
+
+    def test_thread_name_prefix_correct(self):
+        m = ThreadMap(plus_2)
+        self.assertIsInstance(m.thread_name_prefix, str)
+
+    def test_has_initializer(self):
+        m = ThreadMap(plus_2)
+        self.assertTrue(hasattr(m, 'initializer'))
+
+    def test_initializer_is_none(self):
+        m = ThreadMap(plus_2)
+        self.assertIsNone(m.initializer)
+
+    def test_has_initargs(self):
+        m = ThreadMap(plus_2)
+        self.assertTrue(hasattr(m, 'initargs'))
+
+    def test_initargs_correct(self):
+        m = ThreadMap(plus_2)
+        self.assertTupleEqual((), m.initargs)
+
+    def test_has_timeout(self):
+        m = ThreadMap(plus_2)
+        self.assertTrue(hasattr(m, 'initializer'))
+
+    def test_timeout_is_none(self):
+        m = ThreadMap(plus_2)
+        self.assertIsNone(m.timeout)
 
 
 class TestDefaultUsage(unittest.TestCase):
@@ -215,14 +256,6 @@ class TestWrapperAttributes(unittest.TestCase):
     def test_instantiation(self):
         _ = ThreadMap(plus_2, tuple)
 
-    def test_has_transform(self):
-        m = ThreadMap(plus_2, tuple)
-        self.assertTrue(hasattr(m, 'transform'))
-
-    def test_transform_correct(self):
-        m = ThreadMap(plus_2, tuple)
-        self.assertIs(m.transform, plus_2)
-
     def test_has_wrapper(self):
         m = ThreadMap(plus_2, tuple)
         self.assertTrue(hasattr(m, 'wrapper'))
@@ -315,6 +348,122 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
 
+class TestThreadPoolAttributes(unittest.TestCase):
+
+    def test_instantiation(self):
+        _ = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+
+    def test_has_transform(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertTrue(hasattr(m, 'transform'))
+
+    def test_transform_correct(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertIs(m.transform, plus_2)
+
+    def test_has_wrapper(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertTrue(hasattr(m, 'wrapper'))
+
+    def test_wrapper_is_none(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertIsNone(m.wrapper)
+
+    def test_has_max_workers(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertTrue(hasattr(m, 'max_workers'))
+
+    def test_max_workers_correct(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertIsInstance(m.max_workers, int)
+        self.assertEqual(8, m.max_workers)
+
+    def test_has_thread_name_prefix(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertTrue(hasattr(m, 'thread_name_prefix'))
+
+    def test_thread_name_prefix_correct(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertEqual('tm', m.thread_name_prefix)
+
+    def test_has_initializer(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertTrue(hasattr(m, 'initializer'))
+
+    def test_initializer_is_none(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertIs(m.initializer, plus)
+
+    def test_has_initargs(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertTrue(hasattr(m, 'initargs'))
+
+    def test_initargs_correct(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        self.assertTupleEqual((1, 2), m.initargs)
+
+
+class TestThreadPoolUsage(unittest.TestCase):
+
+    @patch('swak.funcflow.concurrent.threadmap.ThreadPoolExecutor')
+    def test_threadpool_called(self, cls):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        _ = m([1, 2, 3])
+        cls.assert_called_once()
+
+    @patch('swak.funcflow.concurrent.threadmap.ThreadPoolExecutor')
+    def test_threadpool_called_with_threadpoolargs(self, cls):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        _ = m([1, 2, 3])
+        cls.assert_called_once_with(8, 'tm', plus, (1, 2))
+
+
+class TestMapAttributes(unittest.TestCase):
+
+    def test_has_timeout_arg(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2), 42)
+        self.assertTrue(hasattr(m, 'timeout'))
+
+    def test_timeout_arg_correct(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2), Cls)
+        self.assertIs(m.timeout, Cls)
+
+    def test_has_timeout_kwarg(self):
+        m = ThreadMap(plus_2, timeout=42)
+        self.assertTrue(hasattr(m, 'timeout'))
+
+    def test_timeout_kwarg_correct(self):
+        m = ThreadMap(plus_2, timeout=Cls)
+        self.assertIs(m.timeout, Cls)
+
+
+class TestMapUsage(unittest.TestCase):
+
+    @patch('swak.funcflow.concurrent.threadmap.ThreadPoolExecutor.map')
+    def test_map_called(self, method):
+        m = ThreadMap(plus_2)
+        _ = m([1, 2, 3])
+        method.assert_called_once()
+
+    @patch('swak.funcflow.concurrent.threadmap.ThreadPoolExecutor.map')
+    def test_map_called_with_iterable_no_timeout(self, method):
+        m = ThreadMap(plus_2)
+        _ = m([1, 2, 3])
+        method.assert_called_once_with(plus_2, [1, 2, 3], timeout=None)
+
+    @patch('swak.funcflow.concurrent.threadmap.ThreadPoolExecutor.map')
+    def test_map_called_with_iterables_no_timeout(self, method):
+        m = ThreadMap(plus)
+        _ = m([1, 2, 3], (1, 2, 3))
+        method.assert_called_once_with(plus, [1, 2, 3], (1, 2, 3), timeout=None)
+
+    @patch('swak.funcflow.concurrent.threadmap.ThreadPoolExecutor.map')
+    def test_map_called_with_timeout(self, method):
+        m = ThreadMap(plus_2, timeout=42)
+        _ = m([1, 2, 3])
+        method.assert_called_once_with(plus_2, [1, 2, 3], timeout=42)
+
+
 class TestMisc(unittest.TestCase):
 
     def test_default_pickle_works(self):
@@ -342,51 +491,78 @@ class TestMisc(unittest.TestCase):
 
     def test_default_lambda_repr(self):
         m = ThreadMap(lambda x: x > 3)
-        self.assertEqual('ThreadMap(lambda, None)', repr(m))
+        expected = "ThreadMap(lambda, None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_default_function_repr(self):
         m = ThreadMap(plus_2)
-        self.assertEqual('ThreadMap(plus_2, None)', repr(m))
+        expected = "ThreadMap(plus_2, None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_default_class_repr(self):
         m = ThreadMap(Cls)
-        self.assertEqual('ThreadMap(Cls, None)', repr(m))
+        expected = "ThreadMap(Cls, None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_default_obj_repr(self):
         m = ThreadMap(Call())
-        self.assertEqual('ThreadMap(Call(...), None)', repr(m))
+        expected = "ThreadMap(Call(...), None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_default_classmethod_repr(self):
         m = ThreadMap(Cls.c)
-        self.assertEqual('ThreadMap(Cls.c, None)', repr(m))
+        expected = "ThreadMap(Cls.c, None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_default_staticmethod_repr(self):
         m = ThreadMap(Cls().s)
-        self.assertEqual('ThreadMap(Cls.s, None)', repr(m))
+        expected = "ThreadMap(Cls.s, None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_default_method_repr(self):
         m = ThreadMap(Cls().m)
-        self.assertEqual('ThreadMap(Cls.m, None)', repr(m))
+        expected = "ThreadMap(Cls.m, None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_default_argrepr(self):
         m = ThreadMap(A(1))
-        self.assertEqual('ThreadMap(A(1), None)', repr(m))
+        excepted = "ThreadMap(A(1), None, 16, '', None, (), None)"
+        self.assertEqual(excepted, repr(m))
 
     def test_default_indentrepr(self):
         m = ThreadMap(Ind(1, 2, 3))
-        self.assertEqual('ThreadMap(Ind[3], None)', repr(m))
+        expected = "ThreadMap(Ind[3], None, 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_wrapper_repr(self):
         m = ThreadMap(plus_2, tuple)
-        self.assertEqual('ThreadMap(plus_2, tuple)', repr(m))
+        expexted = "ThreadMap(plus_2, tuple, 16, '', None, (), None)"
+        self.assertEqual(expexted, repr(m))
 
     def test_wrapper_argrepr(self):
         m = ThreadMap(plus_2, A(1))
-        self.assertEqual('ThreadMap(plus_2, A(1))', repr(m))
+        expected = "ThreadMap(plus_2, A(1), 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
 
     def test_wrapper_indentrepr(self):
         m = ThreadMap(plus_2, Ind(1, 2, 3))
-        self.assertEqual('ThreadMap(plus_2, Ind[3])', repr(m))
+        expected = "ThreadMap(plus_2, Ind[3], 16, '', None, (), None)"
+        self.assertEqual(expected, repr(m))
+
+    def test_threadpool_repr(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2))
+        expexted = "ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2), None)"
+        self.assertEqual(expexted, repr(m))
+
+    def test_map_arg_repr(self):
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2),42)
+        expexted = "ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2), 42)"
+        self.assertEqual(expexted, repr(m))
+
+    def test_map_kwarg_repr(self):
+        m = ThreadMap(plus_2, timeout=42)
+        expexted = "ThreadMap(plus_2, None, 16, '', None, (), 42)"
+        self.assertEqual(expexted, repr(m))
 
     def test_type_annotation_wrapper(self):
         _ = ThreadMap[[int, bool], float, list]
