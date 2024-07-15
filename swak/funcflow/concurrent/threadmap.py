@@ -40,6 +40,12 @@ class ThreadMap[**P, S, T](ArgRepr):
         be forwarded to the ``map`` method of the ``ThreadPoolExecutor``.
 
 
+    Notes
+    -----
+    In contrast to calling the ``map`` method of a ``ThreadPoolExecutor``
+    directly, which returns a generator object, the mapped iterable is fully
+    manifested first and only then wrapped.
+
     See Also
     --------
     concurrent.futures.ThreadPoolExecutor

@@ -74,6 +74,18 @@ class TestDefaultAttributes(unittest.TestCase):
         s = Safe(f)
         self.assertTupleEqual((Exception, ), s.exceptions)
 
+    def test_decorator(self):
+
+        @Safe
+        def s(x):
+            return x
+
+        self.assertIsInstance(s, Safe)
+        self.assertTrue(hasattr(s, 'call'))
+        self.assertTrue(callable(s.call))
+        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTupleEqual((Exception,), s.exceptions)
+
 
 class TestDefaultUsage(unittest.TestCase):
 
