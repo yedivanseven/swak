@@ -41,7 +41,7 @@ class ThreadFork[**P, T](IndentRepr):
     timeout: int or float, optional
         Maximum time (in seconds) to wait for results to be available. Defaults
         to ``None``, which means there is no limit for the time to wait. Will
-        be forwarded to the ``result`` method of the ``Futures``s.
+        be forwarded to the ``result`` method of the ``Future``.
 
     See Also
     --------
