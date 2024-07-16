@@ -1,6 +1,6 @@
 from typing import Iterable, Callable
-from .exceptions import MapError
 from ..magic import ArgRepr
+from .exceptions import MapError
 
 
 class Map[**P, S, T](ArgRepr):

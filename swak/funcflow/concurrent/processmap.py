@@ -1,11 +1,11 @@
 from typing import Any, Iterable, Callable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 from ...magic import ArgRepr
 from ..exceptions import MapError
 
 
-class ThreadMap[**P, S, T](ArgRepr):
-    """Partial of ``concurrent.futures.ThreadPoolExecutor.map``.
+class ProcessMap[**P, S, T](ArgRepr):
+    """Partial of ``concurrent.futures.ProcessPoolExecutor.map``.
 
     Upon subclassing and/or instantiation, type annotation with a list of the
     argument type(s) of `transform`, the return type of `call`, and the return
@@ -22,32 +22,32 @@ class ThreadMap[**P, S, T](ArgRepr):
         `wrapper` will be called with a list mapped elements. Consequently,
         the return type will be the (return) type of `wrapper`.
     max_workers: int, optional
-        Maximum number of worker threads used in the pool to execute
+        Maximum number of worker processes used in the pool to execute
         `transform` asynchronously. Will be forwarded to the constructor of
-        ``ThreadPoolExecutor``. Defaults to 16.
-    thread_name_prefix: str, optional
-        Will be forwarded to the constructor of ``ThreadPoolExecutor``.
-        Defaults to an empty string.
+        ``ProcessPoolExecutor``. Defaults to 4.
     initializer: callable, optional
         Called at the start of each worker thread. Will be forwarded to the
-        constructor of ``ThreadPoolExecutor``. Defaults to ``None``.
+        constructor of ``ProcessPoolExecutor``. Defaults to ``None``.
     initargs: tuple, optional
         Arguments passed to the initializer. Will be forwarded to the
-        constructor of ``ThreadPoolExecutor``. Defaults to an empty tuple.
+        constructor of ``ProcessPoolExecutor``. Defaults to an empty tuple.
     timeout: int or float, optional
         Maximum time (in seconds) to wait for results to be available. Defaults
         to ``None``, which means there is no limit for the time to wait. Will
-        be forwarded to the ``map`` method of the ``ThreadPoolExecutor``.
+        be forwarded to the ``map`` method of the ``ProcessPoolExecutor``.
+    chunksize: int, optional
+        Will be forwarded to the ``map`` method of the ``ProcessPoolExecutor``.
+        Defaults to 1.
 
     Notes
     -----
-    In contrast to calling the ``map`` method of a ``ThreadPoolExecutor``
+    In contrast to calling the ``map`` method of a ``ProcessPoolExecutor``
     directly, which returns a generator object, the mapped iterable is fully
     manifested first and only then wrapped.
 
     See Also
     --------
-    concurrent.futures.ThreadPoolExecutor
+    concurrent.futures.ProcessPoolExecutor
 
     """
 
@@ -55,28 +55,31 @@ class ThreadMap[**P, S, T](ArgRepr):
             self,
             transform: type[S] | Callable[P, S],
             wrapper: type[T] | Callable[[list[S]], T] | None = None,
-            max_workers: int = 16,
-            thread_name_prefix: str = '',
+            max_workers: int | None = 4,
             initializer: Callable[..., Any] | None = None,
             initargs: tuple[Any, ...] = (),
-            timeout: int | float | None = None
+            max_tasks_per_child: int | None = None,
+            timeout: int | float | None = None,
+            chunksize: int = 1
     ) -> None:
         super().__init__(
             transform,
             wrapper,
             max_workers,
-            thread_name_prefix,
             initializer,
             initargs,
-            timeout
+            max_tasks_per_child,
+            timeout,
+            chunksize
         )
         self.transform = transform
         self.wrapper = wrapper
         self.max_workers = max_workers
-        self.thread_name_prefix = thread_name_prefix
         self.initializer = initializer
         self.initargs = initargs
+        self.max_tasks_per_child = max_tasks_per_child
         self.timeout = timeout
+        self.chunksize = chunksize
 
     def __call__(self, iterable: Iterable, *iterables: Iterable) -> T:
         """Concurrently transform the element(s) of the given iterable(s).
@@ -100,21 +103,23 @@ class ThreadMap[**P, S, T](ArgRepr):
         Raises
         ------
         MapError
-            If calling the ``ThreadPoolExecutor``'s ``map`` method raises an
+            If calling the ``ProcessPoolExecutor``'s ``map`` method raises an
             exception or if wrapping the results leads to an exception.
 
         """
-        with ThreadPoolExecutor(
+        with ProcessPoolExecutor(
             self.max_workers,
-            self.thread_name_prefix,
+            None,
             self.initializer,
-            self.initargs
+            self.initargs,
+            max_tasks_per_child=self.max_tasks_per_child
         ) as pool:
             mapped = pool.map(
                 self.transform,
                 iterable,
                 *iterables,
-                timeout=self.timeout
+                timeout=self.timeout,
+                chunksize=self.chunksize
             )
             try:
                 mapped = list(mapped)

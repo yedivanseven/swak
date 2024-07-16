@@ -1,9 +1,9 @@
 from typing import Iterator, Any, Callable, Self, Iterable, ParamSpec
 from functools import singledispatchmethod
-from .exceptions import ForkError
 from ..magic import IndentRepr
+from .exceptions import ForkError
 
-type P = ParamSpec('P')
+P = ParamSpec('P')
 type Call = type | Callable[P, Any]
 
 
@@ -15,7 +15,6 @@ class Fork[**P, T](IndentRepr):
     specifying the concatenation of the return types of all callables, ignoring
     empty tuples. If only a single object remains, the type of that object
     should be annotated.
-
 
     Parameters
     ----------
@@ -114,7 +113,7 @@ class Fork[**P, T](IndentRepr):
 
         """
         results = []
-        for i, call in enumerate(self):
+        for i, call in enumerate(self.calls):
             try:
                 result = call(*args)
             except Exception as error:

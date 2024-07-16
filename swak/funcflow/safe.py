@@ -1,6 +1,6 @@
 from typing import Callable, Iterable
 from ..magic import ArgRepr
-from .exceptions import Caught
+from .exceptions import SafeError
 
 
 class Safe[**P, T](ArgRepr):
@@ -22,7 +22,7 @@ class Safe[**P, T](ArgRepr):
 
     See Also
     --------
-    Caught
+    SafeError
 
     """
 
@@ -41,7 +41,7 @@ class Safe[**P, T](ArgRepr):
         super().__init__(call, *self.exceptions)
         self.exceptions = self.exceptions if self.exceptions else (Exception, )
 
-    def __call__(self, *args: P.args) -> T | Caught:
+    def __call__(self, *args: P.args) -> T | SafeError:
         """Call the cached callable, catching any or all exceptions raised.
 
         Parameters
@@ -51,12 +51,12 @@ class Safe[**P, T](ArgRepr):
 
         Returns
         -------
-        object or Caught
+        object or SafeError
             Either the return value(s) of the cached `call` or an instance of
-            ``Caught`` wrapping one of the specified `exceptions`.
+            ``SafeError`` wrapping one of the specified `exceptions`.
 
         """
         try:
             return self.call(*args)
         except self.exceptions as error:
-            return Caught(error, self._name(self.call), self.call, args)
+            return SafeError(error, self._name(self.call), self.call, args)

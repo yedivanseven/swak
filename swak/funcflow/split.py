@@ -1,6 +1,6 @@
 from typing import Callable, Iterable
-from .exceptions import SplitError
 from ..magic import ArgRepr
+from .exceptions import SplitError
 
 
 class Split[S, T](ArgRepr):

@@ -33,7 +33,7 @@ class SumError(Exception):
     pass
 
 
-class Caught(Exception):
+class SafeError(Exception):
     """Special exception to wrap other exceptions.
 
     Parameters

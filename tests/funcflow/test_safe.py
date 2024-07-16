@@ -1,7 +1,7 @@
 import unittest
 import pickle
 from unittest.mock import Mock
-from swak.funcflow import Safe, Caught
+from swak.funcflow import Safe, SafeError
 from swak.magic import ArgRepr, IndentRepr
 
 
@@ -112,7 +112,7 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_caught_correct_exception(self):
         actual = Safe(g)(1, 0)
-        self.assertIsInstance(actual, Caught)
+        self.assertIsInstance(actual, SafeError)
 
 
 class TestExceptionsAttributes(unittest.TestCase):
@@ -171,7 +171,7 @@ class TestExceptionsUsage(unittest.TestCase):
 
     def test_caught_correct_exception(self):
         actual = Safe(g, ZeroDivisionError, StopIteration)(1, 0)
-        self.assertIsInstance(actual, Caught)
+        self.assertIsInstance(actual, SafeError)
 
     def test_lets_wrong_exception_through(self):
         with self.assertRaises(AttributeError):
