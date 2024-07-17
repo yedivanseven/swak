@@ -1,4 +1,5 @@
 prune tests
 prune Notebooks
 prune docs
-exclude .gitignore
+prune site
+exclude .gitignore .python_version mkdocs.yml version.env
