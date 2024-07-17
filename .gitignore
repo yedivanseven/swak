@@ -134,3 +134,6 @@ dmypy.json
 
 # setuptools_scm
 version.env
+
+# Ruff
+.ruff_cache/
