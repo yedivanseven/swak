@@ -19,25 +19,30 @@ class ProcessMap[**P, S, T](ArgRepr):
         If not given, an attempt will be made to return the type of the first
         iterable the callable instance is being called with (by calling its
         class with a list of the mapped elements). If explicitly given,
-        `wrapper` will be called with a list mapped elements. Consequently,
+        `wrapper` will be called with a list of mapped elements. Consequently,
         the return type will be the (return) type of `wrapper`.
     max_workers: int, optional
         Maximum number of worker processes used in the pool to execute
         `transform` asynchronously. Will be forwarded to the constructor of
         ``ProcessPoolExecutor``. Defaults to 4.
     initializer: callable, optional
-        Called at the start of each worker thread. Will be forwarded to the
+        Called at the start of each worker process. Will be forwarded to the
         constructor of ``ProcessPoolExecutor``. Defaults to ``None``.
     initargs: tuple, optional
         Arguments passed to the initializer. Will be forwarded to the
         constructor of ``ProcessPoolExecutor``. Defaults to an empty tuple.
+    max_tasks_per_child: int, optional
+        Maximum number of iterable items to transform in each worker process
+        before they are being restarted. Defaults to ``None`` indicating no
+        restart(s) at all.
     timeout: int or float, optional
         Maximum time (in seconds) to wait for results to be available. Defaults
         to ``None``, which means there is no limit for the time to wait. Will
         be forwarded to the ``map`` method of the ``ProcessPoolExecutor``.
     chunksize: int, optional
-        Will be forwarded to the ``map`` method of the ``ProcessPoolExecutor``.
-        Defaults to 1.
+        Number of items from the iterable to feed to one worker process at a
+        time. Defaults to 1. Will be forwarded to the ``map`` method of the
+        ``ProcessPoolExecutor``.
 
     Notes
     -----
@@ -108,11 +113,11 @@ class ProcessMap[**P, S, T](ArgRepr):
 
         """
         with ProcessPoolExecutor(
-            self.max_workers,
-            None,
-            self.initializer,
-            self.initargs,
-            max_tasks_per_child=self.max_tasks_per_child
+                self.max_workers,
+                None,
+                self.initializer,
+                self.initargs,
+                max_tasks_per_child=self.max_tasks_per_child
         ) as pool:
             mapped = pool.map(
                 self.transform,

@@ -19,7 +19,7 @@ class ThreadMap[**P, S, T](ArgRepr):
         If not given, an attempt will be made to return the type of the first
         iterable the callable instance is being called with (by calling its
         class with a list of the mapped elements). If explicitly given,
-        `wrapper` will be called with a list mapped elements. Consequently,
+        `wrapper` will be called with a list of mapped elements. Consequently,
         the return type will be the (return) type of `wrapper`.
     max_workers: int, optional
         Maximum number of worker threads used in the pool to execute

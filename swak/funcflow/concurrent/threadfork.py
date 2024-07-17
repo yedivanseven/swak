@@ -9,7 +9,7 @@ type Call = type | Callable[P, Any]
 
 
 class ThreadFork[**P, T](IndentRepr):
-    """Thread-parallely call any number of callables with the same argument(s).
+    """Call multiple callables with the same argument(s) in parallel threads.
 
     Generic type annotation of instances is recommended. Provide a list of
     one or more input types that all callables take, followed by a ``tuple``
@@ -41,7 +41,7 @@ class ThreadFork[**P, T](IndentRepr):
     timeout: int or float, optional
         Maximum time (in seconds) to wait for results to be available. Defaults
         to ``None``, which means there is no limit for the time to wait. Will
-        be forwarded to the ``result`` method of the ``Future``.
+        be forwarded to the ``result`` method of ``Future``.
 
     See Also
     --------
