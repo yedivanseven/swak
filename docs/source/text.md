@@ -1,0 +1,3 @@
+# dictionary
+
+::: swak.text

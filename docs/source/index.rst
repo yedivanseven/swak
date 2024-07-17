@@ -10,6 +10,7 @@ Welcome to swak's documentation!
    magic
    dictionary
    funcflow
+   text
 
 
 Indices and tables
