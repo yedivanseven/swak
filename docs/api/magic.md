@@ -1,0 +1,4 @@
+# magic
+
+::: swak.magic
+

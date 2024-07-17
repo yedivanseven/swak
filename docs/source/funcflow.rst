@@ -3,7 +3,7 @@ funcflow
 
 .. toctree::
    :maxdepth: 1
-   :caption: Subpackages:
+   :caption: Subpackages
 
    concurrent
 

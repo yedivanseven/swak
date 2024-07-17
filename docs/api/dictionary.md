@@ -1,0 +1,4 @@
+# dictionary
+
+::: swak.dictionary
+

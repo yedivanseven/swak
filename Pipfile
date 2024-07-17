@@ -11,6 +11,8 @@ jupyter = "*"
 ruff = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+mkdocs = "*"
+mkdocstrings-python = "*"
 
 [requires]
 python_version = "3.12"
