@@ -1,6 +1,6 @@
 Welcome to swak's documentation!
 =================================
-*The Swiss army knife for functional data-science projects*
+*Swiss army knife for functional data-science projects.*
 
 .. toctree::
    :hidden:
