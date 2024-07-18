@@ -9,7 +9,7 @@ from .split import Split
 from .sum import Sum
 from .safe import Safe
 from .exceptions import SafeError
-from .misc import apply, exit_ok, unit, identity
+from .misc import apply, unit, identity
 
 __all__ = [
     'Filter',
@@ -24,7 +24,6 @@ __all__ = [
     'Safe',
     'SafeError',
     'apply',
-    'exit_ok',
     'unit',
     'identity'
 ]

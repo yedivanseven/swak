@@ -57,7 +57,7 @@ class SafeError(Exception):
             self,
             error: Exception,
             name: str,
-            call: type | Callable[..., Any],
+            call: type | Callable[..., Any],  # ToDo: Do we really need this?
             call_args: tuple[Any, ...]
     ) -> None:
         self.error = error

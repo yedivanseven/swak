@@ -1,4 +1,3 @@
-import os
 from typing import Any, overload, Callable
 
 
@@ -19,18 +18,6 @@ def apply[**P, T](call: type[T] | Callable[P, T], *args: P.args) -> T:
 
     """
     return call(*args)
-
-
-def exit_ok(*_: Any) -> int:
-    """Accepts any number of arguments but always returns exit code for OK.
-
-    Returns
-    -------
-    int
-        Exit code for OK.
-
-    """
-    return os.EX_OK
 
 
 def unit(*_: Any) -> tuple[()]:
@@ -71,8 +58,9 @@ def identity(*args):
     Returns
     -------
     object or tuple
-        Called with one argument, this argument is simply passed through. When
-        called with more than one argument, the arguments tuple returned.
+        Called with one argument, this argument is simply passed through.
+        When called with more than one argument, the arguments tuple returned.
+        When called with no argument, an empty tuple is returned.
 
     """
     return args[0] if len(args) == 1 else args

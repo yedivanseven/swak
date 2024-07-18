@@ -1,5 +1,8 @@
 from .resource import TextResourceLoader
+from .interpolate import TemplateRenderer, FormFiller
 
 __all__ = [
-    'TextResourceLoader'
+    'TextResourceLoader',
+    'TemplateRenderer',
+    'FormFiller'
 ]

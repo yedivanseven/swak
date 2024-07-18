@@ -1,25 +1,6 @@
-import os
 import unittest
 from unittest.mock import Mock
-from swak.funcflow import unit, identity, exit_ok, apply
-
-
-class TestExitOk(unittest.TestCase):
-
-    def test_empty(self):
-        actual = exit_ok()
-        self.assertIsInstance(actual, int)
-        self.assertEqual(os.EX_OK, actual)
-
-    def test_one(self):
-        actual = exit_ok('foo')
-        self.assertIsInstance(actual, int)
-        self.assertEqual(os.EX_OK, actual)
-
-    def test_many(self):
-        actual = exit_ok(1, 'foo', False)
-        self.assertIsInstance(actual, int)
-        self.assertEqual(os.EX_OK, actual)
+from swak.funcflow import unit, identity, apply
 
 
 class TestUnit(unittest.TestCase):
