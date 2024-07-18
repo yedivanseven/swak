@@ -13,7 +13,7 @@ class _Template(string.Template):
 
     """
 
-    braceidpattern = '(?a:[_a-z][._a-z0-9]*)'
+    braceidpattern = '(?a:[_a-z][_a-z0-9]*(\\.[_a-z][_a-z0-9]*)*)'
 
 
 class TemplateRenderer:
