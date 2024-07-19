@@ -508,7 +508,7 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(KeyError):
             _ = t(FIRST='world')
 
-    def test_non_identifier_key_istantiation(self):
+    def test_non_identifier_key_instantiation(self):
         t = TemplateRenderer('Hello ${1}!', {'1': 'world'})
         self.assertEqual('Hello ${1}!', t.template)
         t = TemplateRenderer('Hello ${1}!', {1: 'world'})
@@ -525,12 +525,12 @@ class TestMisc(unittest.TestCase):
         t = TemplateRenderer('Hello ${my.dear}!', {'my.dear': 'world'})
         self.assertEqual('Hello world!', t.template)
 
-    def test_raises_dot_keys_call(self):
+    def test_dot_keys_call(self):
         t = TemplateRenderer('Hello ${my.dear}!')
         actual = t({'my.dear': 'world'})
         self.assertEqual('Hello world!', actual)
 
-    def test_non_identifier_dot_key_istantiation(self):
+    def test_non_identifier_dot_key_instantiation(self):
         t = TemplateRenderer('Hello ${my.1}!', {'my.1': 'world'})
         self.assertEqual('Hello ${my.1}!', t.template)
 

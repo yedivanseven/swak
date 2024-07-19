@@ -25,9 +25,6 @@ class TemplateRenderer:
     need to be provided, but when the object is called and the substitution
     is finalized, all keys must have been provided.
 
-    Instances evaluated to ``True`` if all keys were provided at instantiation
-    and to ``False`` id there are still keys missing.
-
     Parameters
     ----------
     template: str
@@ -39,10 +36,16 @@ class TemplateRenderer:
         Keyword arguments replace respective placeholders with whatever value
         is passed, overwriting values in `mapping`.
 
+    Notes
+    -----
+    Instances evaluate to ``True`` if all keys were provided at instantiation
+    and to ``False`` if there are still keys missing.
+
     """
 
     def __init__(self, template: str, mapping: M = None, **kwargs: Any) -> None:
         mapping = {} if mapping is None else mapping
+        # We could also delay this until instances are called
         self.template = _Template(template).safe_substitute(mapping, **kwargs)
 
     def __repr__(self) -> str:
@@ -85,6 +88,8 @@ class TemplateRenderer:
         ------
         KeyError
             When a value for one or more placeholders is still missing.
+        ValueError
+            When a key is not a valid python identifier.
 
         """
         mapping = {} if mapping is None else mapping
@@ -108,6 +113,11 @@ class FormFiller:
         Keyword arguments replace respective placeholders with whatever value
         is passed, overwriting respective values in `mapping`.
 
+    Notes
+    -----
+    Instances evaluate to ``False`` if no keys were provided at instantiation
+    and to ``True`` if there are any keys cached.
+
     """
 
     def __init__(self, mapping: M = None, **kwargs: Any) -> None:
@@ -120,6 +130,9 @@ class FormFiller:
         head = str(self.mapping).splitlines()[0].strip()
         suffix = ' ...}' if len(head) > 30 else ''
         return f'{cls}({head[:30] + suffix})'
+
+    def __bool__(self) -> bool:
+        return bool(self.mapping)
 
     def __call__(self, template: str, mapping: M = None, **kwargs: Any) -> str:
         """Substitute bash-style "${key}" placeholders in a string template.
@@ -144,6 +157,8 @@ class FormFiller:
         ------
         KeyError
             When a value for one or more placeholders is still missing.
+        ValueError
+            When a key is not a valid python identifier.
 
         """
         mapping = kwargs if mapping is None else {**mapping, **kwargs}
