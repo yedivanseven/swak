@@ -25,15 +25,15 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_has_prefix(self):
         load = TextResourceLoader('tests.text')
-        self.assertTrue(hasattr(load, 'prefix'))
+        self.assertTrue(hasattr(load, 'base_dir'))
 
     def test_prefix_type(self):
         load = TextResourceLoader('tests.text')
-        self.assertIsInstance(load.prefix, str)
+        self.assertIsInstance(load.base_dir, str)
 
     def test_prefix_value(self):
         load = TextResourceLoader('tests.text')
-        self.assertEqual('resources', load.prefix)
+        self.assertEqual('resources', load.base_dir)
 
     def test_has_encoding(self):
         load = TextResourceLoader('tests.text')
@@ -51,16 +51,16 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def test_prefix_type(self):
-        load = TextResourceLoader('tests.text', 'prefix')
-        self.assertIsInstance(load.prefix, str)
+        load = TextResourceLoader('tests.text', 'base_dir')
+        self.assertIsInstance(load.base_dir, str)
 
     def test_prefix_value(self):
-        load = TextResourceLoader('tests.text', 'prefix')
-        self.assertEqual('prefix', load.prefix)
+        load = TextResourceLoader('tests.text', 'base_dir')
+        self.assertEqual('base_dir', load.base_dir)
 
     def test_prefix_strip(self):
-        load = TextResourceLoader('tests.text', '/ prefix/ ')
-        self.assertEqual('prefix', load.prefix)
+        load = TextResourceLoader('tests.text', '/ base_dir/ ')
+        self.assertEqual('base_dir', load.base_dir)
 
     def test_encoding_type(self):
         load = TextResourceLoader('tests.text', encoding='foo')
@@ -178,10 +178,10 @@ class TestStrip(unittest.TestCase):
         self.assertEqual('baz\n', txt)
 
 
-class TestRepr(unittest.TestCase):
+class TestMisc(unittest.TestCase):
 
     def test_repr(self):
-        load = TextResourceLoader('tests.text', prefix='foo')
+        load = TextResourceLoader('tests.text', base_dir='foo')
         expected = "TextResourceLoader('tests.text', 'foo', 'utf-8')"
         self.assertEqual(expected, repr(load))
 

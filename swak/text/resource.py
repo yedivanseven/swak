@@ -11,7 +11,7 @@ class TextResourceLoader(ArgRepr):
     ----------
     package: str
         Name of the python package under which the text file is located.
-    prefix: str, optional
+    base_dir: str, optional
         Directory under which the text file is located within the python
         package. May contain any number of forward slashes to access nested
         subdirectories. Defaults to "resources".
@@ -23,13 +23,13 @@ class TextResourceLoader(ArgRepr):
     def __init__(
             self,
             package: str,
-            prefix: str = 'resources',
+            base_dir: str = 'resources',
             encoding: str = 'utf-8'
     ) -> None:
         self.package = package.strip(' /')
-        self.prefix = prefix.strip(' /')
+        self.base_dir = base_dir.strip(' /')
         self.encoding = encoding.strip()
-        super().__init__(self.package, self.prefix, self.encoding)
+        super().__init__(self.package, self.base_dir, self.encoding)
 
     def __call__(self, path: str, *args: Any) -> str:
         """Load text file from a directory within the specified python package.
@@ -40,9 +40,9 @@ class TextResourceLoader(ArgRepr):
             Path (including file name) relative to the parent python package.
         *args
             Additional arguments will be interpolated into the joined string
-            of `prefix` and `path` by calling its `format` method. Obviously,
+            of `base_dir` and `path` by calling its `format` method. Obviously,
             the number of args must be equal to (or greater than) the total
-            number of placeholders in the combined `prefix` and `path`.
+            number of placeholders in the combined `base_dir` and `path`.
 
         Returns
         -------
@@ -51,5 +51,5 @@ class TextResourceLoader(ArgRepr):
 
         """
 
-        full_path = os.path.join(self.prefix, path.strip(' /')).format(*args)
+        full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
         return pkgutil.get_data(self.package, full_path).decode(self.encoding)
