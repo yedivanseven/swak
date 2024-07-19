@@ -5,7 +5,8 @@ import yaml
 from yaml import Loader
 from ..magic import ArgRepr
 
-type YamlToml = dict[str, Any] | list[dict[str, Any]]
+type Toml = dict[str, Any]
+type Yaml = dict[str, Any] | list[Any]
 
 
 class TomlReader(ArgRepr):
@@ -31,7 +32,7 @@ class TomlReader(ArgRepr):
         self.parse_float = parse_float
         super().__init__(self.base_dir, parse_float)
 
-    def __call__(self, path: str, *args: Any) -> YamlToml:
+    def __call__(self, path: str, *args: Any) -> Toml:
         """Read a specific TOML file.
 
         Parameters
@@ -48,7 +49,7 @@ class TomlReader(ArgRepr):
 
         Returns
         -------
-        dict or list of dicts
+        dict
             The parsed contents of the TOML file.
 
         """
@@ -80,7 +81,7 @@ class YamlReader(ArgRepr):
         self.loader = loader
         super().__init__(self.base_dir, loader)
 
-    def __call__(self, path: str, *args: Any) -> YamlToml:
+    def __call__(self, path: str, *args: Any) -> Yaml:
         """Read a specific YAML file.
 
         Parameters
@@ -97,7 +98,7 @@ class YamlReader(ArgRepr):
 
         Returns
         -------
-        dict or list of dicts
+        dict or list
             The parsed contents of the YAML file.
 
         """
