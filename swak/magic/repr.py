@@ -34,45 +34,6 @@ class _ReprName:
         return 'lambda' if '<lambda>' in name else name
 
 
-class ArgRepr(_ReprName):
-    """Base class for a representation with class name and (keyword) arguments.
-
-    This class is not meant to be instantiated by itself. Rather, it is meant
-    to be inherited from. Its constructor is then meant to be called in the
-    child's constructor (with ``super().__init__(...)``), passing the (keyword)
-    arguments that are desired to appear in the child's representation.
-
-    Parameters
-    ----------
-    *args
-        Appear as arguments within parentheses in the child representation
-        after its class name.
-    **kwargs
-        Appear as keyword arguments within parentheses in the child
-        representation after its class name and arguments.
-
-    """
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.__args = args
-        self.__kwargs = kwargs
-
-    def __repr__(self) -> str:
-        cls = self.__class__.__name__
-        args = ', '.join(self._repr(arg) for arg in self.__args)
-        kwargs = (f'{k}={self._repr(v)}' for k, v in self.__kwargs.items())
-        kwargs = ', '.join(kwargs)
-        signature = ', '.join(filter(None, [args, kwargs]))
-        return f'{cls}({signature})'
-
-    def _repr(self, obj: Any, _: int = 0) -> str:
-        """Representation for any object."""
-        if isinstance(obj, IndentRepr):
-            suffix = f'[{len(repr(obj).splitlines()) - 1}]'
-            return obj.__class__.__name__ + suffix
-        return super()._repr(obj)
-
-
 class IndentRepr(_ReprName):
     """Base class for a representation with numbered and indented children.
 
@@ -110,3 +71,42 @@ class IndentRepr(_ReprName):
         args = enumerate(self._repr(arg, level) for arg in self.__args)
         items = '\n'.join(f'{indent}[{i:>2}] {arg}' for i, arg in args)
         return cls + items
+
+
+class ArgRepr(_ReprName):
+    """Base class for a representation with class name and (keyword) arguments.
+
+    This class is not meant to be instantiated by itself. Rather, it is meant
+    to be inherited from. Its constructor is then meant to be called in the
+    child's constructor (with ``super().__init__(...)``), passing the (keyword)
+    arguments that are desired to appear in the child's representation.
+
+    Parameters
+    ----------
+    *args
+        Appear as arguments within parentheses in the child representation
+        after its class name.
+    **kwargs
+        Appear as keyword arguments within parentheses in the child
+        representation after its class name and arguments.
+
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.__args = args
+        self.__kwargs = kwargs
+
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        args = ', '.join(self._repr(arg) for arg in self.__args)
+        kwargs = (f'{k}={self._repr(v)}' for k, v in self.__kwargs.items())
+        kwargs = ', '.join(kwargs)
+        signature = ', '.join(filter(None, [args, kwargs]))
+        return f'{cls}({signature})'
+
+    def _repr(self, obj: Any, _: int = 0) -> str:
+        """Representation for any object."""
+        if isinstance(obj, IndentRepr):
+            suffix = f'[{len(repr(obj).splitlines()) - 1}]'
+            return obj.__class__.__name__ + suffix
+        return super()._repr(obj)
