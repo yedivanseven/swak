@@ -46,9 +46,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self, *_):
         raise AttributeError('Test!')
 
@@ -245,7 +242,7 @@ class TestUsage(unittest.TestCase):
         expected = ("\nAttributeError executing\n"
                     "g\n"
                     "in step 1 of\n"
-                    "Pipe:\n"
+                    "Pipe():\n"
                     "[ 0] f\n"
                     "[ 1] g\n"
                     "[ 2] f\n"
@@ -259,7 +256,7 @@ class TestUsage(unittest.TestCase):
         expected = ("\nAttributeError executing\n"
                     "A(1)\n"
                     "in step 1 of\n"
-                    "Pipe:\n"
+                    "Pipe():\n"
                     "[ 0] f\n"
                     "[ 1] A(1)\n"
                     "[ 2] f\n"
@@ -271,16 +268,16 @@ class TestUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         expected = ("\nAttributeError executing\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "in step 1 of\n"
-                    "Pipe:\n"
+                    "Pipe():\n"
                     "[ 0] f\n"
-                    "[ 1] Ind:\n"
+                    "[ 1] Ind():\n"
                     "     [ 0] 1\n"
                     "[ 2] f\n"
                     "Test!")
-        pipe = Pipe(f, Ind(1), f)
+        pipe = Pipe(f, Ind([1]), f)
         with self.assertRaises(PipeError) as error:
             _ = pipe()
         self.assertEqual(expected, str(error.exception))
@@ -413,7 +410,7 @@ class TestRepr(unittest.TestCase):
             A('foo')
         )
         expected = (
-            "Pipe:\n"
+            "Pipe():\n"
             "[ 0] lambda\n"
             "[ 1] f\n"
             "[ 2] Cls\n"
@@ -438,8 +435,8 @@ class TestRepr(unittest.TestCase):
         )
         outer = Pipe(pipe, pipe)
         expected = (
-            "Pipe:\n"
-            "[ 0] Pipe:\n"
+            "Pipe():\n"
+            "[ 0] Pipe():\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -448,7 +445,7 @@ class TestRepr(unittest.TestCase):
             "     [ 5] Cls.s\n"
             "     [ 6] Call(...)\n"
             "     [ 7] A('foo')\n"
-            "[ 1] Pipe:\n"
+            "[ 1] Pipe():\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"

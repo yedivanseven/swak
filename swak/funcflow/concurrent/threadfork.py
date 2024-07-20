@@ -60,25 +60,19 @@ class ThreadFork[**P, T](IndentRepr):
             timeout: int | float | None = None
     ) -> None:
         self.calls = ((call,) if callable(call) else tuple(call)) + calls
-        super().__init__(*self.calls)
         self.max_workers = max_workers
         self.thread_name_prefix = thread_name_prefix
         self.initializer = initializer
         self.initargs = initargs
         self.timeout = timeout
-
-    def _indented_repr(self, level: int) -> str:
-        cls = self.__class__.__name__
-        args = ', '.join([
-            str(self.max_workers),
-            repr(self.thread_name_prefix),
-            self._name(self.initializer),
-            str(self.initargs),
-            str(self.timeout)
-        ])
-        body = '\n'.join(super()._indented_repr(level).split('\n')[1:])
-        head = f'{cls}({args})' + (':' if body else '')
-        return head + ('\n' if body else '') + body
+        super().__init__(
+            self.calls,
+            max_workers,
+            thread_name_prefix,
+            initializer,
+            initargs,
+            timeout
+        )
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...

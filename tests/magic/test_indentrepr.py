@@ -60,15 +60,10 @@ class TestArgumentTypes(unittest.TestCase):
         def __init__(self) -> None:
             super().__init__()
 
-    class Args(IndentRepr):
-
-        def __init__(self, *args) -> None:
-            super().__init__(*args)
+    class Ind(IndentRepr):
+        pass
 
     class CallInd(IndentRepr):
-
-        def __init__(self, *args) -> None:
-            super().__init__(*args)
 
         def __call__(self):
             pass
@@ -86,36 +81,36 @@ class TestArgumentTypes(unittest.TestCase):
 
     def test_empty_super_init(self):
         actual = self.Empty()
-        self.assertEqual('Empty', repr(actual))
+        self.assertEqual('Empty()', repr(actual))
 
-    def test_no_args(self):
-        actual = self.Args()
-        self.assertEqual('Args', repr(actual))
+    def test_no_items(self):
+        actual = self.Ind()
+        self.assertEqual('Ind()', repr(actual))
 
     def test_int(self):
-        actual = self.Args(1, 2, 3)
-        expected = "Args:\n[ 0] 1\n[ 1] 2\n[ 2] 3"
+        actual = self.Ind([1, 2, 3])
+        expected = "Ind():\n[ 0] 1\n[ 1] 2\n[ 2] 3"
         self.assertEqual(expected, repr(actual))
 
     def test_string(self):
-        actual = self.Args('a', 'b', 'c')
-        expected = "Args:\n[ 0] 'a'\n[ 1] 'b'\n[ 2] 'c'"
+        actual = self.Ind(['a', 'b', 'c'])
+        expected = "Ind():\n[ 0] 'a'\n[ 1] 'b'\n[ 2] 'c'"
         self.assertEqual(expected, repr(actual))
 
     def test_custom_object(self):
         cls = Cls()
-        actual = self.Args(cls)
-        expected = f"Args:\n[ 0] {str(cls)}"
+        actual = self.Ind([cls])
+        expected = f"Ind():\n[ 0] {str(cls)}"
         self.assertEqual(expected, repr(actual))
 
     def test_argrepr(self):
-        actual = self.Args(A(1))
-        expected = "Args:\n[ 0] A(1)"
+        actual = self.Ind([A(1)])
+        expected = "Ind():\n[ 0] A(1)"
         self.assertEqual(expected, repr(actual))
 
     def test_callable(self):
         cls = Cls()
-        actual = self.Args(
+        actual = self.Ind([
             f,
             Cls,
             lambda x: x,
@@ -130,8 +125,8 @@ class TestArgumentTypes(unittest.TestCase):
             self.CallInd(1, 2, 3).m,
             self.CallInd.c,
             self.CallInd(1, 2, 3).s
-        )
-        expected = ("Args:\n[ 0] f\n[ 1] Cls\n[ 2] lambda\n[ 3] Call(...)\n"
+        ])
+        expected = ("Ind():\n[ 0] f\n[ 1] Cls\n[ 2] lambda\n[ 3] Call(...)\n"
                     "[ 4] CallA(1)\n[ 5] Cls.m\n[ 6] Cls.c\n[ 7] Cls.s\n"
                     "[ 8] CallA.m\n[ 9] CallA.c\n[10] CallA.s\n"
                     "[11] TestArgumentTypes.CallInd.m\n"
@@ -140,36 +135,66 @@ class TestArgumentTypes(unittest.TestCase):
         self.assertEqual(expected, repr(actual))
 
     def test_nested_once(self):
-        child = self.Args(2, 3)
-        parent = self.Args(1, child, 4)
-        expected_child = "[ 1] Args:\n     [ 0] 2\n     [ 1] 3\n"
-        expected = f"Args:\n[ 0] 1\n{expected_child}[ 2] 4"
+        child = self.Ind([2, 3])
+        parent = self.Ind([1, child, 4])
+        expected_child = "[ 1] Ind():\n     [ 0] 2\n     [ 1] 3\n"
+        expected = f"Ind():\n[ 0] 1\n{expected_child}[ 2] 4"
         self.assertEqual(expected, repr(parent))
 
     def test_nested_twice(self):
-        child = self.Args(3, 4)
-        parent = self.Args(2, child, 5)
-        grand = self.Args(1, parent, 6)
-        ch = "     [ 1] Args:\n          [ 0] 3\n          [ 1] 4\n"
-        pa = f"[ 1] Args:\n     [ 0] 2\n{ch}     [ 2] 5\n"
-        expected = f"Args:\n[ 0] 1\n{pa}[ 2] 6"
+        child = self.Ind([3, 4])
+        parent = self.Ind([2, child, 5])
+        grand = self.Ind([1, parent, 6])
+        ch = "     [ 1] Ind():\n          [ 0] 3\n          [ 1] 4\n"
+        pa = f"[ 1] Ind():\n     [ 0] 2\n{ch}     [ 2] 5\n"
+        expected = f"Ind():\n[ 0] 1\n{pa}[ 2] 6"
         self.assertEqual(expected, repr(grand))
 
     def test_callable_nested_once(self):
-        child = self.CallInd(2, 3)
-        parent = self.CallInd(1, child, 4)
-        expected_child = "[ 1] CallInd:\n     [ 0] 2\n     [ 1] 3\n"
-        expected = f"CallInd:\n[ 0] 1\n{expected_child}[ 2] 4"
+        child = self.CallInd([2, 3])
+        parent = self.CallInd([1, child, 4])
+        expected_child = "[ 1] CallInd():\n     [ 0] 2\n     [ 1] 3\n"
+        expected = f"CallInd():\n[ 0] 1\n{expected_child}[ 2] 4"
         self.assertEqual(expected, repr(parent))
 
     def test_callable_nested_twice(self):
-        child = self.CallInd(3, 4)
-        parent = self.CallInd(2, child, 5)
-        grand = self.CallInd(1, parent, 6)
-        ch = "     [ 1] CallInd:\n          [ 0] 3\n          [ 1] 4\n"
-        pa = f"[ 1] CallInd:\n     [ 0] 2\n{ch}     [ 2] 5\n"
-        expected = f"CallInd:\n[ 0] 1\n{pa}[ 2] 6"
+        child = self.CallInd([3, 4])
+        parent = self.CallInd([2, child, 5])
+        grand = self.CallInd([1, parent, 6])
+        ch = "     [ 1] CallInd():\n          [ 0] 3\n          [ 1] 4\n"
+        pa = f"[ 1] CallInd():\n     [ 0] 2\n{ch}     [ 2] 5\n"
+        expected = f"CallInd():\n[ 0] 1\n{pa}[ 2] 6"
         self.assertEqual(expected, repr(grand))
+
+    def test_empty_items_args(self):
+        actual = self.Ind([], 'answer', 42)
+        expected = "Ind('answer', 42)"
+        self.assertEqual(expected, repr(actual))
+
+    def test_items_args(self):
+        actual = self.Ind(['question'], 'answer', 42)
+        expected = "Ind('answer', 42):\n[ 0] 'question'"
+        self.assertEqual(expected, repr(actual))
+
+    def test_empty_items_kwargs(self):
+        actual = self.Ind([], answer=42)
+        expected = "Ind(answer=42)"
+        self.assertEqual(expected, repr(actual))
+
+    def test_items_kwargs(self):
+        actual = self.Ind(['question'], answer=42)
+        expected = "Ind(answer=42):\n[ 0] 'question'"
+        self.assertEqual(expected, repr(actual))
+
+    def test_empty_items_args_kwargs(self):
+        actual = self.Ind([], 'question', answer=42)
+        expected = "Ind('question', answer=42)"
+        self.assertEqual(expected, repr(actual))
+
+    def test_items_args_kwargs(self):
+        actual = self.Ind(['everything'], 'question', answer=42)
+        expected = "Ind('question', answer=42):\n[ 0] 'everything'"
+        self.assertEqual(expected, repr(actual))
 
 
 class TestInheritance(unittest.TestCase):
@@ -179,7 +204,7 @@ class TestInheritance(unittest.TestCase):
         class Parent(IndentRepr):
 
             def __init__(self, a):
-                super().__init__(a)
+                super().__init__([a])
                 self.a = a
 
         class Child(Parent):
@@ -188,7 +213,7 @@ class TestInheritance(unittest.TestCase):
                 super().__init__(a)
 
         child = Child(1)
-        self.assertEqual('Child:\n[ 0] 1', repr(child))
+        self.assertEqual('Child():\n[ 0] 1', repr(child))
         self.assertTrue(hasattr(child, 'a'))
         self.assertEqual(1, child.a)
 
@@ -202,11 +227,11 @@ class TestInheritance(unittest.TestCase):
         class Child(Parent, IndentRepr):
 
             def __init__(self, a):
-                super(Parent, self).__init__(a)
+                super(Parent, self).__init__([a])
                 super().__init__(a)
 
         child = Child(1)
-        self.assertEqual('Child:\n[ 0] 1', repr(child))
+        self.assertEqual('Child():\n[ 0] 1', repr(child))
         self.assertTrue(hasattr(child, 'a'))
         self.assertEqual(1, child.a)
 
@@ -221,10 +246,10 @@ class TestInheritance(unittest.TestCase):
 
             def __init__(self, a):
                 super(IndentRepr, self).__init__(a)
-                super().__init__(a)
+                super().__init__([a])
 
         child = Child(1)
-        self.assertEqual('Child:\n[ 0] 1', repr(child))
+        self.assertEqual('Child():\n[ 0] 1', repr(child))
         self.assertTrue(hasattr(child, 'a'))
         self.assertEqual(1, child.a)
 
@@ -299,10 +324,10 @@ class TestName(unittest.TestCase):
         class Ind(IndentRepr):
 
             def __init__(self, b, c):
-                super().__init__(b, c)
+                super().__init__([b, c])
 
         ind = Ind('foo', 42)
-        expected = "Ind:\n[ 0] 'foo'\n[ 1] 42"
+        expected = "Ind():\n[ 0] 'foo'\n[ 1] 42"
         actual = self.i._name(ind)
         self.assertEqual(expected, actual)
 

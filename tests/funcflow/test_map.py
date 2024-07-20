@@ -47,9 +47,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self, x: int) -> int:
         return 1 / x
 
@@ -190,12 +187,12 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         expected = ('\nZeroDivisionError calling\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'on element #1:\n'
                     '0\n'
                     'division by zero')
-        m = Map(Ind(1))
+        m = Map(Ind([1]))
         with self.assertRaises(MapError) as error:
             _ = m([1, 0, 2])
         self.assertEqual(expected, str(error.exception))
@@ -305,11 +302,11 @@ class TestWrapperUsage(unittest.TestCase):
 
     def test_wrapper_error_msg_indentrepr(self):
         expected = ("\nTypeError calling wrapper\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "on map results:\n"
                     "unsupported operand type(s) for /: 'int' and 'list'")
-        m = Map(plus_2, Ind(1))
+        m = Map(plus_2, Ind([1]))
         with self.assertRaises(MapError) as error:
             _ = m([1, 2, 3])
         self.assertEqual(expected, str(error.exception))
@@ -373,8 +370,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Map(A(1), None)', repr(m))
 
     def test_default_indentrepr(self):
-        m = Map(Ind(1, 2, 3))
-        self.assertEqual('Map(Ind[3], None)', repr(m))
+        m = Map(Ind([1, 2, 3]))
+        self.assertEqual('Map(Ind()[3], None)', repr(m))
 
     def test_wrapper_repr(self):
         m = Map(plus_2, tuple)
@@ -385,8 +382,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Map(plus_2, A(1))', repr(m))
 
     def test_wrapper_indentrepr(self):
-        m = Map(plus_2, Ind(1, 2, 3))
-        self.assertEqual('Map(plus_2, Ind[3])', repr(m))
+        m = Map(plus_2, Ind([1, 2, 3]))
+        self.assertEqual('Map(plus_2, Ind()[3])', repr(m))
 
     def test_type_annotation_wrapper(self):
         _ = Map[[int, bool], float, list]

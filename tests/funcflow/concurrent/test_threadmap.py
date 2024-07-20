@@ -231,12 +231,12 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         expected = ('Error calling\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'on one or more element(s) of the iterable(s)!\n'
                     'ZeroDivisionError:\n'
                     'division by zero')
-        m = ThreadMap(Ind(1))
+        m = ThreadMap(Ind([1]))
         with self.assertRaises(MapError) as error:
             _ = m([1, 0, 2])
         self.assertEqual(expected, str(error.exception))
@@ -338,11 +338,11 @@ class TestWrapperUsage(unittest.TestCase):
 
     def test_wrapper_error_msg_indentrepr(self):
         expected = ("\nTypeError calling wrapper\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "on map results:\n"
                     "unsupported operand type(s) for /: 'int' and 'list'")
-        m = ThreadMap(plus_2, Ind(1))
+        m = ThreadMap(plus_2, Ind([1]))
         with self.assertRaises(MapError) as error:
             _ = m([1, 2, 3])
         self.assertEqual(expected, str(error.exception))
@@ -530,8 +530,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(excepted, repr(m))
 
     def test_default_indentrepr(self):
-        m = ThreadMap(Ind(1, 2, 3))
-        expected = "ThreadMap(Ind[3], None, 16, '', None, (), None)"
+        m = ThreadMap(Ind([1, 2, 3]))
+        expected = "ThreadMap(Ind()[3], None, 16, '', None, (), None)"
         self.assertEqual(expected, repr(m))
 
     def test_wrapper_repr(self):
@@ -545,8 +545,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(m))
 
     def test_wrapper_indentrepr(self):
-        m = ThreadMap(plus_2, Ind(1, 2, 3))
-        expected = "ThreadMap(plus_2, Ind[3], 16, '', None, (), None)"
+        m = ThreadMap(plus_2, Ind([1, 2, 3]))
+        expected = "ThreadMap(plus_2, Ind()[3], 16, '', None, (), None)"
         self.assertEqual(expected, repr(m))
 
     def test_threadpool_repr(self):

@@ -46,9 +46,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self, x, y):
         return x / y
 
@@ -191,11 +188,11 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(s)
 
-    def test_acc_pickle_works(self):
+    def test_pickle_works(self):
         s = Safe(f, ZeroDivisionError, StopIteration)
         _ = pickle.dumps(s)
 
-    def test_acc_pickle_raises_lambda(self):
+    def test_pickle_raises_lambda(self):
         s = Safe(lambda x, y: x + y, ZeroDivisionError, StopIteration)
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(s)
@@ -233,25 +230,25 @@ class TestMisc(unittest.TestCase):
         self.assertEqual("Safe(A(1))", repr(s))
 
     def test_default_indentrepr(self):
-        s = Safe(Ind(1, 2, 3))
-        self.assertEqual("Safe(Ind[3])", repr(s))
+        s = Safe(Ind([1, 2, 3]))
+        self.assertEqual("Safe(Ind()[3])", repr(s))
 
-    def test_acc_repr(self):
+    def test_repr(self):
         s = Safe(f, ZeroDivisionError)
         self.assertEqual('Safe(f, ZeroDivisionError)', repr(s))
 
-    def test_acc_argrepr(self):
+    def test_argrepr(self):
         s = Safe(A(1), ZeroDivisionError)
         self.assertEqual("Safe(A(1), ZeroDivisionError)", repr(s))
 
-    def test_acc_indentrepr(self):
-        s = Safe(Ind(1, 2, 3), ZeroDivisionError)
-        self.assertEqual("Safe(Ind[3], ZeroDivisionError)", repr(s))
+    def test_indentrepr(self):
+        s = Safe(Ind([1, 2, 3]), ZeroDivisionError)
+        self.assertEqual("Safe(Ind()[3], ZeroDivisionError)", repr(s))
 
     def test_type_annotation(self):
         _ = Safe[[int], int](lambda x: x)
 
-    def test_type_annotation_acc(self):
+    def test_type_annotation_exception(self):
         _ = Safe[[int, float], int](f, ZeroDivisionError)
 
 

@@ -50,9 +50,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self, *ys):
         raise AttributeError('Test!')
 
@@ -366,13 +363,13 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        fork = ThreadFork(Ind(1), g)
+        fork = ThreadFork(Ind([1]), g)
         expected = ('\nAttributeError executing\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'in fork 0 of\n'
                     "ThreadFork(16, '', None, (), None):\n"
-                    '[ 0] Ind:\n'
+                    '[ 0] Ind():\n'
                     '     [ 0] 1\n'
                     '[ 1] g\n'
                     'Test!')

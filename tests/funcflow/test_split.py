@@ -45,9 +45,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __bool__(self) -> bool:
         raise TypeError('Test!')
 
@@ -132,12 +129,12 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nTypeError calling\n'
                     'bool\n'
                     'on element #2:\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'Test!')
         s = Split()
         with self.assertRaises(SplitError) as error:
-            _ = s([1, 0, Ind(1), 2, 0])
+            _ = s([1, 0, Ind([1]), 2, 0])
         self.assertEqual(expected, str(error.exception))
 
     def test_wrong_iterable_raises(self):
@@ -255,14 +252,14 @@ class TestCriterionUsage(unittest.TestCase):
 
     def test_criterion_error_msg_indentrepr(self):
         expected = ('\nZeroDivisionError calling\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     '[ 1] 2\n'
                     '[ 2] 3\n'
                     'on element #2:\n'
                     '0\n'
                     'division by zero')
-        s = Split(Ind(1, 2, 3))
+        s = Split(Ind([1, 2, 3]))
         with self.assertRaises(SplitError) as error:
             _ = s([1, 2, 0, 4, 5])
         self.assertEqual(expected, str(error.exception))
@@ -369,11 +366,11 @@ class TestWrapperUsage(unittest.TestCase):
 
     def test_wrapper_error_msg_indentrepr(self):
         expected = ("\nTypeError calling wrapper\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "on split results:\n"
                     "unsupported operand type(s) for /: 'int' and 'list'")
-        f = Split(g, Ind(1))
+        f = Split(g, Ind([1]))
         with self.assertRaises(SplitError) as error:
             _ = f([1, 2, 3, 4, 5])
         self.assertEqual(expected, str(error.exception))
@@ -446,8 +443,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Split(A(1), None)', repr(s))
 
     def test_criterion_indentrepr(self):
-        s = Split(Ind(1, 2, 3))
-        self.assertEqual('Split(Ind[3], None)', repr(s))
+        s = Split(Ind([1, 2, 3]))
+        self.assertEqual('Split(Ind()[3], None)', repr(s))
 
     def test_wrapper_repr(self):
         s = Split(wrapper=tuple)
@@ -458,8 +455,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Split(None, A(1))', repr(s))
 
     def test_wrapper_indentrepr(self):
-        s = Split(wrapper=Ind(1, 2, 3))
-        self.assertEqual('Split(None, Ind[3])', repr(s))
+        s = Split(wrapper=Ind([1, 2, 3]))
+        self.assertEqual('Split(None, Ind()[3])', repr(s))
 
     def test_criterion_wrapper_repr(self):
         s = Split(g, tuple)

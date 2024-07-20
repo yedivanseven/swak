@@ -46,9 +46,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __bool__(self) -> bool:
         raise TypeError('Test!')
 
@@ -129,12 +126,12 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nTypeError calling criterion\n'
                     'bool\n'
                     'on element #2:\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'Test!')
         f = Filter()
         with self.assertRaises(FilterError) as error:
-            _ = f([1, 2, Ind(1), 2, 1])
+            _ = f([1, 2, Ind([1]), 2, 1])
         self.assertEqual(expected, str(error.exception))
 
     def test_wrong_iterable_raises(self):
@@ -252,14 +249,14 @@ class TestCriterionUsage(unittest.TestCase):
 
     def test_criterion_error_msg_indentrepr(self):
         expected = ('\nZeroDivisionError calling criterion\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     '[ 1] 2\n'
                     '[ 2] 3\n'
                     'on element #2:\n'
                     '0\n'
                     'division by zero')
-        f = Filter(Ind(1, 2, 3))
+        f = Filter(Ind([1, 2, 3]))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 0, 2, 1])
         self.assertEqual(expected, str(error.exception))
@@ -364,11 +361,11 @@ class TestWrapperUsage(unittest.TestCase):
 
     def test_wrapper_error_msg_indentrepr(self):
         expected = ("\nTypeError calling wrapper\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "on filter results:\n"
                     "unsupported operand type(s) for /: 'int' and 'list'")
-        f = Filter(g, Ind(1))
+        f = Filter(g, Ind([1]))
         with self.assertRaises(FilterError) as error:
             _ = f([1, 2, 3, 4, 5])
         self.assertEqual(expected, str(error.exception))
@@ -441,8 +438,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Filter(A(1), None)', repr(f))
 
     def test_criterion_indentrepr(self):
-        f = Filter(Ind(1, 2, 3))
-        self.assertEqual('Filter(Ind[3], None)', repr(f))
+        f = Filter(Ind([1, 2, 3]))
+        self.assertEqual('Filter(Ind()[3], None)', repr(f))
 
     def test_wrapper_repr(self):
         f = Filter(wrapper=tuple)
@@ -453,8 +450,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Filter(None, A(1))', repr(f))
 
     def test_wrapper_indentrepr(self):
-        f = Filter(wrapper=Ind(1, 2, 3))
-        self.assertEqual('Filter(None, Ind[3])', repr(f))
+        f = Filter(wrapper=Ind([1, 2, 3]))
+        self.assertEqual('Filter(None, Ind()[3])', repr(f))
 
     def test_criterion_wrapper_repr(self):
         f = Filter(g, tuple)

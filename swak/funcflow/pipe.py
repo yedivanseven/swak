@@ -33,7 +33,7 @@ class Pipe[**P, T](IndentRepr):
 
     def __init__(self, call: Call | Iterable[Call] = (), *calls: Call) -> None:
         self.calls = ((call,) if callable(call) else tuple(call)) + calls
-        super().__init__(*self.calls)
+        super().__init__(self.calls)
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...

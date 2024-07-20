@@ -40,9 +40,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self):
         pass
 
@@ -212,8 +209,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual("Partial(A(1), A(2), answer=42)", repr(partial))
 
     def test_indentrepr(self):
-        partial = Partial(Ind(1, 2, 3), Ind(1, 2, 3), answer=42)
-        self.assertEqual("Partial(Ind[3], Ind[3], answer=42)", repr(partial))
+        partial = Partial(Ind([1, 2, 3]), Ind([1, 2, 3]), answer=42)
+        self.assertEqual("Partial(Ind()[3], Ind()[3], answer=42)", repr(partial))
 
     def test_type_annotation(self):
         _ = Partial[int](f, 42)

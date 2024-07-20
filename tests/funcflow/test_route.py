@@ -62,9 +62,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self, *_):
         raise AttributeError('Test!')
 
@@ -436,7 +433,7 @@ class TestUsage(unittest.TestCase):
         expected = ("\nAttributeError executing\n"
                     "r\n"
                     "in route #1 (2, 0) of\n"
-                    "Route[3, (2, 0)]:\n"
+                    "Route([3, (2, 0)]):\n"
                     "[ 0] f\n"
                     "[ 1] r\n"
                     "Test!")
@@ -449,7 +446,7 @@ class TestUsage(unittest.TestCase):
         expected = ("\nAttributeError executing\n"
                     "A(1)\n"
                     "in route #1 (2, 0) of\n"
-                    "Route[3, (2, 0)]:\n"
+                    "Route([3, (2, 0)]):\n"
                     "[ 0] f\n"
                     "[ 1] A(1)\n"
                     "Test!")
@@ -458,14 +455,14 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        route = Route([3, (2, 0)], f, Ind(1))
+        route = Route([3, (2, 0)], f, Ind([1]))
         expected = ("\nAttributeError executing\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "in route #1 (2, 0) of\n"
-                    "Route[3, (2, 0)]:\n"
+                    "Route([3, (2, 0)]):\n"
                     "[ 0] f\n"
-                    "[ 1] Ind:\n"
+                    "[ 1] Ind():\n"
                     "     [ 0] 1\n"
                     "Test!")
         with self.assertRaises(RouteError) as error:
@@ -613,7 +610,7 @@ class TestMisc(unittest.TestCase):
             A('foo')
         )
         expected = (
-            "Route[0, 1, 2, 3, 4, 5, 6, 7]:\n"
+            "Route([0, 1, 2, 3, 4, 5, 6, 7]):\n"
             "[ 0] lambda\n"
             "[ 1] f\n"
             "[ 2] Cls\n"
@@ -639,8 +636,8 @@ class TestMisc(unittest.TestCase):
         )
         outer = Route([0, 1], route, route)
         expected = (
-            "Route[0, 1]:\n"
-            "[ 0] Route[0, 1, 2, 3, 4, 5, 6, 7]:\n"
+            "Route([0, 1]):\n"
+            "[ 0] Route([0, 1, 2, 3, 4, 5, 6, 7]):\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -649,7 +646,7 @@ class TestMisc(unittest.TestCase):
             "     [ 5] Cls.s\n"
             "     [ 6] Call(...)\n"
             "     [ 7] A('foo')\n"
-            "[ 1] Route[0, 1, 2, 3, 4, 5, 6, 7]:\n"
+            "[ 1] Route([0, 1, 2, 3, 4, 5, 6, 7]):\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -663,11 +660,11 @@ class TestMisc(unittest.TestCase):
 
     def test_empty_repr(self):
         route = Route()
-        self.assertEqual('Route[]', repr(route))
+        self.assertEqual('Route([])', repr(route))
 
     def test_int_empty_repr(self):
         expected = (
-            "Route[2, ()]:\n"
+            "Route([2, ()]):\n"
             "[ 0] f\n"
             "[ 1] g"
         )
@@ -676,7 +673,7 @@ class TestMisc(unittest.TestCase):
 
     def test_tuple_empty_repr(self):
         expected = (
-            "Route[(), (2, 0)]:\n"
+            "Route([(), (2, 0)]):\n"
             "[ 0] f\n"
             "[ 1] g"
         )
@@ -685,7 +682,7 @@ class TestMisc(unittest.TestCase):
 
     def test_tuple_repr(self):
         expected = (
-            "Route[(1, 3), (2, 0)]:\n"
+            "Route([(1, 3), (2, 0)]):\n"
             "[ 0] f\n"
             "[ 1] g"
         )
@@ -694,7 +691,7 @@ class TestMisc(unittest.TestCase):
 
     def test_mixed_repr(self):
         expected = (
-            "Route[3, (2, 0)]:\n"
+            "Route([3, (2, 0)]):\n"
             "[ 0] f\n"
             "[ 1] g"
         )
@@ -703,7 +700,7 @@ class TestMisc(unittest.TestCase):
 
     def test_mixed_empty_repr(self):
         expected = (
-            "Route[3, (2, 0), ()]:\n"
+            "Route([3, (2, 0), ()]):\n"
             "[ 0] f\n"
             "[ 1] g\n"
             "[ 2] f"

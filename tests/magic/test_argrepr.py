@@ -28,15 +28,10 @@ class Call:
 
 
 class Ind(IndentRepr):
-
-    def __init__(self, *xs):
-        super().__init__(*xs)
+    pass
 
 
 class CallInd(IndentRepr):
-
-    def __init__(self, *xs):
-        super().__init__(*xs)
 
     def __call__(self):
         pass
@@ -247,12 +242,12 @@ class TestArgumentTypes(unittest.TestCase):
         self.assertEqual('Test(b=Test(a=1))', repr(test))
 
     def test_indentrepr_arg(self):
-        test = self.Test(Ind(1, 2, 3))
-        self.assertEqual('Test(Ind[3])', repr(test))
+        test = self.Test(Ind([1, 2, 3]))
+        self.assertEqual('Test(Ind()[3])', repr(test))
 
     def test_indentrepr_kwarg(self):
-        test = self.Test(b=Ind(1, 2, 3))
-        self.assertEqual('Test(b=Ind[3])', repr(test))
+        test = self.Test(b=Ind([1, 2, 3]))
+        self.assertEqual('Test(b=Ind()[3])', repr(test))
 
     def test_none_arg(self):
         test = self.Test(None)
@@ -265,7 +260,7 @@ class TestArgumentTypes(unittest.TestCase):
     def test_object(self):
         cls = Cls()
         test = self.Test(cls)
-        expected = "magic.test_argrepr.Cls object at "
+        expected = "test_argrepr.Cls object at "
         self.assertIn(expected, repr(test))
 
     def test_string_arg(self):
@@ -350,11 +345,11 @@ class TestCallables(unittest.TestCase):
         self.assertEqual('Test(TestCallables.Test.s)', repr(test))
 
     def test_callable_indentrepr(self):
-        test = self.Test(CallInd(1, 2, 3))
-        self.assertEqual('Test(CallInd[3])', repr(test))
+        test = self.Test(CallInd([1, 2, 3]))
+        self.assertEqual('Test(CallInd()[3])', repr(test))
 
     def test_indentrepr_method(self):
-        test = self.Test(CallInd(1, 2, 3).m)
+        test = self.Test(CallInd([1, 2, 3]).m)
         self.assertEqual('Test(CallInd.m)', repr(test))
 
     def test_indentrepr_classmethod(self):
@@ -362,7 +357,7 @@ class TestCallables(unittest.TestCase):
         self.assertEqual('Test(CallInd.c)', repr(test))
 
     def test_indentrepr_staticmethod(self):
-        test = self.Test(CallInd(1, 2, 3).s)
+        test = self.Test(CallInd([1, 2, 3]).s)
         self.assertEqual('Test(CallInd.s)', repr(test))
 
 

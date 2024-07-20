@@ -13,9 +13,7 @@ class A(ArgRepr):
 
 
 class Ind(IndentRepr):
-
-    def __init__(self, *xs):
-        super().__init__(*xs)
+    pass
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -78,12 +76,12 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         expected = ("Error adding element #2:\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "TypeError:\n"
                     "unsupported operand type(s) for +: 'int' and 'Ind'")
         with self.assertRaises(SumError) as error:
-            _ = self.s([1, 2, Ind(1)])
+            _ = self.s([1, 2, Ind([1])])
         self.assertEqual(expected, str(error.exception))
 
 
@@ -144,12 +142,12 @@ class TestAccUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         expected = ("Error adding element #2:\n"
-                    "Ind:\n"
+                    "Ind():\n"
                     "[ 0] 1\n"
                     "TypeError:\n"
                     "unsupported operand type(s) for +: 'int' and 'Ind'")
         with self.assertRaises(SumError) as error:
-            _ = self.s([1, 2, Ind(1)])
+            _ = self.s([1, 2, Ind([1])])
         self.assertEqual(expected, str(error.exception))
 
 
@@ -176,8 +174,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual('Sum(A(1))', repr(s))
 
     def test_acc_indentrepr(self):
-        s = Sum(Ind(1, 2, 3))
-        self.assertEqual('Sum(Ind[3])', repr(s))
+        s = Sum(Ind([1, 2, 3]))
+        self.assertEqual('Sum(Ind()[3])', repr(s))
 
     def test_type_annotation(self):
         _ = Sum[int, float]()

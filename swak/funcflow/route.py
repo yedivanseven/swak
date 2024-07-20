@@ -54,14 +54,15 @@ class Route[**P, T](IndentRepr):
         self.routes = self.__packed(routes)
         callables = ((call,) if callable(call) else tuple(call)) + calls
         self.calls = self.__compatible(*callables)
-        super().__init__(*self.calls)
-
-    def _indented_repr(self, level: int) -> str:
-        cls = self.__class__.__name__
         routes = [r[0] if len(r) == 1 else r for r in self.routes]
-        body = '\n'.join(super()._indented_repr(level).split('\n')[1:])
-        head = f'{cls}{routes}' + (':' if body else '')
-        return head + ('\n' if body else '') + body
+        super().__init__(self.calls, routes)
+
+    # def _indented_repr(self, level: int) -> str:
+    #     cls = self.__class__.__name__
+    #     routes = [r[0] if len(r) == 1 else r for r in self.routes]
+    #     body = '\n'.join(super()._indented_repr(level).split('\n')[1:])
+    #     head = f'{cls}{routes}' + (':' if body else '')
+    #     return head + ('\n' if body else '') + body
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...

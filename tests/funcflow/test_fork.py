@@ -46,9 +46,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self, *ys):
         raise AttributeError('Test!')
 
@@ -288,7 +285,7 @@ class TestUsage(unittest.TestCase):
         expected = ('\nAttributeError executing\n'
                     'g\n'
                     'in fork 1 of\n'
-                    'Fork:\n'
+                    'Fork():\n'
                     '[ 0] lambda\n'
                     '[ 1] g\n'
                     'Test!')
@@ -301,7 +298,7 @@ class TestUsage(unittest.TestCase):
         expected = ('\nAttributeError executing\n'
                     'A(1)\n'
                     'in fork 0 of\n'
-                    'Fork:\n'
+                    'Fork():\n'
                     '[ 0] A(1)\n'
                     '[ 1] g\n'
                     'Test!')
@@ -310,13 +307,13 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        fork = Fork(Ind(1), g)
+        fork = Fork(Ind([1]), g)
         expected = ('\nAttributeError executing\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'in fork 0 of\n'
-                    'Fork:\n'
-                    '[ 0] Ind:\n'
+                    'Fork():\n'
+                    '[ 0] Ind():\n'
                     '     [ 0] 1\n'
                     '[ 1] g\n'
                     'Test!')
@@ -458,7 +455,7 @@ class TestMisc(unittest.TestCase):
             A('foo')
         )
         expected = (
-            "Fork:\n"
+            "Fork():\n"
             "[ 0] lambda\n"
             "[ 1] f\n"
             "[ 2] Cls\n"
@@ -483,8 +480,8 @@ class TestMisc(unittest.TestCase):
         )
         outer = Fork(fork, fork)
         expected = (
-            "Fork:\n"
-            "[ 0] Fork:\n"
+            "Fork():\n"
+            "[ 0] Fork():\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -493,7 +490,7 @@ class TestMisc(unittest.TestCase):
             "     [ 5] Cls.s\n"
             "     [ 6] Call(...)\n"
             "     [ 7] A('foo')\n"
-            "[ 1] Fork:\n"
+            "[ 1] Fork():\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"

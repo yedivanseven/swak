@@ -47,9 +47,6 @@ class A(ArgRepr):
 
 class Ind(IndentRepr):
 
-    def __init__(self, *xs):
-        super().__init__(*xs)
-
     def __call__(self, x, y):
         return x / y
 
@@ -154,12 +151,12 @@ class TestDefaultUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         expected = ('\nZeroDivisionError calling\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'on element #2:\n'
                     '0\n'
                     'float division by zero')
-        r = Reduce(Ind(1))
+        r = Reduce(Ind([1]))
         with self.assertRaises(ReduceError) as error:
             _ = r([1, 2, 0])
         self.assertEqual(expected, str(error.exception))
@@ -262,12 +259,12 @@ class TestAccUsage(unittest.TestCase):
 
     def test_error_msg_indentrepr(self):
         expected = ('\nZeroDivisionError calling\n'
-                    'Ind:\n'
+                    'Ind():\n'
                     '[ 0] 1\n'
                     'on element #2:\n'
                     '0\n'
                     'float division by zero')
-        r = Reduce(Ind(1))
+        r = Reduce(Ind([1]))
         with self.assertRaises(ReduceError) as error:
             _ = r([1, 2, 0])
         self.assertEqual(expected, str(error.exception))
@@ -326,8 +323,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual("Reduce(A(1), None)", repr(r))
 
     def test_default_indentrepr(self):
-        r = Reduce(Ind(1, 2, 3))
-        self.assertEqual("Reduce(Ind[3], None)", repr(r))
+        r = Reduce(Ind([1, 2, 3]))
+        self.assertEqual("Reduce(Ind()[3], None)", repr(r))
 
     def test_acc_repr(self):
         r = Reduce(f, 1)
@@ -338,8 +335,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual("Reduce(A(1), A(2))", repr(r))
 
     def test_acc_indentrepr(self):
-        r = Reduce(Ind(1, 2, 3), Ind(1, 2))
-        self.assertEqual("Reduce(Ind[3], Ind[2])", repr(r))
+        r = Reduce(Ind([1, 2, 3]), Ind([1, 2]))
+        self.assertEqual("Reduce(Ind()[3], Ind()[2])", repr(r))
 
     def test_type_annotation(self):
         _ = Reduce[int, str](lambda x: x)
