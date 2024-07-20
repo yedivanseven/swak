@@ -57,13 +57,6 @@ class Route[**P, T](IndentRepr):
         routes = [r[0] if len(r) == 1 else r for r in self.routes]
         super().__init__(self.calls, routes)
 
-    # def _indented_repr(self, level: int) -> str:
-    #     cls = self.__class__.__name__
-    #     routes = [r[0] if len(r) == 1 else r for r in self.routes]
-    #     body = '\n'.join(super()._indented_repr(level).split('\n')[1:])
-    #     head = f'{cls}{routes}' + (':' if body else '')
-    #     return head + ('\n' if body else '') + body
-
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...
         return iter(self.calls)
