@@ -48,8 +48,9 @@ class IndentRepr(_ReprName):
 
     Parameters
     ----------
-    items: sequence
+    items: sequence, optional
         Objects to represent in a (zero-based) numbered list below the class.
+        Defaults to an emtpy tuple.
     *args
         Additional arguments to appear in the class instantiation signature
         in the first line of the representation.
