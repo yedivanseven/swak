@@ -20,17 +20,26 @@ class TomlReader(ArgRepr):
     parse_float: callable, optional
         Will be called with the string of every TOML float to be decoded.
         Defaults to ``float``.
+    **kwargs
+        Additional keyword arguments will be forwarded python`s builtin
+        ``open`` function. Since the `mode` must be ``"rb"``, it is dropped
+        from the keyword arguments.
 
     """
 
     def __init__(
             self,
             base_dir: str,
-            parse_float: Callable[[str], float] = float
+            parse_float: Callable[[str], float] = float,
+            **kwargs: Any
     ) -> None:
         self.base_dir = '/' + base_dir.strip(' /')
         self.parse_float = parse_float
-        super().__init__(self.base_dir, parse_float)
+        if 'mode' in kwargs:
+            self.kwargs = (kwargs.pop('mode'), kwargs)[1]
+        else:
+            self.kwargs = kwargs
+        super().__init__(self.base_dir, parse_float, **self.kwargs)
 
     def __call__(self, path: str, *args: Any) -> Toml:
         """Read a specific TOML file.
@@ -54,7 +63,7 @@ class TomlReader(ArgRepr):
 
         """
         full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
-        with open(full_path, 'rb') as file:
+        with open(full_path, 'rb', **self.kwargs) as file:
             toml = tomllib.load(file, parse_float=self.parse_float)
         return toml
 
@@ -69,17 +78,26 @@ class YamlReader(ArgRepr):
         forward slashes to access nested subdirectories.
     loader: type, optional
         The loader class to use. Defaults to ``Loader``
+    **kwargs
+        Additional keyword arguments will be forwarded python`s builtin
+        ``open`` function. The `mode` is hard-coded to ``"rb"`` and is dropped
+        from the keyword arguments.
 
     """
 
     def __init__(
             self,
             base_dir: str,
-            loader: type = Loader
+            loader: type = Loader,
+            **kwargs: Any
     ) -> None:
         self.base_dir = '/' + base_dir.strip(' /')
         self.loader = loader
-        super().__init__(self.base_dir, loader)
+        if 'mode' in kwargs:
+            self.kwargs = (kwargs.pop('mode'), kwargs)[1]
+        else:
+            self.kwargs = kwargs
+        super().__init__(self.base_dir, loader, **self.kwargs)
 
     def __call__(self, path: str, *args: Any) -> Yaml:
         """Read a specific YAML file.
@@ -103,6 +121,6 @@ class YamlReader(ArgRepr):
 
         """
         full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
-        with open(full_path, 'r') as file:
+        with open(full_path, 'rb', **self.kwargs) as file:
             yml = yaml.load(file, self.loader)
         return yml or {}

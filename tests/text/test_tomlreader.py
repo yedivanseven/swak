@@ -1,5 +1,6 @@
 from pathlib import Path
 import unittest
+from unittest.mock import patch, Mock
 from swak.text import TomlReader
 
 
@@ -37,15 +38,90 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(hasattr(t, 'parse_float'))
         self.assertIs(t.parse_float, f)
 
+    def test_default_kwargs(self):
+        t = TomlReader('hello')
+        self.assertTrue(hasattr(t, 'kwargs'))
+        self.assertDictEqual({}, t.kwargs)
+
+    def test_custom_kwargs(self):
+        t = TomlReader('hello', world=42)
+        self.assertTrue(hasattr(t, 'kwargs'))
+        self.assertDictEqual({'world': 42}, t.kwargs)
+
+    def test_mode_kwarg_purged(self):
+        t = TomlReader('hello', world=42, mode='w+')
+        self.assertTrue(hasattr(t, 'kwargs'))
+        self.assertDictEqual({'world': 42}, t.kwargs)
+
 
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.dir = str(Path(__file__).parent)
+        self.path = Path(__file__).parent
+        self.dir = str(self.path)
 
     def test_callable(self):
         t = TomlReader('')
         self.assertTrue(callable(t))
+
+    @patch('builtins.open')
+    def test_open_called(self, mock):
+        mock.return_value = (self.path / 'foo/bar.toml').open('rb')
+        t = TomlReader(self.dir)
+        _ = t('foo/bar.toml')
+        mock.assert_called_once()
+
+    @patch('builtins.open')
+    def test_open_called_with_defaults(self, mock):
+        path = self.path / 'foo/bar.toml'
+        mock.return_value = path.open('rb')
+        t = TomlReader(self.dir)
+        _ = t('foo/bar.toml')
+        mock.assert_called_once_with(str(path), 'rb')
+
+    @patch('builtins.open')
+    def test_open_called_with_kwargs(self, mock):
+        path = self.path / 'foo/bar.toml'
+        mock.return_value = path.open('rb')
+        t = TomlReader(self.dir, encoding='utf-8')
+        _ = t('foo/bar.toml')
+        mock.assert_called_once_with(str(path), 'rb', encoding='utf-8')
+
+    @patch('builtins.open')
+    def test_open_called_with_mode_purged(self, mock):
+        path = self.path / 'foo/bar.toml'
+        mock.return_value = path.open('rb')
+        t = TomlReader(self.dir, encoding='utf-8', mode='w+')
+        _ = t('foo/bar.toml')
+        mock.assert_called_once_with(str(path), 'rb', encoding='utf-8')
+
+    @patch('swak.text.read.tomllib.load')
+    def test_load_called(self, mock):
+        t = TomlReader(self.dir)
+        _ = t('foo/bar.toml')
+        mock.assert_called_once()
+
+    @patch('builtins.open')
+    @patch('swak.text.read.tomllib.load')
+    def test_load_called_with_defaults(self, load, mock):
+        context = Mock()
+        context.__enter__ = Mock(return_value='file')
+        context.__exit__ = Mock()
+        mock.return_value = context
+        t = TomlReader(self.dir)
+        _ = t('foo/bar.toml')
+        load.assert_called_once_with('file', parse_float=float)
+
+    @patch('builtins.open')
+    @patch('swak.text.read.tomllib.load')
+    def test_load_called_with_custom(self, load, mock):
+        context = Mock()
+        context.__enter__ = Mock(return_value='file')
+        context.__exit__ = Mock()
+        mock.return_value = context
+        t = TomlReader(self.dir, f)
+        _ = t('foo/bar.toml')
+        load.assert_called_once_with('file', parse_float=f)
 
     def test_read_toml(self):
         t = TomlReader(self.dir)
