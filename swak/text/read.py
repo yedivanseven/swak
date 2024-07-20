@@ -104,5 +104,5 @@ class YamlReader(ArgRepr):
         """
         full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
         with open(full_path, 'r') as file:
-            yml = yaml.load(file, Loader)
+            yml = yaml.load(file, self.loader)
         return yml or {}
