@@ -176,9 +176,8 @@ class TestUsage(unittest.TestCase):
 
     def test_empty_one_arg(self):
         pipe = Pipe()
-        result = pipe('foo')
-        self.assertIsInstance(result, tuple)
-        self.assertTupleEqual(('foo', ), result)
+        result = pipe(Cls)
+        self.assertIs(result, Cls)
 
     def test_empty_two_args(self):
         pipe = Pipe()
@@ -381,7 +380,7 @@ class TestMagic(unittest.TestCase):
         self.assertTupleEqual((f, g, *self.calls), pipe.calls)
 
 
-class TestRepr(unittest.TestCase):
+class TestMisc(unittest.TestCase):
 
     def test_type_annotation(self):
         _ = Pipe[[int, bool, str], float](f, Cls)

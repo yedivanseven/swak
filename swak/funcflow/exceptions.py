@@ -33,6 +33,10 @@ class SumError(Exception):
     pass
 
 
+class SideEffectsError(Exception):
+    pass
+
+
 class SafeError(Exception):
     """Special exception to wrap other exceptions.
 

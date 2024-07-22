@@ -1,33 +1,27 @@
-from typing import Iterator, Any, Callable, Self, Iterable
+from typing import Iterator, Any, Callable, Self, Iterable, ParamSpec
 from functools import singledispatchmethod
 from ..magic import IndentRepr
-from .exceptions import PipeError
-
-type Call = type | Callable[..., Any]
+from .exceptions import SideEffectsError
 
 
-class Pipe[**P, T](IndentRepr):
-    """Chain any number of callable objects into a single callable object.
+P = ParamSpec('P')
+type Call = type | Callable[P, Any]
 
-    Arguments passed to the functional composition will be forwarded to the
-    first callable in the chain. Subsequent callables will be called with
-    the return value(s) of the previous callable in the chain. The return
-    value of the functional composition is the return value of the last
-    callable in the chain.
+
+class SideEffects[**P](IndentRepr):
+    """Call any number of callables with the same argument(s) and return those.
+
+    Generic type annotation of instances is recommended. Provide a list of
+    one or more input types that all callables take as input (and that will
+    be returned when calling instances).
 
     Parameters
     ----------
     call: callable or iterable of callables, optional
-        One callable or an iterator of callables to chain one after another.
-        Defaults to an empty tuple.
+        One callable or an iterator of callables to all call with the same
+        arguments. Defaults to an empty tuple.
     *calls: callable
-        Additional callables to chain one after another.
-
-    Notes
-    -----
-    Upon instantiation, the generic class can be type-annotated with the list
-    of argument types of the first callable in the chain, followed by the
-    return type of the last callable.
+        Additional callables to call with the same argument(s).
 
     """
 
@@ -61,17 +55,17 @@ class Pipe[**P, T](IndentRepr):
         return self.__class__(*self.calls[index])
 
     def __eq__(self, other: Self) -> bool:
-        if isinstance(other, Pipe):
+        if isinstance(other, SideEffects):
             return self.calls == other.calls
         return NotImplemented
 
     def __ne__(self, other: Self) -> bool:
-        if isinstance(other, Pipe):
+        if isinstance(other, SideEffects):
             return self.calls != other.calls
         return NotImplemented
 
     def __add__(self, other: Call | Iterable[Call] | Self) -> Self:
-        if isinstance(other, Pipe):
+        if isinstance(other, SideEffects):
             return self.__class__(*self.calls, *other.calls)
         try:
             _ = [callable(call) for call in other]
@@ -84,7 +78,7 @@ class Pipe[**P, T](IndentRepr):
                 return NotImplemented
 
     def __radd__(self, other: Call | Iterable[Call] | Self) -> Self:
-        if isinstance(other, Pipe):
+        if isinstance(other, SideEffects):
             return self.__class__(*other.calls, *self.calls)
         try:
             _ = [callable(call) for call in other]
@@ -96,33 +90,33 @@ class Pipe[**P, T](IndentRepr):
             except TypeError:
                 return NotImplemented
 
-    def __call__(self, *args: P.args) -> T:
-        """Call the functional composition this object was instantiated with.
+    def __call__(self, *args: P.args) -> P.args:
+        """Call all specified `calls` with the same argument(s).
 
         Parameters
         ----------
         *args
-            Arguments to pass to the first callable in `calls`.
+            Arguments to call all `calls` with.
 
         Returns
         -------
-        object
-            Whatever the last callable of `calls` returns.
+        tuple or object
+            The `args` that the instances was called with. If only a single
+            argument was given, that object is returned.
 
         Raises
         ------
-        PipeError
-            When one of the callables in the chain raises an exception.
+        SideEffectsError
+            When one of the `calls` raises an exception.
 
         """
-        args = args[0] if len(args) == 1 else args
         for i, call in enumerate(self):
             try:
-                args = call(*args) if isinstance(args, tuple) else call(args)
+                call(*args)
             except Exception as error:
                 msg = '\n{} executing\n{}\nin step {} of\n{}\n{}'
                 err_cls = error.__class__.__name__
                 name = self._name(call)
                 fmt = msg.format(err_cls, name, i, self, error)
-                raise PipeError(fmt)
-        return args
+                raise SideEffectsError(fmt)
+        return args[0] if len(args) == 1 else args
