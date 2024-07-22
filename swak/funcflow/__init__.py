@@ -7,7 +7,6 @@ from .reduce import Reduce
 from .route import Route
 from .split import Split
 from .sum import Sum
-from .sideeffects import SideEffects
 from .safe import Safe
 from .exceptions import SafeError
 from .misc import apply, unit, identity
@@ -22,7 +21,6 @@ __all__ = [
     'Route',
     'Split',
     'Sum',
-    'SideEffects',
     'Safe',
     'SafeError',
     'apply',
