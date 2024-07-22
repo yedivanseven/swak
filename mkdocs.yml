@@ -7,6 +7,7 @@ nav:
     - dictionary: source/dictionary.md
     - funcflow: source/funcflow.md
     - text: source/text.md
+    - loggers: source/loggers.md
 theme:
   name: readthedocs
 plugins:
