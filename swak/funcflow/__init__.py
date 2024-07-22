@@ -28,5 +28,5 @@ __all__ = [
     'identity'
 ]
 
-# ToDo: Add Fallback and Retry
+# ToDo: Add Fallback, Retry, and Sideffects
 # ToDo: Add lazy sub-package

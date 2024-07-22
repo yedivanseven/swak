@@ -1,12 +1,27 @@
 import os
+import warnings
 import tomllib
 from typing import Callable, Any
+from enum import StrEnum
 import yaml
 from yaml import Loader
 from ..magic import ArgRepr
 
 type Toml = dict[str, Any]
 type Yaml = dict[str, Any] | list[Any]
+
+
+class NotFound(StrEnum):
+    """Enum to direct reader behaviour in case of missing file.
+
+    See Also
+    --------
+    TomlReader, YamlReader
+
+    """
+    IGNORE = 'ignore'
+    WARN = 'warn'
+    RAISE = 'raise'
 
 
 class TomlReader(ArgRepr):
@@ -17,6 +32,10 @@ class TomlReader(ArgRepr):
     base_dir: str
         Base directory of the TOML file(s) to read. May contain any number of
         forward slashes to access nested subdirectories.
+    not_found: str, optional
+        What to do if the specified TOML file is not found. One of "ignore",
+        "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
+        avoid typos!
     parse_float: callable, optional
         Will be called with the string of every TOML float to be decoded.
         Defaults to ``float``.
@@ -25,24 +44,38 @@ class TomlReader(ArgRepr):
         ``open`` function. Since the `mode` must be ``"rb"``, it is dropped
         from the keyword arguments.
 
+    See Also
+    --------
+    NotFound
+
     """
 
     def __init__(
             self,
             base_dir: str,
+            not_found: str = NotFound.RAISE,
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
         self.base_dir = '/' + base_dir.strip(' /')
+        self.not_found = not_found
         self.parse_float = parse_float
         if 'mode' in kwargs:
             self.kwargs = (kwargs.pop('mode'), kwargs)[1]
         else:
             self.kwargs = kwargs
-        super().__init__(self.base_dir, parse_float, **self.kwargs)
+        super().__init__(
+            self.base_dir,
+            str(not_found),
+            parse_float,
+            **self.kwargs
+        )
 
     def __call__(self, path: str, *args: Any) -> Toml:
         """Read a specific TOML file.
+
+        If `not_found` is set to "warn" or "ignore" and the file cannot be
+        found, an empty dictionary is returned.
 
         Parameters
         ----------
@@ -63,8 +96,19 @@ class TomlReader(ArgRepr):
 
         """
         full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
-        with open(full_path, 'rb', **self.kwargs) as file:
-            toml = tomllib.load(file, parse_float=self.parse_float)
+        try:
+            with open(full_path, 'rb', **self.kwargs) as file:
+                toml = tomllib.load(file, parse_float=self.parse_float)
+        except FileNotFoundError as error:
+            match self.not_found:
+                case NotFound.WARN:
+                    msg = 'File {} not found!\nReturning empty TOML.'
+                    warnings.warn(msg.format(full_path))
+                    toml = {}
+                case NotFound.IGNORE:
+                    toml = {}
+                case _:
+                    raise error
         return toml
 
 
@@ -76,6 +120,10 @@ class YamlReader(ArgRepr):
     base_dir: str
         Base directory of the YAML file(s) to read. May contain any number of
         forward slashes to access nested subdirectories.
+    not_found: str, optional
+        What to do if the specified YAML file is not found. One of "ignore",
+        "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
+        avoid typos!
     loader: type, optional
         The loader class to use. Defaults to ``Loader``
     **kwargs
@@ -83,24 +131,33 @@ class YamlReader(ArgRepr):
         ``open`` function. The `mode` is hard-coded to ``"rb"`` and is dropped
         from the keyword arguments.
 
+    See Also
+    --------
+    NotFound
+
     """
 
     def __init__(
             self,
             base_dir: str,
+            not_found: str = NotFound.RAISE,
             loader: type = Loader,
             **kwargs: Any
     ) -> None:
         self.base_dir = '/' + base_dir.strip(' /')
+        self.not_found = not_found
         self.loader = loader
         if 'mode' in kwargs:
             self.kwargs = (kwargs.pop('mode'), kwargs)[1]
         else:
             self.kwargs = kwargs
-        super().__init__(self.base_dir, loader, **self.kwargs)
+        super().__init__(self.base_dir, str(not_found), loader, **self.kwargs)
 
     def __call__(self, path: str, *args: Any) -> Yaml:
         """Read a specific YAML file.
+
+        If `not_found` is set to "warn" or "ignore" and the file cannot be
+        found, and empty dictionary is returned.
 
         Parameters
         ----------
@@ -121,6 +178,17 @@ class YamlReader(ArgRepr):
 
         """
         full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
-        with open(full_path, 'rb', **self.kwargs) as file:
-            yml = yaml.load(file, self.loader)
+        try:
+            with open(full_path, 'rb', **self.kwargs) as file:
+                yml = yaml.load(file, self.loader)
+        except FileNotFoundError as error:
+            match self.not_found:
+                case NotFound.WARN:
+                    msg = 'File {} not found!\nReturning empty YAML.'
+                    warnings.warn(msg.format(full_path))
+                    yml = {}
+                case NotFound.IGNORE:
+                    yml = {}
+                case _:
+                    raise error
         return yml or {}

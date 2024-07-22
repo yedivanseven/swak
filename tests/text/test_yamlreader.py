@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 from unittest.mock import patch, Mock
-from swak.text import YamlReader
+from swak.text import YamlReader, NotFound
 from yaml import SafeLoader, Loader
 
 
@@ -25,13 +25,23 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(y.base_dir, str)
         self.assertEqual('/hello', y.base_dir)
 
+    def test_default_not_found(self):
+        y = YamlReader('hello')
+        self.assertTrue(hasattr(y, 'not_found'))
+        self.assertEqual(y.not_found, NotFound.RAISE)
+
+    def test_custom_not_found(self):
+        y = YamlReader('hello', NotFound.WARN)
+        self.assertTrue(hasattr(y, 'not_found'))
+        self.assertEqual(y.not_found, NotFound.WARN)
+
     def test_default_loader(self):
         y = YamlReader('hello')
         self.assertTrue(hasattr(y, 'loader'))
         self.assertIs(y.loader, Loader)
 
     def test_custom_loader(self):
-        y = YamlReader('hello', SafeLoader)
+        y = YamlReader('hello', loader=SafeLoader)
         self.assertTrue(hasattr(y, 'loader'))
         self.assertIs(y.loader, SafeLoader)
 
@@ -116,7 +126,7 @@ class TestUsage(unittest.TestCase):
         context.__enter__ = Mock(return_value='file')
         context.__exit__ = Mock()
         mock.return_value = context
-        y = YamlReader(self.dir, SafeLoader)
+        y = YamlReader(self.dir, loader=SafeLoader)
         _ = y('foo/bar.yml')
         load.assert_called_once_with('file', SafeLoader)
 
@@ -135,16 +145,37 @@ class TestUsage(unittest.TestCase):
         actual = y('foo/{}/world.yml', 'hello')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
+    def test_default_raises_file_not_found(self):
+        y = YamlReader(self.dir)
+        with self.assertRaises(FileNotFoundError):
+            _ = y('non-existing')
+
+    def test_raises_file_not_found(self):
+        y = YamlReader(self.dir, NotFound.RAISE)
+        with self.assertRaises(FileNotFoundError):
+            _ = y('non-existing')
+
+    def test_warn_file_not_found(self):
+        y = YamlReader(self.dir, NotFound.WARN)
+        with self.assertWarns(UserWarning):
+            actual = y('non-existing')
+        self.assertDictEqual({}, actual)
+
+    def test_ignore_file_not_found(self):
+        y = YamlReader(self.dir, NotFound.IGNORE)
+        actual = y('non-existing')
+        self.assertDictEqual({}, actual)
+
 
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         y = YamlReader('hello')
-        self.assertEqual("YamlReader('/hello', Loader)", repr(y))
+        self.assertEqual("YamlReader('/hello', 'raise', Loader)", repr(y))
 
     def test_custom_repr(self):
-        y = YamlReader('hello', SafeLoader)
-        self.assertEqual("YamlReader('/hello', SafeLoader)", repr(y))
+        y = YamlReader('hello', NotFound.WARN, SafeLoader)
+        self.assertEqual("YamlReader('/hello', 'warn', SafeLoader)", repr(y))
 
 
 if __name__ == '__main__':

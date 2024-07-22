@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 from unittest.mock import patch, Mock
-from swak.text import TomlReader
+from swak.text import TomlReader, NotFound
 
 
 def f(x: str) -> float:
@@ -28,13 +28,23 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(t.base_dir, str)
         self.assertEqual('/hello', t.base_dir)
 
+    def test_default_not_found(self):
+        t = TomlReader('hello')
+        self.assertTrue(hasattr(t, 'not_found'))
+        self.assertEqual(t.not_found, NotFound.RAISE)
+
+    def test_custom_not_found(self):
+        t = TomlReader('hello', NotFound.WARN)
+        self.assertTrue(hasattr(t, 'not_found'))
+        self.assertEqual(t.not_found, NotFound.WARN)
+
     def test_default_parse_float(self):
         t = TomlReader('hello')
         self.assertTrue(hasattr(t, 'parse_float'))
         self.assertIs(t.parse_float, float)
 
     def test_custom_parse_float(self):
-        t = TomlReader('hello', f)
+        t = TomlReader('hello', parse_float=f)
         self.assertTrue(hasattr(t, 'parse_float'))
         self.assertIs(t.parse_float, f)
 
@@ -119,7 +129,7 @@ class TestUsage(unittest.TestCase):
         context.__enter__ = Mock(return_value='file')
         context.__exit__ = Mock()
         mock.return_value = context
-        t = TomlReader(self.dir, f)
+        t = TomlReader(self.dir, parse_float=f)
         _ = t('foo/bar.toml')
         load.assert_called_once_with('file', parse_float=f)
 
@@ -138,16 +148,37 @@ class TestUsage(unittest.TestCase):
         actual = t('foo/{}/world.toml', 'hello')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
+    def test_default_raises_file_not_found(self):
+        t = TomlReader(self.dir)
+        with self.assertRaises(FileNotFoundError):
+            _ = t('non-existing')
+
+    def test_raises_file_not_found(self):
+        t = TomlReader(self.dir, NotFound.RAISE)
+        with self.assertRaises(FileNotFoundError):
+            _ = t('non-existing')
+
+    def test_warn_file_not_found(self):
+        t = TomlReader(self.dir, NotFound.WARN)
+        with self.assertWarns(UserWarning):
+            actual = t('non-existing')
+        self.assertDictEqual({}, actual)
+
+    def test_ignore_file_not_found(self):
+        t = TomlReader(self.dir, NotFound.IGNORE)
+        actual = t('non-existing')
+        self.assertDictEqual({}, actual)
+
 
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         t = TomlReader('hello')
-        self.assertEqual("TomlReader('/hello', float)", repr(t))
+        self.assertEqual("TomlReader('/hello', 'raise', float)", repr(t))
 
     def test_custom_repr(self):
-        t = TomlReader('hello', f)
-        self.assertEqual("TomlReader('/hello', f)", repr(t))
+        t = TomlReader('hello', NotFound.IGNORE, f)
+        self.assertEqual("TomlReader('/hello', 'ignore', f)", repr(t))
 
 
 if __name__ == '__main__':
