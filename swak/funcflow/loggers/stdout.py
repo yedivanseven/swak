@@ -3,21 +3,22 @@ import logging
 from typing import ParamSpec, Callable
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
-from ..magic import ArgRepr
+from ...magic import ArgRepr
 
 P = ParamSpec('P')
 type Message = str | Callable[P, str]
 
 DEFAULT_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name})'
+PID_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name} | PID-{process})'
 
 
 class StdOut(ArgRepr):
-    """Pass-through logger to stdout with at least one formatted StreamHandler.
+    """Pass-through Logger to stdout with at least one formatted StreamHandler.
 
     Parameters
     ----------
     name: str
-        Name of the logger. Typically set to ``__name__``.
+        Name of the Logger. Typically set to ``__name__``.
     level: int, optional
         Minimum logging level. Defaults to 10 (= DEBUG).
     fmt: str, optional
@@ -65,7 +66,7 @@ class StdOut(ArgRepr):
             *args
                 If `msg` is a string, these arguments are inconsequential,
                 and it will simply be logged. If, however, the `msg` is
-                callable, it will be called with these arguments and its
+                callable, it will be called with these arguments and the
                 return value will be logged instead.
 
             Returns
@@ -170,7 +171,7 @@ class StdOut(ArgRepr):
 
     @cached_property
     def logger(self) -> Logger:
-        """Create or get the specified logger and configure it to specs."""
+        """The specified Logger with one StreamHandler configured to specs."""
         # Get logger with the given name
         logger = logging.getLogger(self.name)
         # The logging level can only be decreased but never increased
@@ -186,18 +187,18 @@ class StdOut(ArgRepr):
         return logger
 
     def __filtered(self, handlers: list[Handler]) -> tuple[StreamHandler]:
-        """Filter log handlers according to the filter criterion."""
+        """Filter the Logger's Handlers according to the filter criterion."""
         return tuple(filter(self.__is_stdout_streamhandler, handlers))
 
     @staticmethod
     def __is_stdout_streamhandler(handler: Handler) -> bool:
-        """Filter criterion for log handlers."""
+        """Filter criterion for the Logger's Handlers."""
         if isinstance(handler, StreamHandler):
             return handler.stream is sys.stdout
         return False
 
     def __configure(self, handler: StreamHandler) -> StreamHandler:
-        """Configure the selected stdout log handler."""
+        """Configure the selected StreamHandler to stdout."""
         # The logging level can only be decreased but never increased
         handler.setLevel(max(min(self.level, handler.level), logging.DEBUG))
         handler.setFormatter(self.__formatter)
@@ -205,7 +206,7 @@ class StdOut(ArgRepr):
 
     @property
     def __formatter(self) -> Formatter:
-        """Log-record formatter for the specified format."""
+        """LogRecord Formatter for the specified format."""
         formatter = Formatter(fmt=self.fmt, style='{')
         formatter.default_msec_format = '%s.%03d'
         return formatter

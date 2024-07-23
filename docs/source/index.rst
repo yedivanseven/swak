@@ -11,7 +11,6 @@ Welcome to swak's documentation!
    dictionary
    funcflow
    text
-   loggers
 
 
 Indices and tables

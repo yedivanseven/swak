@@ -138,6 +138,11 @@ class TestUsage(unittest.TestCase):
         actual = t('foo/bar.toml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
+    def test_empty_toml(self):
+        t = TomlReader(self.dir)
+        actual = t('foo/empty.toml')
+        self.assertDictEqual({}, actual)
+
     def test_path_stripped(self):
         t = TomlReader(self.dir)
         actual = t('/ foo/bar.toml/ ')

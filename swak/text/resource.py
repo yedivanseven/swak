@@ -1,7 +1,9 @@
 import os
 import pkgutil
+import warnings
 from typing import Any
 from ..magic import ArgRepr
+from .misc import NotFound
 
 
 class TextResourceLoader(ArgRepr):
@@ -15,8 +17,16 @@ class TextResourceLoader(ArgRepr):
         Directory under which the text file is located within the python
         package. May contain any number of forward slashes to access nested
         subdirectories. Defaults to "resources".
+    not_found: str, optional
+        What to do if the specified file is not found. One of "ignore", "warn",
+        or "raise". Defaults to "raise". Use the ``NotFound`` enum
+        to avoid typos!
     encoding: str, optional
         Encoding of the text file. Defaults to "utf-8".
+
+    See Also
+    --------
+    NotFound
 
     """
 
@@ -24,12 +34,19 @@ class TextResourceLoader(ArgRepr):
             self,
             package: str,
             base_dir: str = 'resources',
+            not_found: str = NotFound.RAISE,
             encoding: str = 'utf-8'
     ) -> None:
         self.package = package.strip(' /')
         self.base_dir = base_dir.strip(' /')
+        self.not_found = not_found
         self.encoding = encoding.strip()
-        super().__init__(self.package, self.base_dir, self.encoding)
+        super().__init__(
+            self.package,
+            self.base_dir,
+            str(not_found),
+            self.encoding
+        )
 
     def __call__(self, path: str, *args: Any) -> str:
         """Load text file from a directory within the specified python package.
@@ -50,6 +67,18 @@ class TextResourceLoader(ArgRepr):
             Decoded contents of the specified text file.
 
         """
-
         full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
-        return pkgutil.get_data(self.package, full_path).decode(self.encoding)
+        try:
+            content = pkgutil.get_data(self.package, full_path)
+        except FileNotFoundError as error:
+            match self.not_found:
+                case NotFound.WARN:
+                    msg = 'File {} not found!\nReturning empty string.'
+                    warnings.warn(msg.format(full_path))
+                    content = b''
+                case NotFound.IGNORE:
+                    content = b''
+                case _:
+                    raise error
+        return content.decode(self.encoding)
+#

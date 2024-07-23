@@ -1,3 +1,0 @@
-# loggers
-
-::: swak.loggers

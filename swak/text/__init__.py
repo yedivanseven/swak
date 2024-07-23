@@ -1,6 +1,7 @@
 from .resource import TextResourceLoader
 from .interpolate import TemplateRenderer, FormFiller
-from .read import NotFound, TomlReader, YamlReader
+from .read import TomlReader, YamlReader
+from .misc import NotFound
 
 __all__ = [
     'TextResourceLoader',

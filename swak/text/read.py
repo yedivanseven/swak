@@ -2,26 +2,13 @@ import os
 import warnings
 import tomllib
 from typing import Callable, Any
-from enum import StrEnum
 import yaml
 from yaml import Loader
 from ..magic import ArgRepr
+from .misc import NotFound
 
 type Toml = dict[str, Any]
 type Yaml = dict[str, Any] | list[Any]
-
-
-class NotFound(StrEnum):
-    """Enum to direct reader behaviour in case of missing file.
-
-    See Also
-    --------
-    TomlReader, YamlReader
-
-    """
-    IGNORE = 'ignore'
-    WARN = 'warn'
-    RAISE = 'raise'
 
 
 class TomlReader(ArgRepr):

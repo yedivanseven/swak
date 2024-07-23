@@ -135,6 +135,11 @@ class TestUsage(unittest.TestCase):
         actual = y('foo/bar.yml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
+    def test_read_empty_yaml(self):
+        y = YamlReader(self.dir)
+        actual = y('foo/empty.yml')
+        self.assertDictEqual({}, actual)
+
     def test_path_stripped(self):
         y = YamlReader(self.dir)
         actual = y('/ foo/bar.yml/ ')

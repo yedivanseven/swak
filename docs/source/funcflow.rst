@@ -6,6 +6,7 @@ funcflow
    :caption: Subpackages
 
    concurrent
+   loggers
 
 .. automodule:: swak.funcflow
    :members:

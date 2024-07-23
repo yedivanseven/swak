@@ -1,5 +1,6 @@
 import unittest
-from swak.text import TextResourceLoader
+from unittest.mock import patch
+from swak.text import TextResourceLoader, NotFound
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -23,17 +24,29 @@ class TestDefaultAttributes(unittest.TestCase):
         load = TextResourceLoader(' /tests.text /')
         self.assertEqual('tests.text', load.package)
 
-    def test_has_prefix(self):
+    def test_has_base_dir(self):
         load = TextResourceLoader('tests.text')
         self.assertTrue(hasattr(load, 'base_dir'))
 
-    def test_prefix_type(self):
+    def test_base_dir_type(self):
         load = TextResourceLoader('tests.text')
         self.assertIsInstance(load.base_dir, str)
 
-    def test_prefix_value(self):
+    def test_base_dir_value(self):
         load = TextResourceLoader('tests.text')
         self.assertEqual('resources', load.base_dir)
+
+    def test_has_not_found(self):
+        load = TextResourceLoader('tests.text')
+        self.assertTrue(hasattr(load, 'not_found'))
+
+    def test_not_found_type(self):
+        load = TextResourceLoader('tests.text')
+        self.assertIsInstance(load.not_found, str)
+
+    def test_not_found_value(self):
+        load = TextResourceLoader('tests.text')
+        self.assertIs(load.not_found, NotFound.RAISE)
 
     def test_has_encoding(self):
         load = TextResourceLoader('tests.text')
@@ -50,17 +63,25 @@ class TestDefaultAttributes(unittest.TestCase):
 
 class TestAttributes(unittest.TestCase):
 
-    def test_prefix_type(self):
+    def test_base_dir_type(self):
         load = TextResourceLoader('tests.text', 'base_dir')
         self.assertIsInstance(load.base_dir, str)
 
-    def test_prefix_value(self):
+    def test_base_dir_value(self):
         load = TextResourceLoader('tests.text', 'base_dir')
         self.assertEqual('base_dir', load.base_dir)
 
-    def test_prefix_strip(self):
+    def test_base_dir_strip(self):
         load = TextResourceLoader('tests.text', '/ base_dir/ ')
         self.assertEqual('base_dir', load.base_dir)
+
+    def test_not_found_type(self):
+        load = TextResourceLoader('tests.text', 'base_dir', NotFound.WARN)
+        self.assertIsInstance(load.not_found, str)
+
+    def test_not_found_value(self):
+        load = TextResourceLoader('tests.text', 'base_dir', NotFound.WARN)
+        self.assertIs(load.not_found, NotFound.WARN)
 
     def test_encoding_type(self):
         load = TextResourceLoader('tests.text', encoding='foo')
@@ -74,24 +95,36 @@ class TestAttributes(unittest.TestCase):
         load = TextResourceLoader('tests.text', encoding=' bar ')
         self.assertEqual('bar', load.encoding)
 
+
+class TestUsage(unittest.TestCase):
+
     def test_callable(self):
         load = TextResourceLoader('tests.text')
         self.assertTrue(callable(load))
 
+    @patch('swak.text.resource.pkgutil.get_data')
+    def test_pkgutil_called(self, mock):
+        load = TextResourceLoader('tests.text')
+        _ = load('hello.txt')
+        mock.assert_called_once()
 
-class TestUsage(unittest.TestCase):
+    @patch('swak.text.resource.pkgutil.get_data')
+    def test_pkgutil_called_correctly(self, mock):
+        load = TextResourceLoader('tests.text')
+        _ = load('hello.txt')
+        mock.assert_called_once_with('tests.text', 'resources/hello.txt')
 
     def test_defaults(self):
         load = TextResourceLoader('tests.text')
         txt = load('hello.txt')
         self.assertEqual('hello\n', txt)
 
-    def test_prefix_file(self):
+    def test_base_dir_file(self):
         load = TextResourceLoader('tests.text', 'foo')
         txt = load('bar.txt')
         self.assertEqual('bar\n', txt)
 
-    def test_subprefix_file(self):
+    def test_subbase_dir_file(self):
         load = TextResourceLoader('tests.text', 'foo/hello')
         txt = load('world.txt')
         self.assertEqual('world\n', txt)
@@ -106,10 +139,33 @@ class TestUsage(unittest.TestCase):
         txt = load('dir/subdir/baz.txt')
         self.assertEqual('baz\n', txt)
 
+    def test_default_raises_file_not_found(self):
+        load = TextResourceLoader('tests.text')
+        with self.assertRaises(FileNotFoundError):
+            _ = load('non-existing')
+
+    def test_raises_file_not_found(self):
+        load = TextResourceLoader('tests.text', not_found=NotFound.RAISE)
+        with self.assertRaises(FileNotFoundError):
+            _ = load('non-existing')
+
+    def test_warn_file_not_found(self):
+        load = TextResourceLoader('tests.text', not_found=NotFound.WARN)
+        with self.assertWarns(UserWarning):
+            actual = load('non-existing')
+        self.assertIsInstance(actual, str)
+        self.assertEqual('', actual)
+
+    def test_ignore_file_not_found(self):
+        load = TextResourceLoader('tests.text', not_found=NotFound.IGNORE)
+        actual = load('non-existing')
+        self.assertIsInstance(actual, str)
+        self.assertEqual('', actual)
+
 
 class TestInterpolation(unittest.TestCase):
 
-    def test_prefix_only(self):
+    def test_base_dir_only(self):
         load = TextResourceLoader('tests.text', 'resources/{}')
         txt = load('subdir/baz.txt', 'dir')
         self.assertEqual('baz\n', txt)
@@ -119,7 +175,7 @@ class TestInterpolation(unittest.TestCase):
         txt = load('{}/{}/baz.txt', 'dir', 'subdir')
         self.assertEqual('baz\n', txt)
 
-    def test_prefix_and_path(self):
+    def test_base_dir_and_path(self):
         load = TextResourceLoader('tests.text', 'resources/{}')
         txt = load('{}/baz.txt', 'dir', 'subdir')
         self.assertEqual('baz\n', txt)
@@ -137,22 +193,22 @@ class TestStrip(unittest.TestCase):
         txt = load('/hello.txt ')
         self.assertEqual('hello\n', txt)
 
-    def test_prefix_trailing(self):
+    def test_base_dir_trailing(self):
         load = TextResourceLoader('tests.text', ' foo/')
         txt = load('bar.txt')
         self.assertEqual('bar\n', txt)
 
-    def test_prefix_preceding(self):
+    def test_base_dir_preceding(self):
         load = TextResourceLoader('tests.text', '/foo')
         txt = load('bar.txt')
         self.assertEqual('bar\n', txt)
 
-    def test_subprefix_trailing(self):
+    def test_subbase_dir_trailing(self):
         load = TextResourceLoader('tests.text', ' foo/hello/')
         txt = load('world.txt')
         self.assertEqual('world\n', txt)
 
-    def test_subprefix_preceding(self):
+    def test_subbase_dir_preceding(self):
         load = TextResourceLoader('tests.text', '/foo/hello ')
         txt = load('world.txt')
         self.assertEqual('world\n', txt)
@@ -182,7 +238,7 @@ class TestMisc(unittest.TestCase):
 
     def test_repr(self):
         load = TextResourceLoader('tests.text', base_dir='foo')
-        expected = "TextResourceLoader('tests.text', 'foo', 'utf-8')"
+        expected = "TextResourceLoader('tests.text', 'foo', 'raise', 'utf-8')"
         self.assertEqual(expected, repr(load))
 
 
