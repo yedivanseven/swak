@@ -53,8 +53,8 @@ class StdOut(ArgRepr):
 
         """
 
-        def __init__(self, logger: Logger, level: int, msg: Message) -> None:
-            self.logger = logger
+        def __init__(self, parent: 'StdOut', level: int, msg: Message) -> None:
+            self.parent = parent
             self.level = level
             self.msg = msg
 
@@ -76,7 +76,7 @@ class StdOut(ArgRepr):
 
             """
             msg = self.msg(*args) if callable(self.msg) else self.msg
-            self.logger.log(self.level, msg)
+            self.parent.logger.log(self.level, msg)
             return args[0] if len(args) == 1 else args
 
     def debug(self, message: Message) -> Log:
@@ -95,7 +95,7 @@ class StdOut(ArgRepr):
             A callable object that logs the `message` when called.
 
         """
-        return self.Log(self.logger, logging.DEBUG, message)
+        return self.Log(self, logging.DEBUG, message)
 
     def info(self, message: Message):
         """Log an INFO message, optionally depending on call arguments.
@@ -113,7 +113,7 @@ class StdOut(ArgRepr):
             A callable object that logs the `message` when called.
 
         """
-        return self.Log(self.logger, logging.INFO, message)
+        return self.Log(self, logging.INFO, message)
 
     def warning(self, message: Message):
         """Log a WARNING message, optionally depending on call arguments.
@@ -131,7 +131,7 @@ class StdOut(ArgRepr):
             A callable object that logs the `message` when called.
 
         """
-        return self.Log(self.logger, logging.WARNING, message)
+        return self.Log(self, logging.WARNING, message)
 
     def error(self, message: Message):
         """Log an ERROR message, optionally depending on call arguments.
@@ -149,7 +149,7 @@ class StdOut(ArgRepr):
             A callable object that logs the `message` when called.
 
         """
-        return self.Log(self.logger, logging.ERROR, message)
+        return self.Log(self, logging.ERROR, message)
 
     def critical(self, message: Message):
         """Log a CRITICAL message, optionally depending on call arguments.
@@ -167,7 +167,7 @@ class StdOut(ArgRepr):
             A callable object that logs the `message` when called.
 
         """
-        return self.Log(self.logger, logging.CRITICAL, message)
+        return self.Log(self, logging.CRITICAL, message)
 
     @cached_property
     def logger(self) -> Logger:
