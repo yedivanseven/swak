@@ -11,6 +11,7 @@ Welcome to swak's documentation!
    dictionary
    funcflow
    text
+   cli
 
 
 Indices and tables
