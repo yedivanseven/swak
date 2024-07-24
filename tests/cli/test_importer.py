@@ -109,6 +109,11 @@ class TestUsage(unittest.TestCase):
         self.assertIs(imported_f, f)
         self.assertIs(imported_g, g)
 
+    def test_call_return_type(self):
+        i = Importer(__package__, 'package.module')
+        imported = i('f', 'g')
+        self.assertListEqual([f, g], imported)
+
     def test_call_long_package_short_module(self):
         i = Importer(__package__ + '.package', 'module')
         imported_f, imported_g = i('f', 'g')
