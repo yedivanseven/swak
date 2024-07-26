@@ -12,6 +12,7 @@ Welcome to swak's documentation!
    funcflow
    text
    cli
+   jsonobject
 
 
 Indices and tables
