@@ -5,7 +5,6 @@ from ast import literal_eval
 from argparse import ArgumentParser, RawTextHelpFormatter
 from typing import Any
 from itertools import takewhile, dropwhile, chain
-from ..magic import ArgRepr
 from .exceptions import ArgParseError
 
 type Parsed = tuple[list[str], dict[str, Any]]
@@ -23,7 +22,7 @@ levels, e.g., "--root.level1.level2 value"
 """
 
 
-class ArgParser(ArgRepr):
+class ArgParser:
     """Parse the command line for actions and any long-format options.
 
     Using this command-line argument parser alleviates the need for
@@ -31,12 +30,9 @@ class ArgParser(ArgRepr):
     following the program call are interpreted as actions to perform as long
     as they do not start with a hyphen. Starting with the first argument
     that starts with a hyphen, command-line arguments will be interpreted as
-    "--key value" pairs and this long format is the only one allowed.
-    Abbreviated options ("-k value") right after actions (and before any
+    ``--key value`` pairs and this long format is the only one allowed.
+    Abbreviated options (``-k value``) right after actions (and before any
     long-format options) are ignored.
-
-    Instances of this class are callable and need to be called to return
-    the results of parsing the command line.
 
     Parameters
     ----------
@@ -52,11 +48,6 @@ class ArgParser(ArgRepr):
     fmt_cls: type, optional
         Option passed on to the underlying ``argparse.ArgumentParser``.
         Defaults to ``argparse.RawTextHelpFormatter``
-    **kwargs
-        Additional keyword arguments to pass to the underlying
-        ``argparse.ArgumentParser``  class. Since only long-format
-        command-line arguments are allowed, the keyword "allow_abbrev"
-        will be purged from `kwargs`.
 
     """
 
@@ -73,30 +64,32 @@ class ArgParser(ArgRepr):
         self.description = description
         self.epilog = epilog
         self.fmt_cls = fmt_cls
-        super().__init__(default_action, '...')
         self.__parse = ArgumentParser(
-            allow_abbrev=False,
             usage=usage,
             description=description,
             epilog=epilog,
             formatter_class=fmt_cls
         ).parse_known_args
 
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        return f'{cls}({self.default_action}, ...)'
+
     def __call__(self, args: list[str] | None = None) -> Parsed:
-        """
+        """Parse the command-line arguments into actions and options.
 
         Parameters
         ----------
-        args: sequence of str, optional
+        args: list of str, optional
             The command-line arguments to parse. Mainly a debugging feature.
-            If none is given ``sys.argv[1:]`` will be parsed.
+            If none is given, ``sys.argv[1:]`` will be parsed.
 
         Returns
         -------
-        actions: tuple of str
-            A tuple with the actions (as string) to perform. If none are
+        actions: list of str
+            A list with the actions (as strings) to perform. If none are
             found on the command line and no `default_action` is specified,
-            that tuple will be empty.
+            that list will be empty.
         options: dict
             Dictionary with keys and values parsed from long-format
             command line arguments.

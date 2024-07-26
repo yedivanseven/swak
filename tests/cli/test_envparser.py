@@ -127,6 +127,22 @@ class TestParse(unittest.TestCase):
         actual = self.parse(inp)
         self.assertDictEqual(expected, actual['FOO'])
 
+    def test_tuple(self):
+        inp = {'FOO': '(1, 2, 3)'}
+        actual = self.parse(inp)
+        self.assertTupleEqual((1, 2, 3), actual['FOO'])
+
+    def test_set(self):
+        inp = {'FOO': '{1, 2, 2}'}
+        actual = self.parse(inp)
+        self.assertSetEqual({1, 2}, actual['FOO'])
+
+    def test_timestamp(self):
+        inp = {'FOO': '2023-01-13 13:26:45.123+01:00'}
+        actual = self.parse(inp)
+        self.assertIsInstance(actual['FOO'], str)
+        self.assertEqual('2023-01-13 13:26:45.123+01:00', actual['FOO'])
+
 
 class TestMisc(unittest.TestCase):
 
