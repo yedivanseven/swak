@@ -1,5 +1,5 @@
-from .fields import Maybe
+from .jsonobject import JsonObject
 
 __all__ = [
-    'Maybe'
+    'JsonObject'
 ]

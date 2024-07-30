@@ -100,17 +100,17 @@ class ThreadFork[**P, T](IndentRepr):
         return self.__class__(*self.calls[index])
 
     def __eq__(self, other: Self) -> bool:
-        if isinstance(other, ThreadFork):
+        if isinstance(other, self.__class__):
             return self.calls == other.calls
         return NotImplemented
 
     def __ne__(self, other: Self) -> bool:
-        if isinstance(other, ThreadFork):
+        if isinstance(other, self.__class__):
             return self.calls != other.calls
         return NotImplemented
 
     def __add__(self, other: Call | Iterable[Call] | Self) -> Self:
-        if isinstance(other, ThreadFork):
+        if isinstance(other, self.__class__):
             return self.__class__(*self.calls, *other.calls)
         try:
             _ = [callable(call) for call in other]
@@ -123,7 +123,7 @@ class ThreadFork[**P, T](IndentRepr):
                 return NotImplemented
 
     def __radd__(self, other: Call | Iterable[Call] | Self) -> Self:
-        if isinstance(other, ThreadFork):
+        if isinstance(other, self.__class__):
             return self.__class__(*other.calls, *self.calls)
         try:
             _ = [callable(call) for call in other]

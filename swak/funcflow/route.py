@@ -86,17 +86,17 @@ class Route[**P, T](IndentRepr):
         return self.__class__(self.routes[index], *self.calls[index])
 
     def __eq__(self, other: Self) -> bool:
-        if isinstance(other, Route):
+        if isinstance(other, self.__class__):
             return self.calls == other.calls and self.routes == other.routes
         return NotImplemented
 
     def __ne__(self, other: Self) -> bool:
-        if isinstance(other, Route):
+        if isinstance(other, self.__class__):
             return self.calls != other.calls or self.routes != other.routes
         return NotImplemented
 
     def __add__(self, other: Self) -> Self:
-        if isinstance(other, Route):
+        if isinstance(other, self.__class__):
             return self.__class__(
                 [*self.routes, *other.routes],
                 *self.calls, *other.calls

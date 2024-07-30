@@ -21,7 +21,7 @@ class Maybe[T]:
 
     """
 
-    def __init__(self, cast: Callable[[Any], T]) -> None:
+    def __init__(self, cast: type[T] | Callable[..., T]) -> None:
         self.cast = cast
 
     def __call__(self, obj: Any) -> T:

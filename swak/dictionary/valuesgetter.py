@@ -61,17 +61,17 @@ class ValuesGetter[T](ArgRepr):
         return self.__class__(*self.keys[index])
 
     def __eq__(self, other: Self) -> bool:
-        if isinstance(other, ValuesGetter):
+        if isinstance(other, self.__class__):
             return self.keys == other.keys
         return NotImplemented
 
     def __ne__(self, other: Self) -> bool:
-        if isinstance(other, ValuesGetter):
+        if isinstance(other, self.__class__):
             return self.keys != other.keys
         return NotImplemented
 
     def __add__(self, other: Hashable | Iterable[Hashable] | Self) -> Self:
-        if isinstance(other, ValuesGetter):
+        if isinstance(other, self.__class__):
             return self.__class__(*self.keys, *other.keys)
         if isinstance(other, str):
             return self.__class__(*self.keys, other)
@@ -86,7 +86,7 @@ class ValuesGetter[T](ArgRepr):
                 return NotImplemented
 
     def __radd__(self, other: Hashable | Iterable[Hashable] | Self) -> Self:
-        if isinstance(other, ValuesGetter):
+        if isinstance(other, self.__class__):
             return self.__class__(*other.keys, *self.keys)
         if isinstance(other, str):
             return self.__class__(other, *self.keys)
