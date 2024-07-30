@@ -196,7 +196,7 @@ class JsonObject(metaclass=SchemaMeta):
     def __init__(self, mapping: Raw | Self = None, **kwargs: Any) -> None:
         # Flatten parsed and purged dictionaries into dot.separated key format
         flat_parsed = self.__flatten(self.__purge(self.__parse(mapping)))
-        flat_kwargs = self.__flatten(self.__purge(self.__parse(kwargs)))
+        flat_kwargs = self.__flatten(self.__purge(self.__parse(kwargs, 1)))
         flat_defaults = self.__flatten(self.__defaults__)
         # Merge flattened dictionaries
         merged = {**flat_defaults, **flat_parsed, **flat_kwargs}
@@ -276,7 +276,7 @@ class JsonObject(metaclass=SchemaMeta):
         """
         # Flatten parsed and purged dictionaries into dot.separated key format
         flat_parsed = self.__flatten(self.__purge(self.__parse(mapping)))
-        flat_kwargs = self.__flatten(self.__purge(self.__parse(kwargs)))
+        flat_kwargs = self.__flatten(self.__purge(self.__parse(kwargs, 1)))
         flat_self = self.__flatten(self)
         # Merge flattened dictionaries
         merged = {**flat_parsed, **flat_kwargs}
@@ -434,7 +434,7 @@ class JsonObject(metaclass=SchemaMeta):
             return cast
         extra_fields = set(mapping) - set(self.__schema__)
         if extra_fields and self.raise_extra:
-            raise ParseError(f'Field(s) {extra_fields} are not in schema!')
+            raise ParseError(f'Fields {extra_fields} are not in schema!')
         if any(key in self.__blacklist__ for key in extra_fields):
             msg = f'Extra fields must not include any of {self.__blacklist__}!'
             raise ParseError(msg)
