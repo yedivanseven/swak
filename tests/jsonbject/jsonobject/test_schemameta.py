@@ -290,42 +290,42 @@ class TestExtraNone(unittest.TestCase):
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertTrue(hasattr(Empty, 'ignore_extra'))
+        self.assertTrue(hasattr(Empty, '__ignore_extra__'))
 
     def test_ignore_extra(self):
 
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertFalse(Empty.ignore_extra)
+        self.assertFalse(Empty.__ignore_extra__)
 
     def test_has_raise_extra(self):
 
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertTrue(hasattr(Empty, 'raise_extra'))
+        self.assertTrue(hasattr(Empty, '__raise_extra__'))
 
     def test_raise_extra(self):
 
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertTrue(Empty.raise_extra)
+        self.assertTrue(Empty.__raise_extra__)
 
     def test_has_respect_none(self):
 
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertTrue(hasattr(Empty, 'respect_none'))
+        self.assertTrue(hasattr(Empty, '__respect_none__'))
 
     def test_respect_none(self):
 
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertFalse(Empty.respect_none)
+        self.assertFalse(Empty.__respect_none__)
 
 
 class TestKwargFields(unittest.TestCase):
@@ -501,14 +501,14 @@ class TestInheritance(unittest.TestCase):
         class IgnoreExtra(self.A, ignore_extra=True):
             pass
 
-        self.assertTrue(hasattr(IgnoreExtra, 'ignore_extra'))
+        self.assertTrue(hasattr(IgnoreExtra, '__ignore_extra__'))
 
     def test_ignore_extra(self):
 
         class IgnoreExtra(self.A, ignore_extra=True):
             pass
 
-        self.assertTrue(IgnoreExtra.ignore_extra)
+        self.assertTrue(IgnoreExtra.__ignore_extra__)
 
     def test_ignore_extra_inherited(self):
 
@@ -518,21 +518,22 @@ class TestInheritance(unittest.TestCase):
         class Child(IgnoreExtra):
             pass
 
-        self.assertTrue(Child.ignore_extra)
+        self.assertTrue(hasattr(Child, '__ignore_extra__'))
+        self.assertTrue(Child.__ignore_extra__)
 
     def test_has_raise_extra(self):
 
         class RaiseExtra(self.A, raise_extra=False):
             pass
 
-        self.assertTrue(hasattr(RaiseExtra, 'raise_extra'))
+        self.assertTrue(hasattr(RaiseExtra, '__raise_extra__'))
 
     def test_raise_extra(self):
 
         class RaiseExtra(self.A, raise_extra=False):
             pass
 
-        self.assertFalse(RaiseExtra.raise_extra)
+        self.assertFalse(RaiseExtra.__raise_extra__)
 
     def test_raise_extra_inherited(self):
 
@@ -542,21 +543,22 @@ class TestInheritance(unittest.TestCase):
         class Child(RaiseExtra):
             pass
 
-        self.assertFalse(Child.raise_extra)
+        self.assertTrue(hasattr(Child, '__raise_extra__'))
+        self.assertFalse(Child.__raise_extra__)
 
     def test_has_respect_none(self):
 
         class RespectNone(self.A, respect_none=True):
             pass
 
-        self.assertTrue(hasattr(RespectNone, 'respect_none'))
+        self.assertTrue(hasattr(RespectNone, '__respect_none__'))
 
     def test_respect_none(self):
 
         class RespectNone(self.A, respect_none=True):
             pass
 
-        self.assertTrue(RespectNone.respect_none)
+        self.assertTrue(RespectNone.__respect_none__)
 
     def test_respect_none_inherited(self):
 
@@ -566,7 +568,8 @@ class TestInheritance(unittest.TestCase):
         class Child(RespectNone):
             pass
 
-        self.assertTrue(Child.respect_none)
+        self.assertTrue(hasattr(Child, '__respect_none__'))
+        self.assertTrue(Child.__respect_none__)
 
     def test_add_kwarg_field_string(self):
 

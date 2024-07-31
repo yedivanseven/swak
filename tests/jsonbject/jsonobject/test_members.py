@@ -88,22 +88,22 @@ class TestMembers(unittest.TestCase):
         self.assertListEqual(['a', 'b', 'c'], list(self.simple.keys()))
 
     def test_has_ignore_extra(self):
-        self.assertTrue(hasattr(self.simple, 'ignore_extra'))
+        self.assertTrue(hasattr(self.simple, '__ignore_extra__'))
 
     def test_ignore_extra_type(self):
-        self.assertIsInstance(self.simple.ignore_extra, bool)
+        self.assertIsInstance(self.simple.__ignore_extra__, bool)
 
     def test_has_raise_extra(self):
-        self.assertTrue(hasattr(self.simple, 'raise_extra'))
+        self.assertTrue(hasattr(self.simple, '__raise_extra__'))
 
     def test_raise_extra_type(self):
-        self.assertIsInstance(self.simple.raise_extra, bool)
+        self.assertIsInstance(self.simple.__raise_extra__, bool)
 
     def test_has_respect_none(self):
-        self.assertTrue(hasattr(self.simple, 'respect_none'))
+        self.assertTrue(hasattr(self.simple, '__respect_none__'))
 
     def test_respect_none_type(self):
-        self.assertIsInstance(self.simple.respect_none, bool)
+        self.assertIsInstance(self.simple.__respect_none__, bool)
 
 
 if __name__ == '__main__':

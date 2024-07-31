@@ -35,14 +35,11 @@ class SchemaMeta(type):
         'get',
         'keys',
         '_serialize'
-        'ignore_extra',
-        'raise_extra',
-        'respect_none',
     }
 
-    ignore_extra = False
-    raise_extra = True
-    respect_none = False
+    __ignore_extra__ = False
+    __raise_extra__ = True
+    __respect_none__ = False
 
     def __new__(
             mcs,
@@ -55,17 +52,17 @@ class SchemaMeta(type):
 
         # Set behavior from past and present class keywords
         ancestral_variables = mcs.__ancestral(cls, '__dict__')
-        cls.ignore_extra = kwargs.pop(
+        cls.__ignore_extra__ = kwargs.pop(
             'ignore_extra',
-            ancestral_variables.get('ignore_extra', mcs.ignore_extra)
+            ancestral_variables.get('__ignore_extra__', mcs.__ignore_extra__)
         )
-        cls.raise_extra = kwargs.pop(
+        cls.__raise_extra__ = kwargs.pop(
             'raise_extra',
-            ancestral_variables.get('raise_extra', mcs.raise_extra)
+            ancestral_variables.get('__raise_extra__', mcs.__raise_extra__)
         )
-        cls.respect_none = kwargs.pop(
+        cls.__respect_none__ = kwargs.pop(
             'respect_none',
-            ancestral_variables.get('respect_none', mcs.respect_none)
+            ancestral_variables.get('__respect_none__', mcs.__respect_none__)
         )
 
         # The schema is in the class __annotations__
@@ -373,7 +370,7 @@ class JsonObject(metaclass=SchemaMeta):
     def __purge(self, mapping: Json) -> Json:
         """Eliminate items with ``None`` value according to  `respect_none`."""
         filters = {True: lambda _: True, False: lambda xs: xs[1] is not None}
-        return dict(filter(filters[self.respect_none], mapping.items()))
+        return dict(filter(filters[self.__respect_none__], mapping.items()))
 
     @staticmethod
     def __stop_recursion_for(obj: Any) -> bool:
@@ -461,12 +458,12 @@ class JsonObject(metaclass=SchemaMeta):
         if missing:
             raise ParseError(missing_msg)
         # If we don't have to deal with extra fields, we're done
-        if self.ignore_extra:
+        if self.__ignore_extra__:
             return cast
 
         # If not, first check if we even allow extra fields
         extra_fields = set(mapping) - set(self.__annotations__)
-        if extra_fields and self.raise_extra:
+        if extra_fields and self.__raise_extra__:
             raise ParseError(f'Fields {extra_fields} are not in schema!')
 
         # Even if extra fields are not ignored and are allowed, we need to ...
