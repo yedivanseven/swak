@@ -185,8 +185,8 @@ class JsonObject(metaclass=SchemaMeta):
     object with a JSON string, dictionary, and/or keyword arguments yields
     a new instance with updated data.
 
-    Notably, nested instances can be accessed dictionary-style (i.e., with the
-    square-bracket accessor) with a dot.separated key.
+    Notably, attributes of nested instances can be accessed dictionary-style
+    (i.e., with the square-bracket accessor) with a dot.separated key.
 
     Parameters
     ----------
