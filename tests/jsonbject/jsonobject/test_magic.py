@@ -182,6 +182,10 @@ class TestMagic(unittest.TestCase):
         empty = Empty()
         self.assertFalse(empty)
 
+    def test_callable(self):
+        simple = Simple()
+        self.assertTrue(callable(simple))
+
     def test_dictionary_unwrapping(self):
         simple = Simple()
         actual = {**simple}
