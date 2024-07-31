@@ -17,14 +17,14 @@ class TestEmptyAttributes(unittest.TestCase):
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertTrue(hasattr(Empty, '__schema__'))
+        self.assertTrue(hasattr(Empty, '__annotations__'))
 
     def test_schema(self):
 
         class Empty(metaclass=SchemaMeta):
             pass
 
-        self.assertDictEqual({}, Empty.__schema__)
+        self.assertDictEqual({}, Empty.__annotations__)
 
     def test_has_defaults(self):
 
@@ -49,7 +49,7 @@ class TestAttributes(unittest.TestCase):
             a: int
             b: str
 
-        self.assertTrue(hasattr(Test, '__schema__'))
+        self.assertTrue(hasattr(Test, '__annotations__'))
 
     def test_schema(self):
 
@@ -57,7 +57,7 @@ class TestAttributes(unittest.TestCase):
             a: int
             b: str
 
-        self.assertDictEqual({'a': int, 'b': str}, Test.__schema__)
+        self.assertDictEqual({'a': int, 'b': str}, Test.__annotations__)
 
     def test_has_mixed_defaults(self):
 
@@ -65,8 +65,8 @@ class TestAttributes(unittest.TestCase):
             a: int
             b: str = 'hello'
 
-        self.assertTrue(hasattr(Test, '__schema__'))
-        self.assertDictEqual({'a': int, 'b': str}, Test.__schema__)
+        self.assertTrue(hasattr(Test, '__annotations__'))
+        self.assertDictEqual({'a': int, 'b': str}, Test.__annotations__)
         self.assertTrue(hasattr(Test, '__defaults__'))
         self.assertDictEqual({'b': 'hello'}, Test.__defaults__)
 
@@ -76,8 +76,8 @@ class TestAttributes(unittest.TestCase):
             a: int
             b: str = 'hello'
 
-        self.assertTrue(hasattr(Test, '__schema__'))
-        self.assertDictEqual({'a': int, 'b': str}, Test.__schema__)
+        self.assertTrue(hasattr(Test, '__annotations__'))
+        self.assertDictEqual({'a': int, 'b': str}, Test.__annotations__)
         self.assertDictEqual({'b': 'hello'}, Test.__defaults__)
 
     def test_has_full_defaults(self):
@@ -86,8 +86,8 @@ class TestAttributes(unittest.TestCase):
             a: int = 1
             b: str = 'hello'
 
-        self.assertTrue(hasattr(Test, '__schema__'))
-        self.assertDictEqual({'a': int, 'b': str}, Test.__schema__)
+        self.assertTrue(hasattr(Test, '__annotations__'))
+        self.assertDictEqual({'a': int, 'b': str}, Test.__annotations__)
         self.assertTrue(hasattr(Test, '__defaults__'))
 
     def test_full_defaults(self):
@@ -96,8 +96,8 @@ class TestAttributes(unittest.TestCase):
             a: int = 1
             b: str = 'hello'
 
-        self.assertTrue(hasattr(Test, '__schema__'))
-        self.assertDictEqual({'a': int, 'b': str}, Test.__schema__)
+        self.assertTrue(hasattr(Test, '__annotations__'))
+        self.assertDictEqual({'a': int, 'b': str}, Test.__annotations__)
         self.assertDictEqual({'a': 1, 'b': 'hello'}, Test.__defaults__)
 
     def test_caster_called(self):
@@ -338,7 +338,7 @@ class TestKwargFields(unittest.TestCase):
 
         expected_schema = {'a': int, 'b': float, 'foo': str}
         expected_defaults = {'a': 1, 'foo': 'foo'}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_add_kwarg_field_float(self):
@@ -349,7 +349,7 @@ class TestKwargFields(unittest.TestCase):
 
         expected_schema = {'a': int, 'b': float, 'foo': str}
         expected_defaults = {'a': 1, 'foo': 'foo'}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_body_field_overwrites_kwarg_field_and_default(self):
@@ -360,7 +360,7 @@ class TestKwargFields(unittest.TestCase):
 
         expected_schema = {'a': int, 'b': float}
         expected_defaults = {'a': 1}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_body_default_overwrites_kwarg_default(self):
@@ -371,7 +371,7 @@ class TestKwargFields(unittest.TestCase):
 
         expected_schema = {'a': int, 'b': float}
         expected_defaults = {'a': 1}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
 
@@ -389,7 +389,7 @@ class TestInheritance(unittest.TestCase):
             b: str
 
         self.assertIsInstance(AddB, SchemaMeta)
-        self.assertDictEqual({'a': int, 'b': str}, AddB.__schema__)
+        self.assertDictEqual({'a': int, 'b': str}, AddB.__annotations__)
         self.assertDictEqual({}, AddB.__defaults__)
 
     def test_add_new_default_field(self):
@@ -398,7 +398,7 @@ class TestInheritance(unittest.TestCase):
             b: str = 'hello'
 
         self.assertIsInstance(AddBdef, SchemaMeta)
-        self.assertDictEqual({'a': int, 'b': str}, AddBdef.__schema__)
+        self.assertDictEqual({'a': int, 'b': str}, AddBdef.__annotations__)
         self.assertDictEqual({'b': 'hello'}, AddBdef.__defaults__)
 
     def test_add_default_to_existing_field(self):
@@ -407,7 +407,7 @@ class TestInheritance(unittest.TestCase):
             a: int = 2
 
         self.assertIsInstance(AddAdef, SchemaMeta)
-        self.assertDictEqual({'a': int}, AddAdef.__schema__)
+        self.assertDictEqual({'a': int}, AddAdef.__annotations__)
         self.assertDictEqual({'a': 2}, AddAdef.__defaults__)
 
     def test_change_default_of_existing_field(self):
@@ -416,7 +416,7 @@ class TestInheritance(unittest.TestCase):
             a: int = 2
 
         self.assertIsInstance(ChangeAdef, SchemaMeta)
-        self.assertDictEqual({'a': int}, ChangeAdef.__schema__)
+        self.assertDictEqual({'a': int}, ChangeAdef.__annotations__)
         self.assertDictEqual({'a': 2}, ChangeAdef.__defaults__)
 
     def test_cant_remove_default_of_existing_field(self):
@@ -425,7 +425,7 @@ class TestInheritance(unittest.TestCase):
             a: int
 
         self.assertIsInstance(AundefA, SchemaMeta)
-        self.assertDictEqual({'a': int}, AundefA.__schema__)
+        self.assertDictEqual({'a': int}, AundefA.__annotations__)
         self.assertDictEqual({'a': 1}, AundefA.__defaults__)
 
     def test_change_type_of_existing_field(self):
@@ -434,7 +434,7 @@ class TestInheritance(unittest.TestCase):
             a: str
 
         self.assertIsInstance(AchangeA, SchemaMeta)
-        self.assertDictEqual({'a': str}, AchangeA.__schema__)
+        self.assertDictEqual({'a': str}, AchangeA.__annotations__)
         self.assertDictEqual({}, AchangeA.__defaults__)
 
     def test_change_type_of_existing_field_and_set_default(self):
@@ -443,7 +443,7 @@ class TestInheritance(unittest.TestCase):
             a: str = 'foo'
 
         self.assertIsInstance(AchangeAdef, SchemaMeta)
-        self.assertDictEqual({'a': str}, AchangeAdef.__schema__)
+        self.assertDictEqual({'a': str}, AchangeAdef.__annotations__)
         self.assertDictEqual({'a': 'foo'}, AchangeAdef.__defaults__)
 
     def test_change_type_of_existing_field_and_change_default(self):
@@ -452,7 +452,7 @@ class TestInheritance(unittest.TestCase):
             a: str = 'foo'
 
         self.assertIsInstance(AchangeAdef, SchemaMeta)
-        self.assertDictEqual({'a': str}, AchangeAdef.__schema__)
+        self.assertDictEqual({'a': str}, AchangeAdef.__annotations__)
         self.assertDictEqual({'a': 'foo'}, AchangeAdef.__defaults__)
 
     def test_grandparent(self):
@@ -464,7 +464,7 @@ class TestInheritance(unittest.TestCase):
             c: float = 2.0
 
         self.assertIsInstance(C, SchemaMeta)
-        self.assertDictEqual({'a': int, 'b': str, 'c': float}, C.__schema__)
+        self.assertDictEqual({'a': int, 'b': str, 'c': float}, C.__annotations__)
         self.assertDictEqual({'b': 'foo', 'c': 2.0}, C.__defaults__)
 
     def test_multiple_inheritance(self):
@@ -476,7 +476,7 @@ class TestInheritance(unittest.TestCase):
             c: float = 2.0
 
         self.assertIsInstance(C, SchemaMeta)
-        self.assertDictEqual({'a': int, 'b': str, 'c': float}, C.__schema__)
+        self.assertDictEqual({'a': int, 'b': str, 'c': float}, C.__annotations__)
         self.assertDictEqual({'b': 'foo', 'c': 2.0}, C.__defaults__)
 
     def test_mro(self):
@@ -491,9 +491,9 @@ class TestInheritance(unittest.TestCase):
             c: float
 
         self.assertIsInstance(C, SchemaMeta)
-        self.assertDictEqual({'a': int, 'c': float}, C.__schema__)
+        self.assertDictEqual({'a': int, 'c': float}, C.__annotations__)
         self.assertDictEqual({}, C.__defaults__)
-        self.assertDictEqual({'a': str, 'c': float}, D.__schema__)
+        self.assertDictEqual({'a': str, 'c': float}, D.__annotations__)
         self.assertDictEqual({}, D.__defaults__)
 
     def test_has_ignore_extra(self):
@@ -510,7 +510,7 @@ class TestInheritance(unittest.TestCase):
 
         self.assertTrue(IgnoreExtra.ignore_extra)
 
-    def test_ignore_extra_not_inherited(self):
+    def test_ignore_extra_inherited(self):
 
         class IgnoreExtra(self.A, ignore_extra=True):
             pass
@@ -534,7 +534,7 @@ class TestInheritance(unittest.TestCase):
 
         self.assertFalse(RaiseExtra.raise_extra)
 
-    def test_raise_extra_not_inherited(self):
+    def test_raise_extra_inherited(self):
 
         class RaiseExtra(self.A, raise_extra=False):
             pass
@@ -558,7 +558,7 @@ class TestInheritance(unittest.TestCase):
 
         self.assertTrue(RespectNone.respect_none)
 
-    def test_respect_none_not_inherited(self):
+    def test_respect_none_inherited(self):
 
         class RespectNone(self.A, respect_none=True):
             pass
@@ -575,7 +575,7 @@ class TestInheritance(unittest.TestCase):
 
         expected_schema = {'a': int, 'foo': str}
         expected_defaults = {'foo': 'foo'}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_add_kwarg_field_float(self):
@@ -585,10 +585,10 @@ class TestInheritance(unittest.TestCase):
 
         expected_schema = {'a': int, 'foo': str}
         expected_defaults = {'foo': 'foo'}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
-    def test_add_kwarg_field_not_inherited(self):
+    def test_add_kwarg_field_inherited(self):
 
         class Test(self.A, foo='bar'):
             pass
@@ -598,7 +598,7 @@ class TestInheritance(unittest.TestCase):
 
         expected_schema = {'a': int, 'foo': str}
         expected_defaults = {'foo': 'foo'}
-        self.assertDictEqual(expected_schema, Child.__schema__)
+        self.assertDictEqual(expected_schema, Child.__annotations__)
         self.assertDictEqual(expected_defaults, Child.__defaults__)
 
     def test_body_field_overwrites_kwarg_field_and_default(self):
@@ -608,7 +608,7 @@ class TestInheritance(unittest.TestCase):
 
         expected_schema = {'a': int}
         expected_defaults = {}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_body_default_overwrites_kwarg_default(self):
@@ -618,7 +618,7 @@ class TestInheritance(unittest.TestCase):
 
         expected_schema = {'a': int}
         expected_defaults = {'a': 1}
-        self.assertDictEqual(expected_schema, Test.__schema__)
+        self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
 

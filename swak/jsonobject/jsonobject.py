@@ -34,10 +34,10 @@ class SchemaMeta(type):
         'as_dtype',
         'get',
         'keys',
+        '_serialize'
         'ignore_extra',
         'raise_extra',
         'respect_none',
-        '_serialize'
     }
 
     ignore_extra = False
@@ -53,26 +53,42 @@ class SchemaMeta(type):
     ) -> 'SchemaMeta':
         cls = super().__new__(mcs, name, bases, attrs)
 
-        # Keywords passed on inheriting from an instance of this metaclass
-        cls.ignore_extra = kwargs.pop('ignore_extra', mcs.ignore_extra)
-        cls.raise_extra = kwargs.pop('raise_extra', mcs.raise_extra)
-        cls.respect_none = kwargs.pop('respect_none', mcs.respect_none)
+        # Set behavior from past and present class keywords
+        ancestral_variables = mcs.__ancestral(cls, '__dict__')
+        cls.ignore_extra = kwargs.pop(
+            'ignore_extra',
+            ancestral_variables.get('ignore_extra', mcs.ignore_extra)
+        )
+        cls.raise_extra = kwargs.pop(
+            'raise_extra',
+            ancestral_variables.get('raise_extra', mcs.raise_extra)
+        )
+        cls.respect_none = kwargs.pop(
+            'respect_none',
+            ancestral_variables.get('respect_none', mcs.respect_none)
+        )
 
         # The schema is in the class __annotations__
-        raw_schema = mcs.__get(cls, '__annotations__')
+        ancestral_schema = mcs.__ancestral(cls, '__annotations__')
         # Extract (string) keys from additional keyword arguments
         kwarg_schema = {key: str for key in kwargs}
         # Fields defined in the class body overwrite keyword fields
-        schema = kwarg_schema | raw_schema
-        cls.__schema__ = mcs.__validate_schema(name, schema, mcs.__blacklist__)
+        schema = kwarg_schema | ancestral_schema
+        # Set the updated class __annotations__
+        cls.__annotations__ = mcs.__validate(name, schema, mcs.__blacklist__)
 
-        # Default values for class variables are in the class __dict__
-        raw_defaults = mcs.__filter(cls, mcs.__get(cls, '__dict__'))
+        # Ancestral defaults are in the class __defaults__
+        ancestral_defaults = mcs.__ancestral(cls, '__defaults__')
+        # Current class variables overwrite ancestral defaults
+        updated_defaults = ancestral_defaults | cls.__dict__
+        # Only type-annotated class variables are relevant
+        filtered_defaults = mcs.__filter(cls.__annotations__, updated_defaults)
         # Defaults for additional fields from keyword arguments are the keys
-        kwarg_defaults = {key: key for key in kwargs if key not in raw_schema}
+        kwarg_defaults = {k: k for k in kwargs if k not in ancestral_schema}
         # Fields defined in the class body overwrite keyword fields
-        defaults = kwarg_defaults | raw_defaults
-        cls.__defaults__ = mcs.__validate_defaults(defaults, cls.__schema__)
+        defaults = kwarg_defaults | filtered_defaults
+        # Use __defaults__ because __dict__ cannot be set or updated directly
+        cls.__defaults__ = mcs.__valid(defaults, cls.__annotations__)
 
         # JSON fields that conflict with methods or properties are forbidden
         cls.__blacklist__ = mcs.__blacklist__
@@ -80,7 +96,7 @@ class SchemaMeta(type):
         return cls
 
     @staticmethod
-    def __get(cls: 'SchemaMeta', attribute: str) -> Json:
+    def __ancestral(cls: 'SchemaMeta', attribute: str) -> Json:
         """Accumulate dictionary class variables down the inheritance tree."""
         # Get class ancestors starting with the oldest
         lineage = reversed(cls.mro())
@@ -98,16 +114,12 @@ class SchemaMeta(type):
         return update
 
     @staticmethod
-    def __filter(cls: 'SchemaMeta', defaults: Json) -> Json:
+    def __filter(schema: Schema, defaults: Json) -> Json:
         """Filter down class __dict__ to keys present in the schema."""
-        return {key: defaults[key] for key in defaults if key in cls.__schema__}
+        return {key: defaults[key] for key in defaults if key in schema}
 
     @staticmethod
-    def __validate_schema(
-            name: str,
-            schema: Schema,
-            blacklist: set[str]
-    ) -> Schema:
+    def __validate(name: str, schema: Schema, blacklist: set[str]) -> Schema:
         """Validate that class-variable annotations are sane."""
         msg = ''
         hidden = f'_{name}__'
@@ -122,7 +134,7 @@ class SchemaMeta(type):
         return schema
 
     @staticmethod
-    def __validate_defaults(defaults: Json, schema: Schema) -> Json:
+    def __valid(defaults: Json, schema: Schema) -> Json:
         """Validate that class-variable defaults are sane."""
         none_defaults = []
         none_msg = ''
@@ -434,7 +446,7 @@ class JsonObject(metaclass=SchemaMeta):
         missing = []
         missing_msg = ''
         # Iterate over the fields in the schema
-        for item, type_cast in self.__schema__.items():
+        for item, type_cast in self.__annotations__.items():
             try:
                 cast[item] = type_cast(mapping[item])
             except (TypeError, ValueError):
@@ -452,7 +464,7 @@ class JsonObject(metaclass=SchemaMeta):
             return cast
 
         # If not, first check if we even allow extra fields
-        extra_fields = set(mapping) - set(self.__schema__)
+        extra_fields = set(mapping) - set(self.__annotations__)
         if extra_fields and self.raise_extra:
             raise ParseError(f'Fields {extra_fields} are not in schema!')
 
