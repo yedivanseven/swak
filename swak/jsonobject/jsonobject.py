@@ -172,6 +172,9 @@ class JsonObject(metaclass=SchemaMeta):
     object with a JSON string, dictionary, and/or keyword arguments yields
     a new instance with updated data.
 
+    Notably, nested instances can be accessed dictionary-style (i.e., with the
+    square-bracket accessor) with a dot.separated key.
+
     Parameters
     ----------
     mapping: dict, str, bytes, or Series, optional
@@ -195,6 +198,10 @@ class JsonObject(metaclass=SchemaMeta):
     -----
     This class is rather heavy, so do not use it to, e.g., wrap JSON payloads
     in high-throughput and/or low-latency web services!
+
+    See Also
+    --------
+    fields.Maybe
 
     """
 

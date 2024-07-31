@@ -4,18 +4,26 @@ from swak.jsonobject import JsonObject
 
 
 class Child(JsonObject):
+    b: float = 42.0
     c: int
 
 
 class Parent(JsonObject):
+    a: str = 'foo'
     child: Child
 
 
 class TestInstantiationDict(unittest.TestCase):
 
     def check_attributes(self, obj):
+        self.assertTrue(hasattr(obj, 'a'))
+        self.assertIsInstance(obj.a, str)
+        self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
+        self.assertTrue(hasattr(obj.child, 'b'))
+        self.assertIsInstance(obj.child.b, float)
+        self.assertEqual(42.0, obj.child.b)
         self.assertTrue(hasattr(obj.child, 'c'))
         self.assertIsInstance(obj.child.c, int)
         self.assertEqual(1, obj.child.c)
@@ -52,8 +60,14 @@ class TestInstantiationDict(unittest.TestCase):
 class TestInstantiationKwarg(unittest.TestCase):
 
     def check_attributes(self, obj):
+        self.assertTrue(hasattr(obj, 'a'))
+        self.assertIsInstance(obj.a, str)
+        self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
+        self.assertTrue(hasattr(obj.child, 'b'))
+        self.assertIsInstance(obj.child.b, float)
+        self.assertEqual(42.0, obj.child.b)
         self.assertTrue(hasattr(obj.child, 'c'))
         self.assertIsInstance(obj.child.c, int)
         self.assertEqual(1, obj.child.c)
@@ -146,8 +160,14 @@ class TestInstantiationKwarg(unittest.TestCase):
 class TestInstantiationSeries(unittest.TestCase):
 
     def check_attributes(self, obj):
+        self.assertTrue(hasattr(obj, 'a'))
+        self.assertIsInstance(obj.a, str)
+        self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
+        self.assertTrue(hasattr(obj.child, 'b'))
+        self.assertIsInstance(obj.child.b, float)
+        self.assertEqual(42.0, obj.child.b)
         self.assertTrue(hasattr(obj.child, 'c'))
         self.assertIsInstance(obj.child.c, int)
         self.assertEqual(1, obj.child.c)
@@ -184,8 +204,14 @@ class TestInstantiationSeries(unittest.TestCase):
 class TestInstantiationOther(unittest.TestCase):
 
     def check_attributes(self, obj):
+        self.assertTrue(hasattr(obj, 'a'))
+        self.assertIsInstance(obj.a, str)
+        self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
+        self.assertTrue(hasattr(obj.child, 'b'))
+        self.assertIsInstance(obj.child.b, float)
+        self.assertEqual(42.0, obj.child.b)
         self.assertTrue(hasattr(obj.child, 'c'))
         self.assertIsInstance(obj.child.c, int)
         self.assertEqual(1, obj.child.c)
@@ -210,8 +236,14 @@ class TestInstantiationOther(unittest.TestCase):
 class TestKwargOverWrites(unittest.TestCase):
 
     def check_attributes(self, obj):
+        self.assertTrue(hasattr(obj, 'a'))
+        self.assertIsInstance(obj.a, str)
+        self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
+        self.assertTrue(hasattr(obj.child, 'b'))
+        self.assertIsInstance(obj.child.b, float)
+        self.assertEqual(42.0, obj.child.b)
         self.assertTrue(hasattr(obj.child, 'c'))
         self.assertIsInstance(obj.child.c, int)
         self.assertEqual(1, obj.child.c)
@@ -258,23 +290,34 @@ class TestViews(unittest.TestCase):
         self.p = Parent({'child': {'c': 1}})
 
     def test_str(self):
-        expected = '{"child": {"c": 1}}'
+        expected = '{"a": "foo", "child": {"b": 42.0, "c": 1}}'
         self.assertEqual(expected, str(self.p))
 
     def test_repr(self):
-        expected = '{\n    "child": {\n        "c": 1\n    }\n}'
+        expected = (
+            '{\n'
+            '    "a": "foo",\n'
+            '    "child": {\n'
+            '        "b": 42.0,\n'
+            '        "c": 1\n'
+            '    }\n'
+            '}'
+        )
         self.assertEqual(expected, repr(self.p))
 
     def test_as_json(self):
-        expected = {'child': {'c': 1}}
+        expected = {'a': 'foo', 'child': {'b': 42.0, 'c': 1}}
         self.assertDictEqual(expected, self.p.as_json)
 
     def test_as_dtype(self):
-        expected = '{"child": {"c": 1}}'
+        expected = '{"a": "foo", "child": {"b": 42.0, "c": 1}}'
         self.assertEqual(expected, self.p.as_dtype)
 
     def test_as_series(self):
-        expected = pd.Series({'child': '{"c": 1}'}, name='Parent')
+        expected = pd.Series(
+            {'a': 'foo', 'child': '{"b": 42.0, "c": 1}'},
+            name='Parent'
+        )
         pd.testing.assert_series_equal(expected, self.p.as_series)
 
 

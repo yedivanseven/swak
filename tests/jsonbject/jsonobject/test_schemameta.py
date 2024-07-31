@@ -510,6 +510,16 @@ class TestInheritance(unittest.TestCase):
 
         self.assertTrue(IgnoreExtra.ignore_extra)
 
+    def test_ignore_extra_not_inherited(self):
+
+        class IgnoreExtra(self.A, ignore_extra=True):
+            pass
+
+        class Child(IgnoreExtra):
+            pass
+
+        self.assertTrue(Child.ignore_extra)
+
     def test_has_raise_extra(self):
 
         class RaiseExtra(self.A, raise_extra=False):
@@ -524,6 +534,16 @@ class TestInheritance(unittest.TestCase):
 
         self.assertFalse(RaiseExtra.raise_extra)
 
+    def test_raise_extra_not_inherited(self):
+
+        class RaiseExtra(self.A, raise_extra=False):
+            pass
+
+        class Child(RaiseExtra):
+            pass
+
+        self.assertFalse(Child.raise_extra)
+
     def test_has_respect_none(self):
 
         class RespectNone(self.A, respect_none=True):
@@ -537,6 +557,16 @@ class TestInheritance(unittest.TestCase):
             pass
 
         self.assertTrue(RespectNone.respect_none)
+
+    def test_respect_none_not_inherited(self):
+
+        class RespectNone(self.A, respect_none=True):
+            pass
+
+        class Child(RespectNone):
+            pass
+
+        self.assertTrue(Child.respect_none)
 
     def test_add_kwarg_field_string(self):
 
@@ -557,6 +587,19 @@ class TestInheritance(unittest.TestCase):
         expected_defaults = {'foo': 'foo'}
         self.assertDictEqual(expected_schema, Test.__schema__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
+
+    def test_add_kwarg_field_not_inherited(self):
+
+        class Test(self.A, foo='bar'):
+            pass
+
+        class Child(Test):
+            pass
+
+        expected_schema = {'a': int, 'foo': str}
+        expected_defaults = {'foo': 'foo'}
+        self.assertDictEqual(expected_schema, Child.__schema__)
+        self.assertDictEqual(expected_defaults, Child.__defaults__)
 
     def test_body_field_overwrites_kwarg_field_and_default(self):
 
