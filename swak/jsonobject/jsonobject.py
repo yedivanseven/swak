@@ -164,8 +164,8 @@ class JsonObject(metaclass=SchemaMeta):
     not being present. To actually set fields to ``None`` (and, potentially,
     overwrite defaults), the class keyword `respect_none` needs to be set
     to ``True`` on subclass definition. Note, however, that type annotations
-    must also tolerate ``None`` values. This can be achieved by using
-    custom types or by wrapping existing types into ``Maybe`` instance.
+    must also tolerate ``None`` values, which is realized by wrapping existing
+    types into ``Maybe`` instances.
 
     The resulting object behaves in many ways like a dictionary, allowing
     dictionary-style, but also object-style access to data fields. Calling the
@@ -190,6 +190,11 @@ class JsonObject(metaclass=SchemaMeta):
     CastError
         If the dictionary values cannot be cast into the types specified in
         the schema.
+
+    Notes
+    -----
+    This class is rather heavy, so do not use it to, e.g., wrap JSON payloads
+    in high-throughput and/or low-latency web services!
 
     """
 
@@ -415,11 +420,13 @@ class JsonObject(metaclass=SchemaMeta):
 
     def __cast(self, mapping: Json) -> Json:
         """Cast all fields in the data structure to their specified type."""
+        # Initialize accumulators
         cast = {}
         uncastable = []
         uncastable_msg = ''
         missing = []
         missing_msg = ''
+        # Iterate over the fields in the schema
         for item, type_cast in self.__schema__.items():
             try:
                 cast[item] = type_cast(mapping[item])
@@ -433,13 +440,30 @@ class JsonObject(metaclass=SchemaMeta):
             raise CastError(uncastable_msg)
         if missing:
             raise ParseError(missing_msg)
+        # If we don't have to deal with extra fields, we're done
         if self.ignore_extra:
             return cast
+
+        # If not, first check if we even allow extra fields
         extra_fields = set(mapping) - set(self.__schema__)
         if extra_fields and self.raise_extra:
             raise ParseError(f'Fields {extra_fields} are not in schema!')
+
+        # Even if extra fields are not ignored and are allowed, we need to ...
+        # ... check that their keys are not blacklisted, ...
         if any(key in self.__blacklist__ for key in extra_fields):
             msg = f'Extra fields must not include any of {self.__blacklist__}!'
             raise ParseError(msg)
+        # ... check that their keys are strings, ...
+        if not all(isinstance(key, str) for key in extra_fields):
+            raise ParseError('Extra fields must have string keys!')
+        # ... and check that, between dots, keys are valid python identifiers.
+        valid = True
+        for key in extra_fields:
+            valid &= all(part.isidentifier() for part in key.split('.'))
+        if not valid:
+            msg = 'Keys must be (dot.separated) valid python identifiers!'
+            raise ParseError(msg)
+        # Only then do we accept and merge them.
         extras = {field: mapping[field] for field in extra_fields}
         return {**cast, **extras}

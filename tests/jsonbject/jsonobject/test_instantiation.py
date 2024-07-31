@@ -30,32 +30,32 @@ class TestEmpty(unittest.TestCase):
     def test_none(self):
         _ = Empty(None)
 
-    def test_dict_none(self):
-        _ = Empty({'foo': None})
-
     def test_empty_series(self):
         _ = Empty(Series())
 
-    def test_series_none(self):
-        _ = Empty(Series([None]))
-
-    def test_string_of_empty_dict(self):
+    def test_str_of_empty_dict(self):
         _ = Empty('{}')
-
-    def test_string_of_dict_none(self):
-        _ = Empty('{"foo": None}')
-
-    def test_string_of_dict_null(self):
-        _ = Empty('{"foo": null}')
 
     def test_bytes_of_empty_dict(self):
         _ = Empty(bytes('{}'.encode('utf-8')))
 
-    def test_bytes_of_dict_null(self):
-        _ = Empty(bytes('{"foo": null}'.encode('utf-8')))
-
     def test_bytearray_of_empty_dict(self):
         _ = Empty(bytearray('{}'.encode('utf-8')))
+
+
+class TestNoneIgnored(unittest.TestCase):
+
+    def test_dict_none(self):
+        _ = Empty({'foo': None})
+
+    def test_series_none(self):
+        _ = Empty(Series({'foo': None}))
+
+    def test_str_of_dict_none(self):
+        _ = Empty("{'foo': None}")
+
+    def test_bytes_of_dict_null(self):
+        _ = Empty(bytes('{"foo": null}'.encode('utf-8')))
 
     def test_bytearray_of_dict_null(self):
         _ = Empty(bytearray('{"foo": null}'.encode('utf-8')))
@@ -670,6 +670,18 @@ class TestExtraFields(unittest.TestCase):
         respect = self.Respect(Series({'a': None}))
         self.assertTrue(hasattr(respect, 'a'))
         self.assertIsNone(respect.a)
+
+    def test_extra_raises_on_non_string_keys(self):
+        expected = 'Extra fields must have string keys!'
+        with self.assertRaises(ParseError) as error:
+            _ = self.FalseFalse({0: 1})
+        self.assertEqual(expected, str(error.exception))
+
+    def test_extra_raises_on_non_identifier_keys(self):
+        expected = 'Keys must be (dot.separated) valid python identifiers!'
+        with self.assertRaises(ParseError) as error:
+            _ = self.FalseFalse({' 034- 5 / ': 1})
+        self.assertEqual(expected, str(error.exception))
 
 
 if __name__ == '__main__':

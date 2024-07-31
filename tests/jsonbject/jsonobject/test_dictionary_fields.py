@@ -1,7 +1,7 @@
 import unittest
 from swak.jsonobject import JsonObject
 
-
+# ToDo: Continue here!
 class Flat(JsonObject):
     c: int
     d: dict
