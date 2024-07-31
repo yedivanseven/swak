@@ -75,7 +75,7 @@ class SchemaMeta(type):
         # Fields defined in the class body overwrite keyword fields
         schema = kwarg_schema | ancestral_schema
         # Set the updated class __annotations__
-        cls.__annotations__ = mcs.__validate(name, schema, mcs.__blacklist__)
+        cls.__annotations__ = mcs.__valid(name, schema, mcs.__blacklist__)
 
         # Ancestral defaults are in the class __defaults__
         ancestral_defaults = mcs.__ancestral(cls, '__defaults__')
@@ -88,7 +88,7 @@ class SchemaMeta(type):
         # Fields defined in the class body overwrite keyword fields
         defaults = kwarg_defaults | filtered_defaults
         # Use __defaults__ because __dict__ cannot be set or updated directly
-        cls.__defaults__ = mcs.__valid(defaults, cls.__annotations__)
+        cls.__defaults__ = mcs.__tried(defaults, cls.__annotations__)
 
         # JSON fields that conflict with methods or properties are forbidden
         cls.__blacklist__ = mcs.__blacklist__
@@ -119,42 +119,46 @@ class SchemaMeta(type):
         return {key: defaults[key] for key in defaults if key in schema}
 
     @staticmethod
-    def __validate(name: str, schema: Schema, blacklist: set[str]) -> Schema:
+    def __valid(name: str, schema: Schema, blacklist: set[str]) -> Schema:
         """Validate that class-variable annotations are sane."""
-        msg = ''
-        hidden = f'_{name}__'
+        msg = ''               # Initialize cumulative error message
+        hidden = f'_{name}__'  # Pattern for double-underscore_class variables
         if not_callable := not all(callable(val) for val in schema.values()):
             msg += '\nAll schema annotations must be callable!'
         if any_forbidden := any(key in blacklist for key in schema.keys()):
             msg += f'\nField must not include any of {blacklist}!'
         if any_hidden := any(key.startswith(hidden) for key in schema.keys()):
             msg += '\nField names must not start with "__"!'
+        # Raise collective error if anything seemed fishy
         if any([not_callable, any_forbidden, any_hidden]):
             raise SchemaError(msg)
         return schema
 
     @staticmethod
-    def __valid(defaults: Json, schema: Schema) -> Json:
-        """Validate that class-variable defaults are sane."""
+    def __tried(defaults: Json, schema: Schema) -> Json:
+        """Ensure that class-variable defaults are sane."""
+        # Initialize accumulators
         none_defaults = []
         none_msg = ''
         cast_defaults = []
         cast_msg = ''
+        # Iterate over default values
         for item in defaults:
-            # Check None values
+            # Check for None values and whether they are allowed
             default_is_none = defaults[item] is None
             type_is_not_maybe = not isinstance(schema[item], Maybe)
             if default_is_none and type_is_not_maybe:
                 none_defaults.append(item)
                 none_msg = (f'\nFor defaults {none_defaults} to be None, mark'
                             ' them as Maybe(<YOUR_TYPE>) in the schema!')
-            # Check can cast values
+            # Check that schema annotations can be called on default values
             try:
                 defaults[item] = schema[item](defaults[item])
             except (TypeError, ValueError):
                 cast_defaults.append(item)
                 cast_msg = (f'\nDefaults {cast_defaults} can not'
                             ' be cast to the desired types!')
+        # Raise collective error if anything seemed fishy
         if any([none_defaults, cast_defaults]):
             msg = ''.join([none_msg, cast_msg])
             raise DefaultsError(msg)
