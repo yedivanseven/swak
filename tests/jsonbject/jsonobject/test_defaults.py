@@ -168,6 +168,14 @@ class TestDefaultOverwrittenWithNone(unittest.TestCase):
         default = Respect(a=None)
         self.check_attribute(default)
 
+    def test_kwarg_null_str(self):
+        default = Respect(a='null')
+        self.check_attribute(default)
+
+    def test_kwarg_none_str(self):
+        default = Respect(a='None')
+        self.check_attribute(default)
+
     def test_series(self):
         default = Respect(Series({'a': None}))
         self.check_attribute(default)

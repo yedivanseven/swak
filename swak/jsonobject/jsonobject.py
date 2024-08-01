@@ -439,24 +439,32 @@ class JsonObject(metaclass=SchemaMeta):
         """Cast all fields in the data structure to their specified type."""
         # Initialize accumulators
         cast = {}
-        uncastable = []
-        uncastable_msg = ''
         missing = []
-        missing_msg = ''
+        uncastable = []
+        nullable = []
         # Iterate over the fields in the schema
         for item, type_cast in self.__annotations__.items():
             try:
-                cast[item] = type_cast(mapping[item])
-            except (TypeError, ValueError):
-                uncastable.append(item)
-                uncastable_msg = f'Could not cast JSON fields {uncastable}!'
+                value = mapping[item]
             except KeyError:
                 missing.append(item)
-                missing_msg = f'Missing non-default fields {missing}!'
-        if uncastable:
-            raise CastError(uncastable_msg)
+                continue
+            if value is None and not isinstance(type_cast, Maybe):
+                nullable.append(item)
+            try:
+                cast[item] = type_cast(value)
+            except (TypeError, ValueError):
+                uncastable.append(item)
         if missing:
-            raise ParseError(missing_msg)
+            msg = f'Missing non-default fields {missing}!'
+            raise ParseError(msg)
+        if nullable:
+            msg = (f'For fields {nullable} to be None, mark them'
+                   f' as Maybe(<YOUR_TYPE>) in the schema!')
+            raise CastError(msg)
+        if uncastable:
+            msg = f'Could not cast JSON fields {uncastable}!'
+            raise CastError(msg)
         # If we don't have to deal with extra fields, we're done
         if self.__ignore_extra__:
             return cast

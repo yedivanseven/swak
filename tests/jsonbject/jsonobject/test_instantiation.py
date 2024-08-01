@@ -19,6 +19,10 @@ class Option(JsonObject, respect_none=True):
     a: Maybe[int](int)
 
 
+class Respect(JsonObject, respect_none=True):
+    a: int
+
+
 class TestEmpty(unittest.TestCase):
 
     def test_no_arg(self):
@@ -54,6 +58,9 @@ class TestNoneIgnored(unittest.TestCase):
     def test_str_of_dict_none(self):
         _ = Empty("{'foo': None}")
 
+    def test_json_of_dict_null(self):
+        _ = Empty('{"foo": null}')
+
     def test_bytes_of_dict_null(self):
         _ = Empty(bytes('{"foo": null}'.encode('utf-8')))
 
@@ -86,8 +93,12 @@ class TestSimple(unittest.TestCase):
         simple = Simple(a=1, b='foo')
         self.check_attributes(simple)
 
-    def test_empty_and_kwargs(self):
+    def test_empty_dict_and_kwargs(self):
         simple = Simple({}, a=1, b='foo')
+        self.check_attributes(simple)
+
+    def test_empty_series_and_kwargs(self):
+        simple = Simple(Series(), a=1, b='foo')
         self.check_attributes(simple)
 
     def test_none_and_kwargs(self):
@@ -478,6 +489,13 @@ class TestExceptions(unittest.TestCase):
         expected = "Could not cast JSON fields ['a']!"
         with self.assertRaises(CastError) as error:
             _ = Simple(Series({'b': 'bar'}), a='foo')
+        self.assertEqual(expected, str(error.exception))
+
+    def test_cast_non_maybe_none_fields(self):
+        expected = ("For fields ['a'] to be None, mark them"
+                    " as Maybe(<YOUR_TYPE>) in the schema!")
+        with self.assertRaises(CastError) as error:
+            _ = Respect(a=None)
         self.assertEqual(expected, str(error.exception))
 
 
