@@ -181,12 +181,9 @@ class JsonObject(metaclass=SchemaMeta):
     types into ``Maybe`` instances.
 
     The resulting object behaves in many ways like a dictionary, allowing
-    dictionary-style, but also object-style access to data fields. Calling the
-    object with a JSON string, dictionary, and/or keyword arguments yields
-    a new instance with updated data.
-
-    Notably, attributes of nested instances can be accessed dictionary-style
-    (i.e., with the square-bracket accessor) with a dot.separated key.
+    dictionary-style, but also object-style access to data fields. Attributes
+    of nested instances can be accessed dictionary-style (i.e., with the
+    square-bracket accessor) with a dot.separated key.
 
     Parameters
     ----------
@@ -340,11 +337,30 @@ class JsonObject(metaclass=SchemaMeta):
         """Default JSON-encoding for attributes not trivially serializable."""
         return obj.as_json if hasattr(obj, 'as_json') else repr(obj)
 
+    @staticmethod
+    def __stop_recursion_for(obj: Any) -> bool:
+        """Criterion for stopping recursions in flattening and nesting.
+
+        As we recursively traverse the tree of dictionary-like object from
+        root to leaves, we stop when we arrive at a leave that (a) is no
+        longer dictionary-like or (b) still is a dictionary, but has non-string
+        keys (which a JSON can't have), or (c) when it is an empty dictionary.
+
+        """
+        if hasattr(obj, 'keys') and callable(obj.keys):
+            # Even so, "keys" could need arguments or not return an iterable
+            try:
+                keys = [*obj.keys()]
+            except TypeError:
+                return True
+            return len(keys) == 0 or any(type(key) is not str for key in keys)
+        return True
+
     def __parse(self, obj: Raw | Self, level: int = 0) -> Json:
         """Recursively parse input into a (nested) dictionary."""
         # For the initial, root-level call, None means an empty dictionary
         mapping = {} if obj is None and level == 0 else obj
-        # Try to parse input as a JSON string ...
+        # Try to parse the input as a JSON string ...
         try:
             parsed = json.loads(mapping)
         except (TypeError, JSONDecodeError):
@@ -371,22 +387,6 @@ class JsonObject(metaclass=SchemaMeta):
         """Eliminate items with ``None`` value according to  `respect_none`."""
         filters = {True: lambda _: True, False: lambda xs: xs[1] is not None}
         return dict(filter(filters[self.__respect_none__], mapping.items()))
-
-    @staticmethod
-    def __stop_recursion_for(obj: Any) -> bool:
-        """Criterion for stopping recursions in flattening and nesting.
-
-        As we recursively traverse the tree of dictionary-like object from
-        root to leaves, we stop when we arrive at a leave that (a) is no
-        longer dictionary-like or (b) still is a dictionary, but has non-string
-        keys (which a JSON can't have), or (c) when it is an empty dictionary.
-
-        """
-        return (
-            not hasattr(obj, 'keys') or
-            any(type(key) is not str for key in obj.keys()) or
-            len(obj.keys()) == 0
-        )
 
     def __nest(self, mapping: Json | Self) -> Json:
         """Nest a dictionary with nesting implied by dot.separated keys."""
