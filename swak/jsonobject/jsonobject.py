@@ -216,15 +216,15 @@ class JsonObject(metaclass=SchemaMeta):
     """
 
     def __init__(self, mapping: Raw | Self = None, **kwargs: Any) -> None:
-        # Flatten parsed and purged dictionaries into dot.separated key format
-        flat_parsed = self.__flatten(self.__purge(self.__parse(mapping)))
-        flat_kwargs = self.__flatten(self.__purge(self.__parse(kwargs, 1)))
-        flat_defaults = self.__flatten(self.__defaults__)
-        # Merge flattened dictionaries
-        merged = {**flat_defaults, **flat_parsed, **flat_kwargs}
-        # Type-cast merged dictionary after nesting them again
-        cast = self.__cast(self.__nest(merged))
-        # Set dictionary items as object attributes
+        # Fully nest the parsed and purged dictionaries with dot.separated keys
+        parsed = self.__nest(self.__purge(self.__parse(mapping)))
+        kwargs = self.__nest(self.__purge(self.__parse(kwargs, 1)))
+        defaults = self.__nest(self.__defaults__)
+        # Merge the fully nested dictionaries
+        merged = self.__merge(defaults, self.__merge(parsed, kwargs))
+        # Type-cast the merged dictionary
+        cast = self.__cast(merged)
+        # Set all dictionary items as object attributes
         self.__dict__.update(cast)
 
     def __getitem__(self, key: str) -> Any:
@@ -296,16 +296,13 @@ class JsonObject(metaclass=SchemaMeta):
             the schema.
 
         """
-        # Flatten parsed and purged dictionaries into dot.separated key format
-        flat_parsed = self.__flatten(self.__purge(self.__parse(mapping)))
-        flat_kwargs = self.__flatten(self.__purge(self.__parse(kwargs, 1)))
-        flat_self = self.__flatten(self)
-        # Merge flattened dictionaries
-        merged = {**flat_parsed, **flat_kwargs}
-        # Only keep those fields in the update that are already present
-        update = {key: merged.get(key, flat_self[key]) for key in flat_self}
+        # Fully nest the parsed and purged dictionaries with dot.separated keys
+        parsed = self.__nest(self.__purge(self.__parse(mapping)))
+        kwargs = self.__nest(self.__purge(self.__parse(kwargs, 1)))
+        # Merge the fully nested dictionaries
+        merged = self.__merge(self.__dict__, self.__merge(parsed, kwargs))
         # Instantiate a new, updated copy of self from the fully nested update
-        return self.__class__(self.__nest(update))
+        return self.__class__(merged)
 
     @property
     def as_json(self) -> Json:
@@ -336,25 +333,6 @@ class JsonObject(metaclass=SchemaMeta):
     def _serialize(obj: Any) -> Any:
         """Default JSON-encoding for attributes not trivially serializable."""
         return obj.as_json if hasattr(obj, 'as_json') else repr(obj)
-
-    @staticmethod
-    def __stop_recursion_for(obj: Any) -> bool:
-        """Criterion for stopping recursions in flattening and nesting.
-
-        As we recursively traverse the tree of dictionary-like object from
-        root to leaves, we stop when we arrive at a leave that (a) is no
-        longer dictionary-like or (b) still is a dictionary, but has non-string
-        keys (which a JSON can't have), or (c) when it is an empty dictionary.
-
-        """
-        if hasattr(obj, 'keys') and callable(obj.keys):
-            # Even so, "keys" could need arguments or not return an iterable
-            try:
-                keys = [*obj.keys()]
-            except TypeError:
-                return True
-            return len(keys) == 0 or any(type(key) is not str for key in keys)
-        return True
 
     def __parse(self, obj: Raw | Self, level: int = 0) -> Json:
         """Recursively parse input into a (nested) dictionary."""
@@ -388,6 +366,21 @@ class JsonObject(metaclass=SchemaMeta):
         filters = {True: lambda _: True, False: lambda xs: xs[1] is not None}
         return dict(filter(filters[self.__respect_none__], mapping.items()))
 
+    @staticmethod
+    def __stop_recursion_for(obj: Any) -> bool:
+        """Criterion for stopping recursions in flattening and nesting.
+
+        As we recursively traverse the tree of dictionary-like objects from
+        root to leaves, we stop when we arrive at a leave that (a) is no
+        longer dictionary-like or (b) is an empty dictionary.
+
+        """
+        try:
+            keys = [*obj.keys()]
+        except (AttributeError, TypeError):
+            return True
+        return len(keys) == 0
+
     def __nest(self, mapping: Json | Self) -> Json:
         """Nest a dictionary with nesting implied by dot.separated keys."""
         # If the input has no "keys" method or keys are not str, end recursion
@@ -397,11 +390,15 @@ class JsonObject(metaclass=SchemaMeta):
         result = defaultdict(dict)
         # Iterate through the keys
         for key in mapping.keys():
-            # Split root-level key from the children
-            root, *children = key.split('.')
             # Get the value to the current key
             value = mapping[key]
-            # If the current key has dots, add child with dot-separated key
+            if isinstance(key, str):
+                # Split root-level key from the children
+                root, *children = key.split('.')
+            else:
+                # Leave the key as what it is
+                root, children = key, []
+            # If the current key has dots, add children with dot-separated key
             if children:
                 result[root].update({'.'.join(children): value})
             # If the current node is already a leave, just set its value
@@ -410,29 +407,17 @@ class JsonObject(metaclass=SchemaMeta):
         # After nesting one level, recurse further down on the values
         return {key: self.__nest(value) for key, value in result.items()}
 
-    def __flatten(self, mapping: Json | Self) -> Json:
-        """Flatten a nested into a flat dictionary with dot.separated keys."""
-        # If the input has no "keys" method or keys are not str, end recursion
-        if self.__stop_recursion_for(mapping):
-            return mapping
-        # If it is, initialize return value
+    def __merge(self, current: Json, update: Json) -> Json:
+        """Recursively deep-merge two dictionaries."""
+        if self.__stop_recursion_for(current):
+            return update
+        if self.__stop_recursion_for(update):
+            return current
         result = {}
-        # Iterate through the keys.
-        for key in mapping.keys():
-            # Get the value to the current key
-            value = mapping[key]
-            # If the value has no "keys" method or keys are not str, stop
-            if self.__stop_recursion_for(value):
-                result[key] = value
-            # If the value still is dictionary-like, iterate over its keys
-            else:
-                for child in value.keys():
-                    # Append child key to current key
-                    child_key = '.'.join([key, child])
-                    # Get value of child.
-                    child_value = value[child]
-                    # Update results with recursively resolved leaves
-                    result.update(self.__flatten({child_key: child_value}))
+        for key in set(current) ^ set(update):
+            result[key] = update[key] if key in update else current[key]
+        for key in set(current) & set(update):
+            result[key] = self.__merge(current[key], update[key])
         return result
 
     def __cast(self, mapping: Json) -> Json:
