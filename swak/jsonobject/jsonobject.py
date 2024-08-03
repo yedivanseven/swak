@@ -206,7 +206,8 @@ class JsonObject(metaclass=SchemaMeta):
         Containing any number of the following exceptions.
     ParseError
         If the (keyword) arguments cannot be parsed into a dictionary with
-        string keys.
+        string keys and if non-default fields are neither given in the
+        `mapping` nor in the keyword arguments.
     CastError
         If the dictionary values cannot be cast into the types specified in
         the schema.
@@ -298,8 +299,7 @@ class JsonObject(metaclass=SchemaMeta):
             Containing any number of the following exceptions.
         ParseError
             If the (keyword) arguments cannot be parsed into a dictionary with
-            string keys and if non-default fields are neither given in the
-            `mapping` nor in the keyword arguments.
+            string keys.
         CastError
             If the dictionary values cannot be cast into the types specified in
             the schema.
