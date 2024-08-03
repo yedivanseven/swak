@@ -48,6 +48,7 @@ class SchemaMeta(type):
             attrs: Json,
             **kwargs: Any
     ) -> 'SchemaMeta':
+        # Create a new class object
         cls = super().__new__(mcs, name, bases, attrs)
 
         # Set behavior from past and present class keywords
@@ -72,23 +73,30 @@ class SchemaMeta(type):
         # Fields defined in the class body overwrite keyword fields
         schema = kwarg_schema | ancestral_schema
         # Set the updated class __annotations__
-        cls.__annotations__ = mcs.__valid(name, schema, mcs.__blacklist__)
+        schema, schema_errors = mcs.__valid(name, schema, mcs.__blacklist__)
 
         # Ancestral defaults are in the class __defaults__
         ancestral_defaults = mcs.__ancestral(cls, '__defaults__')
         # Current class variables overwrite ancestral defaults
         updated_defaults = ancestral_defaults | cls.__dict__
         # Only type-annotated class variables are relevant
-        filtered_defaults = mcs.__filter(cls.__annotations__, updated_defaults)
+        filtered_defaults = mcs.__filter(schema, updated_defaults)
         # Defaults for additional fields from keyword arguments are the keys
         kwarg_defaults = {k: k for k in kwargs if k not in ancestral_schema}
         # Fields defined in the class body overwrite keyword fields
         defaults = kwarg_defaults | filtered_defaults
         # Use __defaults__ because __dict__ cannot be set or updated directly
-        cls.__defaults__ = mcs.__tried(defaults, cls.__annotations__)
+        defaults, default_errors = mcs.__tried(defaults, schema)
 
-        # JSON fields that conflict with methods or properties are forbidden
+        # Raise accumulated errors, if any
+        errors = schema_errors + default_errors
+        if errors:
+            raise ExceptionGroup(name, errors)
+
+        # Set hidden class variables
         cls.__blacklist__ = mcs.__blacklist__
+        cls.__annotations__ = schema
+        cls.__defaults__ = defaults
 
         return cls
 
@@ -116,50 +124,47 @@ class SchemaMeta(type):
         return {key: defaults[key] for key in defaults if key in schema}
 
     @staticmethod
-    def __valid(name: str, schema: Schema, blacklist: set[str]) -> Schema:
+    def __valid(
+            name: str,
+            schema: Schema,
+            blacklist: set[str]
+    ) -> tuple[Schema, list[Exception]]:
         """Validate that class-variable annotations are sane."""
-        msg = ''               # Initialize cumulative error message
-        hidden = f'_{name}__'  # Pattern for double-underscore_class variables
-        if not_callable := not all(callable(val) for val in schema.values()):
-            msg += '\nAll schema annotations must be callable!'
-        if any_forbidden := any(key in blacklist for key in schema.keys()):
-            msg += f'\nField must not include any of {blacklist}!'
-        if any_hidden := any(key.startswith(hidden) for key in schema.keys()):
-            msg += '\nField names must not start with "__"!'
-        # Raise collective error if anything seemed fishy
-        if any([not_callable, any_forbidden, any_hidden]):
-            raise SchemaError(msg)
-        return schema
+        hidden = f'_{name}__'  # Pattern for double-underscore class variables
+        errors = []
+        for field, annotation in schema.items():
+            if not callable(annotation):
+                msg = f'Annotation of field "{field}" is not callable!'
+                errors.append(SchemaError(msg))
+            if field in blacklist:
+                msg = f'Field "{field}" is on the blacklist {blacklist}!'
+                errors.append(SchemaError(msg))
+            if field.startswith(hidden):
+                cleaned = field.removeprefix(hidden)
+                msg = f'Field "__{cleaned}" starts with two underscores "__"!'
+                errors.append(SchemaError(msg))
+        return schema, errors
 
     @staticmethod
-    def __tried(defaults: Json, schema: Schema) -> Json:
+    def __tried(defaults: Json, schema: Schema) -> tuple[Json, list[Exception]]:
         """Ensure that class-variable defaults are sane."""
-        # Initialize accumulators
-        none_defaults = []
-        none_msg = ''
-        cast_defaults = []
-        cast_msg = ''
-        # Iterate over default values
+        errors = []
         for item in defaults:
             # Check for None values and whether they are allowed
             default_is_none = defaults[item] is None
             type_is_not_maybe = not isinstance(schema[item], Maybe)
             if default_is_none and type_is_not_maybe:
-                none_defaults.append(item)
-                none_msg = (f'\nFor defaults {none_defaults} to be None, mark'
-                            ' them as Maybe(<YOUR_TYPE>) in the schema!')
+                msg = (f'For the default value of field "{item} to be None,'
+                       ' annotate it as Maybe(<YOUR_TYPE>) in the schema!')
+                errors.append(DefaultsError(msg))
             # Check that schema annotations can be called on default values
             try:
                 defaults[item] = schema[item](defaults[item])
             except (TypeError, ValueError):
-                cast_defaults.append(item)
-                cast_msg = (f'\nDefaults {cast_defaults} can not'
-                            ' be cast to the desired types!')
-        # Raise collective error if anything seemed fishy
-        if any([none_defaults, cast_defaults]):
-            msg = ''.join([none_msg, cast_msg])
-            raise DefaultsError(msg)
-        return defaults
+                msg = (f'Default value for field "{item}" can'
+                       ' not be cast to the desired type!')
+                errors.append(DefaultsError(msg))
+        return defaults, errors
 
 
 class JsonObject(metaclass=SchemaMeta):
@@ -197,6 +202,8 @@ class JsonObject(metaclass=SchemaMeta):
 
     Raises
     ------
+    ExceptionGroup
+        Containing any number of the following exceptions.
     ParseError
         If the (keyword) arguments cannot be parsed into a dictionary with
         string keys.
@@ -287,6 +294,8 @@ class JsonObject(metaclass=SchemaMeta):
 
         Raises
         ------
+        ExceptionGroup
+            Containing any number of the following exceptions.
         ParseError
             If the (keyword) arguments cannot be parsed into a dictionary with
             string keys and if non-default fields are neither given in the
@@ -322,8 +331,11 @@ class JsonObject(metaclass=SchemaMeta):
         return Series(data, name=name)
 
     def get(self, item: str, default: Any = None) -> Any:
-        """Get attributes by name. Return `default` if name does not exist."""
-        return self.__dict__.get(item, default)
+        """Get (nested) attribute by (dot.separated) name or default."""
+        try:
+            return self[item]
+        except (KeyError, AttributeError):
+            return default
 
     def keys(self):
         """Attribute names as dictionary keys."""
@@ -368,18 +380,18 @@ class JsonObject(metaclass=SchemaMeta):
 
     @staticmethod
     def __stop_recursion_for(obj: Any) -> bool:
-        """Criterion for stopping recursions in flattening and nesting.
+        """Criterion for stopping recursions dictionary nesting and merging.
 
         As we recursively traverse the tree of dictionary-like objects from
-        root to leaves, we stop when we arrive at a leave that (a) is no
-        longer dictionary-like or (b) is an empty dictionary.
+        root to leaves, we stop when we arrive at a leave that is no longer
+        dictionary-like.
 
         """
         try:
-            keys = [*obj.keys()]
+            _ = [*obj.keys()]
         except (AttributeError, TypeError):
             return True
-        return len(keys) == 0
+        return not hasattr(obj, '__getitem__')
 
     def __nest(self, mapping: Json | Self) -> Json:
         """Nest a dictionary with nesting implied by dot.separated keys."""
@@ -410,13 +422,12 @@ class JsonObject(metaclass=SchemaMeta):
     def __merge(self, current: Json, update: Json) -> Json:
         """Recursively deep-merge two dictionaries."""
         if self.__stop_recursion_for(current):
-            return update
-        if self.__stop_recursion_for(update):
-            return current
+            # Current values are updated but not nested any further
+            return update if self.__stop_recursion_for(update) else current
         result = {}
-        for key in set(current) ^ set(update):
+        for key in set(current) ^ set(update):  # symmetric difference
             result[key] = update[key] if key in update else current[key]
-        for key in set(current) & set(update):
+        for key in set(current) & set(update):  # intersection
             result[key] = self.__merge(current[key], update[key])
         return result
 
@@ -424,56 +435,63 @@ class JsonObject(metaclass=SchemaMeta):
         """Cast all fields in the data structure to their specified type."""
         # Initialize accumulators
         cast = {}
-        missing = []
-        uncastable = []
-        nullable = []
+        errors = []
+
         # Iterate over the fields in the schema
         for item, type_cast in self.__annotations__.items():
             try:
                 value = mapping[item]
             except KeyError:
-                missing.append(item)
+                msg = f'Missing non-default field "{item}"!'
+                errors.append(ParseError(msg))
                 continue
-            if value is None and not isinstance(type_cast, Maybe):
-                nullable.append(item)
             try:
                 cast[item] = type_cast(value)
             except (TypeError, ValueError):
-                uncastable.append(item)
-        if missing:
-            msg = f'Missing non-default fields {missing}!'
-            raise ParseError(msg)
-        if nullable:
-            msg = (f'For fields {nullable} to be None, mark them'
-                   f' as Maybe(<YOUR_TYPE>) in the schema!')
-            raise CastError(msg)
-        if uncastable:
-            msg = f'Could not cast JSON fields {uncastable}!'
-            raise CastError(msg)
+                msg = f'Could not cast field "{item}" to the desired type!'
+                errors.append(CastError(msg))
+            except ExceptionGroup as error_group:
+                errors.append(error_group)
+            if value is None and not isinstance(type_cast, Maybe):
+                msg = (f'For the value of field "{item} to be None, annotate'
+                       ' it as Maybe(<YOUR_TYPE>) in the schema!')
+                errors.append(CastError(msg))
+
         # If we don't have to deal with extra fields, we're done
         if self.__ignore_extra__:
+            if errors:
+                raise ExceptionGroup(self.__class__.__name__, errors)
             return cast
 
         # If not, first check if we even allow extra fields
         extra_fields = set(mapping) - set(self.__annotations__)
         if extra_fields and self.__raise_extra__:
-            raise ParseError(f'Fields {extra_fields} are not in schema!')
+            msg = f'Fields {extra_fields} are not in the schema!'
+            errors.append(ParseError(msg))
+            raise ExceptionGroup(self.__class__.__name__, errors)
 
         # Even if extra fields are not ignored and are allowed, we need to ...
-        # ... check that their keys are not blacklisted, ...
-        if any(key in self.__blacklist__ for key in extra_fields):
-            msg = f'Extra fields must not include any of {self.__blacklist__}!'
-            raise ParseError(msg)
-        # ... check that their keys are strings, ...
-        if not all(isinstance(key, str) for key in extra_fields):
-            raise ParseError('Extra fields must have string keys!')
-        # ... and check that, between dots, keys are valid python identifiers.
-        valid = True
-        for key in extra_fields:
-            valid &= all(part.isidentifier() for part in key.split('.'))
-        if not valid:
-            msg = 'Keys must be (dot.separated) valid python identifiers!'
-            raise ParseError(msg)
-        # Only then do we accept and merge them.
+        for field in extra_fields:
+            # ... check that their keys are strings, ...
+            if not isinstance(field, str):
+                msg = f'Extra field "{field}" does not have a string key!'
+                errors.append(ParseError(msg))
+                continue
+            # ... check that their keys are not blacklisted, ...
+            if field in self.__blacklist__:
+                msg = (f'Extra field "{field}" is on the '
+                       f'blacklist {self.__blacklist__}!')
+                errors.append(ParseError(msg))
+            # ... and check that their keys are valid python identifiers.
+            if not all(part.isidentifier() for part in field.split('.')):
+                msg = (f'Not all parts of the (potentially dot.separated) key'
+                       f' of field "{field}" are valid python identifiers!')
+                errors.append(ParseError(msg))
+
+        # If we found anything fishy, raise all errors together
+        if errors:
+            raise ExceptionGroup(self.__class__.__name__, errors)
+
+        # Only now do we accept and merge extra fields.
         extras = {field: mapping[field] for field in extra_fields}
         return {**cast, **extras}

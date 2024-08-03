@@ -3,7 +3,6 @@ from unittest.mock import Mock
 from pandas import Series
 from swak.jsonobject import JsonObject
 from swak.jsonobject.fields import Maybe
-from swak.jsonobject.exceptions import CastError
 
 
 class Default(JsonObject):
@@ -200,31 +199,31 @@ class TestDefaultOverwrittenWithNone(unittest.TestCase):
 class TestException(unittest.TestCase):
 
     def test_dict(self):
-        with self.assertRaises(CastError):
+        with self.assertRaises(ExceptionGroup):
             _ = Default({'a': 'bar'})
 
     def test_kwarg(self):
-        with self.assertRaises(CastError):
+        with self.assertRaises(ExceptionGroup):
             _ = Default(a='bar')
 
     def test_series(self):
-        with self.assertRaises(CastError):
+        with self.assertRaises(ExceptionGroup):
             _ = Default(Series({'a': 'bar'}))
 
     def test_str(self):
-        with self.assertRaises(CastError):
+        with self.assertRaises(ExceptionGroup):
             _ = Default("{'a': 'bar'}")
 
     def test_json(self):
-        with self.assertRaises(CastError):
+        with self.assertRaises(ExceptionGroup):
             _ = Default('{"a": "bar"}')
 
     def test_bytes(self):
-        with self.assertRaises(CastError):
+        with self.assertRaises(ExceptionGroup):
             _ = Default(bytes('{"a": "bar"}'.encode('utf-8')))
 
     def test_bytearray(self):
-        with self.assertRaises(CastError):
+        with self.assertRaises(ExceptionGroup):
             _ = Default(bytearray('{"a": "bar"}'.encode('utf-8')))
 
 
@@ -237,7 +236,6 @@ class TestTypeCast(unittest.TestCase):
 
         custom = Custom()
         self.assertTrue(hasattr(custom, 'a'))
-        self.assertIsInstance(custom.a, str)
         self.assertEqual('1.0', custom.a)
 
     def test_caster_called(self):

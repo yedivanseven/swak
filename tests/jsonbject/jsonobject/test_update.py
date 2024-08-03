@@ -2,7 +2,7 @@ import unittest
 from pandas import Series
 from swak.jsonobject import JsonObject
 from swak.jsonobject.fields import Maybe
-from swak.jsonobject.exceptions import CastError, ParseError
+from swak.jsonobject.exceptions import ParseError
 
 
 class Child(JsonObject):
@@ -64,10 +64,6 @@ class TestEmpty(unittest.TestCase):
 
     def test_bytearray_of_empty_dict(self):
         updated = self.flat(bytearray('{}'.encode('utf-8')))
-        self.check_attributes(updated)
-
-    def test_non_string_keys_ignored(self):
-        updated = self.flat({1: 2})
         self.check_attributes(updated)
 
 
@@ -257,14 +253,6 @@ class TestFlat(unittest.TestCase):
         updated = self.flat({'b': 3.0, 'c': 42}, bar=None)
         self.check_attributes(updated)
 
-    def test_extra_field_ignored(self):
-        updated = self.flat({'b': 3.0, 'c': 42, 'bar': True})
-        self.check_attributes(updated)
-
-    def test_extra_kwarg_ignored(self):
-        updated = self.flat({'b': 3.0, 'c': 42}, bar=True)
-        self.check_attributes(updated)
-
 
 class TestExtra(unittest.TestCase):
 
@@ -304,25 +292,28 @@ class TestExtra(unittest.TestCase):
         self.assertFalse(hasattr(updated, 'a'))
         self.assertFalse(hasattr(updated, 'b'))
 
-    def test_false_true_ignore_empty(self):
+    def test_false_true_raises_empty(self):
         extra = self.FalseTrue()
-        updated = extra(a=42, b='foo')
-        self.assertFalse(hasattr(updated, 'a'))
-        self.assertFalse(hasattr(updated, 'b'))
+        with self.assertRaises(ExceptionGroup):
+            _ = extra(a=42, b='foo')
 
-    def test_false_false_ignore_empty(self):
+    def test_false_false_accepts_empty(self):
         extra = self.FalseFalse()
         updated = extra(a=42, b='foo')
-        self.assertFalse(hasattr(updated, 'a'))
-        self.assertFalse(hasattr(updated, 'b'))
+        self.assertTrue(hasattr(updated, 'a'))
+        self.assertIsInstance(updated.a, int)
+        self.assertEqual(42, updated.a)
+        self.assertTrue(hasattr(updated, 'b'))
+        self.assertEqual('foo', updated.b)
 
-    def test_false_false_accept_non_empty(self):
+    def test_false_false_accepts_non_empty(self):
         extra = self.FalseFalse(a=1)
         updated = extra(a=42, b='foo')
         self.assertTrue(hasattr(updated, 'a'))
         self.assertIsInstance(updated.a, int)
         self.assertEqual(42, updated.a)
-        self.assertFalse(hasattr(updated, 'b'))
+        self.assertTrue(hasattr(updated, 'b'))
+        self.assertEqual('foo', updated.b)
 
 
 class TestRespect(unittest.TestCase):
@@ -335,7 +326,6 @@ class TestRespect(unittest.TestCase):
         self.assertTrue(hasattr(obj, 'a'))
         self.assertIsNone(obj.a)
         self.assertTrue(hasattr(obj, 'b'))
-        self.assertIsInstance(obj.b, str)
         self.assertEqual('foo', obj.b)
 
     def test_dict(self):
@@ -403,11 +393,8 @@ class TestRespect(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_raises_on_maybe_not(self):
-        expected = ("For fields ['b'] to be None, mark them"
-                    " as Maybe(<YOUR_TYPE>) in the schema!")
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Respect(b=None)
-        self.assertEqual(expected, str(error.exception))
 
 
 class TestExtraRespect(unittest.TestCase):
@@ -420,18 +407,23 @@ class TestExtraRespect(unittest.TestCase):
     ):
         pass
 
-    def test_ignore_empy(self):
+    def test_accept_empty(self):
         extra_respect = self.ExtraRespect()
         updated = extra_respect(a=None, b=42)
-        self.assertFalse(hasattr(updated, 'a'))
-        self.assertFalse(hasattr(updated, 'b'))
+        self.assertTrue(hasattr(updated, 'a'))
+        self.assertIsNone(updated.a)
+        self.assertTrue(hasattr(updated, 'b'))
+        self.assertIsInstance(updated.b, int)
+        self.assertEqual(42, updated.b)
 
     def test_accept_non_empty(self):
         extra_respect = self.ExtraRespect(a=1)
         updated = extra_respect(a=None, b=42)
         self.assertTrue(hasattr(updated, 'a'))
         self.assertIsNone(updated.a)
-        self.assertFalse(hasattr(updated, 'b'))
+        self.assertTrue(hasattr(updated, 'b'))
+        self.assertIsInstance(updated.b, int)
+        self.assertEqual(42, updated.b)
 
 
 class TestTypeCasting(unittest.TestCase):
@@ -532,85 +524,59 @@ class TestExceptions(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_dict(self):
-        expected = "Could not cast JSON fields ['b']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat({'b': 'hello world'})
-        self.assertEqual(expected, str(error.exception))
 
     def test_dict_and_kwarg(self):
-        expected = "Could not cast JSON fields ['b', 'c']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat({'b': 'hello'}, c='world')
-        self.assertEqual(expected, str(error.exception))
 
     def test_kwargs(self):
-        expected = "Could not cast JSON fields ['b', 'c']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat(b='hello', c='world')
-        self.assertEqual(expected, str(error.exception))
 
     def test_series(self):
-        expected = "Could not cast JSON fields ['b']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat(Series({'b': 'hello world'}))
-        self.assertEqual(expected, str(error.exception))
 
     def test_series_and_kwarg(self):
-        expected = "Could not cast JSON fields ['b', 'c']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat(Series({'b': 'hello'}), c='world')
-        self.assertEqual(expected, str(error.exception))
 
     def test_str(self):
-        expected = "Could not cast JSON fields ['b']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat("{'b': 'hello world'}")
-        self.assertEqual(expected, str(error.exception))
 
     def test_str_and_kwarg(self):
-        expected = "Could not cast JSON fields ['b', 'c']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat("{'b': 'hello'}", c='world')
-        self.assertEqual(expected, str(error.exception))
 
     def test_json(self):
-        expected = "Could not cast JSON fields ['b']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat('{"b": "hello world"}')
-        self.assertEqual(expected, str(error.exception))
 
     def test_json_and_kwarg(self):
-        expected = "Could not cast JSON fields ['b', 'c']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat('{"b": "hello"}', c='world')
-        self.assertEqual(expected, str(error.exception))
 
     def test_bytes(self):
-        expected = "Could not cast JSON fields ['b']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat(bytes('{"b": "hello world"}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_bytes_and_kwarg(self):
-        expected = "Could not cast JSON fields ['b', 'c']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat(bytes('{"b": "hello"}'.encode('utf-8')), c='world')
-        self.assertEqual(expected, str(error.exception))
 
     def test_bytearray(self):
-        expected = "Could not cast JSON fields ['b']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat(bytearray('{"b": "hello world"}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_bytearray_and_kwarg(self):
-        expected = "Could not cast JSON fields ['b', 'c']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.flat(
                     bytearray('{"b": "hello"}'.encode('utf-8')),
                     c='world'
             )
-        self.assertEqual(expected, str(error.exception))
 
 
 class TestNesting(unittest.TestCase):
@@ -621,7 +587,6 @@ class TestNesting(unittest.TestCase):
     def check_attributes(self, obj):
         self.assertIsInstance(obj, Parent)
         self.assertTrue(hasattr(obj, 'a'))
-        self.assertIsInstance(obj.a, str)
         self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)

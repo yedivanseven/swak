@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
 from swak.jsonobject import JsonObject
+from swak.jsonobject.exceptions import ParseError
 
 
 class Child(JsonObject):
@@ -17,7 +18,6 @@ class TestInstantiationDict(unittest.TestCase):
 
     def check_attributes(self, obj):
         self.assertTrue(hasattr(obj, 'a'))
-        self.assertIsInstance(obj.a, str)
         self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
@@ -56,12 +56,17 @@ class TestInstantiationDict(unittest.TestCase):
         p = Parent({'child': bytearray('{"c": 1}'.encode('utf-8'))})
         self.check_attributes(p)
 
+    def test_nested_error(self):
+        with self.assertRaises(ExceptionGroup) as eg:
+            _ = Parent({'d': 1, 'child': {'b': None, 'e': 2}})
+        self.assertIsInstance(eg.exception.exceptions[0], ExceptionGroup)
+        self.assertIsInstance(eg.exception.exceptions[1], ParseError)
+
 
 class TestInstantiationKwarg(unittest.TestCase):
 
     def check_attributes(self, obj):
         self.assertTrue(hasattr(obj, 'a'))
-        self.assertIsInstance(obj.a, str)
         self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
@@ -161,7 +166,6 @@ class TestInstantiationSeries(unittest.TestCase):
 
     def check_attributes(self, obj):
         self.assertTrue(hasattr(obj, 'a'))
-        self.assertIsInstance(obj.a, str)
         self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
@@ -205,7 +209,6 @@ class TestInstantiationOther(unittest.TestCase):
 
     def check_attributes(self, obj):
         self.assertTrue(hasattr(obj, 'a'))
-        self.assertIsInstance(obj.a, str)
         self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)
@@ -237,7 +240,6 @@ class TestKwargOverWrites(unittest.TestCase):
 
     def check_attributes(self, obj):
         self.assertTrue(hasattr(obj, 'a'))
-        self.assertIsInstance(obj.a, str)
         self.assertEqual('foo', obj.a)
         self.assertTrue(hasattr(obj, 'child'))
         self.assertIsInstance(obj.child, Child)

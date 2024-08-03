@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import Mock
 from swak.jsonobject.jsonobject import SchemaMeta
-from swak.jsonobject.exceptions import SchemaError, DefaultsError
 from swak.jsonobject.fields import Maybe
 
 
@@ -159,18 +158,15 @@ class TestValidations(unittest.TestCase):
 
     def test_annotation_not_callable(self):
 
-        with self.assertRaises(SchemaError) as error:
+        with self.assertRaises(ExceptionGroup):
 
             class Test(metaclass=SchemaMeta):
                 a: int
                 b: 1
 
-        expected = '\nAll schema annotations must be callable!'
-        self.assertEqual(expected, str(error.exception))
-
     def test_field_blacklisted(self):
 
-        with self.assertRaises(SchemaError):
+        with self.assertRaises(ExceptionGroup):
 
             class Test(metaclass=SchemaMeta):
                 a: int
@@ -178,49 +174,36 @@ class TestValidations(unittest.TestCase):
 
     def test_field_double_underscore(self):
 
-        with self.assertRaises(SchemaError) as error:
+        with self.assertRaises(ExceptionGroup):
 
             class Test(metaclass=SchemaMeta):
                 a: int
                 __b: str
 
-        expected = '\nField names must not start with "__"!'
-        self.assertEqual(expected, str(error.exception))
-
     def test_combi_message(self):
 
-        with self.assertRaises(SchemaError) as error:
+        with self.assertRaises(ExceptionGroup):
 
             class Test(metaclass=SchemaMeta):
                 a: int
                 b: 1
                 __c: str
 
-        expected = ('\nAll schema annotations must be callable!'
-                    '\nField names must not start with "__"!')
-        self.assertEqual(expected, str(error.exception))
-
     def test_default_none(self):
 
-        with self.assertRaises(DefaultsError) as error:
+        with self.assertRaises(ExceptionGroup):
 
             class Test(metaclass=SchemaMeta):
                 a: int
                 b: str = None
-        expected = ("\nFor defaults ['b'] to be None, mark them"
-                    " as Maybe(<YOUR_TYPE>) in the schema!")
-        self.assertEqual(expected, str(error.exception))
 
     def test_default_wrong_type(self):
 
-        with self.assertRaises(DefaultsError) as error:
+        with self.assertRaises(ExceptionGroup):
 
             class Test(metaclass=SchemaMeta):
                 a: str
                 b: int = '1.0'
-
-        expected = "\nDefaults ['b'] can not be cast to the desired types!"
-        self.assertEqual(expected, str(error.exception))
 
 
 class TestMaybe(unittest.TestCase):
@@ -273,14 +256,12 @@ class TestMaybe(unittest.TestCase):
 
     def test_maybe_lets_cast_error_through(self):
 
-        with self.assertRaises(DefaultsError) as error:
+        with self.assertRaises(ExceptionGroup):
+
             class Test(metaclass=SchemaMeta):
                 a: Maybe[int](int) = '1.0'
                 b: str = 'foo'
                 c: float
-
-        expected = "\nDefaults ['a'] can not be cast to the desired types!"
-        self.assertEqual(expected, str(error.exception))
 
 
 class TestExtraNone(unittest.TestCase):

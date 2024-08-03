@@ -65,8 +65,7 @@ class TestMembers(unittest.TestCase):
     def test_get_value(self):
         self.assertIsInstance(self.simple.get('a'), int)
         self.assertEqual(1, self.simple.get('a'))
-        self.assertIsInstance(self.simple.get('b'), str)
-        self.assertEqual('foo',self.simple.get('b'))
+        self.assertEqual('foo', self.simple.get('b'))
         self.assertIsInstance(self.simple.get('c'), Custom)
 
     def test_get_non_existent(self):

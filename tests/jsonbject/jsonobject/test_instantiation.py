@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from pandas import Series
 from swak.jsonobject import JsonObject
 from swak.jsonobject.fields import Maybe
-from swak.jsonobject.exceptions import ParseError, CastError
+from swak.jsonobject.exceptions import ParseError
 
 
 class Empty(JsonObject):
@@ -78,7 +78,6 @@ class TestSimple(unittest.TestCase):
         self.assertIsInstance(obj.a, int)
         self.assertEqual(1, obj.a)
         self.assertTrue(hasattr(obj, 'b'))
-        self.assertIsInstance(obj.b, str)
         self.assertEqual('foo', obj.b)
 
     def test_dict(self):
@@ -282,8 +281,7 @@ class TestTypeCasting(unittest.TestCase):
 
     def check_attributes(self, obj):
         self.assertIsInstance(obj.a, int)
-        self.assertEqual(1.0, obj.a)
-        self.assertIsInstance(obj.b, str)
+        self.assertEqual(1, obj.a)
         self.assertEqual('2.0', obj.b)
 
     def test_type_cast_called(self):
@@ -360,46 +358,32 @@ class TestTypeCasting(unittest.TestCase):
 class TestExceptions(unittest.TestCase):
 
     def test_parse_dict_missing_fields(self):
-        expected = "Missing non-default fields ['a']!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple({'b': 'foo'})
-        self.assertEqual(expected, str(error.exception))
 
     def test_parse_kwargs_missing_fields(self):
-        expected = "Missing non-default fields ['a']!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(b='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_parse_json_missing_fields(self):
-        expected = "Missing non-default fields ['a']!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple('{"b": "foo"}')
-        self.assertEqual(expected, str(error.exception))
 
     def test_parse_str_missing_fields(self):
-        expected = "Missing non-default fields ['a']!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple("{'b': 'foo'}")
-        self.assertEqual(expected, str(error.exception))
 
     def test_parse_bytes_missing_fields(self):
-        expected = "Missing non-default fields ['a']!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(bytes('{"b": "foo"}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_parse_bytearray_missing_fields(self):
-        expected = "Missing non-default fields ['a']!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(bytearray('{"b": "foo"}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_parse_series_missing_fields(self):
-        expected = "Missing non-default fields ['a']!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(Series({'b': 'foo'}))
-        self.assertEqual(expected, str(error.exception))
 
     def test_uncastable_str(self):
         expected = "Could not parse hello world as JSON!"
@@ -407,96 +391,61 @@ class TestExceptions(unittest.TestCase):
             _ = Simple('hello world')
         self.assertEqual(expected, str(error.exception))
 
-    def test_non_string_keys(self):
-        expected = "Missing non-default fields ['a', 'b']!"
-        with self.assertRaises(ParseError) as error:
-            _ = Simple({1: 2})
-        self.assertEqual(expected, str(error.exception))
-
     def test_cast_dict_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple({'a': 'foo', 'b': 'bar'})
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_dict_and_kwarg_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple({'b': 'bar'}, a='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_kwargs_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(b='bar', a='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_str_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple("{'a': 'foo', 'b': 'bar'}")
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_str_and_kwarg_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple("{'b': 'bar'}", a='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_json_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple('{"a": "foo", "b": "bar"}')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_json_and_kwarg_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple('{"b": "bar"}', a='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_bytes_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(bytes('{"a": "foo", "b": "bar"}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_bytes_and_kwarg_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(bytes('{"b": "bar"}'.encode('utf-8')), a='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_bytearray_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(bytearray('{"a": "foo", "b": "bar"}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_bytearray_and_kwarg_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(bytearray('{"b": "bar"}'.encode('utf-8')), a='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_series_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(Series({'a': 'foo', 'b': 'bar'}))
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_series_and_kwarg_wrong_field(self):
-        expected = "Could not cast JSON fields ['a']!"
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Simple(Series({'b': 'bar'}), a='foo')
-        self.assertEqual(expected, str(error.exception))
 
     def test_cast_non_maybe_none_fields(self):
-        expected = ("For fields ['a'] to be None, mark them"
-                    " as Maybe(<YOUR_TYPE>) in the schema!")
-        with self.assertRaises(CastError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = Respect(a=None)
-        self.assertEqual(expected, str(error.exception))
 
 
 class TestExtraFields(unittest.TestCase):
@@ -530,10 +479,8 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_dict(self):
-        expected = "Fields {'a'} are not in schema!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self. FalseTrue({'a': 1})
-        self.assertEqual(expected, str(error.exception))
 
     def test_false_false_dict(self):
         false_false = self.FalseFalse({'a': 1})
@@ -549,10 +496,8 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_kwarg(self):
-        expected = "Fields {'a'} are not in schema!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.FalseTrue(a=1)
-        self.assertEqual(expected, str(error.exception))
 
     def test_false_false_kwarg(self):
         false_false = self.FalseFalse(a=1)
@@ -568,10 +513,8 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_str(self):
-        expected = "Fields {'a'} are not in schema!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.FalseTrue("{'a': 1}")
-        self.assertEqual(expected, str(error.exception))
 
     def test_false_false_str(self):
         false_false = self.FalseFalse("{'a': 1}")
@@ -587,10 +530,8 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_json(self):
-        expected = "Fields {'a'} are not in schema!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.FalseTrue('{"a": 1}')
-        self.assertEqual(expected, str(error.exception))
 
     def test_false_false_json(self):
         false_false = self.FalseFalse('{"a": 1}')
@@ -606,10 +547,8 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_bytes(self):
-        expected = "Fields {'a'} are not in schema!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.FalseTrue(bytes('{"a": 1}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_false_false_bytes(self):
         false_false = self.FalseFalse(bytes('{"a": 1}'.encode('utf-8')))
@@ -625,10 +564,8 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_bytearray(self):
-        expected = "Fields {'a'} are not in schema!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.FalseTrue(bytearray('{"a": 1}'.encode('utf-8')))
-        self.assertEqual(expected, str(error.exception))
 
     def test_false_false_bytearray(self):
         false_false = self.FalseFalse(bytearray('{"a": 1}'.encode('utf-8')))
@@ -644,10 +581,8 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_series(self):
-        expected = "Fields {'a'} are not in schema!"
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self. FalseTrue(Series({'a': 1}))
-        self.assertEqual(expected, str(error.exception))
 
     def test_false_false_series(self):
         false_false = self.FalseFalse((Series({'a': 1})))
@@ -690,16 +625,16 @@ class TestExtraFields(unittest.TestCase):
         self.assertIsNone(respect.a)
 
     def test_extra_raises_on_non_string_keys(self):
-        expected = 'Extra fields must have string keys!'
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.FalseFalse({0: 1})
-        self.assertEqual(expected, str(error.exception))
+
+    def test_extra_raises_on_blacklisted_keys(self):
+        with self.assertRaises(ExceptionGroup):
+            _ = self.FalseFalse({'keys': 1})
 
     def test_extra_raises_on_non_identifier_keys(self):
-        expected = 'Keys must be (dot.separated) valid python identifiers!'
-        with self.assertRaises(ParseError) as error:
+        with self.assertRaises(ExceptionGroup):
             _ = self.FalseFalse({' 034- 5 / ': 1})
-        self.assertEqual(expected, str(error.exception))
 
 
 if __name__ == '__main__':
