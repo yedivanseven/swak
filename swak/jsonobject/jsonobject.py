@@ -214,7 +214,7 @@ class JsonObject(metaclass=SchemaMeta):
     Notes
     -----
     This class is rather heavy, so do not use it to, e.g., wrap JSON payloads
-    in high-throughput and/or low-latency web services!
+    in high-throughput low-latency web services!
 
     See Also
     --------
