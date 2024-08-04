@@ -434,7 +434,7 @@ class JsonObject(metaclass=SchemaMeta):
         for key in [key for key in old if key in new]:
             result[key] = self.__merge(old[key], new[key], left)
         # If requested, add fields only present in new in order of appearance
-        right = {} if left else {k: new[k] for k in new if k not in old}
+        right = {} if left else {key: new[key] for key in new if key not in old}
         return result | right
 
     def __cast(self, mapping: Json) -> Json:
