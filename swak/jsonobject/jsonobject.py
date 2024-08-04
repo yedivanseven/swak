@@ -1,6 +1,5 @@
 from typing import Callable, Any, Iterator, Self
 from functools import reduce
-from collections import defaultdict
 from ast import literal_eval
 import json
 from json import JSONDecodeError
@@ -309,7 +308,7 @@ class JsonObject(metaclass=SchemaMeta):
         parsed = self.__nest(self.__purge(self.__parse(mapping)))
         kwargs = self.__nest(self.__purge(self.__parse(kwargs, 1)))
         # Merge the fully nested dictionaries
-        merged = self.__merge(self.__dict__, self.__merge(parsed, kwargs))
+        merged = self.__merge(self.__dict__, self.__merge(parsed, kwargs), True)
         # Instantiate a new, updated copy of self from the fully nested update
         return self.__class__(merged)
 
@@ -395,41 +394,48 @@ class JsonObject(metaclass=SchemaMeta):
 
     def __nest(self, mapping: Json | Self) -> Json:
         """Nest a dictionary with nesting implied by dot.separated keys."""
-        # If the input has no "keys" method or keys are not str, end recursion
+        # If the input is no longer dictionary-like, end the recursion
         if self.__stop_recursion_for(mapping):
             return mapping
-        # If the input still has a "keys" method, initialize the return value
-        result = defaultdict(dict)
-        # Iterate through the keys
+        # If it is, initialize the return value ...
+        result = {}
+        # ... and iterate through the keys
         for key in mapping.keys():
             # Get the value to the current key
             value = mapping[key]
+            # Depending on the type to key ...
             if isinstance(key, str):
-                # Split root-level key from the children
+                # ... split the root from the children
                 root, *children = key.split('.')
             else:
-                # Leave the key as what it is
-                root, children = key, []
-            # If the current key has dots, add children with dot-separated key
+                # ... or leave it as it is
+                root, *children = key,
+            # If the current key did have dots, ...
             if children:
-                result[root].update({'.'.join(children): value})
-            # If the current node is already a leave, just set its value
+                #  ... the value is elevated to a dict
+                value = {'.'.join(children): value}
+            # If the root key already exists in the results ...
+            if root in result:
+                # ... merge it with the new value
+                result[root] = self.__merge(result[root], value)
             else:
+                # ... or, if not, just set it to the new value
                 result[root] = value
         # After nesting one level, recurse further down on the values
         return {key: self.__nest(value) for key, value in result.items()}
 
-    def __merge(self, current: Json, update: Json) -> Json:
-        """Recursively deep-merge two dictionaries."""
-        if self.__stop_recursion_for(current):
-            # Current values are updated but not nested any further
-            return update if self.__stop_recursion_for(update) else current
-        result = {}
-        for key in set(current) ^ set(update):  # symmetric difference
-            result[key] = update[key] if key in update else current[key]
-        for key in set(current) & set(update):  # intersection
-            result[key] = self.__merge(current[key], update[key])
-        return result
+    def __merge(self, old: Json, new: Json, left: bool = False) -> Json:
+        """Recursively deep-merge two dictionaries, outer or left."""
+        if self.__stop_recursion_for(old) or self.__stop_recursion_for(new):
+            return new
+        # First the old values in order of appearance ...
+        result = {key: old[key] for key in old if key not in new}
+        # ... then the intersection of old and new in order of appearance in old
+        for key in [key for key in old if key in new]:
+            result[key] = self.__merge(old[key], new[key], left)
+        # If requested, add fields only present in new in order of appearance
+        right = {} if left else {k: new[k] for k in new if k not in old}
+        return result | right
 
     def __cast(self, mapping: Json) -> Json:
         """Cast all fields in the data structure to their specified type."""

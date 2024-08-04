@@ -292,28 +292,25 @@ class TestExtra(unittest.TestCase):
         self.assertFalse(hasattr(updated, 'a'))
         self.assertFalse(hasattr(updated, 'b'))
 
-    def test_false_true_raises_empty(self):
+    def test_false_true_ignore_empty(self):
         extra = self.FalseTrue()
-        with self.assertRaises(ExceptionGroup):
-            _ = extra(a=42, b='foo')
+        updated = extra(a=42, b='foo')
+        self.assertFalse(hasattr(updated, 'a'))
+        self.assertFalse(hasattr(updated, 'b'))
 
-    def test_false_false_accepts_empty(self):
+    def test_false_false_ignore_empty(self):
         extra = self.FalseFalse()
         updated = extra(a=42, b='foo')
-        self.assertTrue(hasattr(updated, 'a'))
-        self.assertIsInstance(updated.a, int)
-        self.assertEqual(42, updated.a)
-        self.assertTrue(hasattr(updated, 'b'))
-        self.assertEqual('foo', updated.b)
+        self.assertFalse(hasattr(updated, 'a'))
+        self.assertFalse(hasattr(updated, 'b'))
 
-    def test_false_false_accepts_non_empty(self):
+    def test_false_false_accept_non_empty(self):
         extra = self.FalseFalse(a=1)
         updated = extra(a=42, b='foo')
         self.assertTrue(hasattr(updated, 'a'))
         self.assertIsInstance(updated.a, int)
         self.assertEqual(42, updated.a)
-        self.assertTrue(hasattr(updated, 'b'))
-        self.assertEqual('foo', updated.b)
+        self.assertFalse(hasattr(updated, 'b'))
 
 
 class TestRespect(unittest.TestCase):
@@ -407,23 +404,18 @@ class TestExtraRespect(unittest.TestCase):
     ):
         pass
 
-    def test_accept_empty(self):
+    def test_ignore_empty(self):
         extra_respect = self.ExtraRespect()
         updated = extra_respect(a=None, b=42)
-        self.assertTrue(hasattr(updated, 'a'))
-        self.assertIsNone(updated.a)
-        self.assertTrue(hasattr(updated, 'b'))
-        self.assertIsInstance(updated.b, int)
-        self.assertEqual(42, updated.b)
+        self.assertFalse(hasattr(updated, 'a'))
+        self.assertFalse(hasattr(updated, 'b'))
 
     def test_accept_non_empty(self):
         extra_respect = self.ExtraRespect(a=1)
         updated = extra_respect(a=None, b=42)
         self.assertTrue(hasattr(updated, 'a'))
         self.assertIsNone(updated.a)
-        self.assertTrue(hasattr(updated, 'b'))
-        self.assertIsInstance(updated.b, int)
-        self.assertEqual(42, updated.b)
+        self.assertFalse(hasattr(updated, 'b'))
 
 
 class TestTypeCasting(unittest.TestCase):
