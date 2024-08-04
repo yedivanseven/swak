@@ -359,20 +359,20 @@ class TestConflictsPriorities(unittest.TestCase):
         }
         grand = Grand(d)
         self.assertDictEqual(self.expected, grand.as_json)
-        # d = {
-        #     'a': 1,
-        #     'parent.b': 2,
-        #     'parent': {
-        #         'child.c': 4,
-        #         'child': {
-        #             'c': 5,
-        #             'd': 'foo'
-        #         }
-        #     },
-        #     'parent.child.c': 3
-        # }
-        # grand = Grand(d)
-        # self.assertDictEqual(self.expected, grand.as_json)
+        d = {
+            'a': 1,
+            'parent.b': 2,
+            'parent': {
+                'child.c': 4,
+                'child': {
+                    'c': 5,
+                    'd': 'foo'
+                }
+            },
+            'parent.child.c': 3
+        }
+        grand = Grand(d)
+        self.assertDictEqual(self.expected, grand.as_json)
 
 
 class TestRaiseExtraFields(unittest.TestCase):
