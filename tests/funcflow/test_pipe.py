@@ -105,14 +105,6 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(pipe.calls, tuple)
         self.assertTupleEqual((call,), pipe.calls)
 
-    def test_objects(self):
-        call = Call()
-        cls = Cls()
-        pipe = Pipe(call, cls)
-        self.assertTrue(hasattr(pipe, 'calls'))
-        self.assertIsInstance(pipe.calls, tuple)
-        self.assertTupleEqual((call, cls), pipe.calls)
-
     def test_method(self):
         cls = Cls()
         pipe = Pipe(cls.m)
@@ -160,6 +152,21 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(hasattr(h, 'calls'))
         self.assertIsInstance(h.calls, tuple)
         self.assertEqual(1, len(h.calls))
+
+    def test_non_callable_raises(self):
+        cls = Cls()
+        with self.assertRaises(PipeError):
+            _ = Pipe(cls)
+
+    def test_non_callables_raises(self):
+        cls = Cls()
+        with self.assertRaises(PipeError):
+            _ = Pipe([f, 1, cls, g])
+
+    def test_non_callable_args_raises(self):
+        cls = Cls()
+        with self.assertRaises(PipeError):
+            _ = Pipe(f, g, cls, 1, Cls)
 
 
 class TestUsage(unittest.TestCase):
@@ -364,6 +371,16 @@ class TestMagic(unittest.TestCase):
         self.assertIsInstance(pipe, Pipe)
         self.assertTupleEqual((*self.calls, f, g), pipe.calls)
 
+    def test_add_non_callable_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = self.pipe + cls
+
+    def test_add_non_callables_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = self.pipe + [f, cls, 1, g]
+
     def test_radd_call(self):
         pipe = f + self.pipe
         self.assertIsInstance(pipe, Pipe)
@@ -378,6 +395,16 @@ class TestMagic(unittest.TestCase):
         pipe = [f, g] + self.pipe
         self.assertIsInstance(pipe, Pipe)
         self.assertTupleEqual((f, g, *self.calls), pipe.calls)
+
+    def test_radd_non_callable_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = cls + self.pipe
+
+    def test_radd_non_callables_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = [f, cls, 1, g] + self.pipe
 
 
 class TestMisc(unittest.TestCase):

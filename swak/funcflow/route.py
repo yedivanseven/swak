@@ -52,7 +52,8 @@ class Route[**P, T](IndentRepr):
             *calls: Call
     ) -> None:
         self.routes = self.__packed(routes)
-        callables = ((call,) if callable(call) else tuple(call)) + calls
+        callables = (call,) if callable(call) else self.__valid(call)
+        callables += self.__valid(calls)
         self.calls = self.__compatible(*callables)
         routes = [r[0] if len(r) == 1 else r for r in self.routes]
         super().__init__(self.calls, routes)
@@ -156,6 +157,19 @@ class Route[**P, T](IndentRepr):
             # Maximum of the maximum integer in each route, if it exists.
             return max(maxima) + 1 if maxima else 0
         return 0
+
+    @staticmethod
+    def __valid(calls: Iterable[Call]) -> tuple[Call, ...]:
+        """Ensure that the argument is indeed an iterable of callables."""
+        iterable = True
+        all_callable = False
+        try:
+            all_callable = all(callable(call) for call in calls)
+        except TypeError:
+            iterable = False
+        if iterable and all_callable:
+            return tuple(calls)
+        raise RouteError('All paths in the route must be callable!')
 
     def __compatible(self, *calls: Call) -> Calls:
         """Check if the number of routes matches the number of callables."""

@@ -133,15 +133,6 @@ class TestAttributes(unittest.TestCase):
         self.assertTupleEqual((call,), fork.calls)
         self.default_attributes(fork)
 
-    def test_objects(self):
-        call = Call()
-        cls = Cls()
-        fork = ThreadFork(call, cls)
-        self.assertTrue(hasattr(fork, 'calls'))
-        self.assertIsInstance(fork.calls, tuple)
-        self.assertTupleEqual((call, cls), fork.calls)
-        self.default_attributes(fork)
-
     def test_method(self):
         cls = Cls()
         fork = ThreadFork(cls.m)
@@ -196,6 +187,21 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(h.calls, tuple)
         self.assertEqual(1, len(h.calls))
         self.default_attributes(h)
+
+    def test_non_callable_raises(self):
+        cls = Cls()
+        with self.assertRaises(ForkError):
+            _ = ThreadFork(cls)
+
+    def test_non_callables_raises(self):
+        cls = Cls()
+        with self.assertRaises(ForkError):
+            _ = ThreadFork([f, 1, cls, g])
+
+    def test_non_callable_args_raises(self):
+        cls = Cls()
+        with self.assertRaises(ForkError):
+            _ = ThreadFork(f, g, cls, 1, Cls)
 
     def test_threadpool_result_attributes(self):
         fork = ThreadFork(
@@ -538,6 +544,16 @@ class TestMagic(unittest.TestCase):
         self.assertIsInstance(fork, ThreadFork)
         self.assertTupleEqual((*self.calls, f, g), fork.calls)
 
+    def test_add_non_callable_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = self.fork + cls
+
+    def test_add_non_callables_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = self.fork + [f, cls, 1, g]
+
     def test_radd_call(self):
         fork = f + self.fork
         self.assertIsInstance(fork, ThreadFork)
@@ -552,6 +568,16 @@ class TestMagic(unittest.TestCase):
         fork = [f, g] + self.fork
         self.assertIsInstance(fork, ThreadFork)
         self.assertTupleEqual((f, g, *self.calls), fork.calls)
+
+    def test_radd_non_callable_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = cls + self.fork
+
+    def test_radd_non_callables_raises(self):
+        cls = Cls()
+        with self.assertRaises(TypeError):
+            _ = [f, cls, 1, g] + self.fork
 
 
 class TestMisc(unittest.TestCase):

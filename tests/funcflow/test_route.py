@@ -281,6 +281,21 @@ class TestAttributes(unittest.TestCase):
         with self.assertRaises(RouteError):
             _ = Route(f, g)
 
+    def test_non_callable_raises(self):
+        cls = Cls()
+        with self.assertRaises(RouteError):
+            _ = Route([1], cls)
+
+    def test_non_callables_raises(self):
+        cls = Cls()
+        with self.assertRaises(RouteError):
+            _ = Route([1, 2, 3], [f, cls, g])
+
+    def test_non_callable_args_raises(self):
+        cls = Cls()
+        with self.assertRaises(RouteError):
+            _ = Route([1, 2, 3], f, cls, g)
+
 
 class TestUsage(unittest.TestCase):
 

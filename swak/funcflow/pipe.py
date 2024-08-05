@@ -32,7 +32,8 @@ class Pipe[**P, T](IndentRepr):
     """
 
     def __init__(self, call: Call | Iterable[Call] = (), *calls: Call) -> None:
-        self.calls = ((call,) if callable(call) else tuple(call)) + calls
+        self.calls = (call,) if callable(call) else self.__valid(call)
+        self.calls += self.__valid(calls)
         super().__init__(self.calls)
 
     def __iter__(self) -> Iterator[Call]:
@@ -72,29 +73,23 @@ class Pipe[**P, T](IndentRepr):
 
     def __add__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, self.__class__):
-            return self.__class__(*self.calls, *other.calls)
+            return self.__class__(self.calls, *other.calls)
+        elif callable(other):
+            return self.__class__(self.calls, other)
         try:
-            _ = [callable(call) for call in other]
-            return self.__class__(*self.calls, *other)
-        except TypeError:
-            try:
-                _ = callable(other)
-                return self.__class__(*self.calls, other)
-            except TypeError:
-                return NotImplemented
+            return self.__class__(self.calls, *self.__valid(other))
+        except PipeError:
+            return NotImplemented
 
     def __radd__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, self.__class__):
-            return self.__class__(*other.calls, *self.calls)
+            return self.__class__(other.calls, *self.calls)
+        elif callable(other):
+            return self.__class__(other, *self.calls)
         try:
-            _ = [callable(call) for call in other]
-            return self.__class__(*other, *self.calls)
-        except TypeError:
-            try:
-                _ = callable(other)
-                return self.__class__(other, *self.calls)
-            except TypeError:
-                return NotImplemented
+            return self.__class__(self.__valid(other), *self.calls)
+        except PipeError:
+            return NotImplemented
 
     def __call__(self, *args: P.args) -> T:
         """Call the functional composition this object was instantiated with.
@@ -126,3 +121,16 @@ class Pipe[**P, T](IndentRepr):
                 fmt = msg.format(err_cls, name, i, self, error)
                 raise PipeError(fmt)
         return args
+
+    @staticmethod
+    def __valid(calls: Iterable[Call]) -> tuple[Call, ...]:
+        """Ensure that the argument is indeed an iterable of callables."""
+        iterable = True
+        all_callable = False
+        try:
+            all_callable = all(callable(call) for call in calls)
+        except TypeError:
+            iterable = False
+        if iterable and all_callable:
+            return tuple(calls)
+        raise PipeError('All items in the pipe must be callable!')
