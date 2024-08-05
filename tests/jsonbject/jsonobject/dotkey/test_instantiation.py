@@ -1,5 +1,6 @@
 import unittest
 from swak.jsonobject import JsonObject
+from swak.jsonobject.exceptions import ValidationErrors
 
 
 class Child(JsonObject):
@@ -369,25 +370,25 @@ class TestRaiseExtraFields(unittest.TestCase):
 
     def test_dict_first_level(self):
         self.expected['parent.e'] = 'bar'
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Grand(self.expected)
 
     def test_dict_second_level(self):
         self.expected['parent']['child.e'] = 'bar'
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Grand(self.expected)
 
     def test_dict_all_levels(self):
         self.expected['parent.child.e'] = 'bar'
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Grand(self.expected)
 
     def test_kwargs_second_level_dict(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Grand(self.expected, parent={'child.e': 'bar'})
 
     def test_kwargs_second_level_str(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Grand(self.expected, parent='{"child.e": "bar"}')
 
 

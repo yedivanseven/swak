@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from pandas import Series
 from swak.jsonobject import JsonObject
 from swak.jsonobject.fields import Maybe
-from swak.jsonobject.exceptions import ParseError
+from swak.jsonobject.exceptions import ParseError, ValidationErrors
 
 
 class Empty(JsonObject):
@@ -362,31 +362,31 @@ class TestTypeCasting(unittest.TestCase):
 class TestExceptions(unittest.TestCase):
 
     def test_parse_dict_missing_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple({'b': 'foo'})
 
     def test_parse_kwargs_missing_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(b='foo')
 
     def test_parse_json_missing_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple('{"b": "foo"}')
 
     def test_parse_str_missing_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple("{'b': 'foo'}")
 
     def test_parse_bytes_missing_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(bytes('{"b": "foo"}'.encode('utf-8')))
 
     def test_parse_bytearray_missing_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(bytearray('{"b": "foo"}'.encode('utf-8')))
 
     def test_parse_series_missing_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(Series({'b': 'foo'}))
 
     def test_uncastable_str(self):
@@ -396,59 +396,59 @@ class TestExceptions(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_cast_dict_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple({'a': 'foo', 'b': 'bar'})
 
     def test_cast_dict_and_kwarg_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple({'b': 'bar'}, a='foo')
 
     def test_cast_kwargs_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(b='bar', a='foo')
 
     def test_cast_str_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple("{'a': 'foo', 'b': 'bar'}")
 
     def test_cast_str_and_kwarg_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple("{'b': 'bar'}", a='foo')
 
     def test_cast_json_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple('{"a": "foo", "b": "bar"}')
 
     def test_cast_json_and_kwarg_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple('{"b": "bar"}', a='foo')
 
     def test_cast_bytes_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(bytes('{"a": "foo", "b": "bar"}'.encode('utf-8')))
 
     def test_cast_bytes_and_kwarg_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(bytes('{"b": "bar"}'.encode('utf-8')), a='foo')
 
     def test_cast_bytearray_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(bytearray('{"a": "foo", "b": "bar"}'.encode('utf-8')))
 
     def test_cast_bytearray_and_kwarg_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(bytearray('{"b": "bar"}'.encode('utf-8')), a='foo')
 
     def test_cast_series_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(Series({'a': 'foo', 'b': 'bar'}))
 
     def test_cast_series_and_kwarg_wrong_field(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Simple(Series({'b': 'bar'}), a='foo')
 
     def test_cast_non_maybe_none_fields(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Respect(a=None)
 
 
@@ -483,7 +483,7 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_dict(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self. FalseTrue({'a': 1})
 
     def test_false_false_dict(self):
@@ -505,7 +505,7 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseTrue(a=1)
 
     def test_false_false_kwarg(self):
@@ -527,7 +527,7 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_str(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseTrue("{'a': 1}")
 
     def test_false_false_str(self):
@@ -549,7 +549,7 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_json(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseTrue('{"a": 1}')
 
     def test_false_false_json(self):
@@ -571,7 +571,7 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_bytes(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseTrue(bytes('{"a": 1}'.encode('utf-8')))
 
     def test_false_false_bytes(self):
@@ -595,7 +595,7 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_bytearray(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseTrue(bytearray('{"a": 1}'.encode('utf-8')))
 
     def test_false_false_bytearray(self):
@@ -619,7 +619,7 @@ class TestExtraFields(unittest.TestCase):
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_series(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self. FalseTrue(Series({'a': 1}))
 
     def test_false_false_series(self):
@@ -668,15 +668,15 @@ class TestExtraFields(unittest.TestCase):
         self.assertIsNone(respect.a)
 
     def test_extra_raises_on_non_string_keys(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseFalse({0: 1})
 
     def test_extra_raises_on_blacklisted_keys(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseFalse({'keys': 1})
 
     def test_extra_raises_on_non_identifier_keys(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.FalseFalse({' 034- 5 / ': 1})
 
 

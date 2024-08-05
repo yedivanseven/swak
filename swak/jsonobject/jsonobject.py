@@ -5,7 +5,13 @@ import json
 from json import JSONDecodeError
 from pandas import Series
 from .fields import Maybe
-from .exceptions import SchemaError, DefaultsError, ParseError, CastError
+from .exceptions import (
+    SchemaError,
+    DefaultsError,
+    ParseError,
+    CastError,
+    ValidationErrors
+)
 
 type Json = dict[str, Any]
 type Raw = str | bytes | bytearray | Json | Series | None
@@ -90,7 +96,7 @@ class SchemaMeta(type):
         # Raise accumulated errors, if any
         errors = schema_errors + default_errors
         if errors:
-            raise ExceptionGroup(name, errors)
+            raise ValidationErrors(name, errors)
 
         # Set hidden class variables
         cls.__blacklist__ = mcs.__blacklist__
@@ -201,8 +207,8 @@ class JsonObject(metaclass=SchemaMeta):
 
     Raises
     ------
-    ExceptionGroup
-        Containing any number of the following exceptions.
+    ValidationErrors
+        ExceptionGroup containing any number of the following exceptions.
     ParseError
         If the (keyword) arguments cannot be parsed into a dictionary with
         string keys and if non-default fields are neither given in the
@@ -294,8 +300,8 @@ class JsonObject(metaclass=SchemaMeta):
 
         Raises
         ------
-        ExceptionGroup
-            Containing any number of the following exceptions.
+        ValidationErrors
+            ExceptionGroup containing any number of the following exceptions.
         ParseError
             If the (keyword) arguments cannot be parsed into a dictionary with
             string keys.
@@ -457,7 +463,7 @@ class JsonObject(metaclass=SchemaMeta):
             except (TypeError, ValueError):
                 msg = f'Could not cast field "{item}" to the desired type!'
                 errors.append(CastError(msg))
-            except ExceptionGroup as error_group:
+            except ValidationErrors as error_group:
                 errors.append(error_group)
             if value is None and not isinstance(type_cast, Maybe):
                 msg = (f'For the value of field "{item} to be None, annotate'
@@ -467,7 +473,7 @@ class JsonObject(metaclass=SchemaMeta):
         # If we don't have to deal with extra fields, we're done
         if self.__ignore_extra__:
             if errors:
-                raise ExceptionGroup(self.__class__.__name__, errors)
+                raise ValidationErrors(self.__class__.__name__, errors)
             return cast
 
         # If not, first check if we even allow extra fields
@@ -475,7 +481,7 @@ class JsonObject(metaclass=SchemaMeta):
         if extra_fields and self.__raise_extra__:
             msg = f'Fields {extra_fields} are not in the schema!'
             errors.append(ParseError(msg))
-            raise ExceptionGroup(self.__class__.__name__, errors)
+            raise ValidationErrors(self.__class__.__name__, errors)
 
         # Even if extra fields are not ignored and are allowed, we need to ...
         for field in extra_fields:
@@ -497,7 +503,7 @@ class JsonObject(metaclass=SchemaMeta):
 
         # If we found anything fishy, raise all errors together
         if errors:
-            raise ExceptionGroup(self.__class__.__name__, errors)
+            raise ValidationErrors(self.__class__.__name__, errors)
 
         # Only now do we accept and merge extra fields.
         extras = {field: mapping[field] for field in extra_fields}

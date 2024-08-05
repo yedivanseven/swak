@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from pandas import Series
 from swak.jsonobject import JsonObject
 from swak.jsonobject.fields import Maybe
+from swak.jsonobject.exceptions import ValidationErrors
 
 
 class Default(JsonObject):
@@ -199,31 +200,31 @@ class TestDefaultOverwrittenWithNone(unittest.TestCase):
 class TestException(unittest.TestCase):
 
     def test_dict(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Default({'a': 'bar'})
 
     def test_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Default(a='bar')
 
     def test_series(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Default(Series({'a': 'bar'}))
 
     def test_str(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Default("{'a': 'bar'}")
 
     def test_json(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Default('{"a": "bar"}')
 
     def test_bytes(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Default(bytes('{"a": "bar"}'.encode('utf-8')))
 
     def test_bytearray(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Default(bytearray('{"a": "bar"}'.encode('utf-8')))
 
 

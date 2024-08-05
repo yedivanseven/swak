@@ -2,7 +2,7 @@ import unittest
 from pandas import Series
 from swak.jsonobject import JsonObject
 from swak.jsonobject.fields import Maybe
-from swak.jsonobject.exceptions import ParseError
+from swak.jsonobject.exceptions import ParseError, ValidationErrors
 
 
 class Child(JsonObject):
@@ -409,7 +409,7 @@ class TestRespect(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_raises_on_maybe_not(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = Respect(b=None)
 
 
@@ -535,55 +535,55 @@ class TestExceptions(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_dict(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat({'b': 'hello world'})
 
     def test_dict_and_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat({'b': 'hello'}, c='world')
 
     def test_kwargs(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat(b='hello', c='world')
 
     def test_series(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat(Series({'b': 'hello world'}))
 
     def test_series_and_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat(Series({'b': 'hello'}), c='world')
 
     def test_str(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat("{'b': 'hello world'}")
 
     def test_str_and_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat("{'b': 'hello'}", c='world')
 
     def test_json(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat('{"b": "hello world"}')
 
     def test_json_and_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat('{"b": "hello"}', c='world')
 
     def test_bytes(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat(bytes('{"b": "hello world"}'.encode('utf-8')))
 
     def test_bytes_and_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat(bytes('{"b": "hello"}'.encode('utf-8')), c='world')
 
     def test_bytearray(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat(bytearray('{"b": "hello world"}'.encode('utf-8')))
 
     def test_bytearray_and_kwarg(self):
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
             _ = self.flat(
                     bytearray('{"b": "hello"}'.encode('utf-8')),
                     c='world'

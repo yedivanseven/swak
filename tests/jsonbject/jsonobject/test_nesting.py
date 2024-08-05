@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 from swak.jsonobject import JsonObject
-from swak.jsonobject.exceptions import ParseError
+from swak.jsonobject.exceptions import ParseError, ValidationErrors
 
 
 class Child(JsonObject):
@@ -57,9 +57,9 @@ class TestInstantiationDict(unittest.TestCase):
         self.check_attributes(p)
 
     def test_nested_error(self):
-        with self.assertRaises(ExceptionGroup) as eg:
+        with self.assertRaises(ValidationErrors) as eg:
             _ = Parent({'d': 1, 'child': {'b': None, 'e': 2}})
-        self.assertIsInstance(eg.exception.exceptions[0], ExceptionGroup)
+        self.assertIsInstance(eg.exception.exceptions[0], ValidationErrors)
         self.assertIsInstance(eg.exception.exceptions[1], ParseError)
 
 

@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock
 from swak.jsonobject.jsonobject import SchemaMeta
 from swak.jsonobject.fields import Maybe
+from swak.jsonobject.exceptions import ValidationErrors
 
 
 class TestEmptyAttributes(unittest.TestCase):
@@ -158,7 +159,7 @@ class TestValidations(unittest.TestCase):
 
     def test_annotation_not_callable(self):
 
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
 
             class Test(metaclass=SchemaMeta):
                 a: int
@@ -166,7 +167,7 @@ class TestValidations(unittest.TestCase):
 
     def test_field_blacklisted(self):
 
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
 
             class Test(metaclass=SchemaMeta):
                 a: int
@@ -174,7 +175,7 @@ class TestValidations(unittest.TestCase):
 
     def test_field_double_underscore(self):
 
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
 
             class Test(metaclass=SchemaMeta):
                 a: int
@@ -182,7 +183,7 @@ class TestValidations(unittest.TestCase):
 
     def test_combi_message(self):
 
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
 
             class Test(metaclass=SchemaMeta):
                 a: int
@@ -191,7 +192,7 @@ class TestValidations(unittest.TestCase):
 
     def test_default_none(self):
 
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
 
             class Test(metaclass=SchemaMeta):
                 a: int
@@ -199,7 +200,7 @@ class TestValidations(unittest.TestCase):
 
     def test_default_wrong_type(self):
 
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
 
             class Test(metaclass=SchemaMeta):
                 a: str
@@ -256,7 +257,7 @@ class TestMaybe(unittest.TestCase):
 
     def test_maybe_lets_cast_error_through(self):
 
-        with self.assertRaises(ExceptionGroup):
+        with self.assertRaises(ValidationErrors):
 
             class Test(metaclass=SchemaMeta):
                 a: Maybe[int](int) = '1.0'

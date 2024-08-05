@@ -12,3 +12,7 @@ class ParseError(Exception):
 
 class CastError(Exception):
     pass
+
+
+class ValidationErrors(ExceptionGroup):
+    pass
