@@ -285,6 +285,14 @@ class TestKwargOverWrites(unittest.TestCase):
         )
         self.check_attributes(p)
 
+    def test_kwarg_nest_dict(self):
+        p = Parent({'child': 42}, child={'c': 1})
+        self.check_attributes(p)
+
+    def test_kwarg_collapse_dict(self):
+        p = Parent({'child': {'c': {'d': 1}}}, child={'c': 1})
+        self.check_attributes(p)
+
 
 class TestViews(unittest.TestCase):
 

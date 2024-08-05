@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
 from swak.jsonobject import JsonObject
+from swak.jsonobject.fields import Maybe
 
 
 class Custom:
@@ -16,6 +17,10 @@ class Simple(JsonObject):
     a: int = 1
     b: str = 'foo'
     c: Custom = True
+
+
+class Option(JsonObject):
+    a: Maybe[int](int) = None
 
 
 class TestMembers(unittest.TestCase):
@@ -56,6 +61,7 @@ class TestMembers(unittest.TestCase):
         )
         pd.testing.assert_series_equal(expected, self.simple.as_series)
 
+    # Do we even need this method?
     def test_has_get(self):
         self.assertTrue(hasattr(self.simple, 'get'))
 
@@ -76,6 +82,11 @@ class TestMembers(unittest.TestCase):
         default = self.simple.get('d', 'default')
         self.assertIsInstance(default, str)
         self.assertEqual('default', default)
+
+    def test_get_none_field(self):
+        default = Option().get('a', 'default')
+        self.assertIsNone(default)
+    ###########################################################################
 
     def test_has_keys(self):
         self.assertTrue(hasattr(self.simple, 'keys'))

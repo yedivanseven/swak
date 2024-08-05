@@ -31,7 +31,7 @@ class SchemaMeta(type):
         'as_json',
         'as_series',
         'as_dtype',
-        'get',
+        'get',  # Do we even need this method?
         'keys',
         '_serialize'
     }
@@ -329,6 +329,7 @@ class JsonObject(metaclass=SchemaMeta):
         name = self.__class__.__name__
         return Series(data, name=name)
 
+    # Do we even need this method?
     def get(self, item: str, default: Any = None) -> Any:
         """Get (nested) attribute by (dot.separated) name or default."""
         try:

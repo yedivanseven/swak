@@ -253,6 +253,10 @@ class TestFlat(unittest.TestCase):
         updated = self.flat({'b': 3.0, 'c': 42}, bar=None)
         self.check_attributes(updated)
 
+    def test_dict_and_kwarg_collapse(self):
+        updated = self.flat({'b': 3.0, 'c': {42: 'answer'}}, c=42)
+        self.check_attributes(updated)
+
 
 class TestExtra(unittest.TestCase):
 
@@ -306,6 +310,21 @@ class TestExtra(unittest.TestCase):
 
     def test_false_false_accept_non_empty(self):
         extra = self.FalseFalse(a=1)
+        updated = extra(a=42, b='foo')
+        self.assertTrue(hasattr(updated, 'a'))
+        self.assertIsInstance(updated.a, int)
+        self.assertEqual(42, updated.a)
+        self.assertFalse(hasattr(updated, 'b'))
+
+    def test_false_false_nest_non_empty(self):
+        extra = self.FalseFalse(a=1)
+        updated = extra(a={42: 'answer'}, b='foo')
+        self.assertTrue(hasattr(updated, 'a'))
+        self.assertDictEqual({42: 'answer'}, updated.a)
+        self.assertFalse(hasattr(updated, 'b'))
+
+    def test_false_false_collapse_non_empty(self):
+        extra = self.FalseFalse(a={42: 'answer'})
         updated = extra(a=42, b='foo')
         self.assertTrue(hasattr(updated, 'a'))
         self.assertIsInstance(updated.a, int)
@@ -594,6 +613,14 @@ class TestNesting(unittest.TestCase):
 
     def test_dict_dict(self):
         updated = self.nested({'child': {'c': 42}})
+        self.check_attributes(updated)
+
+    def test_nest(self):
+        updated = self.nested({'child': 42}, child={'c': 42})
+        self.check_attributes(updated)
+
+    def test_collapse(self):
+        updated = self.nested({'child': {'c': {42: 'answer'}}}, child={'c': 42})
         self.check_attributes(updated)
 
     def test_dict_self(self):

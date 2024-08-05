@@ -189,6 +189,10 @@ class TestSimple(unittest.TestCase):
         simple = Simple({'a': 1, 'b': 'foo'}, c=None)
         self.check_attributes(simple)
 
+    def test_collapse(self):
+        simple = Simple({'a': 1, 'b': {42: 'answer'}}, b='foo')
+        self.check_attributes(simple)
+
 
 class TestNone(unittest.TestCase):
 
@@ -487,6 +491,11 @@ class TestExtraFields(unittest.TestCase):
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
 
+    def test_false_false_nest_dict(self):
+        false_false = self.FalseFalse({'a': {42: 'answer'}})
+        self.assertTrue(hasattr(false_false, 'a'))
+        self.assertDictEqual({42: 'answer'}, false_false.a)
+
     def test_true_true_kwarg(self):
         true_true = self.TrueTrue(a=1)
         self.assertFalse(hasattr(true_true, 'a'))
@@ -503,6 +512,11 @@ class TestExtraFields(unittest.TestCase):
         false_false = self.FalseFalse(a=1)
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
+
+    def test_false_false_nest_kwarg(self):
+        false_false = self.FalseFalse(a={42: 'answer'})
+        self.assertTrue(hasattr(false_false, 'a'))
+        self.assertDictEqual({42: 'answer'}, false_false.a)
 
     def test_true_true_str(self):
         true_true = self.TrueTrue("{'a': 1}")
@@ -521,6 +535,11 @@ class TestExtraFields(unittest.TestCase):
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
 
+    def test_false_false_nest_str(self):
+        false_false = self.FalseFalse("{'a': {42: 'answer'}}")
+        self.assertTrue(hasattr(false_false, 'a'))
+        self.assertDictEqual({42: 'answer'}, false_false.a)
+
     def test_true_true_json(self):
         true_true = self.TrueTrue('{"a": 1}')
         self.assertFalse(hasattr(true_true, 'a'))
@@ -537,6 +556,11 @@ class TestExtraFields(unittest.TestCase):
         false_false = self.FalseFalse('{"a": 1}')
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
+
+    def test_false_false_nest_json(self):
+        false_false = self.FalseFalse('{"a": {"42": "answer"}}')
+        self.assertTrue(hasattr(false_false, 'a'))
+        self.assertDictEqual({'42': 'answer'}, false_false.a)
 
     def test_true_true_bytes(self):
         true_true = self.TrueTrue(bytes('{"a": 1}'.encode('utf-8')))
@@ -555,6 +579,13 @@ class TestExtraFields(unittest.TestCase):
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
 
+    def test_false_false_nest_bytes(self):
+        false_false = self.FalseFalse(
+            bytes('{"a": {"42": "answer"}}'.encode('utf-8'))
+        )
+        self.assertTrue(hasattr(false_false, 'a'))
+        self.assertDictEqual({'42': 'answer'}, false_false.a)
+
     def test_true_true_bytearray(self):
         true_true = self.TrueTrue(bytearray('{"a": 1}'.encode('utf-8')))
         self.assertFalse(hasattr(true_true, 'a'))
@@ -572,6 +603,13 @@ class TestExtraFields(unittest.TestCase):
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
 
+    def test_false_false_nest_bytearray(self):
+        false_false = self.FalseFalse(
+            bytearray('{"a": {"42": "answer"}}'.encode('utf-8'))
+        )
+        self.assertTrue(hasattr(false_false, 'a'))
+        self.assertDictEqual({'42': 'answer'}, false_false.a)
+
     def test_true_true_series(self):
         true_true = self.TrueTrue(Series({'a': 1}))
         self.assertFalse(hasattr(true_true, 'a'))
@@ -585,9 +623,14 @@ class TestExtraFields(unittest.TestCase):
             _ = self. FalseTrue(Series({'a': 1}))
 
     def test_false_false_series(self):
-        false_false = self.FalseFalse((Series({'a': 1})))
+        false_false = self.FalseFalse(Series({'a': 1}))
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
+
+    def test_false_false_nest_series(self):
+        false_false = self.FalseFalse(Series({'a': {42: 'answer'}}))
+        self.assertTrue(hasattr(false_false, 'a'))
+        self.assertDictEqual({42: 'answer'}, false_false.a)
 
     def test_extra_field_none_dict(self):
         respect = self.Respect({'a': None})
