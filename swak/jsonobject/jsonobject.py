@@ -57,7 +57,7 @@ class SchemaMeta(type):
         cls = super().__new__(mcs, name, bases, attrs)
 
         # Set behavior from past and present class keywords
-        ancestral_variables = mcs.__ancestral(cls, '__dict__')
+        ancestral_variables = mcs.__ancestral(cls, '__dict__', 1)
         cls.__ignore_extra__ = kwargs.pop(
             'ignore_extra',
             ancestral_variables.get('__ignore_extra__', mcs.__ignore_extra__)
@@ -106,10 +106,10 @@ class SchemaMeta(type):
         return cls
 
     @staticmethod
-    def __ancestral(cls: 'SchemaMeta', attribute: str) -> Json:
+    def __ancestral(cls: 'SchemaMeta', attribute: str, start: int = 0) -> Json:
         """Accumulate dictionary class variables down the inheritance tree."""
         # Get class ancestors starting with the oldest
-        lineage = reversed(cls.mro())
+        lineage = reversed(cls.mro()[start:])
         # Accumulate inherited dictionary attributes, overwriting old with new
         return reduce(cls.__merge(attribute), lineage, {})
 

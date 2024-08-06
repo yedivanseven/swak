@@ -23,6 +23,11 @@ class Pipe[**P, T](IndentRepr):
     *calls: callable
         Additional callables to chain one after another.
 
+    Raises
+    ------
+    PipeError
+        If (any of) `call` or any of `calls` are not, in fact, callable.
+
     Notes
     -----
     Upon instantiation, the generic class can be type-annotated with the list
@@ -32,19 +37,18 @@ class Pipe[**P, T](IndentRepr):
     """
 
     def __init__(self, call: Call | Iterable[Call] = (), *calls: Call) -> None:
-        self.calls = (call,) if callable(call) else self.__valid(call)
-        self.calls += self.__valid(calls)
+        self.calls = self.__valid(call) + self.__valid(calls)
         super().__init__(self.calls)
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...
-        return iter(self.calls)
+        return self.calls.__iter__()
 
     def __len__(self) -> int:
-        return len(self.calls)
+        return self.calls.__len__()
 
     def __bool__(self) -> bool:
-        return self.__len__() > 0
+        return bool(self.calls)
 
     def __contains__(self, item: Call) -> bool:
         return item in self.calls
@@ -74,8 +78,6 @@ class Pipe[**P, T](IndentRepr):
     def __add__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, self.__class__):
             return self.__class__(self.calls, *other.calls)
-        elif callable(other):
-            return self.__class__(self.calls, other)
         try:
             return self.__class__(self.calls, *self.__valid(other))
         except PipeError:
@@ -84,8 +86,6 @@ class Pipe[**P, T](IndentRepr):
     def __radd__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, self.__class__):
             return self.__class__(other.calls, *self.calls)
-        elif callable(other):
-            return self.__class__(other, *self.calls)
         try:
             return self.__class__(self.__valid(other), *self.calls)
         except PipeError:
@@ -123,8 +123,10 @@ class Pipe[**P, T](IndentRepr):
         return args
 
     @staticmethod
-    def __valid(calls: Iterable[Call]) -> tuple[Call, ...]:
+    def __valid(calls: Call | Iterable[Call]) -> tuple[Call, ...]:
         """Ensure that the argument is indeed an iterable of callables."""
+        if callable(calls):
+            return calls,
         iterable = True
         all_callable = False
         try:

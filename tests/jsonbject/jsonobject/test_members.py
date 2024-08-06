@@ -23,6 +23,15 @@ class Option(JsonObject):
     a: Maybe[int](int) = None
 
 
+class Extra(
+        JsonObject,
+        ignore_extra=False,
+        raise_extra=False,
+        respect_none=True
+):
+    pass
+
+
 class TestMembers(unittest.TestCase):
 
     def setUp(self):
@@ -114,6 +123,66 @@ class TestMembers(unittest.TestCase):
 
     def test_respect_none_type(self):
         self.assertIsInstance(self.simple.__respect_none__, bool)
+
+    def test_cls_body_ignored(self):
+
+        class Body(JsonObject):
+            __ignore_extra__ = True
+            __raise_extra__ = False
+            __respect_none__ = True
+
+        self.assertTrue(hasattr(Body, '__ignore_extra__'))
+        self.assertFalse(Body.__ignore_extra__)
+        self.assertTrue(hasattr(Body, '__raise_extra__'))
+        self.assertTrue(Body.__raise_extra__)
+        self.assertTrue(hasattr(Body, '__respect_none__'))
+        self.assertFalse(Body.__respect_none__)
+
+
+class TestInheritance(unittest.TestCase):
+
+    def test_cls_kwargs_inherited(self):
+
+        class Child(Extra):
+            pass
+
+        self.assertTrue(hasattr(Child, '__ignore_extra__'))
+        self.assertFalse(Child.__ignore_extra__)
+        self.assertTrue(hasattr(Child, '__raise_extra__'))
+        self.assertFalse(Child.__raise_extra__)
+        self.assertTrue(hasattr(Child, '__respect_none__'))
+        self.assertTrue(Child.__respect_none__)
+
+    def test_cls_kwargs_overwrite_parent(self):
+
+        class Child(
+                Extra,
+                ignore_extra=True,
+                raise_extra=True,
+                respect_none=False
+        ):
+            pass
+
+        self.assertTrue(hasattr(Child, '__ignore_extra__'))
+        self.assertTrue(Child.__ignore_extra__)
+        self.assertTrue(hasattr(Child, '__raise_extra__'))
+        self.assertTrue(Child.__raise_extra__)
+        self.assertTrue(hasattr(Child, '__respect_none__'))
+        self.assertFalse(Child.__respect_none__)
+
+    def test_cls_body_of_child_ignored(self):
+
+        class Child(Extra):
+            __ignore_extra__ = True
+            __raise_extra__ = True
+            __respect_none__ = False
+
+        self.assertTrue(hasattr(Child, '__ignore_extra__'))
+        self.assertFalse(Child.__ignore_extra__)
+        self.assertTrue(hasattr(Child, '__raise_extra__'))
+        self.assertFalse(Child.__raise_extra__)
+        self.assertTrue(hasattr(Child, '__respect_none__'))
+        self.assertTrue(Child.__respect_none__)
 
 
 if __name__ == '__main__':

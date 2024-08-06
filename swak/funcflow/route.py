@@ -40,8 +40,9 @@ class Route[**P, T](IndentRepr):
     Raises
     ------
     RouteError
-        If the `routes` cannot be parsed or if the number of `routes` does not
-        match the number of callables specified with `call` and `calls`.
+        If the `routes` cannot be parsed, if the number of `routes` does not
+        match the number of callables specified with `call` and `calls`, or
+        if (any of) `call` or any of `calls` is not, in fact, callable.
 
     """
 
@@ -52,21 +53,20 @@ class Route[**P, T](IndentRepr):
             *calls: Call
     ) -> None:
         self.routes = self.__packed(routes)
-        callables = (call,) if callable(call) else self.__valid(call)
-        callables += self.__valid(calls)
+        callables = self.__valid(call) + self.__valid(calls)
         self.calls = self.__compatible(*callables)
         routes = [r[0] if len(r) == 1 else r for r in self.routes]
         super().__init__(self.calls, routes)
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...
-        return iter(self.calls)
+        return self.calls.__iter__()
 
     def __len__(self) -> int:
-        return len(self.calls)
+        return self.calls.__len__()
 
     def __bool__(self) -> bool:
-        return self.__len__() > 0
+        return bool(self.calls)
 
     def __contains__(self, item: Call) -> bool:
         return item in self.calls
@@ -159,8 +159,10 @@ class Route[**P, T](IndentRepr):
         return 0
 
     @staticmethod
-    def __valid(calls: Iterable[Call]) -> tuple[Call, ...]:
+    def __valid(calls: Call | Iterable[Call]) -> tuple[Call, ...]:
         """Ensure that the argument is indeed an iterable of callables."""
+        if callable(calls):
+            return calls,
         iterable = True
         all_callable = False
         try:

@@ -11,7 +11,7 @@ class ValuesGetter[T](ArgRepr):
 
     Parameters
     ----------
-    key: optional
+    key: Hashable, optional
         Dictionary key or iterable thereof. Defaults to an empy tuple.
     *keys: Hashable
         Additional dictionary keys.
@@ -21,6 +21,11 @@ class ValuesGetter[T](ArgRepr):
         should be annotated. Instances can be type annotated with the type
         of sequence to be returned. Defaults to ``list``.
 
+    Raises
+    ------
+    TypeError
+        If (any of) `key` or any of `keys` are not, in fact, hashable.
+
     """
 
     def __init__(
@@ -29,19 +34,15 @@ class ValuesGetter[T](ArgRepr):
             *keys: Hashable,
             wrapper: type[T] | Callable[[tuple], T] = list
     ) -> None:
+        self.keys: tuple[Hashable, ...] = self.__valid(key) + self.__valid(keys)
         self.wrapper = wrapper
-        try:
-            key = tuple(key)
-        except TypeError:
-            key = key,
-        self.keys: tuple[Hashable, ...] = key + keys
         super().__init__(*self.keys, wrapper=wrapper)
 
     def __len__(self) -> int:
-        return len(self.keys)
+        return self.keys.__len__()
 
     def __bool__(self) -> bool:
-        return len(self) > 0
+        return bool(self.keys)
 
     def __reversed__(self) -> Self:
         return self.__class__(*reversed(self.keys))
@@ -72,33 +73,21 @@ class ValuesGetter[T](ArgRepr):
 
     def __add__(self, other: Hashable | Iterable[Hashable] | Self) -> Self:
         if isinstance(other, self.__class__):
-            return self.__class__(*self.keys, *other.keys)
-        if isinstance(other, str):
-            return self.__class__(*self.keys, other)
+            return self.__class__(self.keys, *other.keys)
         try:
-            _ = [hash(key) for key in other]
-            return self.__class__(*self.keys, *other)
+            others = self.__valid(other)
         except TypeError:
-            try:
-                _ = hash(other)
-                return self.__class__(*self.keys, other)
-            except TypeError:
-                return NotImplemented
+            return NotImplemented
+        return self.__class__(self.keys, *others)
 
     def __radd__(self, other: Hashable | Iterable[Hashable] | Self) -> Self:
         if isinstance(other, self.__class__):
-            return self.__class__(*other.keys, *self.keys)
-        if isinstance(other, str):
-            return self.__class__(other, *self.keys)
+            return self.__class__(other.keys, *self.keys)
         try:
-            _ = [hash(key) for key in other]
-            return self.__class__(*other, *self.keys)
+            others = self.__valid(other)
         except TypeError:
-            try:
-                _ = hash(other)
-                return self.__class__(other, *self.keys)
-            except TypeError:
-                return NotImplemented
+            return NotImplemented
+        return self.__class__(others, *self.keys)
 
     def __call__(self, mapping: Mapping) -> T:
         """Extract sequence of dictionary values for given keys.
@@ -123,3 +112,15 @@ class ValuesGetter[T](ArgRepr):
             case _:
                 values = itemgetter(*self.keys)(mapping)
         return self.wrapper(values)
+
+    @staticmethod
+    def __valid(keys: Hashable | Iterable[Hashable]) -> tuple[Hashable, ...]:
+        """Ensure that the argument is indeed an iterable of hashables."""
+        if isinstance(keys, str):
+            return keys,
+        try:
+            _ = [hash(key) for key in keys]
+        except TypeError:
+            _ = hash(keys)
+            return keys,
+        return tuple(keys)

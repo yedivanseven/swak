@@ -20,40 +20,90 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(values_from, 'wrapper'))
         self.assertTrue(callable(values_from.wrapper))
 
-    def test_one_key(self):
+    def test_one_int_key(self):
         values_from = ValuesGetter(1)
         self.assertTrue(hasattr(values_from, 'keys'))
         self.assertTupleEqual((1,), values_from.keys)
         self.assertTrue(hasattr(values_from, 'wrapper'))
         self.assertTrue(callable(values_from.wrapper))
 
-    def test_three_keys(self):
+    def test_one_str_key(self):
+        values_from = ValuesGetter('one')
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual(('one',), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
+
+    def test_three_int_keys(self):
         values_from = ValuesGetter(1, 2, 3)
         self.assertTrue(hasattr(values_from, 'keys'))
         self.assertTupleEqual((1, 2, 3), values_from.keys)
         self.assertTrue(hasattr(values_from, 'wrapper'))
         self.assertTrue(callable(values_from.wrapper))
 
-    def test_list_one_key_two_keys(self):
+    def test_list_one_int_key_two_int_keys(self):
         values_from = ValuesGetter([1], 2, 3)
         self.assertTrue(hasattr(values_from, 'keys'))
         self.assertTupleEqual((1, 2, 3), values_from.keys)
         self.assertTrue(hasattr(values_from, 'wrapper'))
         self.assertTrue(callable(values_from.wrapper))
 
-    def test_list_two_keys_one_key(self):
+    def test_list_two_int_keys_one_int_key(self):
         values_from = ValuesGetter([1, 2], 3)
         self.assertTrue(hasattr(values_from, 'keys'))
         self.assertTupleEqual((1, 2, 3), values_from.keys)
         self.assertTrue(hasattr(values_from, 'wrapper'))
         self.assertTrue(callable(values_from.wrapper))
 
-    def test_list_three_keys(self):
+    def test_list_three_int_keys(self):
         values_from = ValuesGetter([1, 2, 3])
         self.assertTrue(hasattr(values_from, 'keys'))
         self.assertTupleEqual((1, 2, 3), values_from.keys)
         self.assertTrue(hasattr(values_from, 'wrapper'))
         self.assertTrue(callable(values_from.wrapper))
+
+    def test_three_str_keys(self):
+        values_from = ValuesGetter('one', 'two', 'three')
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual(('one', 'two', 'three'), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
+
+    def test_list_one_str_key_two_str_keys(self):
+        values_from = ValuesGetter(['one'], 'two', 'three')
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual(('one', 'two', 'three'), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
+
+    def test_list_two_str_keys_one_str_key(self):
+        values_from = ValuesGetter(['one', 'two'], 'three')
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual(('one', 'two', 'three'), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
+
+    def test_list_three_str_keys(self):
+        values_from = ValuesGetter(['one', 'two', 'three'])
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual(('one', 'two', 'three'), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
+
+    def test_mixed_keys(self):
+        values_from = ValuesGetter(['one', 2], 'three', 4)
+        self.assertTrue(hasattr(values_from, 'keys'))
+        self.assertTupleEqual(('one', 2, 'three', 4), values_from.keys)
+        self.assertTrue(hasattr(values_from, 'wrapper'))
+        self.assertTrue(callable(values_from.wrapper))
+
+    def test_non_hashables_raise(self):
+        with self.assertRaises(TypeError):
+            _ = ValuesGetter([[], []])
+
+    def test_non_hashable_args_raise(self):
+        with self.assertRaises(TypeError):
+            _ = ValuesGetter(1, [])
 
 
 class TestDefaultUsage(unittest.TestCase):
@@ -221,6 +271,10 @@ class TestMagic(unittest.TestCase):
         self.assertIsInstance(getter, ValuesGetter)
         self.assertTupleEqual((*self.keys, 4, 5), getter.keys)
 
+    def test_add_unhashable_raises(self):
+        with self.assertRaises(TypeError):
+            _ = self.values_from + [[4], [5]]
+
     def test_radd_key(self):
         getter = 4 + self.values_from
         self.assertIsInstance(getter, ValuesGetter)
@@ -235,6 +289,10 @@ class TestMagic(unittest.TestCase):
         getter = [4, 5] + self.values_from
         self.assertIsInstance(getter, ValuesGetter)
         self.assertTupleEqual((4, 5, *self.keys), getter.keys)
+
+    def test_radd_unhashable_raises(self):
+        with self.assertRaises(TypeError):
+            _ = [[4], [5]] + self.values_from
 
 
 class TestMisc(unittest.TestCase):

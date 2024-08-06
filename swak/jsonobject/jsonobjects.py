@@ -59,8 +59,12 @@ class JsonObjects[T]:
         try:
             item_type = kwargs.pop('item_type')
         except KeyError:
-            msg = 'An "item_type" must be defined in the class call!'
-            raise SchemaError(msg)
+            try:
+                item_type = cls.mro()[1].__item_type__
+            except AttributeError:
+                msg = ('If not inherited, an "item_type" must be defined as'
+                       'a keyword argument in the class call on definition!')
+                raise SchemaError(msg)
         cls.__item_type__ = cls.__class_checked(item_type)
         super().__init_subclass__(**kwargs)
 
@@ -167,12 +171,14 @@ class JsonObjects[T]:
     @property
     def as_df(self) -> DataFrame:
         """Representation as a pandas data frame."""
-        data = [item.as_series for item in self]
         if self:
             columns = self[0].keys()
         else:
             columns = self.__item_type__.__annotations__.keys()
-        return DataFrame(data, columns=columns).reset_index(drop=True)
+        data = [item.as_series for item in self]
+        df = DataFrame(data, columns=columns).reset_index(drop=True)
+        df.columns.name = self.__item_type__.__name__
+        return df
 
     @staticmethod
     def __class_checked(item_type: type[JsonObject]) -> type[JsonObject]:

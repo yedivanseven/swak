@@ -13,25 +13,56 @@ class Items(JsonObjects, item_type=Item):
     pass
 
 
+class Extra(JsonObject, ignore_extra=False, raise_extra=False):
+    a: int = 1
+    b: str = 'foo'
+
+
+class Extras(JsonObjects, item_type=Extra):
+    pass
+
+
 class TestEmpty(unittest.TestCase):
 
     def test_empty(self):
-        _ = Items()
+        items = Items()
+        self.assertTupleEqual((), tuple(items))
 
     def test_empty_list(self):
-        _ = Items([])
+        items = Items([])
+        self.assertTupleEqual((), tuple(items))
 
     def test_none(self):
-        _ = Items(None)
+        items = Items(None)
+        self.assertTupleEqual((), tuple(items))
 
-    def test_empty_string(self):
-        _ = Items('')
+    def test_empty_str(self):
+        items = Items('')
+        self.assertTupleEqual((), tuple(items))
 
-    def test_string_with_empty_list(self):
-        _ = Items('[]')
+    def test_empty_bytes(self):
+        items = Items(''.encode())
+        self.assertTupleEqual((), tuple(items))
+
+    def test_empty_bytearray(self):
+        items = Items(bytearray(''.encode()))
+        self.assertTupleEqual((), tuple(items))
+
+    def test_str_empty_list(self):
+        items = Items('[]')
+        self.assertTupleEqual((), tuple(items))
+
+    def test_byte_empty_list(self):
+        items = Items('[]'.encode())
+        self.assertTupleEqual((), tuple(items))
+
+    def test_bytearray_empty_list(self):
+        items = Items(bytearray('[]'.encode()))
+        self.assertTupleEqual((), tuple(items))
 
     def test_empty_dataframe(self):
-        _ = Items(pd.DataFrame())
+        items = Items(pd.DataFrame())
+        self.assertTupleEqual((), tuple(items))
 
 
 class TestNonEmpty(unittest.TestCase):

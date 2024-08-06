@@ -60,7 +60,7 @@ class ProcessFork[**P, T](IndentRepr):
             max_tasks_per_child: int | None = None,
             timeout: int | float | None = None
     ) -> None:
-        self.calls = ((call,) if callable(call) else tuple(call)) + calls
+        self.calls = self.__valid(call) + self.__valid(calls)
         self.max_workers = max_workers
         self.initializer = initializer
         self.initargs = initargs
@@ -77,13 +77,13 @@ class ProcessFork[**P, T](IndentRepr):
 
     def __iter__(self) -> Iterator[Call]:
         # We could also iterate over instances of self ...
-        return iter(self.calls)
+        return self.calls.__iter__()
 
     def __len__(self) -> int:
-        return len(self.calls)
+        return self.calls.__len__()
 
     def __bool__(self) -> bool:
-        return self.__len__() > 0
+        return bool(self.calls)
 
     def __contains__(self, call: Call) -> bool:
         return call in self.calls
@@ -112,29 +112,19 @@ class ProcessFork[**P, T](IndentRepr):
 
     def __add__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, self.__class__):
-            return self.__class__(*self.calls, *other.calls)
+            return self.__class__(self.calls, *other.calls)
         try:
-            _ = [callable(call) for call in other]
-            return self.__class__(*self.calls, *other)
-        except TypeError:
-            try:
-                _ = callable(other)
-                return self.__class__(*self.calls, other)
-            except TypeError:
-                return NotImplemented
+            return self.__class__(self.calls, *self.__valid(other))
+        except ForkError:
+            return NotImplemented
 
     def __radd__(self, other: Call | Iterable[Call] | Self) -> Self:
         if isinstance(other, self.__class__):
-            return self.__class__(*other.calls, *self.calls)
+            return self.__class__(other.calls, *self.calls)
         try:
-            _ = [callable(call) for call in other]
-            return self.__class__(*other, *self.calls)
-        except TypeError:
-            try:
-                _ = callable(other)
-                return self.__class__(other, *self.calls)
-            except TypeError:
-                return NotImplemented
+            return self.__class__(self.__valid(other), *self.calls)
+        except ForkError:
+            return NotImplemented
 
     def __call__(self, *args: P.args) -> T:
         """Concurrently call all specified `calls` with the same argument(s).
@@ -181,3 +171,18 @@ class ProcessFork[**P, T](IndentRepr):
                     else:
                         results.append(result)
         return results[0] if len(results) == 1 else tuple(results)
+
+    @staticmethod
+    def __valid(calls: Call | Iterable[Call]) -> tuple[Call, ...]:
+        """Ensure that the argument is indeed an iterable of callables."""
+        if callable(calls):
+            return calls,
+        iterable = True
+        all_callable = False
+        try:
+            all_callable = all(callable(call) for call in calls)
+        except TypeError:
+            iterable = False
+        if iterable and all_callable:
+            return tuple(calls)
+        raise ForkError('All branches in the process-fork must be callable!')

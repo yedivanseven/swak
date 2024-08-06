@@ -88,6 +88,7 @@ class TestAttributes(unittest.TestCase):
     def test_as_df(self):
         items = Items(self.items)
         expected = pd.DataFrame([{'a': 1, 'b': 'foo'}, {'a': 1, 'b': 'foo'}])
+        expected.columns.name = 'Item'
         self.assertTrue(hasattr(items, 'as_df'))
         self.assertIsInstance(items.as_df, pd.DataFrame)
         pd.testing.assert_frame_equal(expected, items.as_df)
@@ -102,6 +103,7 @@ class TestAttributes(unittest.TestCase):
             {'a': 1, 'b': 'foo', 'c': 'as dtype'},
             {'a': 1, 'b': 'foo', 'c': 'as dtype'}
         ])
+        expected.columns.name = 'CustomItem'
         self.assertTrue(hasattr(items, 'as_df'))
         self.assertIsInstance(items.as_df, pd.DataFrame)
         pd.testing.assert_frame_equal(expected, items.as_df)
