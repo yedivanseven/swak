@@ -9,6 +9,7 @@ nav:
     - text: source/text.md
     - cli: source/cli.md
     - jsonobject: source/jsonobject.md
+    - pd: source/pd.md
 theme:
   name: readthedocs
 plugins:

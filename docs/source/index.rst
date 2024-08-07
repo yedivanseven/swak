@@ -13,6 +13,7 @@ Welcome to swak's documentation!
    text
    cli
    jsonobject
+   pd
 
 
 Indices and tables

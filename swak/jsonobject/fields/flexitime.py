@@ -12,7 +12,7 @@ class FlexiTime:
 
     Parameters
     ----------
-    datetime
+    time
         Can be an ISO string of a date or datetime, a ``datetime.date`` or
         a ``datetime.datetime`` object, or a ``pandas.Timestamp``.
 
