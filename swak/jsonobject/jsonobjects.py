@@ -166,10 +166,6 @@ class JsonObjects[T]:
         """Representation in the cell of a pandas data frame."""
         return self.__str__()
 
-    def get(self, key: str, default: Any = None) -> Any:
-        """List the values (or default) of all items for the given key."""
-        return [item.get(key, default) for item in self.__items]
-
     @property
     def as_df(self) -> DataFrame:
         """Representation as a pandas data frame."""
