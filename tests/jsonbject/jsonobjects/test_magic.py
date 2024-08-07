@@ -100,6 +100,10 @@ class TestMagic(unittest.TestCase):
         self.assertIsInstance(column, list)
         self.assertListEqual([1, 2], column)
 
+    def test_getattr_raises_keys(self):
+        with self.assertRaises(AttributeError):
+            _ = self.items.keys()
+
     def test_getattr_raises_attribute_error(self):
         with self.assertRaises(AttributeError):
             _ = self.items.foo

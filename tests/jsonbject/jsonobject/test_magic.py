@@ -92,6 +92,12 @@ class TestMagic(unittest.TestCase):
         with self.assertRaises(KeyError):
             _ = simple[1]
 
+    def test_getitem_raises_blacklisted_keys(self):
+        simple = Simple()
+        for key in simple.__blacklist__:
+            with self.assertRaises(KeyError):
+                _ = simple[key]
+
     def test_iter(self):
         simple = Simple()
         keys = {key for key in simple}

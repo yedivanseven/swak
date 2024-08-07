@@ -156,6 +156,37 @@ class TestAttributes(unittest.TestCase):
         expected.columns.name = 'Empty'
         pd.testing.assert_frame_equal(expected, empties.as_df)
 
+    def test_get_present(self):
+        items = Items(self.items)
+        self.assertTrue(hasattr(items, 'get'))
+        self.assertTrue(callable(items.get))
+        actual = items.get('a')
+        self.assertListEqual([1, 1], actual)
+
+    def test_get_present_with_default(self):
+        items = Items(self.items)
+        self.assertTrue(hasattr(items, 'get'))
+        self.assertTrue(callable(items.get))
+        actual = items.get('a', 'default')
+        self.assertListEqual([1, 1], actual)
+
+    def test_get_default(self):
+        items = Items(self.items)
+        self.assertTrue(hasattr(items, 'get'))
+        self.assertTrue(callable(items.get))
+        actual = items.get('c', 'default')
+        self.assertListEqual(['default', 'default'], actual)
+
+    def test_get_none(self):
+        items = Items(self.items)
+        self.assertTrue(hasattr(items, 'get'))
+        self.assertTrue(callable(items.get))
+        actual = items.get('c')
+        self.assertListEqual([None, None], actual)
+
+
+class TestExtra(unittest.TestCase):
+
     def test_extra_df(self):
         extras = Extras([{'c': 'bar'}, {'d': 'baz'}])
         self.assertTrue(hasattr(extras, 'as_df'))
@@ -168,15 +199,23 @@ class TestAttributes(unittest.TestCase):
         expected.columns.name = 'Extra'
         pd.testing.assert_frame_equal(expected, extras.as_df)
 
-    def test_get_raises(self):
-        items = Items(self.items)
-        with self.assertRaises(AttributeError):
-            _ = items.get('a')
+    def test_get_extra(self):
+        extras = Extras([{'c': 'bar'}, {'d': 'baz'}])
+        self.assertTrue(hasattr(extras, 'get'))
+        self.assertTrue(callable(extras.get))
+        actual = extras.get('c')
+        self.assertListEqual(['bar', None], actual)
+        actual = extras.get('d')
+        self.assertListEqual([None, 'baz'], actual)
 
-    def test_keys_raises(self):
-        items = Items(self.items)
-        with self.assertRaises(AttributeError):
-            _ = items.keys()
+    def test_get_extra_default(self):
+        extras = Extras([{'c': 'bar'}, {'d': 'baz'}])
+        self.assertTrue(hasattr(extras, 'get'))
+        self.assertTrue(callable(extras.get))
+        actual = extras.get('c', 'default')
+        self.assertListEqual(['bar', 'default'], actual)
+        actual = extras.get('d', 'default')
+        self.assertListEqual(['default', 'baz'], actual)
 
 
 if __name__ == '__main__':

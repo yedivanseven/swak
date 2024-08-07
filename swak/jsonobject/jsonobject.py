@@ -242,6 +242,9 @@ class JsonObject(metaclass=SchemaMeta):
         self.__dict__.update(cast)
 
     def __getitem__(self, key: str) -> Any:
+        # Raise for blacklisted keys
+        if key in self.__blacklist__:
+            raise KeyError(key)
         # Try and split the (string) key by dots
         try:
             root, *children = key.split('.')

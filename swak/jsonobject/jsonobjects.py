@@ -77,10 +77,9 @@ class JsonObjects[T]:
         return self.__items.__len__()
 
     def __getattr__(self, key: str) -> list:
-        blocked = key in ('keys', 'get')
         missing = object()
         values = [item.get(key, missing) for item in self.__items]
-        if blocked or all(value is missing for value in values):
+        if all(value is missing for value in values):
             cls = self.__class__.__name__
             msg = f"'{cls}' object has no attribute '{key}'"
             raise AttributeError(msg)
@@ -167,6 +166,10 @@ class JsonObjects[T]:
         """Representation in the cell of a pandas data frame."""
         return self.__str__()
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """List the values (or default) of all items for the given key."""
+        return [item.get(key, default) for item in self.__items]
+
     @property
     def as_df(self) -> DataFrame:
         """Representation as a pandas data frame."""
@@ -180,7 +183,7 @@ class JsonObjects[T]:
         return df.reset_index(drop=True)
 
     @staticmethod
-    def __class_checked(item_type: type) -> type:
+    def __class_checked(item_type: type[JsonObject]) -> type[JsonObject]:
         """Allow only JsonObject and JsonObjects as item_type."""
         right_type = isinstance(item_type, SchemaMeta)
         right_class = issubclass(item_type, JsonObject)
