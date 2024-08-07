@@ -60,7 +60,7 @@ class TestGetItem(unittest.TestCase):
         self.assertEqual(self.child['c'], actual)
 
     def test_raises_missing_key(self):
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(KeyError):
             _ = self.grand['parent.child.missing']
 
 

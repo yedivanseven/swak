@@ -1,4 +1,5 @@
 from typing import Callable, Any, Iterator, Self
+from collections.abc import KeysView
 from functools import reduce
 from ast import literal_eval
 import json
@@ -202,8 +203,8 @@ class JsonObject(metaclass=SchemaMeta):
         Defaults to an empty dictionary.
     **kwargs
         Can be any value or, for nested structures, again a dictionary with
-        string keys or a JSON string/bytes or a pandas Series. Keywords will
-        override values already present in the `mapping`.
+        string keys or a JSON string/bytes or a pandas Series. Keyword
+        arguments will override values already present in the `mapping`.
 
     Raises
     ------
@@ -248,7 +249,11 @@ class JsonObject(metaclass=SchemaMeta):
             cls = type(key).__name__
             raise KeyError(f'Keys must be strings, not {cls} like {key}!')
         # The key could also refer to an attribute like a property or a method
-        value = self.__dict__.get(root, self.__getattribute__(root))
+        try:
+            value = self.__dict__.get(root, getattr(self, root))
+        # ... but we still raise a KeyError to meet expectations
+        except AttributeError:
+            raise KeyError(key)
         # If the key contains dots, recurse down into the value
         return reduce(lambda x, y: x[y], children, value)
 
@@ -290,8 +295,8 @@ class JsonObject(metaclass=SchemaMeta):
             Defaults to an empty dictionary.
         **kwargs
             Can be any value or, for nested structures, again a dictionary with
-            string keys or a JSON string/bytes or a pandas Series. Keywords will
-            override values already present in the `mapping`.
+            string keys or a JSON string/bytes or a pandas Series. Keyword
+            arguments will override values already present in the `mapping`.
 
         Returns
         -------
@@ -340,10 +345,10 @@ class JsonObject(metaclass=SchemaMeta):
         """Get (nested) attribute by (dot.separated) name or default."""
         try:
             return self[item]
-        except (KeyError, AttributeError):
+        except KeyError:
             return default
 
-    def keys(self):
+    def keys(self) -> KeysView[str]:
         """Attribute names as dictionary keys."""
         return self.__dict__.keys()
 

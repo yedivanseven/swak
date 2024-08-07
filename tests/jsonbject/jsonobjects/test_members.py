@@ -3,6 +3,14 @@ import pandas as pd
 from swak.jsonobject import JsonObject, JsonObjects
 
 
+class Empty(JsonObject):
+    pass
+
+
+class Empties(JsonObjects, item_type=Empty):
+    pass
+
+
 class Item(JsonObject):
     a: int = 1
     b: str = 'foo'
@@ -18,11 +26,11 @@ class CustomType:
         pass
 
     @property
-    def as_json(self):
+    def as_json(self) -> str:
         return 'as json'
 
     @property
-    def as_dtype(self):
+    def as_dtype(self) -> str:
         return 'as dtype'
 
 
@@ -33,15 +41,24 @@ class CustomItem(Item):
 class CustomItems(JsonObjects, item_type=CustomItem):
 
     @property
-    def as_dtype(self):
+    def as_dtype(self) -> list:
         return self.as_json
+
+
+class Extra(JsonObject, ignore_extra=False, raise_extra=False):
+    a: int = 1
+    b: str = 'foo'
+
+
+class Extras(JsonObjects, item_type=Extra):
+    pass
 
 
 class TestAttributes(unittest.TestCase):
 
     def setUp(self) -> None:
         self.items = [Item(), Item()]
-        self.custom_items = [CustomItem(), CustomItems()]
+        self.custom_items = [CustomItem(), CustomItem()]
 
     def test_as_json(self):
         items = Items(self.items)
@@ -75,6 +92,10 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(items.as_dtype, str)
         self.assertEqual(expected, items.as_dtype)
 
+    def test_instantiation_from_as_dtype(self):
+        items = Items(self.items)
+        self.assertListEqual(items.as_json, Items(items.as_dtype).as_json)
+
     def test_custom_as_dtype(self):
         items = CustomItems(self.custom_items)
         expected = [
@@ -84,6 +105,10 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(hasattr(items, 'as_dtype'))
         self.assertIsInstance(items.as_dtype, list)
         self.assertListEqual(expected, items.as_dtype)
+
+    def test_instantiation_from_custom_as_dtype(self):
+        items = CustomItems(self.custom_items)
+        self.assertListEqual(items.as_json, CustomItems(items.as_dtype).as_json)
 
     def test_as_df(self):
         items = Items(self.items)
@@ -114,6 +139,44 @@ class TestAttributes(unittest.TestCase):
             items.as_df,
             CustomItems(items.as_df).as_df
         )
+
+    def test_empty_as_df(self):
+        items = Items()
+        self.assertTrue(hasattr(items, 'as_df'))
+        self.assertIsInstance(items.as_df, pd.DataFrame)
+        expected = pd.DataFrame([], columns=['a', 'b'])
+        expected.columns.name = 'Item'
+        pd.testing.assert_frame_equal(expected, items.as_df)
+
+    def test_empty_empty_as_df(self):
+        empties = Empties()
+        self.assertTrue(hasattr(empties, 'as_df'))
+        self.assertIsInstance(empties.as_df, pd.DataFrame)
+        expected = pd.DataFrame([], columns=[])
+        expected.columns.name = 'Empty'
+        pd.testing.assert_frame_equal(expected, empties.as_df)
+
+    def test_extra_df(self):
+        extras = Extras([{'c': 'bar'}, {'d': 'baz'}])
+        self.assertTrue(hasattr(extras, 'as_df'))
+        self.assertIsInstance(extras.as_df, pd.DataFrame)
+        data = [
+            {'a': 1, 'b': 'foo', 'c': 'bar'},
+            {'a': 1, 'b': 'foo', 'd': 'baz'},
+        ]
+        expected = pd.DataFrame(data, columns=['a', 'b', 'c', 'd'])
+        expected.columns.name = 'Extra'
+        pd.testing.assert_frame_equal(expected, extras.as_df)
+
+    def test_get_raises(self):
+        items = Items(self.items)
+        with self.assertRaises(AttributeError):
+            _ = items.get('a')
+
+    def test_keys_raises(self):
+        items = Items(self.items)
+        with self.assertRaises(AttributeError):
+            _ = items.keys()
 
 
 if __name__ == '__main__':

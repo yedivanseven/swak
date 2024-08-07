@@ -9,7 +9,7 @@ from .jsonobject import SchemaMeta, JsonObject
 
 type Json = dict[str, Any]
 type Record = str | bytes | bytearray | Json | Series | JsonObject | None
-type Records = str | bytes | bytearray | DataFrame | Iterable[Record] | Record
+type Records = str | bytes | bytearray | DataFrame | Record | Iterable[Record]
 
 
 class JsonObjects[T]:
@@ -28,18 +28,6 @@ class JsonObjects[T]:
         schema specified by the `item_type` can be provided. These will be
         appended to the `items`.
 
-    Properties
-    ----------
-    as_json
-        Defaults to a list of JSON serializable dictionary, but can be
-        overridden in subclasses.
-    as_dtype
-        Defaults to a serialized JSON string, but can be overridden in
-        subclasses. Determines how the object is represented within a cell
-        of a pandas DatFrame.
-    as_df
-        Representation as pandas DataFrame.
-
     Raises
     ------
     ParseError
@@ -47,6 +35,11 @@ class JsonObjects[T]:
         dictionaries.
     SchemaError
         If `item_type` is not a subclass of ``JsonObject``.
+
+    Notes
+    -----
+    This class is rather heavy, so do not use it to, e.g., wrap JSON payloads
+    in high-throughput low-latency web services!
 
     """
 
@@ -84,12 +77,14 @@ class JsonObjects[T]:
         return self.__items.__len__()
 
     def __getattr__(self, key: str) -> list:
-        try:
-            return [item[key] for item in self.__items]
-        except KeyError:
+        blocked = key in ('keys', 'get')
+        missing = object()
+        values = [item.get(key, missing) for item in self.__items]
+        if blocked or all(value is missing for value in values):
             cls = self.__class__.__name__
             msg = f"'{cls}' object has no attribute '{key}'"
             raise AttributeError(msg)
+        return [None if value is missing else value for value in values]
 
     @singledispatchmethod
     def __getitem__(self, index: int) -> T:
@@ -100,11 +95,15 @@ class JsonObjects[T]:
         return self.__class__(*self.__items[index])
 
     @__getitem__.register
-    def _(self, index: str) -> list:
-        return [item[index] for item in self.__items]
+    def _(self, key: str) -> list:
+        missing = object()
+        values = [item.get(key, missing) for item in self.__items]
+        if all(value is missing for value in values):
+            raise KeyError(key)
+        return [None if value is missing else value for value in values]
 
     def __bool__(self) -> bool:
-        return self.__items.__len__() > 0
+        return bool(self.__items)
 
     def __contains__(self, other: Record) -> bool:
         try:
@@ -134,12 +133,12 @@ class JsonObjects[T]:
         Parameters
         ----------
         mapping: dict or str, optional
-            Dictionary with string keys or JSON string.
+            Dictionary with string keys, JSON string/bytes, or pandas Series.
             Defaults to an empty dictionary.
         **kwargs:
             Can be any value or, for nested structures, again a dictionary with
-            string keys or a JSON string. Keywords will override values already
-            present in the `mapping`.
+            string keys or a JSON string/bytes or a pandas Series. Keyword
+            arguments will override values already present in the `mapping`.
 
         Returns
         -------
@@ -171,33 +170,33 @@ class JsonObjects[T]:
     @property
     def as_df(self) -> DataFrame:
         """Representation as a pandas data frame."""
-        if self:
-            columns = self[0].keys()
-        else:
-            columns = self.__item_type__.__annotations__.keys()
         data = [item.as_series for item in self]
-        df = DataFrame(data, columns=columns).reset_index(drop=True)
+        if data:
+            columns = None
+        else:
+            columns = list(self.__item_type__.__annotations__.keys())
+        df = DataFrame(data, columns=columns)
         df.columns.name = self.__item_type__.__name__
-        return df
+        return df.reset_index(drop=True)
 
     @staticmethod
-    def __class_checked(item_type: type[JsonObject]) -> type[JsonObject]:
-        """Allow only instances of SchemaMeta and subclasses as item_type."""
-        wrong_type = not isinstance(item_type, SchemaMeta)
-        wrong_class = not issubclass(item_type, JsonObject)
-        if wrong_type or wrong_class:
-            raise SchemaError('item_type must be a subclass of JsonObject!')
-        return item_type
+    def __class_checked(item_type: type) -> type:
+        """Allow only JsonObject and JsonObjects as item_type."""
+        right_type = isinstance(item_type, SchemaMeta)
+        right_class = issubclass(item_type, JsonObject)
+        if right_type and right_class:
+            return item_type
+        raise SchemaError('item_type must be a subclass of JsonObject!')
 
     @staticmethod
     def __parse(items: Records) -> list[Record]:
         """Parse input into a list of something."""
         # Define parsers for converting input into a list of items.
         parsers = (
-            lambda x: json.loads(x),          # JSON string
-            lambda x: literal_eval(x),        # Some other string
-            lambda x: x.to_dict('records'),   # Dataframe
-            lambda x: [] if x is None else x  # None or some other object
+            lambda x: json.loads(x),                # JSON string
+            lambda x: literal_eval(x),              # Some other string
+            lambda x: x.to_dict(orient='records'),  # Dataframe
+            lambda x: [] if x is None else x        # None or some other object
         )
         # Try parsers one after another
         for parse in parsers:
@@ -220,11 +219,10 @@ class JsonObjects[T]:
         """Convert list of something into a list of JSONs."""
         # Define patterns that convert input to a list of dicts
         patterns = (
-            lambda x: [{key: item[key] for key in item} for item in x],
-            lambda x: [{**x}],
-            lambda x: [*x]
+            lambda x: [{**x}],  # List of dicts
+            lambda x: [*x]      # List of iterable, possibly a string
         )
-        # First, try list of dicts, then single dicts, then list of anything.
+        # First, try list of dicts, then list of anything
         for pattern in patterns:
             try:
                 itemized = pattern(items)

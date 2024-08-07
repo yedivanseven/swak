@@ -82,12 +82,12 @@ class TestMagic(unittest.TestCase):
         simple = Simple()
         _ = simple['clsm']
 
-    def test_getitem_raises_AttributeError(self):
+    def test_getitem_raises_missing(self):
         simple = Simple()
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(KeyError):
             _ = simple['missing']
 
-    def test_getitem_raises_KeyError(self):
+    def test_getitem_raises_wrong_key(self):
         simple = Simple()
         with self.assertRaises(KeyError):
             _ = simple[1]

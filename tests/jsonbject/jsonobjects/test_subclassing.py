@@ -11,7 +11,7 @@ class Item(JsonObject):
 
 class TestSubclassing(unittest.TestCase):
 
-    def test_intended(self):
+    def test_intended_singular(self):
 
         class Intended(JsonObjects, item_type=Item):
             pass
@@ -19,7 +19,7 @@ class TestSubclassing(unittest.TestCase):
         self.assertTrue(hasattr(Intended, '__item_type__'))
         self.assertIs(Intended.__item_type__, Item)
 
-    def test_inherited(self):
+    def test_inherited_singular(self):
 
         class Intended(JsonObjects, item_type=Item):
             pass
@@ -33,18 +33,18 @@ class TestSubclassing(unittest.TestCase):
     def test_raises_on_missing_item_type(self):
         with self.assertRaises(SchemaError):
 
-            class _(JsonObjects):
+            class Wrong(JsonObjects):
                 pass
 
     def test_raises_on_item_type_in_class_body(self):
         with self.assertRaises(SchemaError):
 
-            class _(JsonObjects):
+            class Wrong(JsonObjects):
                 __item_type__ = Item
 
     def test_raises_on_item_type_not_schema_meta(self):
         with self.assertRaises(SchemaError):
-            class _(JsonObjects, item_type=int):
+            class Wrong(JsonObjects, item_type=int):
                 pass
 
     def test_raises_on_item_type_not_JsonObject(self):
@@ -53,7 +53,8 @@ class TestSubclassing(unittest.TestCase):
             pass
 
         with self.assertRaises(SchemaError):
-            class _(JsonObjects, item_type=Wrong):
+
+            class StillWrong(JsonObjects, item_type=Wrong):
                 pass
 
 

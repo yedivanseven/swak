@@ -3,8 +3,8 @@ from swak.jsonobject import JsonObject, JsonObjects
 
 
 class Item(JsonObject):
-    a: int
-    b: str
+    a: int = 1
+    b: str = 'foo'
 
 
 class Items(JsonObjects, item_type=Item):
