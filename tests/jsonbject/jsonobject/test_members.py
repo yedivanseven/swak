@@ -89,7 +89,6 @@ class TestMembers(unittest.TestCase):
 
     def test_get_default(self):
         default = self.simple.get('d', 'default')
-        self.assertIsInstance(default, str)
         self.assertEqual('default', default)
 
     def test_get_none_field(self):

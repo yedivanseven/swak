@@ -71,7 +71,6 @@ class TestMembers(unittest.TestCase):
 
     def test_as_json(self):
         self.assertTrue(hasattr(self.fd, 'as_json'))
-        self.assertIsInstance(self.fd.as_json, str)
         self.assertEqual(self.date, self.fd.as_json)
 
     def test_as_datetime(self):

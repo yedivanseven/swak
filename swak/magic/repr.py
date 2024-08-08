@@ -1,7 +1,7 @@
 from typing import Any, Callable, Sequence
 
 
-class _ReprName:
+class ReprName:
     """Auxiliary mixin providing representations for (callable) objects."""
 
     def _repr(self, obj: Any, _: int = 0) -> str:
@@ -25,7 +25,7 @@ class _ReprName:
         """
         if obj is None:
             return 'None'
-        if isinstance(obj, _ReprName):
+        if isinstance(obj, ReprName):
             return repr(obj)
         try:
             name = obj.__qualname__
@@ -34,7 +34,7 @@ class _ReprName:
         return 'lambda' if '<lambda>' in name else name
 
 
-class IndentRepr(_ReprName):
+class IndentRepr(ReprName):
     """Base class for a representation with numbered and indented children.
 
     This class is not meant to be instantiated by itself. Rather, it is meant
@@ -88,7 +88,7 @@ class IndentRepr(_ReprName):
         return f'{cls}({signature})' + suffix + items
 
 
-class ArgRepr(_ReprName):
+class ArgRepr(ReprName):
     """Base class for a representation with class name and (keyword) arguments.
 
     This class is not meant to be instantiated by itself. Rather, it is meant

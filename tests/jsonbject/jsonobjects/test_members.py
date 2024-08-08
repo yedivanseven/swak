@@ -104,7 +104,6 @@ class TestAttributes(unittest.TestCase):
         items = Items(self.items)
         expected = '[{"a": 1, "b": "foo"}, {"a": 1, "b": "foo"}]'
         self.assertTrue(hasattr(items, 'as_dtype'))
-        self.assertIsInstance(items.as_dtype, str)
         self.assertEqual(expected, items.as_dtype)
 
     def test_instantiation_from_as_dtype(self):

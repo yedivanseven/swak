@@ -39,7 +39,6 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_usage(self):
         parse = ArgParser()
-        self.assertIsInstance(parse.usage, str)
         self.assertEqual(USAGE, parse.usage)
 
     def test_has_description(self):
@@ -48,7 +47,6 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_description(self):
         parse = ArgParser()
-        self.assertIsInstance(parse.description, str)
         self.assertEqual(DESCRIPTION, parse.description)
 
     def test_has_epilog(self):
@@ -57,7 +55,6 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_epilog(self):
         parse = ArgParser()
-        self.assertIsInstance(parse.epilog, str)
         self.assertEqual(EPILOG, parse.epilog)
 
     def test_has_fmt_cls(self):
@@ -113,7 +110,6 @@ class TestCustomAttributes(unittest.TestCase):
 
     def test_default_action(self):
         parse = ArgParser('action')
-        self.assertIsInstance(parse.default_action, str)
         self.assertEqual('action', parse.default_action)
 
     def test_has_usage(self):
@@ -122,7 +118,6 @@ class TestCustomAttributes(unittest.TestCase):
 
     def test_usage(self):
         parse = ArgParser('action', 'foo')
-        self.assertIsInstance(parse.usage, str)
         self.assertEqual('foo', parse.usage)
 
     def test_has_description(self):
@@ -131,7 +126,6 @@ class TestCustomAttributes(unittest.TestCase):
 
     def test_description(self):
         parse = ArgParser('action', 'foo', 'bar')
-        self.assertIsInstance(parse.description, str)
         self.assertEqual('bar', parse.description)
 
     def test_has_epilog(self):
@@ -140,7 +134,6 @@ class TestCustomAttributes(unittest.TestCase):
 
     def test_epilog(self):
         parse = ArgParser('action', 'foo', 'bar', 'baz')
-        self.assertIsInstance(parse.epilog, str)
         self.assertEqual('baz', parse.epilog)
 
     def test_has_fmt_cls(self):
@@ -361,13 +354,11 @@ class TestCastValues(unittest.TestCase):
     def test_timestamp(self):
         expected = '2023-01-13 13:26:45.123+01:00'
         _, option = self.parse(['--key', '2023-01-13 13:26:45.123+01:00'])
-        self.assertIsInstance(option['key'], str)
         self.assertEqual(expected, option['key'])
 
     def test_quoted_string(self):
         expected = 'Hello world!'
         _, option = self.parse(['--key', '"Hello world!"'])
-        self.assertIsInstance(option['key'], str)
         self.assertEqual(expected, option['key'])
 
     def test_int(self):

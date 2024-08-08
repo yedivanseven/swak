@@ -79,7 +79,6 @@ class TestParse(unittest.TestCase):
     def test_quoted_string(self):
         inp = {'FOO': '"foo"'}
         actual = self.parse(inp)
-        self.assertIsInstance(actual['FOO'], str)
         self.assertEqual('foo', actual['FOO'])
 
     def test_int(self):
@@ -140,7 +139,6 @@ class TestParse(unittest.TestCase):
     def test_timestamp(self):
         inp = {'FOO': '2023-01-13 13:26:45.123+01:00'}
         actual = self.parse(inp)
-        self.assertIsInstance(actual['FOO'], str)
         self.assertEqual('2023-01-13 13:26:45.123+01:00', actual['FOO'])
 
 

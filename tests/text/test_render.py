@@ -12,7 +12,6 @@ class TestEmptyInstantiation(unittest.TestCase):
     def test_empty(self):
         t = TemplateRenderer(self.empty)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.empty, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -20,7 +19,6 @@ class TestEmptyInstantiation(unittest.TestCase):
     def test_empty_dict(self):
         t = TemplateRenderer(self.empty, {})
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.empty, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -28,7 +26,6 @@ class TestEmptyInstantiation(unittest.TestCase):
     def test_dict(self):
         t = TemplateRenderer(self.empty, {'first': self.first})
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.empty, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -36,7 +33,6 @@ class TestEmptyInstantiation(unittest.TestCase):
     def test_kwarg(self):
         t = TemplateRenderer(self.empty, first=self.first)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.empty, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -44,7 +40,6 @@ class TestEmptyInstantiation(unittest.TestCase):
     def test_empty_dict_kwarg(self):
         t = TemplateRenderer(self.empty, {}, first=self.first)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.empty, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -56,7 +51,6 @@ class TestEmptyInstantiation(unittest.TestCase):
             second=self.second
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.empty, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -68,7 +62,6 @@ class TestEmptyInstantiation(unittest.TestCase):
             first=self.first
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.empty, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -84,7 +77,6 @@ class TestNoKeyInstantiation(unittest.TestCase):
     def test_no_key(self):
         t = TemplateRenderer(self.no_key)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.no_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -92,7 +84,6 @@ class TestNoKeyInstantiation(unittest.TestCase):
     def test_empty_dict(self):
         t = TemplateRenderer(self.no_key, {})
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.no_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -100,7 +91,6 @@ class TestNoKeyInstantiation(unittest.TestCase):
     def test_dict(self):
         t = TemplateRenderer(self.no_key, {'first': self.first})
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.no_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -108,7 +98,6 @@ class TestNoKeyInstantiation(unittest.TestCase):
     def test_kwarg(self):
         t = TemplateRenderer(self.no_key, first=self.first)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.no_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -116,7 +105,6 @@ class TestNoKeyInstantiation(unittest.TestCase):
     def test_empty_dict_kwarg(self):
         t = TemplateRenderer(self.no_key, {}, first=self.first)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.no_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -128,7 +116,6 @@ class TestNoKeyInstantiation(unittest.TestCase):
             second=self.second
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.no_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -140,7 +127,6 @@ class TestNoKeyInstantiation(unittest.TestCase):
             first=self.first
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.no_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -156,7 +142,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_one_key(self):
         t = TemplateRenderer(self.one_key)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.one_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual(['first'], t.identifiers)
@@ -164,7 +149,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_empty_dict(self):
         t = TemplateRenderer(self.one_key, {})
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.one_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual(['first'], t.identifiers)
@@ -172,7 +156,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_right_dict(self):
         t = TemplateRenderer(self.one_key, {'first': self.first})
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual('Hello world!', t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -180,7 +163,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_wrong_dict(self):
         t = TemplateRenderer(self.one_key, {'second': self.second})
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.one_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual(['first'], t.identifiers)
@@ -188,7 +170,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_right_kwarg(self):
         t = TemplateRenderer(self.one_key, first=self.first)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual('Hello world!', t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -196,7 +177,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_wrong_kwarg(self):
         t = TemplateRenderer(self.one_key, second=self.second)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.one_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual(['first'], t.identifiers)
@@ -204,7 +184,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_empty_dict_right_kwarg(self):
         t = TemplateRenderer(self.one_key, {}, first=self.first)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual('Hello world!', t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -212,7 +191,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
     def test_empty_dict_wrong_kwarg(self):
         t = TemplateRenderer(self.one_key, {}, second=self.second)
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.one_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual(['first'], t.identifiers)
@@ -224,7 +202,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
             second=self.second
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual('Hello world!', t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -236,7 +213,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
             first=self.first
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual('Hello world!', t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -248,7 +224,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
             third='foo'
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual(self.one_key, t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual(['first'], t.identifiers)
@@ -260,7 +235,6 @@ class TestOneKeyInstantiation(unittest.TestCase):
             first=self.first
         )
         self.assertTrue(hasattr(t, 'template'))
-        self.assertIsInstance(t.template, str)
         self.assertEqual('Hello world!', t.template)
         self.assertTrue(hasattr(t, 'identifiers'))
         self.assertListEqual([], t.identifiers)
@@ -279,37 +253,30 @@ class TestEmptyCall(unittest.TestCase):
 
     def test_empty(self):
         actual = self.t()
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.empty, actual)
 
     def test_empty_dict(self):
         actual = self.t({})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.empty, actual)
 
     def test_dict(self):
         actual = self.t({'first': self.first})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.empty, actual)
 
     def test_kwarg(self):
         actual = self.t(first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.empty, actual)
 
     def test_empty_dict_kwarg(self):
         actual = self.t({}, first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.empty, actual)
 
     def test_dict_kwarg_different_keys(self):
         actual = self.t({'first': self.first}, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.empty, actual)
 
     def test_dict_kwarg_same_keys(self):
         actual = self.t({'first': self.second}, first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.empty, actual)
 
 
@@ -326,37 +293,30 @@ class TestNoKeyCall(unittest.TestCase):
 
     def test_no_key(self):
         actual = self.t()
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.no_key, actual)
 
     def test_empty_dict(self):
         actual = self.t({})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.no_key, actual)
 
     def test_dict(self):
         actual = self.t({'first': self.first})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.no_key, actual)
 
     def test_kwarg(self):
         actual = self.t(first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.no_key, actual)
 
     def test_empty_dict_kwarg(self):
         actual = self.t({}, first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.no_key, actual)
 
     def test_dict_kwarg_different_keys(self):
         actual = self.t({'first': self.first}, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.no_key, actual)
 
     def test_dict_kwarg_same_keys(self):
         actual = self.t({'first': self.second}, first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.no_key, actual)
 
 
@@ -381,7 +341,6 @@ class TestOneKeyCall(unittest.TestCase):
 
     def test_right_dict(self):
         actual = self.t({'first': self.first})
-        self.assertIsInstance(actual, str)
         self.assertEqual('Hello world!', actual)
 
     def test_raises_on_wrong_dict(self):
@@ -390,7 +349,6 @@ class TestOneKeyCall(unittest.TestCase):
 
     def test_right_kwarg(self):
         actual = self.t(first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual('Hello world!', actual)
 
     def test_raises_on_wrong_kwarg(self):
@@ -399,7 +357,6 @@ class TestOneKeyCall(unittest.TestCase):
 
     def test_empty_dict_right_kwarg(self):
         actual = self.t({}, first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual('Hello world!', actual)
 
     def test_raises_empty_dict_wrong_kwarg(self):
@@ -408,12 +365,10 @@ class TestOneKeyCall(unittest.TestCase):
 
     def test_right_dict_wrong_kwarg(self):
         actual = self.t({'first': self.first}, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual('Hello world!', actual)
 
     def test_wrong_dict_right_kwarg(self):
         actual = self.t({'second': self.second}, first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual('Hello world!', actual)
 
     def test_raises_on_wrong_dict_wrong_kwarg(self):
@@ -422,7 +377,6 @@ class TestOneKeyCall(unittest.TestCase):
 
     def test_kwarg_overwrites_dict(self):
         actual = self.t({'first': self.second}, first=self.first)
-        self.assertIsInstance(actual, str)
         self.assertEqual('Hello world!', actual)
 
 
@@ -437,25 +391,21 @@ class TestTwoKeyInstantiationCall(unittest.TestCase):
     def test_instantiation_dict_call_dict(self):
         t = TemplateRenderer(self.two_key, {'first': self.first})
         actual = t({'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_kwarg_call_dict(self):
         t = TemplateRenderer(self.two_key, first=self.first)
         actual = t({'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_dict_call_kwarg(self):
         t = TemplateRenderer(self.two_key, {'first': self.first})
         actual = t(second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_kwarg_call_kwarg(self):
         t = TemplateRenderer(self.two_key, first=self.first)
         actual = t(second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
 

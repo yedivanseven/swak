@@ -216,7 +216,6 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(fork.max_workers, int)
         self.assertEqual(8, fork.max_workers)
         self.assertTrue(hasattr(fork, 'thread_name_prefix'))
-        self.assertIsInstance(fork.thread_name_prefix, str)
         self.assertEqual('tn', fork.thread_name_prefix)
         self.assertTrue(hasattr(fork, 'initializer'))
         self.assertIs(fork.initializer, g)

@@ -74,7 +74,6 @@ class TestMembers(unittest.TestCase):
 
     def test_as_json(self):
         self.assertTrue(hasattr(self.ft, 'as_json'))
-        self.assertIsInstance(self.ft.as_json, str)
         self.assertEqual(self.time, self.ft.as_json)
 
     def test_as_dtype(self):

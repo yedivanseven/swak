@@ -153,13 +153,12 @@ class TestUsage(unittest.TestCase):
         load = TextResourceLoader('tests.text', not_found=NotFound.WARN)
         with self.assertWarns(UserWarning):
             actual = load('non-existing')
-        self.assertIsInstance(actual, str)
+
         self.assertEqual('', actual)
 
     def test_ignore_file_not_found(self):
         load = TextResourceLoader('tests.text', not_found=NotFound.IGNORE)
         actual = load('non-existing')
-        self.assertIsInstance(actual, str)
         self.assertEqual('', actual)
 
 

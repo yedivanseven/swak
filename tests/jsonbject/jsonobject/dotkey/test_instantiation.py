@@ -410,27 +410,23 @@ class TestAllowExtraFields(unittest.TestCase):
         self.expected['parent.e'] = 'bar'
         grand = AllowGrand(self.expected)
         self.assertTrue(hasattr(grand.parent, 'e'))
-        self.assertIsInstance(grand.parent.e, str)
         self.assertEqual('bar', grand.parent.e)
 
     def test_dict_second_levels(self):
         self.expected['parent']['child.e'] = 'bar'
         grand = AllowGrand(self.expected)
         self.assertTrue(hasattr(grand.parent.child, 'e'))
-        self.assertIsInstance(grand.parent.child.e, str)
         self.assertEqual('bar', grand.parent.child.e)
 
     def test_dict_all_levels(self):
         self.expected['parent.child.e'] = 'bar'
         grand = AllowGrand(self.expected)
         self.assertTrue(hasattr(grand.parent.child, 'e'))
-        self.assertIsInstance(grand.parent.child.e, str)
         self.assertEqual('bar', grand.parent.child.e)
 
     def test_kwargs_second_level(self):
         grand = AllowGrand(self.expected, parent={'child.e': 'bar'})
         self.assertTrue(hasattr(grand.parent.child, 'e'))
-        self.assertIsInstance(grand.parent.child.e, str)
         self.assertEqual('bar', grand.parent.child.e)
 
 

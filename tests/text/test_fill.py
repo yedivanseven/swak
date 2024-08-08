@@ -65,43 +65,36 @@ class TestNoKeyUsage(unittest.TestCase):
     def test_empty(self):
         f = FormFiller()
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.text, actual)
 
     def test_empty_dict(self):
         f = FormFiller({})
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.text, actual)
 
     def test_empty_dict_kwarg(self):
         f = FormFiller({}, foo='bar')
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.text, actual)
 
     def test_dict_kwarg(self):
         f = FormFiller({'foo': 'bar'}, baz=42)
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.text, actual)
 
     def test_call_empty_dict(self):
         f = FormFiller({'foo': 'bar'}, foo='baz')
         actual = f(self.text, {})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.text, actual)
 
     def test_call_empty_dict_kwarg(self):
         f = FormFiller({'foo': 'bar'}, foo='baz')
         actual = f(self.text, {}, answer=42)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.text, actual)
 
     def test_call_dict_kwarg(self):
         f = FormFiller({'foo': 'bar'}, foo='baz')
         actual = f(self.text, {'question': 'unknown'}, answer=42)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.text, actual)
 
 
@@ -116,67 +109,57 @@ class TestKeyUsage(unittest.TestCase):
     def test_instantiation_dict(self):
         f = FormFiller({'first': self.first, 'second': self.second})
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
+
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_dict_kwarg(self):
         f = FormFiller({'first': self.first}, second=self.second)
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_kwargs(self):
         f = FormFiller(first=self.first, second=self.second)
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_kwarg_overwrites_dict(self):
         f = FormFiller({'first': self.first, 'second': 42}, second=self.second)
         actual = f(self.text)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_dict_call_empty_dict(self):
         f = FormFiller({'first': self.first, 'second': self.second})
         actual = f(self.text, {})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_dict_kwarg_call_empty_dict(self):
         f = FormFiller({'first': self.first}, second=self.second)
         actual = f(self.text, {})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_kwargs_call_empty_dict(self):
         f = FormFiller(first=self.first, second=self.second)
         actual = f(self.text, {})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_kwarg_overwrites_dict_call_empty_dict(self):
         f = FormFiller({'first': self.first, 'second': 42}, second=self.second)
         actual = f(self.text, {})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_call_dict(self):
         f = FormFiller()
         actual = f(self.text, {'first': self.first, 'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_call_dict_kwarg(self):
         f = FormFiller()
         actual = f(self.text, {'first': self.first}, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_call_kwargs(self):
         f = FormFiller()
         actual = f(self.text, first=self.first, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_call_kwarg_overwrites_dict(self):
@@ -186,25 +169,21 @@ class TestKeyUsage(unittest.TestCase):
             {'first': self.first, 'second': 'nose'},
             second=self.second
         )
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_dict_call_dict(self):
         f = FormFiller({})
         actual = f(self.text, {'first': self.first, 'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_dict_call_dict_kwarg(self):
         f = FormFiller({})
         actual = f(self.text, {'first': self.first}, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_dict_call_kwargs(self):
         f = FormFiller({})
         actual = f(self.text, first=self.first, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_empty_dict_call_kwarg_overwrites_dict(self):
@@ -214,49 +193,41 @@ class TestKeyUsage(unittest.TestCase):
             {'first': self.first, 'second': 'nose'},
             second=self.second
         )
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_dict_call_dict(self):
         f = FormFiller({'first': self.first})
         actual = f(self.text, {'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_dict_call_kwarg(self):
         f = FormFiller({'first': self.first})
         actual = f(self.text, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_instantiation_kwarg_call_dict(self):
         f = FormFiller(first=self.first)
         actual = f(self.text, {'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_call_dict_overwrites_instantiation_dict(self):
         f = FormFiller({'first': self.first, 'second': 'nose'})
         actual = f(self.text, {'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_call_dict_overwrites_instantiation_kwarg(self):
         f = FormFiller(first=self.first, second='nose')
         actual = f(self.text, {'second': self.second})
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_call_kwarg_overwrites_instantiation_dict(self):
         f = FormFiller({'first': self.first, 'second': 'nose'})
         actual = f(self.text, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_call_kwarg_overwrites_instantiation_kwarg(self):
         f = FormFiller(first=self.first, second='nose')
         actual = f(self.text, second=self.second)
-        self.assertIsInstance(actual, str)
         self.assertEqual(self.expected, actual)
 
     def test_raises(self):
