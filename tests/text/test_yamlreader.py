@@ -1,3 +1,5 @@
+import os
+import pickle
 from pathlib import Path
 import unittest
 from unittest.mock import patch, Mock
@@ -7,22 +9,24 @@ from yaml import SafeLoader, Loader
 
 class TestAttributes(unittest.TestCase):
 
+    def test_empty(self):
+        y = YamlReader()
+        self.assertTrue(hasattr(y, 'base_dir'))
+        self.assertEqual(os.getcwd(), y.base_dir)
+
     def test_dir(self):
         y = YamlReader('/hello')
         self.assertTrue(hasattr(y, 'base_dir'))
-        self.assertIsInstance(y.base_dir, str)
         self.assertEqual('/hello', y.base_dir)
 
     def test_dir_stripped(self):
         y = YamlReader('/ hello/ ')
         self.assertTrue(hasattr(y, 'base_dir'))
-        self.assertIsInstance(y.base_dir, str)
         self.assertEqual('/hello', y.base_dir)
 
     def test_dir_completed(self):
         y = YamlReader('hello')
         self.assertTrue(hasattr(y, 'base_dir'))
-        self.assertIsInstance(y.base_dir, str)
         self.assertEqual('/hello', y.base_dir)
 
     def test_default_not_found(self):
@@ -181,6 +185,10 @@ class TestMisc(unittest.TestCase):
     def test_custom_repr(self):
         y = YamlReader('hello', NotFound.WARN, SafeLoader)
         self.assertEqual("YamlReader('/hello', 'warn', SafeLoader)", repr(y))
+
+    def test_pickle_works(self):
+        y = YamlReader()
+        _ = pickle.dumps(y)
 
 
 if __name__ == '__main__':

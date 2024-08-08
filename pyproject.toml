@@ -11,6 +11,8 @@ dynamic = ["version"]
 requires-python = ">=3.12"
 dependencies = [
   "pandas>=2.2",
+  "pyarrow>=17.0",
+  "pyyaml>=6.0"
 ]
 authors = [
   {name = "yedivanseven", email = "yedivanseven@icloud.com"},

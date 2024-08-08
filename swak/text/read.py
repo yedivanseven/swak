@@ -16,9 +16,11 @@ class TomlReader(ArgRepr):
 
     Parameters
     ----------
-    base_dir: str
+    base_dir: str, optional
         Base directory of the TOML file(s) to read. May contain any number of
-        forward slashes to access nested subdirectories.
+        forward slashes to access nested subdirectories, or string placeholders
+        (i.e., curly brackets) to interpolate later. Defaults to the current
+        working directory of the python interpreter.
     not_found: str, optional
         What to do if the specified TOML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -39,12 +41,12 @@ class TomlReader(ArgRepr):
 
     def __init__(
             self,
-            base_dir: str,
+            base_dir: str = '',
             not_found: str = NotFound.RAISE,
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
-        self.base_dir = '/' + base_dir.strip(' /')
+        self.base_dir = '/' + base_dir.strip(' /') if base_dir else os.getcwd()
         self.not_found = not_found
         self.parse_float = parse_float
         if 'mode' in kwargs:
@@ -69,7 +71,8 @@ class TomlReader(ArgRepr):
         path: str
             Path (including file name) under the `base_dir` of the TOML file
             to read. May contain any number of forward slashes to access
-            nested subdirectories.
+            nested subdirectories, or string placeholders (i.e., curly brackets)
+            to interpolate with `args`.
         *args
             Additional arguments will be interpolated into the joined string
             of `base_dir` and `path` by calling its `format` method. Obviously,
@@ -104,9 +107,11 @@ class YamlReader(ArgRepr):
 
     Parameters
     ----------
-    base_dir: str
+    base_dir: str, optional
         Base directory of the YAML file(s) to read. May contain any number of
-        forward slashes to access nested subdirectories.
+        forward slashes to access nested subdirectories, or string placeholders
+        (i.e., curly brackets) to interpolate later. Defaults to the current
+        working directory of the python interpreter.
     not_found: str, optional
         What to do if the specified YAML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -126,12 +131,12 @@ class YamlReader(ArgRepr):
 
     def __init__(
             self,
-            base_dir: str,
+            base_dir: str = '',
             not_found: str = NotFound.RAISE,
             loader: type = Loader,
             **kwargs: Any
     ) -> None:
-        self.base_dir = '/' + base_dir.strip(' /')
+        self.base_dir = '/' + base_dir.strip(' /') if base_dir else os.getcwd()
         self.not_found = not_found
         self.loader = loader
         if 'mode' in kwargs:
@@ -151,7 +156,8 @@ class YamlReader(ArgRepr):
         path: str
             Path (including file name) under the `base_dir` of the YAML file
             to read. May contain any number of forward slashes to access
-            nested subdirectories.
+            nested subdirectories, or string placeholders (i.e., curly brackets)
+            to interpolate with `args`.
         *args
             Additional arguments will be interpolated into the joined string
             of `base_dir` and `path` by calling its `format` method. Obviously,

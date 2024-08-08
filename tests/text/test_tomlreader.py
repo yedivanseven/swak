@@ -1,3 +1,5 @@
+import os
+import pickle
 from pathlib import Path
 import unittest
 from unittest.mock import patch, Mock
@@ -10,22 +12,24 @@ def f(x: str) -> float:
 
 class TestAttributes(unittest.TestCase):
 
+    def test_empty(self):
+        t = TomlReader()
+        self.assertTrue(hasattr(t, 'base_dir'))
+        self.assertEqual(os.getcwd(), t.base_dir)
+
     def test_dir(self):
         t = TomlReader('/hello')
         self.assertTrue(hasattr(t, 'base_dir'))
-        self.assertIsInstance(t.base_dir, str)
         self.assertEqual('/hello', t.base_dir)
 
     def test_dir_stripped(self):
         t = TomlReader('/ hello/ ')
         self.assertTrue(hasattr(t, 'base_dir'))
-        self.assertIsInstance(t.base_dir, str)
         self.assertEqual('/hello', t.base_dir)
 
     def test_dir_completed(self):
         t = TomlReader('hello')
         self.assertTrue(hasattr(t, 'base_dir'))
-        self.assertIsInstance(t.base_dir, str)
         self.assertEqual('/hello', t.base_dir)
 
     def test_default_not_found(self):
@@ -184,6 +188,10 @@ class TestMisc(unittest.TestCase):
     def test_custom_repr(self):
         t = TomlReader('hello', NotFound.IGNORE, f)
         self.assertEqual("TomlReader('/hello', 'ignore', f)", repr(t))
+
+    def test_pickle_works(self):
+        t = TomlReader()
+        _ = pickle.dumps(t)
 
 
 if __name__ == '__main__':

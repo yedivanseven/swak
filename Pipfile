@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pandas = "*"
 pyyaml = "*"
+pyarrow = "*"
 
 [dev-packages]
 jupyter = "*"
