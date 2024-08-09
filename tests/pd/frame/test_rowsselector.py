@@ -1,6 +1,7 @@
-import pandas as pd
+import pickle
 import unittest
 from unittest.mock import MagicMock
+import pandas as pd
 from swak.pd import RowsSelector
 
 
@@ -12,7 +13,7 @@ def row(df):
     return df[0] > 3
 
 
-class TestRowsSelector(unittest.TestCase):
+class TestAttributeUsage(unittest.TestCase):
 
     def setUp(self) -> None:
         self.mock = MagicMock()
@@ -60,9 +61,21 @@ class TestRowsSelector(unittest.TestCase):
         self.assertIsInstance(selected, pd.DataFrame)
         self.assertTrue(selected.empty)
 
+
+class TestMisc(unittest.TestCase):
+
     def test_repr(self):
         select = RowsSelector(rows)
         self.assertEqual('RowsSelector(rows)', repr(select))
+
+    def test_pickle_works_with_function(self):
+        select = RowsSelector(rows)
+        _ = pickle.dumps(select)
+
+    def test_pickle_raises_with_lambda(self):
+        select = RowsSelector(lambda df: df[0] > 2)
+        with self.assertRaises(AttributeError):
+            _ = pickle.dumps(select)
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ type Type = str | type | dtype | ExtensionDtype
 type Types = dict[Hashable, Type]
 type Mask = list[bool] | Series | ndarray
 type Condition = Callable[[DataFrame], Mask]
+type Transform = dict[Hashable, Any] | Series | Callable[[Any], Any]
 
 
 class AsType(ReprName):
@@ -148,24 +149,82 @@ class ColumnsSelector(ArgRepr):
         return tuple(cols)
 
 
+class ColumnMapper(ArgRepr):
+    """Transform one column of a pandas dataframe into another.
+
+    This is simply a partial of calling the ``map`` method on one column of a
+    dataframe and assigning the result to the same or another column of the
+    same dataframe.
+
+    Parameters
+    ----------
+    src_col: Hashable
+        Column to call the ``map`` method on.
+    transform: callable, Mapping, or Series
+        Function or mapping in the form of a dictionary or a pandas series.
+    tgt_col: Hashable, optional
+        Dataframe column to store the series resulting from the
+        transformation. Defaults to `src_col`, thus overwriting it in place.
+    **kwargs
+        Keyword arguments are passed on to the call of the Series'
+        ``map`` method.
+
+    """
+
+    def __init__(
+            self,
+            src_col: Hashable,
+            transform: Transform,
+            tgt_col: Hashable | None = None,
+            **kwargs: Any
+    ) -> None:
+        self.src_col = src_col
+        self.tgt_col = src_col if tgt_col is None else tgt_col
+        self.transform = transform
+        self.kwargs = kwargs
+        name = transform if callable(transform) else type(transform)
+        super().__init__(src_col, name, tgt_col, **kwargs)
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Called the ``map`` method on a specified column of a DataFrame.
+
+        Cached keyword arguments are forwarded to the method call and
+        the result is stored in the specified column of the DataFrame.
+
+        Parameters
+        ----------
+        df: DataFrame
+           Pandas dataframe with the column to call the ``map`` method on.
+
+        Returns
+        -------
+        DataFrame
+            Pandas dataframe with the result of the column transformation in
+            the specified column.
+
+
+        """
+        df[self.tgt_col] = df[self.src_col].map(self.transform, **self.kwargs)
+        return df
+
+
 class RowsSelector(ArgRepr):
     """Select rows from a pandas dataframe with a boolean mask or function.
 
     This is simply a partial for calling a dataframe's ``__getitem__``
-    method (using the square-brackets accessor) with a 1-D, boolean array-like
-    structure (of the same length as the dataframe to select from) or callable
-    that produces such a boolean mask from the dataframe.
+    method (using the square-brackets accessor) with a callable that takes
+    the dataframe as input, and produces a 1-D, boolean array-like structure
+    (of the same length as the dataframe to select from).
 
     Parameters
     ----------
     condition: callable or array-like
-        Either a 1-D, array-like structure of boolean (e.g., a list, a numpy
-        array, or a pandas series, but not a tuple!) or a callable that accepts
-        a pandas dataframe and produces such an array-like structure.
+        A callable that accepts a dataframe and produces a 1-D, boolean array-
+        like structure of the same length
 
     """
 
-    def __init__(self, condition: Mask | Condition) -> None:
+    def __init__(self, condition: Condition) -> None:
         super().__init__(condition)
         self.condition = condition
 
