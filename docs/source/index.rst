@@ -14,6 +14,7 @@ Welcome to swak's documentation!
    cli
    jsonobject
    pd
+   cloud
 
 
 Indices and tables

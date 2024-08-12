@@ -194,7 +194,7 @@ class ColumnMapper(ArgRepr):
         Parameters
         ----------
         df: DataFrame
-           Pandas dataframe with the column to call the ``map`` method on.
+            Pandas dataframe with the column to call the ``map`` method on.
 
         Returns
         -------

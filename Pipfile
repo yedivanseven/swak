@@ -7,6 +7,9 @@ name = "pypi"
 pandas = "*"
 pyyaml = "*"
 pyarrow = "*"
+google-cloud-storage = "*"
+google-cloud-bigquery = "*"
+pandas-gbq = "*"
 
 [dev-packages]
 jupyter = "*"
