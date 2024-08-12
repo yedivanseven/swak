@@ -54,6 +54,38 @@ class TestDefaultAttributes(unittest.TestCase):
         actual = self.create.to_ms(3)
         self.assertEqual(f'{expected}', actual)
 
+    def test_project_stripped(self):
+        create = DatasetCreator(
+            ' / project . /',
+            '/ .dataset/ ',
+            ' location'
+        )
+        self.assertEqual('project', create.project)
+
+    def test_dataset_stripped(self):
+        create = DatasetCreator(
+            ' / project . /',
+            '/ .dataset/ ',
+            ' location'
+        )
+        self.assertEqual('dataset', create.dataset)
+
+    def test_location_stripped(self):
+        create = DatasetCreator(
+            ' / project . /',
+            '/ .dataset/ ',
+            ' location'
+        )
+        self.assertEqual('location', create.location)
+
+    def test_name_stripped(self):
+        create = DatasetCreator(
+            ' / project . /',
+            '/ .dataset/ ',
+            ' location'
+        )
+        self.assertEqual('dataset', create.name)
+
 
 class TestAttributes(unittest.TestCase):
 
@@ -103,6 +135,15 @@ class TestAttributes(unittest.TestCase):
             }
         }
         self.assertDictEqual(expected, create.api_repr)
+
+    def test_name_stripped(self):
+        create = DatasetCreator(
+            ' / project . /',
+            '/ .dataset/ ',
+            ' location',
+            name=' name  '
+        )
+        self.assertEqual('name', create.name)
 
 
 class TestUsage(unittest.TestCase):

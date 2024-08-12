@@ -35,3 +35,25 @@ gcp
    :members:
    :special-members: __call__
    :show-inheritance:
+
+
+.. autoclass:: swak.cloud.gcp.Storage
+   :show-inheritance:
+
+   .. autoattribute:: STANDARD
+      :annotation: = STANDARD
+
+   .. autoattribute:: NEARLINE
+      :annotation: = NEARLINE
+
+   .. autoattribute:: COLDLINE
+      :annotation: = COLDLINE
+
+   .. autoattribute:: ARCHIVE
+      :annotation: = ARCHIVE
+
+
+.. autoclass:: swak.cloud.gcp.BucketCreator
+   :members:
+   :special-members: __call__
+   :show-inheritance:

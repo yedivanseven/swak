@@ -48,7 +48,7 @@ class DatasetCreator:
         Number of days after which partitions of partitioned tables are dropped.
         Defaults to ``None``, which results in partitions never being dropped.
     labels: dict, optional
-        Any number of string-values labels of the dataset. Defaults to none.
+        Any number of string-valued labels of the dataset. Defaults to none.
     access: list of dict, optional
         Fined-grained access rights to the dataset (see the Google Cloud
         Platform `documentation <https://cloud.google.com/bigquery/docs/
@@ -111,7 +111,7 @@ class DatasetCreator:
         self.project = project.strip(' /.')
         self.dataset = dataset.strip(' /.')
         self.location = location.strip()
-        self.name = dataset if name is None else name.strip()
+        self.name = self.dataset if name is None else name.strip()
         self.description = description
         self.table_expire_days = table_expire_days
         self.partition_expire_days = partition_expire_days
@@ -181,7 +181,7 @@ class DatasetCreator:
         ----------
         exists_ok: bool, optional
             Whether to raise a ``Conflict`` exception if the targeted dataset
-            already exists or not. Defaults to ``False``.
+            already exists or not. Defaults to ``True``.
         retry: Retry, optional
             Retry policy for the request. Defaults to ``None``. See the Google
             Cloud Platform `documentation <https://googleapis.dev/python/
@@ -194,6 +194,11 @@ class DatasetCreator:
             Google Bigquery client (see `documentation <https://cloud.google.
             com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
             client.Client#parameters>`__ for options).
+
+        Raises
+        ------
+        Conflict
+            If `exists_ok` is set to ``False`` and the dataset already exists.
 
         Returns
         -------
