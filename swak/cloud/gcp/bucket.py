@@ -6,7 +6,7 @@ from ...magic import ArgRepr
 
 
 class Storage(StrEnum):
-    """Specify storage class for blobs in a Google Storage bucket."""
+    """Specify storage class for blobs in a Google Cloud Storage bucket."""
     STANDARD = 'STANDARD'
     NEARLINE = 'NEARLINE'
     COLDLINE = 'COLDLINE'
