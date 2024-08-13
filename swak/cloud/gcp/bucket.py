@@ -90,7 +90,7 @@ class BucketCreator(ArgRepr):
             self,
             exists_ok: bool = True,
             retry: Retry | None = None,
-            timeout: float | None = None,
+            timeout: float | tuple[float, float] | None = None,
             **kwargs: Any
     ) -> Bucket:
         """Create a new bucket on Google Cloud Storage.
@@ -101,12 +101,16 @@ class BucketCreator(ArgRepr):
             Whether to raise a ``Conflict`` exception if the targeted bucket
             already exists or not. Defaults to ``True``.
         retry: Retry, optional
-            Retry policy for the request. Defaults to ``None``. See the Google
-            Cloud Platform `documentation <https://googleapis.dev/python/
-            google-api-core/latest/retry.html>`__ for options.
+            Retry policy for the request. Defaults to ``None``, which disables
+            retries. See the Google Cloud Platform `guide
+            <https://cloud.google.com/python/docs/reference/storage/1.39.0/
+            retry_timeout#configuring-retries>`__ and `reference
+            <https://googleapis.dev/python/google-api-core/latest/retry.html>`__
+            for options.
         timeout: float, optional
             The number of seconds to wait for the HTTP response to the API call
-            before using `retry`.
+            before using `retry` or a tuple with separate values for connection
+            and request timeouts. Defaults to ``None``, meaning wait forever.
         **kwargs
             Additional keyword arguments are passed to the constructor of the
             Google Storage client (see `documentation <https://cloud.google.
@@ -129,16 +133,14 @@ class BucketCreator(ArgRepr):
         client = Client(self.project, **kwargs)
         bucket = Bucket(client, self.bucket, self.user_project)
 
-        if bucket.exists():
-            if exists_ok:
-                return bucket
-            bucket.create()  # Create bucket anyway to raise the original error
-
         bucket.requester_pays = self.requester_pays
         bucket.storage_class = self.storage_class
         bucket.labels = self.labels
         if self.blob_expire_days:
             bucket.add_lifecycle_delete_rule(age=self.blob_expire_days)
+
+        if bucket.exists() and exists_ok:
+            return client.get_bucket(bucket, retry=retry, timeout=timeout)
 
         bucket.create(
             client,

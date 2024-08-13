@@ -137,9 +137,7 @@ class DatasetCreator:
     @staticmethod
     def to_ms(days):
         """Convert integer days to a millisecond string for the GCP API call."""
-        if days is None:
-            return None
-        return f'{int(days * 1000 * 60 * 60 * 24)}'
+        return None if days is None else f'{int(days * 1000 * 60 * 60 * 24)}'
 
     @property
     def api_repr(self) -> dict[str, Any]:
@@ -172,7 +170,7 @@ class DatasetCreator:
             self,
             exists_ok: bool = True,
             retry: Retry | None = None,
-            timeout: float | None = None,
+            timeout: float | tuple[float, float] | None = None,
             **kwargs: Any
     ) -> Dataset:
         """Create a Google BigQuery dataset in a Google Cloud Platform project.
@@ -183,12 +181,16 @@ class DatasetCreator:
             Whether to raise a ``Conflict`` exception if the targeted dataset
             already exists or not. Defaults to ``True``.
         retry: Retry, optional
-            Retry policy for the request. Defaults to ``None``. See the Google
-            Cloud Platform `documentation <https://googleapis.dev/python/
-            google-api-core/latest/retry.html>`__ for options.
+            Retry policy for the request. Defaults to ``None``, which disables
+            retries. See the Google Cloud Platform `guide
+            <https://cloud.google.com/python/docs/reference/storage/1.39.0/
+            retry_timeout#configuring-retries>`__ and `reference
+            <https://googleapis.dev/python/google-api-core/latest/retry.html>`__
+            for options.
         timeout: float, optional
             The number of seconds to wait for the HTTP response to the API call
-            before using `retry`.
+            before using `retry` or a tuple with separate values for connection
+            and request timeouts. Defaults to ``None``, meaning wait forever.
         **kwargs
             Additional keyword arguments are passed to the constructor of the
             Google Bigquery client (see `documentation <https://cloud.google.
