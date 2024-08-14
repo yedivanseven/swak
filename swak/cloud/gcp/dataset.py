@@ -2,6 +2,7 @@ import json
 from enum import StrEnum
 from typing import Any, overload
 from google.cloud.bigquery import Client, Dataset
+from google.cloud.exceptions import NotFound
 from google.api_core.retry import Retry
 
 
@@ -23,7 +24,7 @@ class Billing(StrEnum):
     LOGICAL = 'LOGICAL'
 
 
-class DatasetCreator:
+class GbqDataset:
     """Create a new dataset in a Google BigQuery project.
 
     Parameters
@@ -110,7 +111,7 @@ class DatasetCreator:
     ) -> None:
         self.project = project.strip(' /.')
         self.dataset = dataset.strip(' /.')
-        self.location = location.strip()
+        self.location = location.strip().lower()
         self.name = self.dataset if name is None else name.strip()
         self.description = description
         self.table_expire_days = table_expire_days
@@ -172,7 +173,7 @@ class DatasetCreator:
             retry: Retry | None = None,
             timeout: float | tuple[float, float] | None = None,
             **kwargs: Any
-    ) -> Dataset:
+    ) -> tuple[Dataset, bool]:
         """Create a Google BigQuery dataset in a Google Cloud Platform project.
 
         Parameters
@@ -193,7 +194,7 @@ class DatasetCreator:
             and request timeouts. Defaults to ``None``, meaning wait forever.
         **kwargs
             Additional keyword arguments are passed to the constructor of the
-            Google Bigquery client (see `documentation <https://cloud.google.
+            Google BigQuery client (see `documentation <https://cloud.google.
             com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
             client.Client#parameters>`__ for options).
 
@@ -205,9 +206,20 @@ class DatasetCreator:
         Returns
         -------
         Dataset
-            The dataset just create.
+            The existing or newly created dataset. If existing, then the
+            dataset is returned unchanged, that is, none of the specified
+            options are applied.
+        bool
+            ``True`` if the requested dataset is newly created and ``False``
+            if an existing dataset is returned.
 
         """
         dataset = Dataset.from_api_repr(self.api_repr)
         client = Client(self.project, **kwargs)
-        return client.create_dataset(dataset, exists_ok, retry, timeout)
+        try:
+            _ = client.get_dataset(dataset.reference, retry, timeout)
+        except NotFound:
+            exists = False
+        else:
+            exists = True
+        return client.create_dataset(dataset, exists_ok, retry, timeout), exists

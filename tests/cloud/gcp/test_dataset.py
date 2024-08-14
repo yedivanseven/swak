@@ -2,13 +2,14 @@ import unittest
 import pickle
 import json
 from unittest.mock import Mock, patch
-from swak.cloud.gcp import DatasetCreator
+from google.cloud.exceptions import NotFound
+from swak.cloud.gcp import GbqDataset
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.create = DatasetCreator(
+        self.create = GbqDataset(
             'project',
             'dataset',
             'location'
@@ -55,7 +56,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(f'{expected}', actual)
 
     def test_project_stripped(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             ' / project . /',
             '/ .dataset/ ',
             ' location'
@@ -63,7 +64,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual('project', create.project)
 
     def test_dataset_stripped(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             ' / project . /',
             '/ .dataset/ ',
             ' location'
@@ -71,7 +72,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual('dataset', create.dataset)
 
     def test_location_stripped(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             ' / project . /',
             '/ .dataset/ ',
             ' location'
@@ -79,7 +80,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual('location', create.location)
 
     def test_name_stripped(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             ' / project . /',
             '/ .dataset/ ',
             ' location'
@@ -90,7 +91,7 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def test_values(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             project='project',
             dataset='dataset',
             location='location',
@@ -137,7 +138,7 @@ class TestAttributes(unittest.TestCase):
         self.assertDictEqual(expected, create.api_repr)
 
     def test_name_stripped(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             ' / project . /',
             '/ .dataset/ ',
             ' location',
@@ -149,7 +150,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.create = DatasetCreator(
+        self.create = GbqDataset(
             project='project',
             dataset='dataset',
             location='location',
@@ -204,34 +205,71 @@ class TestUsage(unittest.TestCase):
 
     @patch('swak.cloud.gcp.dataset.Dataset')
     @patch('swak.cloud.gcp.dataset.Client')
-    def test_dataset_called(self, mock_client, mock_dataset):
+    def test_dataset_called(self, mock_client, mock_dataset_cls):
         client = Mock()
         client.create_dataset = Mock(return_value='success')
         mock_client.return_value = client
-        mock_dataset.from_api_repr = Mock(return_value=self.create.api_repr)
+        mock_dataset_obj = Mock()
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
         _ = self.create()
-        mock_dataset.from_api_repr.assert_called_once()
+        mock_dataset_cls.from_api_repr.assert_called_once()
 
     @patch('swak.cloud.gcp.dataset.Dataset')
     @patch('swak.cloud.gcp.dataset.Client')
-    def test_dataset_called_with_api_repr(self, mock_client, mock_dataset):
+    def test_dataset_called_with_api_repr(self, mock_client, mock_dataset_cls):
         client = Mock()
         client.create_dataset = Mock(return_value='success')
         mock_client.return_value = client
-        mock_dataset.from_api_repr = Mock(return_value=self.create.api_repr)
+        mock_dataset_obj = Mock()
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
         _ = self.create()
-        mock_dataset.from_api_repr.assert_called_once_with(self.create.api_repr)
+        mock_dataset_cls.from_api_repr.assert_called_once_with(
+            self.create.api_repr
+        )
 
     @patch('swak.cloud.gcp.dataset.Dataset')
     @patch('swak.cloud.gcp.dataset.Client')
-    def test_create_called_with_defaults(self, mock_client, mock_dataset):
+    def test_get_called_with_defaults(self, mock_client, mock_dataset_cls):
         client = Mock()
         client.create_dataset = Mock(return_value='success')
         mock_client.return_value = client
-        mock_dataset.from_api_repr = Mock(return_value=self.create.api_repr)
+        mock_dataset_obj = Mock()
+        mock_dataset_obj.reference = 'reference'
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
+        _ = self.create()
+        client.get_dataset.assert_called_once_with(
+            'reference',
+            None,
+            None
+        )
+
+    @patch('swak.cloud.gcp.dataset.Dataset')
+    @patch('swak.cloud.gcp.dataset.Client')
+    def test_get_called_with_args(self, mock_client, mock_dataset_cls):
+        client = Mock()
+        client.create_dataset = Mock(return_value='success')
+        mock_client.return_value = client
+        mock_dataset_obj = Mock()
+        mock_dataset_obj.reference = 'reference'
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
+        _ = self.create(False, 'retry', 'timeout')
+        client.get_dataset.assert_called_once_with(
+            'reference',
+            'retry',
+            'timeout'
+        )
+
+    @patch('swak.cloud.gcp.dataset.Dataset')
+    @patch('swak.cloud.gcp.dataset.Client')
+    def test_create_called_with_defaults(self, mock_client, mock_dataset_cls):
+        client = Mock()
+        client.create_dataset = Mock(return_value='success')
+        mock_client.return_value = client
+        mock_dataset_obj = Mock()
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
         _ = self.create()
         client.create_dataset.assert_called_once_with(
-            self.create.api_repr,
+            mock_dataset_obj,
             True,
             None,
             None
@@ -239,14 +277,15 @@ class TestUsage(unittest.TestCase):
 
     @patch('swak.cloud.gcp.dataset.Dataset')
     @patch('swak.cloud.gcp.dataset.Client')
-    def test_create_called_with_args(self, mock_client, mock_dataset):
+    def test_create_called_with_args(self, mock_client, mock_dataset_cls):
         client = Mock()
         client.create_dataset = Mock(return_value='success')
         mock_client.return_value = client
-        mock_dataset.from_api_repr = Mock(return_value=self.create.api_repr)
+        mock_dataset_obj = Mock()
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
         _ = self.create(False, 'retry', 'timeout')
         client.create_dataset.assert_called_once_with(
-            self.create.api_repr,
+            mock_dataset_obj,
             False,
             'retry',
             'timeout'
@@ -254,19 +293,32 @@ class TestUsage(unittest.TestCase):
 
     @patch('swak.cloud.gcp.dataset.Dataset')
     @patch('swak.cloud.gcp.dataset.Client')
-    def test_return_value(self, mock_client, mock_dataset):
+    def test_return_value_new(self, mock_client, mock_dataset_cls):
         client = Mock()
         client.create_dataset = Mock(return_value='success')
         mock_client.return_value = client
-        mock_dataset.from_api_repr = Mock(return_value=self.create.api_repr)
-        actual = self.create()
-        self.assertEqual('success', actual)
+        mock_dataset_obj = Mock()
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
+        existing, created = self.create()
+        self.assertTupleEqual(('success', True), (existing, created))
+
+    @patch('swak.cloud.gcp.dataset.Dataset')
+    @patch('swak.cloud.gcp.dataset.Client')
+    def test_return_value_existing(self, mock_client, mock_dataset_cls):
+        client = Mock()
+        client.create_dataset = Mock(return_value='success')
+        client.get_dataset.side_effect = NotFound('error')
+        mock_client.return_value = client
+        mock_dataset_obj = Mock()
+        mock_dataset_cls.from_api_repr = Mock(return_value=mock_dataset_obj)
+        existing, created = self.create()
+        self.assertTupleEqual(('success', False), (existing, created))
 
 
 class TestMisc(unittest.TestCase):
 
     def test_repr(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             project='project',
             dataset='dataset',
             location='location',
@@ -286,7 +338,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(json.dumps(create.api_repr, indent=4), repr(create))
 
     def test_pickle_works(self):
-        create = DatasetCreator(
+        create = GbqDataset(
             project='project',
             dataset='dataset',
             location='location'

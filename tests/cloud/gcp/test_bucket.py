@@ -1,13 +1,13 @@
 import unittest
 import pickle
 from unittest.mock import Mock, patch
-from swak.cloud.gcp import BucketCreator
+from swak.cloud.gcp import GcsBucket
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.create = BucketCreator(
+        self.create = GcsBucket(
             'project',
             'bucket',
             'location'
@@ -46,7 +46,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertFalse(self.create.requester_pays)
 
     def test_project_stripped(self):
-        create = BucketCreator(
+        create = GcsBucket(
             ' /.project ./',
             ' /.bucket ./',
             ' location  '
@@ -54,7 +54,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual('project', create.project)
 
     def test_bucket_stripped(self):
-        create = BucketCreator(
+        create = GcsBucket(
             ' /.project ./',
             ' /.bucket ./',
             ' location  '
@@ -62,7 +62,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual('bucket', create.bucket)
 
     def test_location_stripped(self):
-        create = BucketCreator(
+        create = GcsBucket(
             ' /.project ./',
             ' /.bucket ./',
             ' location  '
@@ -73,7 +73,7 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.create = BucketCreator(
+        self.create = GcsBucket(
             'project',
             'bucket',
             'location',
@@ -101,7 +101,7 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(self.create.requester_pays)
 
     def test_user_project_stripped(self):
-        create = BucketCreator(
+        create = GcsBucket(
             'project',
             'bucket',
             'location',
@@ -113,7 +113,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.create = BucketCreator(
+        self.create = GcsBucket(
             'project',
             'bucket',
             'location',
@@ -167,7 +167,7 @@ class TestUsage(unittest.TestCase):
     @patch('swak.cloud.gcp.bucket.Bucket')
     @patch('swak.cloud.gcp.bucket.Client')
     def test_bucket_default_attributes_set(self, mock_client, mock_bucket):
-        create = BucketCreator(
+        create = GcsBucket(
             'project',
             'bucket',
             'location'
@@ -265,15 +265,15 @@ class TestUsage(unittest.TestCase):
     @patch('swak.cloud.gcp.bucket.Client')
     def test_get_bucket_return_value(self, mock_client, mock_bucket):
         client = Mock()
-        client.get_bucket = Mock(return_value='get bucket returns')
+        client.get_bucket = Mock(return_value='old')
         mock_client.return_value = client
         bucket = Mock()
         bucket.add_lifecycle_delete_rule = Mock()
         bucket.exists = Mock(return_value=True)
         bucket.create = Mock()
         mock_bucket.return_value = bucket
-        actual = self.create()
-        self.assertEqual('get bucket returns', actual)
+        existing, created = self.create()
+        self.assertTupleEqual(('old', False), (existing, created))
 
     @patch('swak.cloud.gcp.bucket.Bucket')
     @patch('swak.cloud.gcp.bucket.Client')
@@ -365,15 +365,16 @@ class TestUsage(unittest.TestCase):
         bucket.exists = Mock(return_value=False)
         bucket.create = Mock()
         mock_bucket.return_value = bucket
-        actual = self.create()
-        self.assertIs(bucket, actual)
+        new, created = self.create()
+        self.assertIs(bucket, new)
+        self.assertTrue(created)
 
 
 
 class TestMisc(unittest.TestCase):
 
     def setUp(self):
-        self.create = BucketCreator(
+        self.create = GcsBucket(
             'project',
             'bucket',
             'location',
@@ -385,7 +386,7 @@ class TestMisc(unittest.TestCase):
         )
 
     def test_repr(self):
-        expected = ("BucketCreator('project', 'bucket', 'LOCATION', "
+        expected = ("GcsBucket('project', 'bucket', 'LOCATION', "
                     "blob_expire_days=4, labels={'foo': 'bar'}, "
                     "user_project='user', storage_class='storage', "
                     "requester_pays=True)")

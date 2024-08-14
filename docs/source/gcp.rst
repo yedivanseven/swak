@@ -31,7 +31,7 @@ gcp
       :annotation: = LOGICAL
 
 
-.. autoclass:: swak.cloud.gcp.DatasetCreator
+.. autoclass:: swak.cloud.gcp.GbqDataset
    :members:
    :special-members: __call__
    :show-inheritance:
@@ -53,7 +53,12 @@ gcp
       :annotation: = ARCHIVE
 
 
-.. autoclass:: swak.cloud.gcp.BucketCreator
+.. autoclass:: swak.cloud.gcp.GcsBucket
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+.. autoclass:: swak.cloud.gcp.GbqQuery
    :members:
    :special-members: __call__
    :show-inheritance:

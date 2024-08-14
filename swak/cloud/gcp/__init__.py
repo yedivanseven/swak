@@ -1,11 +1,13 @@
-from .dataset import Collation, Rounding, Billing, DatasetCreator
-from .bucket import Storage, BucketCreator
+from .dataset import Collation, Rounding, Billing, GbqDataset
+from .bucket import Storage, GcsBucket
+from .query import GbqQuery
 
 __all__ = [
     'Collation',
     'Rounding',
     'Billing',
-    'DatasetCreator',
+    'GbqDataset',
     'Storage',
-    'BucketCreator'
+    'GcsBucket',
+    'GbqQuery'
 ]

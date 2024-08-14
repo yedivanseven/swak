@@ -13,7 +13,7 @@ class Storage(StrEnum):
     ARCHIVE = 'ARCHIVE'
 
 
-class BucketCreator(ArgRepr):
+class GcsBucket(ArgRepr):
     """Create a new bucket on Google Cloud Storage.
 
     Parameters
@@ -45,7 +45,8 @@ class BucketCreator(ArgRepr):
 
     Notes
     -----
-    There are a lot more options to set, which have been deliberately omitted.
+    There are a lot more options to set, which have been deliberately omitted
+    because of the complexity involved.
 
     See Also
     --------
@@ -92,7 +93,7 @@ class BucketCreator(ArgRepr):
             retry: Retry | None = None,
             timeout: float | tuple[float, float] | None = None,
             **kwargs: Any
-    ) -> Bucket:
+    ) -> tuple[Bucket, bool]:
         """Create a new bucket on Google Cloud Storage.
 
         Parameters
@@ -128,6 +129,9 @@ class BucketCreator(ArgRepr):
             The existing or newly created bucket. If existing, then the bucket
             is returned unchanged, that is, none of the specified options are
             applied.
+        bool
+            ``True`` if the requested bucket is newly created and ``False``
+            if an existing bucket is returned.
 
         """
         client = Client(self.project, **kwargs)
@@ -140,7 +144,8 @@ class BucketCreator(ArgRepr):
             bucket.add_lifecycle_delete_rule(age=self.blob_expire_days)
 
         if bucket.exists() and exists_ok:
-            return client.get_bucket(bucket, retry=retry, timeout=timeout)
+            existing = client.get_bucket(bucket, retry=retry, timeout=timeout)
+            return existing, False
 
         bucket.create(
             client,
@@ -149,4 +154,4 @@ class BucketCreator(ArgRepr):
             retry=retry,
             timeout=timeout
         )
-        return bucket
+        return bucket, True
