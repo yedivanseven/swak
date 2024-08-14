@@ -1,19 +1,9 @@
 import time
 from typing import Any
 from google.cloud.bigquery import Client, QueryJobConfig
-from google.cloud.bigquery.query import (
-    ArrayQueryParameter,
-    ScalarQueryParameter,
-    StructQueryParameter
-)
 from ...magic import ArgRepr
 from .exceptions import GbqError
 
-type Parameters = list[
-    ArrayQueryParameter |
-    ScalarQueryParameter |
-    StructQueryParameter
-]
 
 class GbqQuery(ArgRepr):
     """Run a SQL query that does not return anything on Google BigQuery.
@@ -22,6 +12,10 @@ class GbqQuery(ArgRepr):
     ----------
     project: str
         The name of the Google billing project.
+    location: str
+        The physical datacenter location to run the query on. See the
+        Google Cloud Platform `documentation <https://cloud.google.com/
+        bigquery/docs/locations>`__ for options.
     polling_interval: int, optional
         Job completion is going to be checked for every `polling_interval`
         seconds. Defaults to 5 (seconds).
@@ -30,16 +24,11 @@ class GbqQuery(ArgRepr):
         "INTERACTIVE". Defaults to "BATCH". Use the `QueryPriority
         <https://cloud.google.com/python/docs/reference/bigquery/latest/
         google.cloud.bigquery.job.QueryPriority>`__ enum to avoid typos.
-    labels: dict, optional
-        Any number of string-valued labels of the query job. Defaults to none.
-    parameters: list, optional
-        Any number of query parameters to interpolate into the query.
-        Defaults to ``None``, resulting in an empty list.
     **kwargs
         Additional keyword arguments are passed to the constructor of the
-        Google BigQuery ``QueryJobConfig``. See `documentation
-        <https://cloud.google.com/python/docs/reference/bigquery/latest/
-        google.cloud.bigquery.job.QueryJobConfig>`__ for options.
+        Google BigQuery ``Client`` (see `documentation <https://cloud.google.
+        com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
+        client.Client#parameters>`__ for options).
 
     Notes
     -----
@@ -55,35 +44,19 @@ class GbqQuery(ArgRepr):
             location: str,
             polling_interval: int = 5,
             priority: str = 'BATCH',
-            labels: dict[str, str] | None = None,
-            parameters: Parameters | None = None,
             **kwargs: Any
     ) -> None:
         self.project = project.strip(' /.')
         self.location = location.strip().lower()
         self.polling_interval = polling_interval
         self.priority = priority.strip().upper()
-        self.labels = {} if labels is None else labels
-        self.parameters = [] if parameters is None else parameters
         self.kwargs = kwargs
         super().__init__(
             self.project,
             self.location,
             self.polling_interval,
             self.priority,
-            self.labels,
-            self.parameters,
             **kwargs
-        )
-
-    @property
-    def config(self) -> QueryJobConfig:
-        """The configuration for the query job to submit."""
-        return QueryJobConfig(
-            priority=self.priority,
-            labels=self.labels,
-            query_parameters=self.parameters,
-            **self.kwargs
         )
 
     def __call__(self, query: str, **kwargs: Any) -> tuple[()]:
@@ -95,9 +68,9 @@ class GbqQuery(ArgRepr):
             The SQL query to fire using the pre-configured client.
         **kwargs
             Additional keyword arguments are passed to the constructor of the
-            Google BigQuery client (see `documentation <https://cloud.google.
-            com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
-            client.Client#parameters>`__ for options).
+            Google BigQuery ``QueryJobConfig``. See `documentation
+            <https://cloud.google.com/python/docs/reference/bigquery/latest/
+            google.cloud.bigquery.job.QueryJobConfig>`__ for options.
 
         Returns
         -------
@@ -110,8 +83,9 @@ class GbqQuery(ArgRepr):
             If the ``QueryJob`` finishes and returns and error.
 
         """
-        client = Client(project=self.project, location=self.location, **kwargs)
-        job = client.query(query, self.config)
+        client = Client(self.project, location=self.location, **self.kwargs)
+        config = QueryJobConfig(priority=self.priority, **kwargs)
+        job = client.query(query, config)
         while job.running():
             time.sleep(self.polling_interval)
         if error := job.error_result:

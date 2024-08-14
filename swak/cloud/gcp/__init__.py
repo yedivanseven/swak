@@ -1,6 +1,7 @@
 from .dataset import Collation, Rounding, Billing, GbqDataset
 from .bucket import Storage, GcsBucket
 from .query import GbqQuery
+from .query2gcs import GbqQuery2GcsParquet
 
 __all__ = [
     'Collation',
@@ -9,5 +10,6 @@ __all__ = [
     'GbqDataset',
     'Storage',
     'GcsBucket',
-    'GbqQuery'
+    'GbqQuery',
+    'GbqQuery2GcsParquet'
 ]

@@ -28,17 +28,9 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.query, 'priority'))
         self.assertEqual('BATCH', self.query.priority)
 
-    def test_labels(self):
-        self.assertTrue(hasattr(self.query, 'labels'))
-        self.assertDictEqual({}, self.query.labels)
-
     def test_kwargs(self):
         self.assertTrue(hasattr(self.query, 'kwargs'))
         self.assertDictEqual({}, self.query.kwargs)
-
-    def test_parameters(self):
-        self.assertTrue(hasattr(self.query, 'parameters'))
-        self.assertListEqual([], self.query.parameters)
 
     def test_project_stripped(self):
         query = GbqQuery(' /.project ./', ' location ')
@@ -56,9 +48,7 @@ class TestAttributes(unittest.TestCase):
             'project',
             'location',
             7,
-            'INTERACTIVE',
-            {'foo': 'bar'},
-            ['baz', 42],
+            ' INterACTivE  ',
             hello='world'
         )
 
@@ -68,12 +58,6 @@ class TestAttributes(unittest.TestCase):
 
     def test_priority(self):
         self.assertEqual('INTERACTIVE', self.query.priority)
-
-    def test_labels(self):
-        self.assertDictEqual({'foo': 'bar'}, self.query.labels)
-
-    def test_parameters(self):
-        self.assertListEqual(['baz', 42], self.query.parameters)
 
     def test_kwargs(self):
         self.assertDictEqual({'hello': 'world'}, self.query.kwargs)
@@ -102,8 +86,6 @@ class TestUsage(unittest.TestCase):
             'location',
             7,
             'INTERACTIVE',
-            {'foo': 'bar'},
-            ['baz', 42],
             hello='world'
         )
 
@@ -118,19 +100,12 @@ class TestUsage(unittest.TestCase):
         _ = self.query('SELECT 1')
         self.client_class.assert_called_once()
 
-    def test_client_called_with_defaults(self):
-        _ = self.query('SELECT 1')
-        self.client_class.assert_called_once_with(
-            project=self.query.project,
-            location=self.query.location
-        )
-
     def test_client_called_with_kwargs(self):
         _ = self.query('SELECT 1', foo='bar')
         self.client_class.assert_called_once_with(
-            project=self.query.project,
+            self.query.project,
             location=self.query.location,
-            foo='bar'
+            hello='world'
         )
 
     def test_config_called_once(self):
@@ -138,12 +113,10 @@ class TestUsage(unittest.TestCase):
         self.config.assert_called_once()
 
     def test_config_called_with_kwargs(self):
-        _ = self.query('SELECT 1')
+        _ = self.query('SELECT 1', foo='bar')
         self.config.assert_called_once_with(
             priority=self.query.priority,
-            labels=self.query.labels,
-            query_parameters=self.query.parameters,
-            hello='world'
+            foo='bar'
         )
 
     def test_query_called_once(self):
@@ -181,15 +154,13 @@ class TestMisc(unittest.TestCase):
             'location',
             7,
             'INTERACTIVE',
-            {'foo': 'bar'},
-            ['baz', 42],
             hello='world'
         )
 
 
     def test_repr(self):
         expected = ("GbqQuery('project', 'location', 7, 'INTERACTIVE', "
-                    "{'foo': 'bar'}, ['baz', 42], hello='world')")
+                    "hello='world')")
         self.assertEqual(expected, repr(self.query))
 
     def test_pickle_works(self):

@@ -42,6 +42,11 @@ class GcsBucket(ArgRepr):
         Whether the requester will be billed for interacting with the bucket.
         Defaults to ``False``, which means that the (`user_`)`project` will be
         billed.
+    **kwargs
+        Additional keyword arguments are passed to the constructor of the
+        Google Storage ``Client`` (see `documentation <https://cloud.google.
+        com/python/docs/reference/storage/latest/google.cloud.storage.
+        client.Client#parameters>`__ for options).
 
     Notes
     -----
@@ -64,6 +69,7 @@ class GcsBucket(ArgRepr):
             user_project: str | None = None,
             storage_class: str | None = None,
             requester_pays: bool = False,
+            **kwargs: Any
     ) -> None:
         self.project = project.strip(' /.')
         self.bucket = bucket.strip(' /.')
@@ -76,6 +82,7 @@ class GcsBucket(ArgRepr):
             self.user_project = user_project.strip(' /.')
         self.storage_class = storage_class
         self.requester_pays = requester_pays
+        self.kwargs = kwargs
         super().__init__(
             self.project,
             self.bucket,
@@ -84,7 +91,8 @@ class GcsBucket(ArgRepr):
             labels=self.labels,
             user_project=self.user_project,
             storage_class=self.storage_class,
-            requester_pays=self.requester_pays
+            requester_pays=self.requester_pays,
+            **kwargs
         )
 
     def __call__(
@@ -92,7 +100,6 @@ class GcsBucket(ArgRepr):
             exists_ok: bool = True,
             retry: Retry | None = None,
             timeout: float | tuple[float, float] | None = None,
-            **kwargs: Any
     ) -> tuple[Bucket, bool]:
         """Create a new bucket on Google Cloud Storage.
 
@@ -112,11 +119,6 @@ class GcsBucket(ArgRepr):
             The number of seconds to wait for the HTTP response to the API call
             before using `retry` or a tuple with separate values for connection
             and request timeouts. Defaults to ``None``, meaning wait forever.
-        **kwargs
-            Additional keyword arguments are passed to the constructor of the
-            Google Storage client (see `documentation <https://cloud.google.
-            com/python/docs/reference/storage/latest/google.cloud.storage.
-            client.Client#parameters>`__ for options).
 
         Raises
         ------
@@ -134,7 +136,7 @@ class GcsBucket(ArgRepr):
             if an existing bucket is returned.
 
         """
-        client = Client(self.project, **kwargs)
+        client = Client(self.project, **self.kwargs)
         bucket = Bucket(client, self.bucket, self.user_project)
 
         bucket.requester_pays = self.requester_pays

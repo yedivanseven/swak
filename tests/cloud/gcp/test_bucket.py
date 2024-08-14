@@ -45,6 +45,10 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.create, 'requester_pays'))
         self.assertFalse(self.create.requester_pays)
 
+    def test_kwargs(self):
+        self.assertTrue(hasattr(self.create, 'kwargs'))
+        self.assertDictEqual({}, self.create.kwargs)
+
     def test_project_stripped(self):
         create = GcsBucket(
             ' /.project ./',
@@ -81,7 +85,8 @@ class TestAttributes(unittest.TestCase):
             {'foo': 'bar'},
             'user',
             'storage',
-            True
+            True,
+            hello='world'
         )
 
     def test_blob_expire_days(self):
@@ -99,6 +104,9 @@ class TestAttributes(unittest.TestCase):
 
     def test_requester_pays(self):
         self.assertTrue(self.create.requester_pays)
+
+    def test_kwargs(self):
+        self.assertDictEqual({'hello': 'world'}, self.create.kwargs)
 
     def test_user_project_stripped(self):
         create = GcsBucket(
@@ -121,7 +129,8 @@ class TestUsage(unittest.TestCase):
             {'foo': 'bar'},
             'user',
             'storage',
-            True
+            True,
+            hello='world'
         )
 
     def test_callable(self):
@@ -133,17 +142,12 @@ class TestUsage(unittest.TestCase):
         _ = self.create()
         mock_client.assert_called_once()
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_client_called_once_with_defaults(self, mock_client, _):
-        _ = self.create()
-        mock_client.assert_called_once_with('project')
 
     @patch('swak.cloud.gcp.bucket.Bucket')
     @patch('swak.cloud.gcp.bucket.Client')
     def test_client_called_once_with_kwargs(self, mock_client, _):
-        _ = self.create(foo='bar')
-        mock_client.assert_called_once_with('project', foo='bar')
+        _ = self.create()
+        mock_client.assert_called_once_with('project', hello='world')
 
     @patch('swak.cloud.gcp.bucket.Bucket')
     @patch('swak.cloud.gcp.bucket.Client')

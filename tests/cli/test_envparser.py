@@ -144,11 +144,11 @@ class TestParse(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def test_representation_default(self):
+    def test_repr_default(self):
         parser = EnvParser()
         self.assertEqual("EnvParser('')", repr(parser))
 
-    def test_representation_prefix(self):
+    def test_repr_prefix(self):
         parser = EnvParser('PREFIX_')
         self.assertEqual("EnvParser('PREFIX_')", repr(parser))
 

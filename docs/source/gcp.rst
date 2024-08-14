@@ -62,3 +62,8 @@ gcp
    :members:
    :special-members: __call__
    :show-inheritance:
+
+.. autoclass:: swak.cloud.gcp.GbqQuery2GcsParquet
+   :members:
+   :special-members: __call__
+   :show-inheritance:

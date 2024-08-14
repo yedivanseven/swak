@@ -76,6 +76,11 @@ class GbqDataset:
     tags: dict, optional
         Associate globally defined tags with this dataset. Defaults to ``None``,
         which result in no tags to be associated.
+    **kwargs
+        Additional keyword arguments are passed to the constructor of the
+        Google BigQuery ``Client`` (see `documentation <https://cloud.google.
+        com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
+        client.Client#parameters>`__ for options).
 
     Notes
     -----
@@ -107,7 +112,8 @@ class GbqDataset:
             rounding: str | None = None,
             max_travel_time_hours: int = 168,
             billing: str | None = None,
-            tags: dict[str, str] | None = None
+            tags: dict[str, str] | None = None,
+            **kwargs: Any
     ) -> None:
         self.project = project.strip(' /.')
         self.dataset = dataset.strip(' /.')
@@ -124,6 +130,7 @@ class GbqDataset:
         self.max_travel_time_hours = max_travel_time_hours
         self.billing = billing
         self.tags = {} if tags is None else tags
+        self.kwargs = kwargs
 
     @staticmethod
     @overload
@@ -172,7 +179,6 @@ class GbqDataset:
             exists_ok: bool = True,
             retry: Retry | None = None,
             timeout: float | tuple[float, float] | None = None,
-            **kwargs: Any
     ) -> tuple[Dataset, bool]:
         """Create a Google BigQuery dataset in a Google Cloud Platform project.
 
@@ -192,11 +198,6 @@ class GbqDataset:
             The number of seconds to wait for the HTTP response to the API call
             before using `retry` or a tuple with separate values for connection
             and request timeouts. Defaults to ``None``, meaning wait forever.
-        **kwargs
-            Additional keyword arguments are passed to the constructor of the
-            Google BigQuery client (see `documentation <https://cloud.google.
-            com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
-            client.Client#parameters>`__ for options).
 
         Raises
         ------
@@ -215,7 +216,7 @@ class GbqDataset:
 
         """
         dataset = Dataset.from_api_repr(self.api_repr)
-        client = Client(self.project, **kwargs)
+        client = Client(self.project, location=self.location, **self.kwargs)
         try:
             _ = client.get_dataset(dataset.reference, retry, timeout)
         except NotFound:

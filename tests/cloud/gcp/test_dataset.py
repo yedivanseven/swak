@@ -40,6 +40,10 @@ class TestDefaultAttributes(unittest.TestCase):
         }
         self.assertDictEqual(expected, self.create.api_repr)
 
+    def test_kwargs(self):
+        self.assertTrue(hasattr(self.create, 'kwargs'))
+        self.assertDictEqual({}, self.create.kwargs)
+
     def test_has_to_ms(self):
         self.assertTrue(hasattr(self.create, 'to_ms'))
 
@@ -106,7 +110,7 @@ class TestAttributes(unittest.TestCase):
             rounding='rounding',
             max_travel_time_hours=48,
             billing='billing',
-            tags={'baz': 'pan'}
+            tags={'baz': 'pan'},
         )
         expected = {
             "datasetReference": {
@@ -137,6 +141,15 @@ class TestAttributes(unittest.TestCase):
         }
         self.assertDictEqual(expected, create.api_repr)
 
+    def test_kwargs(self):
+        create = GbqDataset(
+            'project',
+            'dataset',
+            'location',
+            hello='world'
+        )
+        self.assertDictEqual({'hello': 'world'}, create.kwargs)
+
     def test_name_stripped(self):
         create = GbqDataset(
             ' / project . /',
@@ -165,7 +178,8 @@ class TestUsage(unittest.TestCase):
             rounding='rounding',
             max_travel_time_hours=48,
             billing='billing',
-            tags={'baz': 'pan'}
+            tags={'baz': 'pan'},
+            hello='world'
         )
 
     def test_callable(self):
@@ -180,20 +194,12 @@ class TestUsage(unittest.TestCase):
         mock.assert_called_once()
 
     @patch('swak.cloud.gcp.dataset.Client')
-    def test_client_called_with_defaults(self, mock):
-        client = Mock()
-        client.create_dataset = Mock(return_value='success')
-        mock.return_value = client
-        _ = self.create()
-        mock.assert_called_with('project')
-
-    @patch('swak.cloud.gcp.dataset.Client')
     def test_client_called_with_kwargs(self, mock):
         client = Mock()
         client.create_dataset = Mock(return_value='success')
         mock.return_value = client
-        _ = self.create(foo='bar')
-        mock.assert_called_with('project', foo='bar')
+        _ = self.create()
+        mock.assert_called_with('project', location='location', hello='world')
 
     @patch('swak.cloud.gcp.dataset.Client')
     def test_create_called_once(self, mock):
