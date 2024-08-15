@@ -126,7 +126,7 @@ class JsonObjects[T]:
     def __radd__(self, others: Records | Self) -> Self:
         return self.__class__(self.__class__(others), *self)
 
-    def __call__(self, mapping: Record = None,  **kwargs: Any) -> Self:
+    def __call__(self, mapping: Record = None, **kwargs: Any) -> Self:
         """Update one or more (nested) fields within each item.
 
         Parameters

@@ -585,8 +585,8 @@ class TestExceptions(unittest.TestCase):
     def test_bytearray_and_kwarg(self):
         with self.assertRaises(ValidationErrors):
             _ = self.flat(
-                    bytearray('{"b": "hello"}'.encode('utf-8')),
-                    c='world'
+                bytearray('{"b": "hello"}'.encode('utf-8')),
+                c='world'
             )
 
 

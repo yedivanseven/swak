@@ -14,7 +14,6 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.query, 'project'))
         self.assertEqual('project', self.query.project)
 
-
     def test_location(self):
         self.assertTrue(hasattr(self.query, 'location'))
         self.assertEqual('location', self.query.location)
@@ -144,8 +143,6 @@ class TestUsage(unittest.TestCase):
         self.assertTupleEqual((), actual)
 
 
-
-
 class TestMisc(unittest.TestCase):
 
     def setUp(self):
@@ -156,7 +153,6 @@ class TestMisc(unittest.TestCase):
             'INTERACTIVE',
             hello='world'
         )
-
 
     def test_repr(self):
         expected = ("GbqQuery('project', 'location', 7, 'INTERACTIVE', "

@@ -555,7 +555,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(m))
 
     def test_map_arg_repr(self):
-        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2),42)
+        m = ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2), 42)
         expected = "ThreadMap(plus_2, None, 8, 'tm', plus, (1, 2), 42)"
         self.assertEqual(expected, repr(m))
 

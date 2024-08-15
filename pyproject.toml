@@ -24,22 +24,23 @@ description = "Swiss army knife for functional data-science projects."
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = [
-    'functional',
-    'tools',
-    'utilities',
-    'helpers',
+    "functional",
+    "tools",
+    "utilities",
+    "helpers",
 ]
 classifiers = [
-    'Development Status :: 1 - Planning',
-    'Intended Audience :: Developers',
-    'Programming Language :: Python :: 3.12',
-    'Topic :: Utilities',
-    'License :: OSI Approved :: MIT License',
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
 ]
 
 [tool.setuptools]
-packages = ['swak']
+packages = ["swak"]
 
 [tool.setuptools_scm]
 version_file = "version.env"
 version_file_template = "SETUPTOOLS_SCM_PRETEND_VERSION={version}"
+

@@ -185,6 +185,7 @@ class TestUsage(unittest.TestCase):
             'bucket',
             prefix='prefix/'
         )
+
     def test_list_called_prefix_call(self):
         export = GbqQuery2GcsParquet(
             'project',
@@ -264,7 +265,6 @@ class TestUsage(unittest.TestCase):
         _ = export(self.query)
         self.storage_instance.get_bucket.assert_not_called()
         self.bucket.delete_blobs.assert_not_called()
-
 
     def test_client_called_default(self):
         export = GbqQuery2GcsParquet('project', 'bucket', 'location')
@@ -396,19 +396,39 @@ class TestUsage(unittest.TestCase):
                     'SELECT *\n')
         self.client_instance.query.assert_called_once_with(expected, 'config')
 
-    def test_query_strips_name(self):
+    def test_query_interpolates_args_into_prefix(self):
         export = GbqQuery2GcsParquet(
             'project',
             'bucket',
             'location',
             'pre'
         )
-        _ = export('DECLARE;\nSET;\nSELECT *\n', 'fix', ' /. name./ ')
+        _ = export('DECLARE;\nSET;\nSELECT *\n', 'fix/{}', 'foo')
         expected = ('DECLARE;\n'
                     'SET;\n'
                     '\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/name*.pqt"\n'
+                    '        uri="gs://bucket/pre/fix/foo/*.pqt"\n'
+                    '      , format="PARQUET"\n'
+                    '      , compression="SNAPPY"\n'
+                    '      , overwrite=false\n'
+                    '    ) AS\n\n'
+                    'SELECT *\n')
+        self.client_instance.query.assert_called_once_with(expected, 'config')
+
+    def test_query_strips_interpolated_prefix_args(self):
+        export = GbqQuery2GcsParquet(
+            'project',
+            'bucket',
+            'location',
+            'pre'
+        )
+        _ = export('DECLARE;\nSET;\nSELECT *\n', 'fix/{}', 'foo /.')
+        expected = ('DECLARE;\n'
+                    'SET;\n'
+                    '\n'
+                    '    EXPORT DATA OPTIONS(\n'
+                    '        uri="gs://bucket/pre/fix/foo/*.pqt"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=false\n'
@@ -424,10 +444,10 @@ class TestUsage(unittest.TestCase):
             'pre',
             overwrite=True
         )
-        _ = export('SELECT *\n', 'fix', 'name')
+        _ = export('SELECT *\n', 'fix')
         expected = ('\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/name*.pqt"\n'
+                    '        uri="gs://bucket/pre/fix/*.pqt"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=true\n'
@@ -464,7 +484,9 @@ class TestUsage(unittest.TestCase):
         export = GbqQuery2GcsParquet('project', 'bucket', 'location')
         prefix = export('SELECT *\n')
         self.assertIsInstance(prefix, str)
-        self.assertTrue(prefix)
+        expected = ('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]'
+                    '{4}-[0-9a-f]{4}-[0-9a-f]{12}/$')
+        self.assertRegex(prefix, expected)
 
     def test_checks_job_running(self):
         export = GbqQuery2GcsParquet('project', 'bucket', 'location')

@@ -142,7 +142,6 @@ class TestUsage(unittest.TestCase):
         _ = self.create()
         mock_client.assert_called_once()
 
-
     @patch('swak.cloud.gcp.bucket.Bucket')
     @patch('swak.cloud.gcp.bucket.Client')
     def test_client_called_once_with_kwargs(self, mock_client, _):
@@ -372,7 +371,6 @@ class TestUsage(unittest.TestCase):
         new, created = self.create()
         self.assertIs(bucket, new)
         self.assertTrue(created)
-
 
 
 class TestMisc(unittest.TestCase):
