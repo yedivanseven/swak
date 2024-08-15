@@ -158,7 +158,7 @@ class GbqQuery2GcsParquet(ArgRepr):
         while job.running():
             time.sleep(self.polling_interval)
         if error := job.error_result:
-            raise GbqError(f"{error['reason'].upper()}: {error['message']}")
+            raise GbqError(f"\n{error['reason'].upper()}: {error['message']}")
         return prefix
 
     def __skip_query_for(self, prefix: str) -> bool:
