@@ -23,7 +23,7 @@ class GcsBucket(ArgRepr):
     bucket: str
         The name of the bucket to create.
     location: str
-        The physical datacenter location to create the dataset in. See the
+        The physical datacenter location to create the bucket in. See the
         Google Cloud Platform `documentation <https://cloud.google.com/storage/
         docs/locations>`__ for options.
     blob_expire_days: int, optional

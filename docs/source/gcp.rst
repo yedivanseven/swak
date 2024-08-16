@@ -67,3 +67,8 @@ gcp
    :members:
    :special-members: __call__
    :show-inheritance:
+
+.. autoclass:: swak.cloud.gcp.GcsDir2LocalDir
+   :members:
+   :special-members: __call__
+   :show-inheritance:

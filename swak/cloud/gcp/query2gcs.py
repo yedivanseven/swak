@@ -61,7 +61,7 @@ class GbqQuery2GcsParquet(ArgRepr):
     """
 
     _template = """    EXPORT DATA OPTIONS(
-        uri="gs://{}/{}/*.pqt"
+        uri="gs://{}/{}*.pqt"
       , format="PARQUET"
       , compression="SNAPPY"
       , overwrite={}
@@ -124,7 +124,7 @@ class GbqQuery2GcsParquet(ArgRepr):
         *args
             Additional arguments will be interpolated into the path-joined
             prefixes given at instantiation and on call. Obviously, the number
-            args must be equal to (or greater than) the total number of
+            of args must be equal to (or greater than) the total number of
             placeholders in the combined prefixes.
         **kwargs
             Additional keyword arguments are passed to the constructor of the
@@ -177,12 +177,13 @@ class GbqQuery2GcsParquet(ArgRepr):
         prefix = os.path.join(self.prefix, prefix) if prefix else self.prefix
         prefix = prefix or str(uuid.uuid4())
         prefix = prefix.format(*args).rstrip(' /.')
+        prefix = prefix + '/' if prefix else ''
         header = self._template.format(
             self.bucket,
-            prefix.format(*args),
+            prefix,
             str(self.overwrite).lower()
         )
-        return prefix + '/', header
+        return prefix, header
 
     @staticmethod
     def __split(query: str) -> tuple[str, str]:
