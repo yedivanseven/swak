@@ -1,7 +1,56 @@
 text
 ====
 
-.. automodule:: swak.text
+Classes
+-------
+
+.. autoclass:: swak.text.resource.TextResourceLoader
    :members:
    :special-members: __call__
    :show-inheritance:
+
+
+.. autoclass:: swak.text.interpolate.TemplateRenderer
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.text.interpolate.FormFiller
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.text.read.TomlReader
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.text.read.YamlReader
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.text.parse.YamlParser
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+Enums
+-----
+
+.. autoclass:: swak.text.misc.NotFound
+   :show-inheritance:
+
+   .. autoattribute:: IGNORE
+      :annotation: = ignore
+
+   .. autoattribute:: WARN
+      :annotation: = warn
+
+   .. autoattribute:: RAISE
+      :annotation: = raise
