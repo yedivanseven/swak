@@ -58,17 +58,26 @@ gcp
    :special-members: __call__
    :show-inheritance:
 
+
 .. autoclass:: swak.cloud.gcp.GbqQuery
    :members:
    :special-members: __call__
    :show-inheritance:
+
 
 .. autoclass:: swak.cloud.gcp.GbqQuery2GcsParquet
    :members:
    :special-members: __call__
    :show-inheritance:
 
+
 .. autoclass:: swak.cloud.gcp.GcsDir2LocalDir
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.cloud.gcp.GcsParquet2DataFrame
    :members:
    :special-members: __call__
    :show-inheritance:

@@ -31,8 +31,8 @@ class GcsDir2LocalDir(ArgRepr):
     n_threads: int, optional
         Maximum number of blobs to download in parallel. Defaults to 16.
     chunk_size: int, optional
-        Chunk size to read from Google Cloud Storage in one API call in MB.
-        Defaults to 10 MB.
+        Chunk size to read from Google Cloud Storage in one API call in MiB.
+        Defaults to 10 MiB.
     **kwargs
         Additional keyword arguments are passed to the constructor of the
         Google Storage ``Client`` (see `documentation <https://cloud.google.
