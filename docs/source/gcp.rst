@@ -81,3 +81,9 @@ gcp
    :members:
    :special-members: __call__
    :show-inheritance:
+
+
+.. autoclass:: swak.cloud.gcp.GbqQuery2DataFrame
+   :members:
+   :special-members: __call__
+   :show-inheritance:

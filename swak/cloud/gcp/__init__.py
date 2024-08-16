@@ -4,6 +4,7 @@ from .query import GbqQuery
 from .query2gcs import GbqQuery2GcsParquet
 from .gcs2local import GcsDir2LocalDir
 from .gcs2df import GcsParquet2DataFrame
+from .query2df import GbqQuery2DataFrame
 
 __all__ = [
     'Collation',
@@ -15,5 +16,6 @@ __all__ = [
     'GbqQuery',
     'GbqQuery2GcsParquet',
     'GcsDir2LocalDir',
-    'GcsParquet2DataFrame'
+    'GcsParquet2DataFrame',
+    'GbqQuery2DataFrame'
 ]
