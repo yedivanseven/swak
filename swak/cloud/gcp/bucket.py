@@ -1,8 +1,10 @@
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 from google.cloud.storage import Client, Bucket
 from google.api_core.retry import Retry
 from ...magic import ArgRepr
+
+type StorageType = Literal['STANDARD', 'NEARLINE', 'COLDLINE', 'ARCHIVE']
 
 
 class Storage(StrEnum):
@@ -67,7 +69,7 @@ class GcsBucket(ArgRepr):
             blob_expire_days: int | None = None,
             labels: dict[str, str] | None = None,
             user_project: str | None = None,
-            storage_class: str | None = None,
+            storage_class: StorageType | None = None,
             requester_pays: bool = False,
             **kwargs: Any
     ) -> None:

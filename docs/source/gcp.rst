@@ -87,3 +87,22 @@ gcp
    :members:
    :special-members: __call__
    :show-inheritance:
+
+
+.. autoclass:: swak.cloud.gcp.IfExists
+   :show-inheritance:
+
+   .. autoattribute:: FAIL
+      :annotation: = fail
+
+   .. autoattribute:: REPLACE
+      :annotation: = replace
+
+   .. autoattribute:: APPEND
+      :annotation: = append
+
+
+.. autoclass:: swak.cloud.gcp.DataFrame2Gbq
+   :members:
+   :special-members: __call__
+   :show-inheritance:

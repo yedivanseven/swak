@@ -1,9 +1,13 @@
 import json
 from enum import StrEnum
-from typing import Any, overload
+from typing import Any, overload, Literal
 from google.cloud.bigquery import Client, Dataset
 from google.cloud.exceptions import NotFound
 from google.api_core.retry import Retry
+
+type CollationType = Literal['', 'und:ci']
+type RoundingType = Literal['ROUND_HALF_AWAY_FROM_ZERO', 'ROUND_HALF_EVEN']
+type BillingType = Literal['PHYSICAL', 'LOGICAL']
 
 
 class Collation(StrEnum):
@@ -108,10 +112,10 @@ class GbqDataset:
             labels: dict[str, str] | None = None,
             access: list[dict[str, str]] | None = None,
             case_sensitive: bool = True,
-            collation: str | None = None,
-            rounding: str | None = None,
+            collation: CollationType | None = None,
+            rounding: RoundingType | None = None,
             max_travel_time_hours: int = 168,
-            billing: str | None = None,
+            billing: BillingType | None = None,
             tags: dict[str, str] | None = None,
             **kwargs: Any
     ) -> None:

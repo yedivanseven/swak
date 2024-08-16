@@ -5,18 +5,22 @@ from ...magic import ArgRepr
 
 
 class GbqQuery2DataFrame(ArgRepr):
-    """Send SQL to Google BigQuery and read the result into a pandas DataFrame.
+    """Partial of the ``read_gbq`` function in the``pandas_gbq`` package.
 
-    This is a simple partial to the top-level ``read_gbq`` function of the
-    ``pandas_gbq`` package. As such, it is not suitable for downloading large
-    amounts of data (see its `documentation <https://googleapis.dev/python/
-    pandas-gbq/latest/>`__ for further details). For query a little (meta)data,
-    however, it is most convenient.
+    As such, it may not bet suitable for downloading large amounts of data (see
+    its `documentation <https://googleapis.dev/python/pandas-gbq/latest/>`__
+    for details).
 
     Parameters
     ----------
+    project: str
+        The project to bill for the query/retrieval.
+    location: str
+        The physical datacenter location to fetch the data from. See the
+        Google Cloud Platform `documentation <https://cloud.google.com/
+        bigquery/docs/locations>`__ for options.
     **kwargs
-        Keyword arguments passed on to the ``read_gbq`` function call.
+        Additional keyword arguments passed on to the ``read_gbq`` call.
 
     See Also
     --------
@@ -26,28 +30,40 @@ class GbqQuery2DataFrame(ArgRepr):
 
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
+    def __init__(
+            self,
+            project: str,
+            location: str,
+            **kwargs: Any
+    ) -> None:
+        self.project = project.strip(' ./')
+        self.location = location.strip().lower()
         self.kwargs = kwargs
+        super().__init__(self.project, self.location, **kwargs)
 
-    def __call__(self, query: str, *args: Any) -> DataFrame:
+    def __call__(self, query_or_table: str, *args: Any) -> DataFrame:
         """Read results of Google BigQuery SQL into pandas DataFrame.
 
         Parameters
         ----------
-        query: str
-            SQL query to be submitted to Google BigQuery.
+        query_or_table: str
+            Table name (including dataset) or SQL query to be
+            retrieved from or submitted to Google BigQuery.
         *args
-            Additional arguments will be interpolated into the query.
-            Obviously, the number of args must be equal to (or greater than)
-            the total number of placeholders in the query.
+            Additional arguments will be interpolated into the query or table
+            name. Obviously, the number of args must be equal to (or greater
+            than) the total number of placeholders in the query or table name.
 
         Returns
         -------
         DataFrame
-            The results of the SQL query.
+            The results of the SQL query ro the contents of the table.
 
         """
-        df = pq.read_gbq(query.format(*args), **self.kwargs)
-        df.reset_index(drop=True, inplace=True)
-        return df
+        return pq.read_gbq(
+            query_or_table.format(*args),
+            project_id=self.project,
+            location=self.location,
+            progress_bar_type=None,
+            **self.kwargs
+        )
