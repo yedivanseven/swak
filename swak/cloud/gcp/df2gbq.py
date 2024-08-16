@@ -13,7 +13,7 @@ class IfExists(StrEnum):
 
 
 class DataFrame2Gbq(ArgRepr):
-    """Partial of the ``read_gbq`` function in the``pandas_gbq`` package.
+    """Partial of the ``to_gbq`` function in the``pandas_gbq`` package.
 
     As such, it may not be suitable for uploading large amounts of data (see
     its `documentation <https://googleapis.dev/python/pandas-gbq/latest/>`__
@@ -28,7 +28,7 @@ class DataFrame2Gbq(ArgRepr):
         Google Cloud Platform `documentation <https://cloud.google.com/
         bigquery/docs/locations>`__ for options.
     table: str
-        The full table name to load data into, including the dataset it.
+        The full table name to load data into, including the dataset id.
     if_exists: str, optional
         What to do if the destination table already exists. Can be one of
         "fail", "replace" or "append". Defaults to "fail".  Use the
@@ -38,7 +38,7 @@ class DataFrame2Gbq(ArgRepr):
         Defaults to ``None``, resulting in the entire dataframe to be
         inserted at once.
     **kwargs
-        Additional keyword arguments passed on to the ``read_gbq`` call.
+        Additional keyword arguments passed on to the ``to_gbq`` call.
 
     See Also
     --------
