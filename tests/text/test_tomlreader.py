@@ -152,11 +152,6 @@ class TestUsage(unittest.TestCase):
         actual = t('/ foo/bar.toml/ ')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
-    def test_path_interpolated(self):
-        t = TomlReader(self.dir)
-        actual = t('foo/{}/world.toml', 'hello')
-        self.assertDictEqual({'world': {'answer': 42}}, actual)
-
     def test_default_raises_file_not_found(self):
         t = TomlReader(self.dir)
         with self.assertRaises(FileNotFoundError):

@@ -124,8 +124,8 @@ class ArgParser:
         """Raise if any action string is not a valid python identifier."""
         for action in actions:
             if not action.isidentifier():
-                msg = f'Actions must be valid identifiers, unlike "{action}"!'
-                raise ArgParseError(msg)
+                msg = 'Actions must be valid identifiers, unlike "{}"!'
+                raise ArgParseError(msg.format(action))
         return actions
 
     @staticmethod

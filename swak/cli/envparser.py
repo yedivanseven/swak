@@ -48,7 +48,7 @@ class EnvParser(ArgRepr):
         original = {}
         for key in env:
             if key.startswith(self.prefix):
-                prefixed[key[len(self.prefix):]] = env[key]
+                prefixed[key.removeprefix(self.prefix)] = env[key]
             else:
                 original[key] = env[key]
         merged = original | prefixed

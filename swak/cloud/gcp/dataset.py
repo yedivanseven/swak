@@ -44,7 +44,7 @@ class GbqDataset:
         bigquery/docs/locations>`__ for options.
     name: str, optional
         A human-readable name of the dataset. Defaults to the `dataset` it.
-    description: str
+    description: str, optional
         A short description of the dataset. Defaults to ``None``.
     table_expire_days: int, optional
         Number of days after which tables are dropped. Defaults to ``None``,

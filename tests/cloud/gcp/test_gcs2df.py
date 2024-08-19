@@ -183,44 +183,6 @@ class TestPrefix(unittest.TestCase):
         self.assertIsInstance(actual, pd.DataFrame)
         self.assertTrue(actual.empty)
 
-    def test_instantiation_prefix_interpolated(self):
-        self.blob.name = 'pre/foo/fix/blob.pqt'
-        download = GcsParquet2DataFrame(
-            'project',
-            'bucket',
-            'pre/{}/fix',
-        )
-        _ = download('', 'foo')
-        self.client_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='pre/foo/fix/'
-        )
-
-    def test_call_prefix_interpolated(self):
-        self.blob.name = 'pre/foo/fix/blob.pqt'
-        download = GcsParquet2DataFrame(
-            'project',
-            'bucket',
-        )
-        _ = download('pre/{}/fix', 'foo')
-        self.client_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='pre/foo/fix/'
-        )
-
-    def test_partial_prefixes_interpolated(self):
-        self.blob.name = 'pre/foo/bar/fix/blob.pqt'
-        download = GcsParquet2DataFrame(
-            'project',
-            'bucket',
-            'pre/{}'
-        )
-        _ = download('/{}/fix', 'foo', 'bar')
-        self.client_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='pre/foo/bar/fix/'
-        )
-
 
 class TestCloud(unittest.TestCase):
 

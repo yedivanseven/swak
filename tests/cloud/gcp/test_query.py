@@ -8,15 +8,11 @@ from swak.cloud.gcp.exceptions import GbqError
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.query = GbqQuery('project', 'location')
+        self.query = GbqQuery('project')
 
     def test_project(self):
         self.assertTrue(hasattr(self.query, 'project'))
         self.assertEqual('project', self.query.project)
-
-    def test_location(self):
-        self.assertTrue(hasattr(self.query, 'location'))
-        self.assertEqual('location', self.query.location)
 
     def test_polling_interval(self):
         self.assertTrue(hasattr(self.query, 'polling_interval'))
@@ -32,12 +28,8 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertDictEqual({}, self.query.kwargs)
 
     def test_project_stripped(self):
-        query = GbqQuery(' /.project ./', ' location ')
+        query = GbqQuery(' /.project ./')
         self.assertEqual('project', query.project)
-
-    def test_location_stripped_lower(self):
-        query = GbqQuery(' /.project ./', ' LocATIon ')
-        self.assertEqual('location', query.location)
 
 
 class TestAttributes(unittest.TestCase):
@@ -45,7 +37,6 @@ class TestAttributes(unittest.TestCase):
     def setUp(self):
         self.query = GbqQuery(
             'project',
-            'location',
             7,
             ' INterACTivE  ',
             hello='world'
@@ -82,7 +73,6 @@ class TestUsage(unittest.TestCase):
         self.config = self.config_patch.start()
         self.query = GbqQuery(
             'project',
-            'location',
             7,
             'INTERACTIVE',
             hello='world'
@@ -103,7 +93,6 @@ class TestUsage(unittest.TestCase):
         _ = self.query('SELECT 1', foo='bar')
         self.client_class.assert_called_once_with(
             self.query.project,
-            location=self.query.location,
             hello='world'
         )
 
@@ -148,15 +137,13 @@ class TestMisc(unittest.TestCase):
     def setUp(self):
         self.query = GbqQuery(
             'project',
-            'location',
             7,
             'INTERACTIVE',
             hello='world'
         )
 
     def test_repr(self):
-        expected = ("GbqQuery('project', 'location', 7, 'INTERACTIVE', "
-                    "hello='world')")
+        expected = "GbqQuery('project', 7, 'INTERACTIVE', hello='world')"
         self.assertEqual(expected, repr(self.query))
 
     def test_pickle_works(self):

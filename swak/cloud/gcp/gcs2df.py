@@ -66,7 +66,7 @@ class GcsParquet2DataFrame(ArgRepr):
         in_multiples_of_256kb = int(in_bytes // (256 * 1024))
         return in_multiples_of_256kb * 256 * 1024
 
-    def __call__(self, prefix: str = '', *args: Any) -> DataFrame:
+    def __call__(self, prefix: str = '') -> DataFrame:
         """Load parquet files from Google Cloud Storage into a pandas DataFrame.
 
         Parameters
@@ -75,11 +75,6 @@ class GcsParquet2DataFrame(ArgRepr):
             The prefix of the parquet files to load. If given here, it will
             be appended to the `prefix` given at instantiation time.
             Defaults to an empty string.
-        *args
-            Additional arguments will be interpolated into the path-joined
-            prefixes given at instantiation and on call. Obviously, the number
-            of args must be equal to (or greater than) the total number of
-            placeholders in the combined prefixes.
 
         Returns
         -------
@@ -88,8 +83,7 @@ class GcsParquet2DataFrame(ArgRepr):
 
         """
         prefix = prefix.strip(' ./') + '/' if prefix.strip(' ./') else ''
-        remote = (self.prefix + prefix).format(*args).rstrip(' ./')
-        remote = remote + '/' if remote else ''
+        remote = self.prefix + prefix
 
         client = gcs.Client(self.project, **self.kwargs)
         blobs = client.list_blobs(self.bucket, prefix=remote or None)

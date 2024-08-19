@@ -60,7 +60,7 @@ class TomlReader(ArgRepr):
             **self.kwargs
         )
 
-    def __call__(self, path: str, *args: Any) -> Toml:
+    def __call__(self, path: str) -> Toml:
         """Read a specific TOML file.
 
         If `not_found` is set to "warn" or "ignore" and the file cannot be
@@ -73,11 +73,6 @@ class TomlReader(ArgRepr):
             to read. May contain any number of forward slashes to access
             nested subdirectories, or string placeholders (i.e., curly brackets)
             to interpolate with `args`.
-        *args
-            Additional arguments will be interpolated into the joined string
-            of `base_dir` and `path` by calling its `format` method. Obviously,
-            the number of args must be equal to (or greater than) the total
-            number of placeholders in the combined `base_dir` and `path`.
 
         Returns
         -------
@@ -85,7 +80,7 @@ class TomlReader(ArgRepr):
             The parsed contents of the TOML file.
 
         """
-        full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
+        full_path = self.base_dir + '/' + path.strip(' /')
         try:
             with open(full_path, 'rb', **self.kwargs) as file:
                 toml = tomllib.load(file, parse_float=self.parse_float)
@@ -145,7 +140,7 @@ class YamlReader(ArgRepr):
             self.kwargs = kwargs
         super().__init__(self.base_dir, str(not_found), loader, **self.kwargs)
 
-    def __call__(self, path: str, *args: Any) -> Yaml:
+    def __call__(self, path: str) -> Yaml:
         """Read a specific YAML file.
 
         If `not_found` is set to "warn" or "ignore" and the file cannot be
@@ -158,11 +153,6 @@ class YamlReader(ArgRepr):
             to read. May contain any number of forward slashes to access
             nested subdirectories, or string placeholders (i.e., curly brackets)
             to interpolate with `args`.
-        *args
-            Additional arguments will be interpolated into the joined string
-            of `base_dir` and `path` by calling its `format` method. Obviously,
-            the number of args must be equal to (or greater than) the total
-            number of placeholders in the combined `base_dir` and `path`.
 
         Returns
         -------
@@ -170,7 +160,7 @@ class YamlReader(ArgRepr):
             The parsed contents of the YAML file.
 
         """
-        full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
+        full_path = self.base_dir + '/' + path.strip(' /')
         try:
             with open(full_path, 'rb', **self.kwargs) as file:
                 yml = yaml.load(file, self.loader)

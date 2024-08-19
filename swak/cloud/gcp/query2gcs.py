@@ -26,14 +26,10 @@ class GbqQuery2GcsParquet(ArgRepr):
         The Google Cloud Storage bucket to export to. Note that, unless you
         have set up some different "wiring" yourself, the project of the
         bucket is the same as `project`.
-    location: str
-        The physical datacenter location to run the query on. See the
-        Google Cloud Platform `documentation <https://cloud.google.com/
-        bigquery/docs/locations>`__ for options.
     prefix: str, optional
         Prefix of the blob location, where parquet files will reside. If
         none is given here, one can be provided on calling the instance.
-        If both are given, they will be combined into one and, if neither
+        If both are given, they will be concatenated and, if neither
         is given, a UUID will be generated. Defaults to an empty string.
     overwrite: bool, optional
         Blobs with the given bucket/prefix combination may already exist on
@@ -71,7 +67,6 @@ class GbqQuery2GcsParquet(ArgRepr):
             self,
             project: str,
             bucket: str,
-            location: str,
             prefix: str = '',
             overwrite: bool = False,
             skip: bool = False,
@@ -82,7 +77,6 @@ class GbqQuery2GcsParquet(ArgRepr):
     ) -> None:
         self.project = project.strip(' /.')
         self.bucket = bucket.strip(' /.')
-        self.location = location.strip().lower()
         self.prefix = prefix.strip(' /.')
         self.overwrite = overwrite
         self.skip = skip
@@ -93,7 +87,6 @@ class GbqQuery2GcsParquet(ArgRepr):
         super().__init__(
             self.project,
             self.bucket,
-            self.location,
             self.prefix,
             self.overwrite,
             self.skip,
@@ -103,13 +96,7 @@ class GbqQuery2GcsParquet(ArgRepr):
             self.gcs_kws,
         )
 
-    def __call__(
-            self,
-            query: str,
-            prefix: str = '',
-            *args: Any,
-            **kwargs: Any
-    ) -> str:
+    def __call__(self, query: str, prefix: str = '', **kwargs: Any) -> str:
         """Export the results of a SQL query to Google Cloud Storage.
 
         Parameters
@@ -119,13 +106,8 @@ class GbqQuery2GcsParquet(ArgRepr):
         prefix: str, optional
             Prefix of the blob location, where parquet files will reside. If
             none is given, the prefix specified at instantiation will be used.
-            If both are given, they will be combined into one and, if neither
+            If both are given, they will be concatenated and, if neither
             is given, a UUID will be generated. Defaults to an empty string.
-        *args
-            Additional arguments will be interpolated into the path-joined
-            prefixes given at instantiation and on call. Obviously, the number
-            of args must be equal to (or greater than) the total number of
-            placeholders in the combined prefixes.
         **kwargs
             Additional keyword arguments are passed to the constructor of the
             Google BigQuery ``QueryJobConfig``. See `documentation
@@ -145,14 +127,10 @@ class GbqQuery2GcsParquet(ArgRepr):
 
         """
         scripts, main = self.__split(query)
-        prefix, header = self.__render(prefix.strip(' ./'), *args)
+        prefix, header = self.__render(prefix.strip(' ./'))
         if self.__skip_query_for(prefix):
             return prefix
-        client = gbq.Client(
-            self.project,
-            location=self.location,
-            **self.gbq_kws
-        )
+        client = gbq.Client(self.project, **self.gbq_kws)
         config = gbq.QueryJobConfig(priority=self.priority, **kwargs)
         job = client.query('\n'.join([scripts, header, main]), config)
         while job.running():
@@ -172,11 +150,10 @@ class GbqQuery2GcsParquet(ArgRepr):
             bucket.delete_blobs(blobs)
         return False
 
-    def __render(self, prefix: str, *args: Any) -> tuple[str, str]:
+    def __render(self, prefix: str) -> tuple[str, str]:
         """Render the EXPORT header template with the given parameters."""
         prefix = os.path.join(self.prefix, prefix) if prefix else self.prefix
         prefix = prefix or str(uuid.uuid4())
-        prefix = prefix.format(*args).rstrip(' /.')
         prefix = prefix + '/' if prefix else ''
         header = self._template.format(
             self.bucket,

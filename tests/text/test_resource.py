@@ -162,24 +162,6 @@ class TestUsage(unittest.TestCase):
         self.assertEqual('', actual)
 
 
-class TestInterpolation(unittest.TestCase):
-
-    def test_base_dir_only(self):
-        load = TextResourceLoader('tests.text', 'resources/{}')
-        txt = load('subdir/baz.txt', 'dir')
-        self.assertEqual('baz\n', txt)
-
-    def test_path_only(self):
-        load = TextResourceLoader('tests.text', )
-        txt = load('{}/{}/baz.txt', 'dir', 'subdir')
-        self.assertEqual('baz\n', txt)
-
-    def test_base_dir_and_path(self):
-        load = TextResourceLoader('tests.text', 'resources/{}')
-        txt = load('{}/baz.txt', 'dir', 'subdir')
-        self.assertEqual('baz\n', txt)
-
-
 class TestStrip(unittest.TestCase):
 
     def test_defaults_trailing(self):

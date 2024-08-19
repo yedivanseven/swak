@@ -20,7 +20,7 @@ class GcsDir2LocalDir(ArgRepr):
         The prefix of the blobs to download. Since it (or part of it)
         can also be provided later, when the callable instance is called, it
         is optional here. Defaults to an empty string.
-    base: str, optional
+    base_dir: str, optional
         Base directory on the local filesystem. Defaults to "/tmp".
     overwrite: bool, optional
         Whether to silently overwrite local destination directory. Defaults
@@ -54,7 +54,7 @@ class GcsDir2LocalDir(ArgRepr):
             project: str,
             bucket: str,
             prefix: str = '',
-            base: str = '/tmp',
+            base_dir: str = '/tmp',
             overwrite: bool = False,
             skip: bool = False,
             n_threads: int = 16,
@@ -64,7 +64,7 @@ class GcsDir2LocalDir(ArgRepr):
         self.project = project.strip(' /.')
         self.bucket = bucket.strip(' /.')
         self.prefix = prefix.strip(' ./') + '/' if prefix.strip(' ./') else ''
-        self.base = '/' + base.strip(' /')
+        self.base_dir = '/' + base_dir.strip(' /')
         self.overwrite = overwrite
         self.skip = skip
         self.n_threads = n_threads
@@ -74,7 +74,7 @@ class GcsDir2LocalDir(ArgRepr):
             self.project,
             self.bucket,
             self.prefix,
-            self.base,
+            self.base_dir,
             self.overwrite,
             self.skip,
             self.n_threads,
@@ -89,7 +89,7 @@ class GcsDir2LocalDir(ArgRepr):
         in_multiples_of_256kb = int(in_bytes // (256 * 1024))
         return in_multiples_of_256kb * 256 * 1024
 
-    def __call__(self, prefix: str = '', *args: Any) -> list[str]:
+    def __call__(self, prefix: str = '') -> list[str]:
         """Download parquet files from Google Cloud Storage to local drive.
 
         Parameters
@@ -98,11 +98,6 @@ class GcsDir2LocalDir(ArgRepr):
             The prefix of the parquet files to download. If given here, it will
             be appended to the `prefix` given at instantiation time.
             Defaults to an empty string.
-        *args
-            Additional arguments will be interpolated into the path-joined
-            prefixes given at instantiation and on call. Obviously, the number
-            of args must be equal to (or greater than) the total number of
-            placeholders in the combined prefixes.
 
         Returns
         -------
@@ -117,8 +112,7 @@ class GcsDir2LocalDir(ArgRepr):
 
         """
         prefix = prefix.strip(' ./') + '/' if prefix.strip(' ./') else ''
-        local = (self.prefix + prefix).format(*args).rstrip(' ./')
-        local = local + '/' if local else ''
+        local = self.prefix + prefix
 
         files = self.__files_from(local)
 
@@ -140,7 +134,7 @@ class GcsDir2LocalDir(ArgRepr):
 
     def __files_from(self, local: str) -> list[str]:
         """Return files from local directory if configured adn present."""
-        path = Path(self.base) / local
+        path = Path(self.base_dir) / local
 
         if path.exists() and self.overwrite:
             resolved = str(path.resolve())
@@ -169,7 +163,7 @@ class GcsDir2LocalDir(ArgRepr):
         blob = self.__thread.bucket.get_blob(name)
         blob.chunk_size = self.chunk_bytes
         file = blob.name.split('/')[-1]
-        path = Path(self.base) / local / file
+        path = Path(self.base_dir) / local / file
         with open(path, 'wb') as stream:
             blob.download_to_file(stream, raw_download=True)
         return str(path.resolve())

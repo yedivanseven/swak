@@ -15,10 +15,6 @@ class GbqQuery2DataFrame(ArgRepr):
     ----------
     project: str
         The project to bill for the query/retrieval.
-    location: str
-        The physical datacenter location to fetch the data from. See the
-        Google Cloud Platform `documentation <https://cloud.google.com/
-        bigquery/docs/locations>`__ for options.
     **kwargs
         Additional keyword arguments passed on to the ``read_gbq`` call.
 
@@ -30,40 +26,29 @@ class GbqQuery2DataFrame(ArgRepr):
 
     """
 
-    def __init__(
-            self,
-            project: str,
-            location: str,
-            **kwargs: Any
-    ) -> None:
+    def __init__(self, project: str, **kwargs: Any) -> None:
         self.project = project.strip(' ./')
-        self.location = location.strip().lower()
         self.kwargs = kwargs
-        super().__init__(self.project, self.location, **kwargs)
+        super().__init__(self.project, **kwargs)
 
-    def __call__(self, query_or_table: str, *args: Any) -> DataFrame:
-        """Read results of Google BigQuery SQL into pandas DataFrame.
+    def __call__(self, query_or_table: str) -> DataFrame:
+        """Read Google BigQuery SQL results or table into a pandas DataFrame.
 
         Parameters
         ----------
         query_or_table: str
-            Table name (including dataset) or SQL query to be
+            Table name (including dataset id) or SQL query to be
             retrieved from or submitted to Google BigQuery.
-        *args
-            Additional arguments will be interpolated into the query or table
-            name. Obviously, the number of args must be equal to (or greater
-            than) the total number of placeholders in the query or table name.
 
         Returns
         -------
         DataFrame
-            The results of the SQL query ro the contents of the table.
+            The contents of the table or the results of the SQL query.
 
         """
         return pq.read_gbq(
-            query_or_table.format(*args),
+            query_or_table,
             project_id=self.project,
-            location=self.location,
             progress_bar_type=None,
             **self.kwargs
         )

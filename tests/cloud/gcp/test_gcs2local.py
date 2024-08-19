@@ -23,9 +23,9 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.download, 'prefix'))
         self.assertEqual('', self.download.prefix)
 
-    def test_base(self):
-        self.assertTrue(hasattr(self.download, 'base'))
-        self.assertEqual('/tmp', self.download.base)
+    def test_base_dir(self):
+        self.assertTrue(hasattr(self.download, 'base_dir'))
+        self.assertEqual('/tmp', self.download.base_dir)
 
     def test_overwrite(self):
         self.assertTrue(hasattr(self.download, 'overwrite'))
@@ -72,7 +72,7 @@ class TestAttributes(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            '/base',
+            '/base_dir',
             True,
             True,
             8,
@@ -83,8 +83,8 @@ class TestAttributes(unittest.TestCase):
     def test_prefix(self):
         self.assertEqual('prefix/', self.download.prefix)
 
-    def test_base(self):
-        self.assertEqual('/base', self.download.base)
+    def test_base_dir(self):
+        self.assertEqual('/base_dir', self.download.base_dir)
 
     def test_overwrite(self):
         self.assertTrue(self.download.overwrite)
@@ -124,28 +124,28 @@ class TestAttributes(unittest.TestCase):
         )
         self.assertEqual('prefix/', download.prefix)
 
-    def test_base_strips(self):
+    def test_base_dir_strips(self):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base='  / base/  '
+            base_dir='  / base_dir/  '
         )
-        self.assertEqual('/base', download.base)
+        self.assertEqual('/base_dir', download.base_dir)
 
-    def test_base_adds(self):
+    def test_base_dir_adds(self):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base='base'
+            base_dir='base_dir'
         )
-        self.assertEqual('/base', download.base)
+        self.assertEqual('/base_dir', download.base_dir)
 
 
 class TestPrefix(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tmp = TemporaryDirectory()
-        self.base = self.tmp.name
+        self.base_dir = self.tmp.name
         self.blob = Mock()
         self.blob.name = 'blob.pqt'
         self.blob.download_to_file = Mock(return_value=b'Hello World')
@@ -168,10 +168,10 @@ class TestPrefix(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base
+            base_dir=self.base_dir
         )
         _ = download()
-        file = Path(self.base) / 'blob.pqt'
+        file = Path(self.base_dir) / 'blob.pqt'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -185,10 +185,10 @@ class TestPrefix(unittest.TestCase):
             'project',
             'bucket',
             'pre/fix',
-            base=self.base
+            base_dir=self.base_dir
         )
         _ = download()
-        directory = Path(self.base) / 'pre' / 'fix'
+        directory = Path(self.base_dir) / 'pre' / 'fix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
         file = directory / 'blob.pqt'
@@ -204,10 +204,10 @@ class TestPrefix(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base
+            base_dir=self.base_dir
         )
         _ = download('pre/fix')
-        directory = Path(self.base) / 'pre' / 'fix'
+        directory = Path(self.base_dir) / 'pre' / 'fix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
         file = directory / 'blob.pqt'
@@ -224,10 +224,10 @@ class TestPrefix(unittest.TestCase):
             'project',
             'bucket',
             'pre',
-            base=self.base
+            base_dir=self.base_dir
         )
         _ = download('fix')
-        directory = Path(self.base) / 'pre' / 'fix'
+        directory = Path(self.base_dir) / 'pre' / 'fix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
         file = directory / 'blob.pqt'
@@ -244,10 +244,10 @@ class TestPrefix(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base
+            base_dir=self.base_dir
         )
         _ = download()
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
         self.assertFalse(any(directory.iterdir()))
@@ -258,74 +258,15 @@ class TestPrefix(unittest.TestCase):
             prefix='prefix/'
         )
 
-    def test_instantiation_prefix_interpolated(self):
-        self.blob.name = 'pre/foo/fix/blob.pqt'
-        download = GcsDir2LocalDir(
-            'project',
-            'bucket',
-            'pre/{}/fix',
-            base=self.base
-        )
-        _ = download('', 'foo')
-        directory = Path(self.base) / 'pre' / 'foo' / 'fix'
-        self.assertTrue(directory.exists())
-        self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
-        self.assertTrue(file.exists())
-        self.assertTrue(file.is_file())
-        self.client_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='pre/foo/fix/'
-        )
-
-    def test_call_prefix_interpolated(self):
-        self.blob.name = 'pre/foo/fix/blob.pqt'
-        download = GcsDir2LocalDir(
-            'project',
-            'bucket',
-            base=self.base
-        )
-        _ = download('pre/{}/fix', 'foo')
-        directory = Path(self.base) / 'pre' / 'foo' / 'fix'
-        self.assertTrue(directory.exists())
-        self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
-        self.assertTrue(file.exists())
-        self.assertTrue(file.is_file())
-        self.client_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='pre/foo/fix/'
-        )
-
-    def test_partial_prefixes_interpolated(self):
-        self.blob.name = 'pre/foo/bar/fix/blob.pqt'
-        download = GcsDir2LocalDir(
-            'project',
-            'bucket',
-            'pre/{}',
-            base=self.base
-        )
-        _ = download('/{}/fix', 'foo', 'bar')
-        directory = Path(self.base) / 'pre' / 'foo' / 'bar' / 'fix'
-        self.assertTrue(directory.exists())
-        self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
-        self.assertTrue(file.exists())
-        self.assertTrue(file.is_file())
-        self.client_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='pre/foo/bar/fix/'
-        )
-
     def test_local_exists_empty(self):
         self.blob.name = 'prefix/blob.pqt'
         download = GcsDir2LocalDir(
             'project',
             'bucket',
             'prefix',
-            base=self.base
+            base_dir=self.base_dir
         )
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         _ = download()
         file = directory / 'blob.pqt'
@@ -342,9 +283,9 @@ class TestPrefix(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base
+            base_dir=self.base_dir
         )
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         file = directory / 'existing.txt'
         with open(file, 'w') as stream:
@@ -357,7 +298,7 @@ class TestSkipOverwrite(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tmp = TemporaryDirectory()
-        self.base = self.tmp.name
+        self.base_dir = self.tmp.name
         self.blob = Mock()
         self.blob.name = 'prefix/blob.pqt'
         self.blob.download_to_file = Mock(return_value=b'Hello World')
@@ -380,11 +321,11 @@ class TestSkipOverwrite(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base,
+            base_dir=self.base_dir,
             skip=True
         )
         _ = download('prefix')
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
         file = directory / 'blob.pqt'
@@ -399,10 +340,10 @@ class TestSkipOverwrite(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base,
+            base_dir=self.base_dir,
             skip=True
         )
-        directory = Path(self.base)
+        directory = Path(self.base_dir)
         file = directory / 'prefix'
         with open(file, 'w') as stream:
             stream.write('Hello World')
@@ -413,10 +354,10 @@ class TestSkipOverwrite(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base,
+            base_dir=self.base_dir,
             skip=True
         )
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         _ = download('prefix')
         file = directory / 'blob.pqt'
@@ -431,10 +372,10 @@ class TestSkipOverwrite(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base,
+            base_dir=self.base_dir,
             skip=True
         )
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         file = directory / 'existing.txt'
         with open(file, 'w') as stream:
@@ -450,10 +391,10 @@ class TestSkipOverwrite(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base,
+            base_dir=self.base_dir,
             overwrite=True
         )
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         with open(directory, 'w') as stream:
             stream.write('Hello World')
         _ = download('prefix')
@@ -471,10 +412,10 @@ class TestSkipOverwrite(unittest.TestCase):
         download = GcsDir2LocalDir(
             'project',
             'bucket',
-            base=self.base,
+            base_dir=self.base_dir,
             overwrite=True
         )
-        directory = Path(self.base) / 'prefix'
+        directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         existing = directory / 'foo.pqt'
         with open(existing, 'w') as stream:
@@ -496,7 +437,7 @@ class TestCloud(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tmp = TemporaryDirectory()
-        self.base = self.tmp.name
+        self.base_dir = self.tmp.name
         self.blob = Mock()
         self.blob.name = 'prefix/blob.pqt'
         self.blob.download_to_file = Mock(return_value=b'Hello World')
@@ -521,7 +462,7 @@ class TestCloud(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base,
+            base_dir=self.base_dir,
         )
         _ = download()
         self.assertEqual(2, self.client_class.call_count)
@@ -531,7 +472,7 @@ class TestCloud(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base,
+            base_dir=self.base_dir,
         )
         _ = download()
         args1, args2 = self.client_class.call_args_list
@@ -545,7 +486,7 @@ class TestCloud(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base,
+            base_dir=self.base_dir,
             foo='bar'
         )
         _ = download()
@@ -560,7 +501,7 @@ class TestCloud(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base,
+            base_dir=self.base_dir,
         )
         _ = download()
         self.client_instance.get_bucket.assert_called_once_with('bucket')
@@ -570,7 +511,7 @@ class TestCloud(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base,
+            base_dir=self.base_dir,
         )
         _ = download()
         self.bucket.get_blob.assert_called_once_with('prefix/blob.pqt')
@@ -580,7 +521,7 @@ class TestCloud(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base,
+            base_dir=self.base_dir,
         )
         _ = download()
         self.assertIsInstance(self.blob.chunk_size, int)
@@ -591,7 +532,7 @@ class TestCloud(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            base=self.base,
+            base_dir=self.base_dir,
         )
         _ = download()
         self.blob.download_to_file.assert_called_once()
@@ -617,7 +558,7 @@ class TestMisc(unittest.TestCase):
             'project',
             'bucket',
             'prefix',
-            '/base',
+            '/base_dir',
             True,
             True,
             8,
@@ -625,7 +566,7 @@ class TestMisc(unittest.TestCase):
             foo='bar'
         )
         expected = ("GcsDir2LocalDir('project', 'bucket', 'prefix/', "
-                    "'/base', True, True, 8, 5, foo='bar')")
+                    "'/base_dir', True, True, 8, 5, foo='bar')")
         self.assertEqual(expected, repr(download))
 
     def test_pickle_works(self):

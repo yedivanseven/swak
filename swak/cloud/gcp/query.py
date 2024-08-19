@@ -12,10 +12,6 @@ class GbqQuery(ArgRepr):
     ----------
     project: str
         The name of the Google billing project.
-    location: str
-        The physical datacenter location to run the query on. See the
-        Google Cloud Platform `documentation <https://cloud.google.com/
-        bigquery/docs/locations>`__ for options.
     polling_interval: int, optional
         Job completion is going to be checked for every `polling_interval`
         seconds. Defaults to 5 (seconds).
@@ -41,19 +37,16 @@ class GbqQuery(ArgRepr):
     def __init__(
             self,
             project: str,
-            location: str,
             polling_interval: int = 5,
             priority: str = 'BATCH',
             **kwargs: Any
     ) -> None:
         self.project = project.strip(' /.')
-        self.location = location.strip().lower()
         self.polling_interval = polling_interval
         self.priority = priority.strip().upper()
         self.kwargs = kwargs
         super().__init__(
             self.project,
-            self.location,
             self.polling_interval,
             self.priority,
             **kwargs
@@ -83,7 +76,7 @@ class GbqQuery(ArgRepr):
             If the ``QueryJob`` finishes and returns and error.
 
         """
-        client = Client(self.project, location=self.location, **self.kwargs)
+        client = Client(self.project, **self.kwargs)
         config = QueryJobConfig(priority=self.priority, **kwargs)
         job = client.query(query, config)
         while job.running():

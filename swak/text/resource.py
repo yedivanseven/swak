@@ -1,7 +1,5 @@
-import os
 import pkgutil
 import warnings
-from typing import Any
 from ..magic import ArgRepr
 from .misc import NotFound
 
@@ -37,7 +35,7 @@ class TextResourceLoader(ArgRepr):
             not_found: str = NotFound.RAISE,
             encoding: str = 'utf-8'
     ) -> None:
-        self.package = package.strip(' /')
+        self.package = package.strip(' ./')
         self.base_dir = base_dir.strip(' /')
         self.not_found = not_found
         self.encoding = encoding.strip()
@@ -48,18 +46,13 @@ class TextResourceLoader(ArgRepr):
             self.encoding
         )
 
-    def __call__(self, path: str, *args: Any) -> str:
+    def __call__(self, path: str) -> str:
         """Load text file from a directory within the specified python package.
 
         Parameters
         ----------
         path: str
             Path (including file name) relative to the parent python package.
-        *args
-            Additional arguments will be interpolated into the joined string
-            of `base_dir` and `path` by calling its `format` method. Obviously,
-            the number of args must be equal to (or greater than) the total
-            number of placeholders in the combined `base_dir` and `path`.
 
         Returns
         -------
@@ -67,7 +60,7 @@ class TextResourceLoader(ArgRepr):
             Decoded contents of the specified text file.
 
         """
-        full_path = os.path.join(self.base_dir, path.strip(' /')).format(*args)
+        full_path = self.base_dir + '/' + path.strip(' /')
         try:
             content = pkgutil.get_data(self.package, full_path)
         except FileNotFoundError as error:
@@ -81,4 +74,3 @@ class TextResourceLoader(ArgRepr):
                 case _:
                     raise error
         return content.decode(self.encoding)
-#

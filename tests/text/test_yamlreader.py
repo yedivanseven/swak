@@ -149,11 +149,6 @@ class TestUsage(unittest.TestCase):
         actual = y('/ foo/bar.yml/ ')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
-    def test_path_interpolated(self):
-        y = YamlReader(self.dir)
-        actual = y('foo/{}/world.yml', 'hello')
-        self.assertDictEqual({'world': {'answer': 42}}, actual)
-
     def test_default_raises_file_not_found(self):
         y = YamlReader(self.dir)
         with self.assertRaises(FileNotFoundError):

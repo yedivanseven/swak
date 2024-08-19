@@ -321,6 +321,12 @@ class TestMisc(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = f('Hello ${my.1}!', {'my.1': 'world'})
 
+    def test_curly_format_brackets_stay(self):
+        expected = 'Hello {}! I like your {}!'
+        f = FormFiller({'foo': 'bar'})
+        actual = f(expected)
+        self.assertEqual(expected, actual)
+
 
 if __name__ == '__main__':
     unittest.main()
