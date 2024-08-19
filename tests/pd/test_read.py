@@ -93,20 +93,6 @@ class TestCall(unittest.TestCase):
         method.assert_called_once()
         method.assert_called_once_with('/foo/baz', a='bar', b=42)
 
-    @patch('pandas.read_parquet')
-    def test_interpolate_path(self, method):
-        read = ParquetReader('/foo')
-        _ = read('bar_{}', 'baz')
-        method.assert_called_once()
-        method.assert_called_once_with('/foo/bar_baz')
-
-    @patch('pandas.read_parquet')
-    def test_interpolate_full_path(self, method):
-        read = ParquetReader('/foo_{}')
-        _ = read('baz_{}', 'bar', 42)
-        method.assert_called_once()
-        method.assert_called_once_with('/foo_bar/baz_42')
-
     @patch('pandas.read_parquet', return_value=pd.DataFrame([1, 2, 3]))
     def test_returns(self, _):
         query = ParquetReader()

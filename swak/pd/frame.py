@@ -1,4 +1,5 @@
-from typing import Any, Hashable, Iterable, Callable
+from typing import Any
+from collections.abc import Hashable, Iterable, Callable
 from numpy import dtype, ndarray
 from pandas.core.dtypes.base import ExtensionDtype
 from pandas import DataFrame, Series
@@ -52,7 +53,8 @@ class AsType(ReprName):
         Returns
         -------
         DataFrame
-            Pandas dataframe cast to new type or with columns cast to new types.
+            Pandas dataframe cast to new type or with columns cast to
+            new types.
 
         """
         return df.astype(self.types, **self.kwargs)
@@ -117,7 +119,8 @@ class ColumnsSelector(ArgRepr):
             col: Hashable | Iterable[Hashable] = (),
             *cols: Hashable
     ) -> None:
-        self.cols: tuple[Hashable, ...] = self.__valid(col) + self.__valid(cols)
+        col = self.__valid(col)
+        self.cols: tuple[Hashable, ...] = col + self.__valid(cols)
         super().__init__(*self.cols)
 
     def __call__(self, df: DataFrame) -> DataFrame:

@@ -41,10 +41,10 @@ class TestEmpty(unittest.TestCase):
         _ = Empty('{}')
 
     def test_bytes_of_empty_dict(self):
-        _ = Empty(bytes('{}'.encode('utf-8')))
+        _ = Empty(b'{}')
 
     def test_bytearray_of_empty_dict(self):
-        _ = Empty(bytearray('{}'.encode('utf-8')))
+        _ = Empty(bytearray(b'{}'))
 
 
 class TestNoneIgnored(unittest.TestCase):
@@ -62,10 +62,10 @@ class TestNoneIgnored(unittest.TestCase):
         _ = Empty('{"foo": null}')
 
     def test_bytes_of_dict_null(self):
-        _ = Empty(bytes('{"foo": null}'.encode('utf-8')))
+        _ = Empty(b'{"foo": null}')
 
     def test_bytearray_of_dict_null(self):
-        _ = Empty(bytearray('{"foo": null}'.encode('utf-8')))
+        _ = Empty(bytearray(b'{"foo": null}'))
 
     def test_kwarg_none(self):
         _ = Empty(foo=None)
@@ -121,19 +121,19 @@ class TestSimple(unittest.TestCase):
         self.check_attributes(simple)
 
     def test_bytes(self):
-        simple = Simple(bytes('{"a": 1, "b": "foo"}'.encode('utf-8')))
+        simple = Simple(b'{"a": 1, "b": "foo"}')
         self.check_attributes(simple)
 
     def test_bytes_and_kwarg(self):
-        simple = Simple(bytes('{"b": "foo"}'.encode('utf-8')), a=1)
+        simple = Simple(b'{"b": "foo"}', a=1)
         self.check_attributes(simple)
 
     def test_bytearray(self):
-        simple = Simple(bytearray('{"a": 1, "b": "foo"}'.encode('utf-8')))
+        simple = Simple(bytearray(b'{"a": 1, "b": "foo"}'))
         self.check_attributes(simple)
 
     def test_bytearray_and_kwarg(self):
-        simple = Simple(bytearray('{"b": "foo"}'.encode('utf-8')), a=1)
+        simple = Simple(bytearray(b'{"b": "foo"}'), a=1)
         self.check_attributes(simple)
 
     def test_series(self):
@@ -162,14 +162,11 @@ class TestSimple(unittest.TestCase):
         self.check_attributes(simple)
 
     def test_kwarg_trumps_bytes(self):
-        simple = Simple(bytes('{"a": 1, "b": "bar"}'.encode('utf8')), b='foo')
+        simple = Simple(b'{"a": 1, "b": "bar"}', b='foo')
         self.check_attributes(simple)
 
     def test_kwarg_trumps_bytearray(self):
-        simple = Simple(
-            bytearray('{"a": 1, "b": "bar"}'.encode('utf8')),
-            b='foo'
-        )
+        simple = Simple(bytearray(b'{"a": 1, "b": "bar"}'), b='foo')
         self.check_attributes(simple)
 
     def test_kwarg_trumps_series(self):
@@ -335,19 +332,19 @@ class TestTypeCasting(unittest.TestCase):
         self.check_attributes(simple)
 
     def test_bytes(self):
-        simple = Simple(bytes('{"a": 1.0, "b": 2.0}'.encode('utf-8')))
+        simple = Simple(b'{"a": 1.0, "b": 2.0}')
         self.check_attributes(simple)
 
     def test_bytes_and_kwarg(self):
-        simple = Simple(bytes('{"b": 2.0}'.encode('utf-8')), a=1.0)
+        simple = Simple(b'{"b": 2.0}', a=1.0)
         self.check_attributes(simple)
 
     def test_bytearray(self):
-        simple = Simple(bytearray('{"a": 1.0, "b": 2.0}'.encode('utf-8')))
+        simple = Simple(bytearray(b'{"a": 1.0, "b": 2.0}'))
         self.check_attributes(simple)
 
     def test_bytearray_and_kwarg(self):
-        simple = Simple(bytearray('{"b": 2.0}'.encode('utf-8')), a=1.0)
+        simple = Simple(bytearray(b'{"b": 2.0}'), a=1.0)
         self.check_attributes(simple)
 
     def test_series(self):
@@ -379,11 +376,11 @@ class TestExceptions(unittest.TestCase):
 
     def test_parse_bytes_missing_fields(self):
         with self.assertRaises(ValidationErrors):
-            _ = Simple(bytes('{"b": "foo"}'.encode('utf-8')))
+            _ = Simple(b'{"b": "foo"}')
 
     def test_parse_bytearray_missing_fields(self):
         with self.assertRaises(ValidationErrors):
-            _ = Simple(bytearray('{"b": "foo"}'.encode('utf-8')))
+            _ = Simple(bytearray(b'{"b": "foo"}'))
 
     def test_parse_series_missing_fields(self):
         with self.assertRaises(ValidationErrors):
@@ -425,19 +422,19 @@ class TestExceptions(unittest.TestCase):
 
     def test_cast_bytes_wrong_field(self):
         with self.assertRaises(ValidationErrors):
-            _ = Simple(bytes('{"a": "foo", "b": "bar"}'.encode('utf-8')))
+            _ = Simple(b'{"a": "foo", "b": "bar"}')
 
     def test_cast_bytes_and_kwarg_wrong_field(self):
         with self.assertRaises(ValidationErrors):
-            _ = Simple(bytes('{"b": "bar"}'.encode('utf-8')), a='foo')
+            _ = Simple(b'{"b": "bar"}', a='foo')
 
     def test_cast_bytearray_wrong_field(self):
         with self.assertRaises(ValidationErrors):
-            _ = Simple(bytearray('{"a": "foo", "b": "bar"}'.encode('utf-8')))
+            _ = Simple(bytearray(b'{"a": "foo", "b": "bar"}'))
 
     def test_cast_bytearray_and_kwarg_wrong_field(self):
         with self.assertRaises(ValidationErrors):
-            _ = Simple(bytearray('{"b": "bar"}'.encode('utf-8')), a='foo')
+            _ = Simple(bytearray(b'{"b": "bar"}'), a='foo')
 
     def test_cast_series_wrong_field(self):
         with self.assertRaises(ValidationErrors):
@@ -563,50 +560,46 @@ class TestExtraFields(unittest.TestCase):
         self.assertDictEqual({'42': 'answer'}, false_false.a)
 
     def test_true_true_bytes(self):
-        true_true = self.TrueTrue(bytes('{"a": 1}'.encode('utf-8')))
+        true_true = self.TrueTrue(b'{"a": 1}')
         self.assertFalse(hasattr(true_true, 'a'))
 
     def test_true_false_bytes(self):
-        true_false = self.TrueFalse(bytes('{"a": 1}'.encode('utf-8')))
+        true_false = self.TrueFalse(b'{"a": 1}')
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_bytes(self):
         with self.assertRaises(ValidationErrors):
-            _ = self.FalseTrue(bytes('{"a": 1}'.encode('utf-8')))
+            _ = self.FalseTrue(b'{"a": 1}')
 
     def test_false_false_bytes(self):
-        false_false = self.FalseFalse(bytes('{"a": 1}'.encode('utf-8')))
+        false_false = self.FalseFalse(b'{"a": 1}')
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
 
     def test_false_false_nest_bytes(self):
-        false_false = self.FalseFalse(
-            bytes('{"a": {"42": "answer"}}'.encode('utf-8'))
-        )
+        false_false = self.FalseFalse(b'{"a": {"42": "answer"}}')
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertDictEqual({'42': 'answer'}, false_false.a)
 
     def test_true_true_bytearray(self):
-        true_true = self.TrueTrue(bytearray('{"a": 1}'.encode('utf-8')))
+        true_true = self.TrueTrue(bytearray(b'{"a": 1}'))
         self.assertFalse(hasattr(true_true, 'a'))
 
     def test_true_false_bytearray(self):
-        true_false = self.TrueFalse(bytearray('{"a": 1}'.encode('utf-8')))
+        true_false = self.TrueFalse(bytearray(b'{"a": 1}'))
         self.assertFalse(hasattr(true_false, 'a'))
 
     def test_false_true_bytearray(self):
         with self.assertRaises(ValidationErrors):
-            _ = self.FalseTrue(bytearray('{"a": 1}'.encode('utf-8')))
+            _ = self.FalseTrue(bytearray(b'{"a": 1}'))
 
     def test_false_false_bytearray(self):
-        false_false = self.FalseFalse(bytearray('{"a": 1}'.encode('utf-8')))
+        false_false = self.FalseFalse(bytearray(b'{"a": 1}'))
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertEqual(1, false_false.a)
 
     def test_false_false_nest_bytearray(self):
-        false_false = self.FalseFalse(
-            bytearray('{"a": {"42": "answer"}}'.encode('utf-8'))
-        )
+        false_false = self.FalseFalse(bytearray(b'{"a": {"42": "answer"}}'))
         self.assertTrue(hasattr(false_false, 'a'))
         self.assertDictEqual({'42': 'answer'}, false_false.a)
 
@@ -653,12 +646,12 @@ class TestExtraFields(unittest.TestCase):
         self.assertIsNone(respect.a)
 
     def test_extra_field_null_bytes(self):
-        respect = self.Respect(bytes('{"a": null}'.encode('utf-8')))
+        respect = self.Respect(b'{"a": null}')
         self.assertTrue(hasattr(respect, 'a'))
         self.assertIsNone(respect.a)
 
     def test_extra_field_null_bytearray(self):
-        respect = self.Respect(bytearray('{"a": null}'.encode('utf-8')))
+        respect = self.Respect(bytearray(b'{"a": null}'))
         self.assertTrue(hasattr(respect, 'a'))
         self.assertIsNone(respect.a)
 

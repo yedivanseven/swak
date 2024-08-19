@@ -47,7 +47,7 @@ class TestSubclassing(unittest.TestCase):
             class Wrong(JsonObjects, item_type=int):
                 pass
 
-    def test_raises_on_item_type_not_JsonObject(self):
+    def test_raises_on_item_type_not_jsonobject(self):
 
         class Wrong(metaclass=SchemaMeta):
             pass

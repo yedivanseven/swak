@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Callable
+from typing import Any
+from collections.abc import Iterable, Callable
 from concurrent.futures import ProcessPoolExecutor
 from ...magic import ArgRepr
 from ..exceptions import MapError
@@ -64,7 +65,7 @@ class ProcessMap[**P, S, T](ArgRepr):
             initializer: Callable[..., Any] | None = None,
             initargs: tuple[Any, ...] = (),
             max_tasks_per_child: int | None = None,
-            timeout: int | float | None = None,
+            timeout: float | None = None,
             chunksize: int = 1
     ) -> None:
         super().__init__(
@@ -134,7 +135,7 @@ class ProcessMap[**P, S, T](ArgRepr):
                 name = self._name(self.transform)
                 err_cls = error.__class__.__name__
                 fmt = msg.format(name, err_cls, error)
-                raise MapError(fmt)
+                raise MapError(fmt) from error
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(mapped)
@@ -142,5 +143,5 @@ class ProcessMap[**P, S, T](ArgRepr):
             msg = '\n{} calling wrapper\n{}\non map results:\n{}'
             name = self._name(wrap)
             err_cls = error.__class__.__name__
-            raise MapError(msg.format(err_cls, name, error))
+            raise MapError(msg.format(err_cls, name, error)) from error
         return wrapped

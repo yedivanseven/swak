@@ -130,14 +130,14 @@ class TestAttributes(unittest.TestCase):
 
     def test_raises_on_route_empty_but_call(self):
         expected = ('Number of callables (=1) must '
-                    'match the number of routes (=0)!')
+                    'match number of routes (=0)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([], [f])
         self.assertEqual(expected, str(error.exception))
 
     def test_raises_on_route_empty_but_calls(self):
         expected = ('Number of callables (=1) must '
-                    'match the number of routes (=0)!')
+                    'match number of routes (=0)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([], f)
         self.assertEqual(expected, str(error.exception))
@@ -174,35 +174,35 @@ class TestAttributes(unittest.TestCase):
 
     def test_raises_on_route_but_no_call(self):
         expected = ('Number of callables (=0) must '
-                    'match the number of routes (=2)!')
+                    'match number of routes (=2)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([1, 2], [])
         self.assertEqual(expected, str(error.exception))
 
     def test_raises_on_route_but_no_calls(self):
         expected = ('Number of callables (=0) must '
-                    'match the number of routes (=2)!')
+                    'match number of routes (=2)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([1, 2], )
         self.assertEqual(expected, str(error.exception))
 
     def test_raises_on_route_call_mismatch(self):
         expected = ('Number of callables (=3) must '
-                    'match the number of routes (=2)!')
+                    'match number of routes (=2)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([1, 2], [f, g, f])
         self.assertEqual(expected, str(error.exception))
 
     def test_raises_on_route_calls_mismatch(self):
         expected = ('Number of callables (=3) must '
-                    'match the number of routes (=2)!')
+                    'match number of routes (=2)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([1, 2], f, g, f)
         self.assertEqual(expected, str(error.exception))
 
     def test_raises_on_route_call_calls_mismatch(self):
         expected = ('Number of callables (=3) must '
-                    'match the number of routes (=2)!')
+                    'match number of routes (=2)!')
         with self.assertRaises(RouteError) as error:
             _ = Route([1, 2], [f, g], f)
         self.assertEqual(expected, str(error.exception))
@@ -453,7 +453,7 @@ class TestUsage(unittest.TestCase):
                     "[ 1] r\n"
                     "Test!")
         with self.assertRaises(RouteError) as error:
-            _ = _ = route(1, 2, 3, 4)
+            _ = route(1, 2, 3, 4)
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
@@ -466,7 +466,7 @@ class TestUsage(unittest.TestCase):
                     "[ 1] A(1)\n"
                     "Test!")
         with self.assertRaises(RouteError) as error:
-            _ = _ = route(1, 2, 3, 4)
+            _ = route(1, 2, 3, 4)
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
@@ -481,7 +481,7 @@ class TestUsage(unittest.TestCase):
                     "     [ 0] 1\n"
                     "Test!")
         with self.assertRaises(RouteError) as error:
-            _ = _ = route(1, 2, 3, 4)
+            _ = route(1, 2, 3, 4)
         self.assertEqual(expected, str(error.exception))
 
 

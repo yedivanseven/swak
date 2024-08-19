@@ -90,19 +90,19 @@ class GcsDir2LocalDir(ArgRepr):
         return in_multiples_of_256kb * 256 * 1024
 
     def __call__(self, prefix: str = '') -> list[str]:
-        """Download parquet files from Google Cloud Storage to local drive.
+        """Download files from Google Cloud Storage to local drive.
 
         Parameters
         ----------
         prefix: str, optional
-            The prefix of the parquet files to download. If given here, it will
+            The prefix of the files to download. If given here, it will
             be appended to the `prefix` given at instantiation time.
             Defaults to an empty string.
 
         Returns
         -------
         list
-            A list of the fully resolved parquet file names on the local drive.
+            A list of the fully resolved file names on the local drive.
 
         Raises
         ------
@@ -159,7 +159,7 @@ class GcsDir2LocalDir(ArgRepr):
         self.__thread.bucket = self.__thread.client.get_bucket(self.bucket)
 
     def __download(self, name: str, local: str) -> str:
-        """Download a single parquet file from Google Cloud Storage to local."""
+        """Download a single file from Google Cloud Storage to local."""
         blob = self.__thread.bucket.get_blob(name)
         blob.chunk_size = self.chunk_bytes
         file = blob.name.split('/')[-1]

@@ -455,7 +455,12 @@ class TestMapUsage(unittest.TestCase):
     def test_map_called_with_iterables_no_timeout(self, method):
         m = ThreadMap(plus)
         _ = m([1, 2, 3], (1, 2, 3))
-        method.assert_called_once_with(plus, [1, 2, 3], (1, 2, 3), timeout=None)
+        method.assert_called_once_with(
+            plus,
+            [1, 2, 3],
+            (1, 2, 3),
+            timeout=None
+        )
 
     @patch('swak.funcflow.concurrent.threadmap.ThreadPoolExecutor.map')
     def test_map_called_with_timeout(self, method):

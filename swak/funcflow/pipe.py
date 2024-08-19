@@ -1,4 +1,5 @@
-from typing import Iterator, Any, Callable, Self, Iterable
+from typing import Any, Self
+from collections.abc import Iterator, Callable, Iterable
 from functools import singledispatchmethod
 from ..magic import IndentRepr
 from .exceptions import PipeError
@@ -119,7 +120,7 @@ class Pipe[**P, T](IndentRepr):
                 err_cls = error.__class__.__name__
                 name = self._name(call)
                 fmt = msg.format(err_cls, name, i, self, error)
-                raise PipeError(fmt)
+                raise PipeError(fmt) from error
         return args
 
     @staticmethod

@@ -288,7 +288,7 @@ class TestPrefix(unittest.TestCase):
         directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         file = directory / 'existing.txt'
-        with open(file, 'w') as stream:
+        with file.open('w') as stream:
             stream.write('Hello World')
         with self.assertRaises(FileExistsError):
             _ = download()
@@ -345,7 +345,7 @@ class TestSkipOverwrite(unittest.TestCase):
         )
         directory = Path(self.base_dir)
         file = directory / 'prefix'
-        with open(file, 'w') as stream:
+        with file.open('w') as stream:
             stream.write('Hello World')
         with self.assertRaises(FileExistsError):
             _ = download('prefix')
@@ -378,7 +378,7 @@ class TestSkipOverwrite(unittest.TestCase):
         directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         file = directory / 'existing.txt'
-        with open(file, 'w') as stream:
+        with file.open('w') as stream:
             stream.write('Hello World')
         actual = download('prefix')
         self.assertIsInstance(actual, list)
@@ -395,7 +395,7 @@ class TestSkipOverwrite(unittest.TestCase):
             overwrite=True
         )
         directory = Path(self.base_dir) / 'prefix'
-        with open(directory, 'w') as stream:
+        with directory.open('w') as stream:
             stream.write('Hello World')
         _ = download('prefix')
         self.assertTrue(directory.exists())
@@ -418,7 +418,7 @@ class TestSkipOverwrite(unittest.TestCase):
         directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         existing = directory / 'foo.pqt'
-        with open(existing, 'w') as stream:
+        with existing.open('w') as stream:
             stream.write('Hello World')
         _ = download('prefix')
         self.assertTrue(directory.exists())

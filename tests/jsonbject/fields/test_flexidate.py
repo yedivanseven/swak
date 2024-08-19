@@ -14,7 +14,7 @@ class TestAttributes(unittest.TestCase):
         fd = FlexiDate('2021-01-23 11:24:13.123456')
         self.assertEqual('2021-01-23', str(fd))
 
-    def test_time_T_string(self):
+    def test_time_t_string(self):
         fd = FlexiDate('2021-01-23T11:24:13.123456')
         self.assertEqual('2021-01-23', str(fd))
 
@@ -26,11 +26,11 @@ class TestAttributes(unittest.TestCase):
         fd = FlexiDate('2021-01-23 11:24:13.123456+02:00')
         self.assertEqual('2021-01-23', str(fd))
 
-    def test_datetime_utc_T_string(self):
+    def test_datetime_utc_t_string(self):
         fd = FlexiDate('2021-01-23T11:24:13.123456Z')
         self.assertEqual('2021-01-23', str(fd))
 
-    def test_datetime_offset_T_string(self):
+    def test_datetime_offset_t_string(self):
         fd = FlexiDate('2021-01-23T11:24:13.123456+02:00')
         self.assertEqual('2021-01-23', str(fd))
 

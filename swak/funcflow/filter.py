@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 from ..magic import ArgRepr
 from .exceptions import FilterError
 
@@ -72,15 +72,15 @@ class Filter[S, T](ArgRepr):
                 name = self._name(criterion)
                 err_cls = error.__class__.__name__
                 fmt = msg.format(err_cls, name, i, element, error)
-                raise FilterError(fmt)
+                raise FilterError(fmt) from error
             if criterion_is_fulfilled:
                 filtered.append(element)
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(filtered)
-        except Exception as error:
+        except Exception as err:
             msg = '\n{} calling wrapper\n{}\non filter results:\n{}'
             name = self._name(wrap)
-            err_cls = error.__class__.__name__
-            raise FilterError(msg.format(err_cls, name, error))
+            err_cls = err.__class__.__name__
+            raise FilterError(msg.format(err_cls, name, err)) from err
         return wrapped

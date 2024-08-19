@@ -76,11 +76,11 @@ class TestEmpty(unittest.TestCase):
         self.assertListEqual([], items.as_json)
 
     def test_empty_bytes(self):
-        items = Items(''.encode())
+        items = Items(b'')
         self.assertListEqual([], items.as_json)
 
     def test_empty_bytearray(self):
-        items = Items(bytearray(''.encode()))
+        items = Items(bytearray(b''))
         self.assertListEqual([], items.as_json)
 
     def test_str_empty_list(self):
@@ -88,11 +88,11 @@ class TestEmpty(unittest.TestCase):
         self.assertListEqual([], items.as_json)
 
     def test_byte_empty_list(self):
-        items = Items('[]'.encode())
+        items = Items(b'[]')
         self.assertListEqual([], items.as_json)
 
     def test_bytearray_empty_list(self):
-        items = Items(bytearray('[]'.encode()))
+        items = Items(bytearray(b'[]'))
         self.assertListEqual([], items.as_json)
 
     def test_empty_dataframe(self):
@@ -193,12 +193,12 @@ class TestEmptyArgs(unittest.TestCase):
         self.assertListEqual(dicts, items.as_json)
 
     def test_empty_bytes_and_series_args(self):
-        items = Items(''.encode(), *[bytearray(j.encode()) for j in jsons])
+        items = Items(b'', *[bytearray(j.encode()) for j in jsons])
         self.assertListEqual(dicts, items.as_json)
 
     def test_empty_bytearray_and_mixed_args(self):
         items = Items(
-            bytearray(''.encode()),
+            bytearray(b''),
             dicts[0],
             strs[1],
             jsons[2],

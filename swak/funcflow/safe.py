@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 from ..magic import ArgRepr
 from .exceptions import SafeError
 
@@ -7,8 +7,8 @@ class Safe[**P, T](ArgRepr):
     """Wrap callable to catch potential errors and safely return them.
 
     Generic type annotation of instances is recommended. Provide a list of
-    one or more input types that the callable takes, followed by the return type
-    of the callable.
+    one or more input types that the callable takes, followed by the return
+    type of the callable.
 
     Parameters
     ----------

@@ -59,11 +59,11 @@ class TestEmpty(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_bytes_of_empty_dict(self):
-        updated = self.flat(bytes('{}'.encode('utf-8')))
+        updated = self.flat(b'{}')
         self.check_attributes(updated)
 
     def test_bytearray_of_empty_dict(self):
-        updated = self.flat(bytearray('{}'.encode('utf-8')))
+        updated = self.flat(bytearray(b'{}'))
         self.check_attributes(updated)
 
 
@@ -102,11 +102,11 @@ class TestNone(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_bytes_of_dict_null(self):
-        updated = self.flat(bytes('{"bar": null}'.encode('utf-8')))
+        updated = self.flat(b'{"bar": null}')
         self.check_attributes(updated)
 
     def test_bytearray_of_dict_null(self):
-        updated = self.flat(bytearray('{"bar": null}'.encode('utf-8')))
+        updated = self.flat(bytearray(b'{"bar": null}'))
         self.check_attributes(updated)
 
     def test_kwarg_none(self):
@@ -161,11 +161,11 @@ class TestFlat(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_bytes_of_empty_dict_and_kwargs(self):
-        updated = self.flat(bytes('{}'.encode('utf-8')), b=3.0, c=42)
+        updated = self.flat(b'{}', b=3.0, c=42)
         self.check_attributes(updated)
 
     def test_bytearray_of_empty_dict_and_kwargs(self):
-        updated = self.flat(bytearray('{}'.encode('utf-8')), b=3.0, c=42)
+        updated = self.flat(bytearray(b'{}'), b=3.0, c=42)
         self.check_attributes(updated)
 
     def test_series(self):
@@ -193,19 +193,19 @@ class TestFlat(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_bytes(self):
-        updated = self.flat(bytes('{"b": 3.0, "c": 42}'.encode('utf-8')))
+        updated = self.flat(b'{"b": 3.0, "c": 42}')
         self.check_attributes(updated)
 
     def test_bytes_and_kwarg(self):
-        updated = self.flat(bytes('{"b": 3.0}'.encode('utf-8')), c=42)
+        updated = self.flat(b'{"b": 3.0}', c=42)
         self.check_attributes(updated)
 
     def test_bytearray(self):
-        updated = self.flat(bytearray('{"b": 3.0, "c": 42}'.encode('utf-8')))
+        updated = self.flat(bytearray(b'{"b": 3.0, "c": 42}'))
         self.check_attributes(updated)
 
     def test_bytearray_and_kwarg(self):
-        updated = self.flat(bytearray('{"b": 3.0}'.encode('utf-8')), c=42)
+        updated = self.flat(bytearray(b'{"b": 3.0}'), c=42)
         self.check_attributes(updated)
 
     def test_self(self):
@@ -230,14 +230,11 @@ class TestFlat(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_kwarg_trumps_bytes(self):
-        updated = self.flat(bytes('{"b": 3.0, "c": 4}'.encode('utf-8')), c=42)
+        updated = self.flat(b'{"b": 3.0, "c": 4}', c=42)
         self.check_attributes(updated)
 
     def test_kwarg_trumps_bytearray_and_kwarg(self):
-        updated = self.flat(
-            bytearray('{"b": 3.0, "c": 4}'.encode('utf-8')),
-            c=42
-        )
+        updated = self.flat(bytearray(b'{"b": 3.0, "c": 4}'), c=42)
         self.check_attributes(updated)
 
     def test_kwarg_trumps_self(self):
@@ -397,11 +394,11 @@ class TestRespect(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_bytes_of_dict_null(self):
-        updated = self.respect(bytes('{"a": null}'.encode('utf-8')))
+        updated = self.respect(b'{"a": null}')
         self.check_attributes(updated)
 
     def test_bytearray_of_dict_null(self):
-        updated = self.respect(bytearray('{"a": null}'.encode('utf-8')))
+        updated = self.respect(bytearray(b'{"a": null}'))
         self.check_attributes(updated)
 
     def test_self(self):
@@ -491,29 +488,19 @@ class TestTypeCasting(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_bytes(self):
-        updated = self.flat(
-            bytes('{"b": 3, "c": 42.0, "d": "foo"}'.encode('utf-8'))
-        )
+        updated = self.flat(b'{"b": 3, "c": 42.0, "d": "foo"}')
         self.check_attributes(updated)
 
     def test_bytes_and_kwarg(self):
-        updated = self.flat(
-            bytes('{"b": 3, "c": 42.0}'.encode('utf-8')),
-            d='foo'
-        )
+        updated = self.flat(b'{"b": 3, "c": 42.0}', d='foo')
         self.check_attributes(updated)
 
     def test_bytearray(self):
-        updated = self.flat(
-            bytearray('{"b": 3, "c": 42.0, "d": "foo"}'.encode('utf-8'))
-        )
+        updated = self.flat(bytearray(b'{"b": 3, "c": 42.0, "d": "foo"}'))
         self.check_attributes(updated)
 
     def test_bytearray_and_kwarg(self):
-        updated = self.flat(
-            bytearray('{"b": 3, "c": 42.0}'.encode('utf-8')),
-            d='foo'
-        )
+        updated = self.flat(bytearray(b'{"b": 3, "c": 42.0}'), d='foo')
         self.check_attributes(updated)
 
 
@@ -531,7 +518,7 @@ class TestExceptions(unittest.TestCase):
     def test_uncastable_bytes(self):
         expected = "Could not parse b'hello world' as JSON!"
         with self.assertRaises(ParseError) as error:
-            _ = self.flat(bytes('hello world'.encode('utf-8')))
+            _ = self.flat(b'hello world')
         self.assertEqual(expected, str(error.exception))
 
     def test_dict(self):
@@ -572,22 +559,19 @@ class TestExceptions(unittest.TestCase):
 
     def test_bytes(self):
         with self.assertRaises(ValidationErrors):
-            _ = self.flat(bytes('{"b": "hello world"}'.encode('utf-8')))
+            _ = self.flat(b'{"b": "hello world"}')
 
     def test_bytes_and_kwarg(self):
         with self.assertRaises(ValidationErrors):
-            _ = self.flat(bytes('{"b": "hello"}'.encode('utf-8')), c='world')
+            _ = self.flat(b'{"b": "hello"}', c='world')
 
     def test_bytearray(self):
         with self.assertRaises(ValidationErrors):
-            _ = self.flat(bytearray('{"b": "hello world"}'.encode('utf-8')))
+            _ = self.flat(bytearray(b'{"b": "hello world"}'))
 
     def test_bytearray_and_kwarg(self):
         with self.assertRaises(ValidationErrors):
-            _ = self.flat(
-                bytearray('{"b": "hello"}'.encode('utf-8')),
-                c='world'
-            )
+            _ = self.flat(bytearray(b'{"b": "hello"}'), c='world')
 
 
 class TestNesting(unittest.TestCase):
@@ -620,7 +604,10 @@ class TestNesting(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_collapse(self):
-        updated = self.nested({'child': {'c': {42: 'answer'}}}, child={'c': 42})
+        updated = self.nested(
+            {'child': {'c': {42: 'answer'}}},
+            child={'c': 42}
+        )
         self.check_attributes(updated)
 
     def test_dict_self(self):
@@ -640,11 +627,11 @@ class TestNesting(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_dict_bytes(self):
-        updated = self.nested({'child': bytes('{"c": 42}'.encode('utf-8'))})
+        updated = self.nested({'child': b'{"c": 42}'})
         self.check_attributes(updated)
 
     def test_dict_bytearray(self):
-        updated = self.nested({'child': bytearray('{"c": 42}'.encode('utf-8'))})
+        updated = self.nested({'child': bytearray(b'{"c": 42}')})
         self.check_attributes(updated)
 
     def test_kwarg_dict(self):
@@ -668,11 +655,11 @@ class TestNesting(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_kwarg_bytes(self):
-        updated = self.nested(child=bytes('{"c": 42}'.encode('utf-8')))
+        updated = self.nested(child=b'{"c": 42}')
         self.check_attributes(updated)
 
     def test_kwarg_bytearray(self):
-        updated = self.nested(child=bytearray('{"c": 42}'.encode('utf-8')))
+        updated = self.nested(child=bytearray(b'{"c": 42}'))
         self.check_attributes(updated)
 
     def test_series_dict(self):
@@ -696,15 +683,11 @@ class TestNesting(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_series_bytes(self):
-        updated = self.nested(
-            Series({'child': bytes('{"c": 42}'.encode('utf-8'))})
-        )
+        updated = self.nested(Series({'child': b'{"c": 42}'}))
         self.check_attributes(updated)
 
     def test_series_bytearray(self):
-        updated = self.nested(
-            Series({'child': bytearray('{"c": 42}'.encode('utf-8'))})
-        )
+        updated = self.nested(Series({'child': bytearray(b'{"c": 42}')}))
         self.check_attributes(updated)
 
     def test_str(self):
@@ -716,11 +699,11 @@ class TestNesting(unittest.TestCase):
         self.check_attributes(updated)
 
     def test_bytes(self):
-        updated = self.nested(bytes('{"child": {"c": 42}}'.encode('utf-8')))
+        updated = self.nested(b'{"child": {"c": 42}}')
         self.check_attributes(updated)
 
     def test_bytearray(self):
-        updated = self.nested(bytearray('{"child": {"c": 42}}'.encode('utf-8')))
+        updated = self.nested(bytearray(b'{"child": {"c": 42}}'))
         self.check_attributes(updated)
 
 

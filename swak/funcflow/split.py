@@ -1,4 +1,4 @@
-from typing import Callable, Iterable
+from collections.abc import Callable, Iterable
 from ..magic import ArgRepr
 from .exceptions import SplitError
 
@@ -70,7 +70,7 @@ class Split[S, T](ArgRepr):
                 name = self._name(criterion)
                 err_cls = error.__class__.__name__
                 fmt = msg.format(err_cls, name, i, element, error)
-                raise SplitError(fmt)
+                raise SplitError(fmt) from error
             if criterion_is_fulfilled:
                 true.append(element)
             else:
@@ -83,5 +83,5 @@ class Split[S, T](ArgRepr):
             msg = '\n{} calling wrapper\n{}\non split results:\n{}'
             name = self._name(wrap)
             err_cls = error.__class__.__name__
-            raise SplitError(msg.format(err_cls, name, error))
+            raise SplitError(msg.format(err_cls, name, error)) from error
         return true, false

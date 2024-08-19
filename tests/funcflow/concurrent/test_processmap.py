@@ -402,7 +402,13 @@ class TestProcessPoolUsage(unittest.TestCase):
     def test_processpool_called_with_processpoolargs(self, cls):
         m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
         _ = m([1, 2, 3])
-        cls.assert_called_once_with(8, None, plus, (1, 2), max_tasks_per_child=3)
+        cls.assert_called_once_with(
+            8,
+            None,
+            plus,
+            (1, 2),
+            max_tasks_per_child=3
+        )
 
 
 class TestMapAttributes(unittest.TestCase):

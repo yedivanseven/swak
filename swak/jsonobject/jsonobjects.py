@@ -1,4 +1,5 @@
-from typing import Any, Iterator, Iterable, Self
+from typing import Any, Self
+from collections.abc import Iterator, Iterable
 from functools import singledispatchmethod
 import json
 from json.decoder import JSONDecodeError
@@ -54,10 +55,10 @@ class JsonObjects[T]:
         except KeyError:
             try:
                 item_type = cls.mro()[1].__item_type__
-            except AttributeError:
+            except AttributeError as error:
                 msg = ('If not inherited, an "item_type" must be defined as'
                        'a keyword argument in the class call on definition!')
-                raise SchemaError(msg)
+                raise SchemaError(msg) from error
         cls.__item_type__ = cls.__class_checked(item_type)
         super().__init_subclass__(**kwargs)
 

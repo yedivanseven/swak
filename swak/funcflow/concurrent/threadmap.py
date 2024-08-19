@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Callable
+from typing import Any
+from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from ...magic import ArgRepr
 from ..exceptions import MapError
@@ -59,7 +60,7 @@ class ThreadMap[**P, S, T](ArgRepr):
             thread_name_prefix: str = '',
             initializer: Callable[..., Any] | None = None,
             initargs: tuple[Any, ...] = (),
-            timeout: int | float | None = None
+            timeout: float | None = None
     ) -> None:
         super().__init__(
             transform,
@@ -124,7 +125,7 @@ class ThreadMap[**P, S, T](ArgRepr):
                 name = self._name(self.transform)
                 err_cls = error.__class__.__name__
                 fmt = msg.format(name, err_cls, error)
-                raise MapError(fmt)
+                raise MapError(fmt) from error
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(mapped)
@@ -132,5 +133,5 @@ class ThreadMap[**P, S, T](ArgRepr):
             msg = '\n{} calling wrapper\n{}\non map results:\n{}'
             name = self._name(wrap)
             err_cls = error.__class__.__name__
-            raise MapError(msg.format(err_cls, name, error))
+            raise MapError(msg.format(err_cls, name, error)) from error
         return wrapped

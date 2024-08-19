@@ -33,7 +33,7 @@ class TestDefault(unittest.TestCase):
         default = Default({})
         self.check_attribute(default)
 
-    def test_None(self):
+    def test_none(self):
         default = Default(None)
         self.check_attribute(default)
 
@@ -62,19 +62,19 @@ class TestDefault(unittest.TestCase):
         self.check_attribute(default)
 
     def test_bytes_of_empty_dict(self):
-        default = Default(bytes('{}'.encode('utf-8')))
+        default = Default(b'{}')
         self.check_attribute(default)
 
     def test_bytes_of_dict_null(self):
-        default = Default(bytes('{"a": null}'.encode('utf-8')))
+        default = Default(b'{"a": null}')
         self.check_attribute(default)
 
     def test_bytearray_of_empty_dict(self):
-        default = Default(bytearray('{}'.encode('utf-8')))
+        default = Default(bytearray(b'{}'))
         self.check_attribute(default)
 
     def test_bytearray_of_dict_null(self):
-        default = Default(bytearray('{"a": null}'.encode('utf-8')))
+        default = Default(bytearray(b'{"a": null}'))
         self.check_attribute(default)
 
     def test_kwarg_none(self):
@@ -110,11 +110,11 @@ class TestDefaultOverwritten(unittest.TestCase):
         self.check_attribute(default)
 
     def test_bytes(self):
-        default = Default(bytes('{"a": 42}'.encode('utf-8')))
+        default = Default(b'{"a": 42}')
         self.check_attribute(default)
 
     def test_bytearray(self):
-        default = Default(bytearray('{"a": 42}'.encode('utf-8')))
+        default = Default(bytearray(b'{"a": 42}'))
         self.check_attribute(default)
 
 
@@ -146,11 +146,11 @@ class TestNoneDefaultOverwritten(unittest.TestCase):
         self.check_attribute(default)
 
     def test_bytes(self):
-        default = NoneDefault(bytes('{"a": 42}'.encode('utf-8')))
+        default = NoneDefault(b'{"a": 42}')
         self.check_attribute(default)
 
     def test_bytearray(self):
-        default = NoneDefault(bytearray('{"a": 42}'.encode('utf-8')))
+        default = NoneDefault(bytearray(b'{"a": 42}'))
         self.check_attribute(default)
 
 
@@ -189,11 +189,11 @@ class TestDefaultOverwrittenWithNone(unittest.TestCase):
         self.check_attribute(default)
 
     def test_bytes(self):
-        default = Respect(bytes('{"a": null}'.encode('utf-8')))
+        default = Respect(b'{"a": null}')
         self.check_attribute(default)
 
     def test_bytearray(self):
-        default = Respect(bytearray('{"a": null}'.encode('utf-8')))
+        default = Respect(bytearray(b'{"a": null}'))
         self.check_attribute(default)
 
 
@@ -221,11 +221,11 @@ class TestException(unittest.TestCase):
 
     def test_bytes(self):
         with self.assertRaises(ValidationErrors):
-            _ = Default(bytes('{"a": "bar"}'.encode('utf-8')))
+            _ = Default(b'{"a": "bar"}')
 
     def test_bytearray(self):
         with self.assertRaises(ValidationErrors):
-            _ = Default(bytearray('{"a": "bar"}'.encode('utf-8')))
+            _ = Default(bytearray(b'{"a": "bar"}'))
 
 
 class TestTypeCast(unittest.TestCase):

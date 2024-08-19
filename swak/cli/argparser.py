@@ -111,7 +111,7 @@ class ArgParser:
         if not actions and self.default_action is not None:
             actions = self.default_action,
         # Either way, replace dashes with underscores
-        actions = map(lambda action: action.lower().replace('-', '_'), actions)
+        actions = (action.lower().replace('-', '_') for action in actions)
 
         # Everything after the action(s) are options (starting with "--").
         args = dropwhile(lambda arg: not arg.startswith('--'), args)

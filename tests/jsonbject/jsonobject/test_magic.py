@@ -100,7 +100,7 @@ class TestMagic(unittest.TestCase):
 
     def test_iter(self):
         simple = Simple()
-        keys = {key for key in simple}
+        keys = set(simple)
         self.assertSetEqual({'a', 'b', 'c'}, keys)
 
     def test_str(self):

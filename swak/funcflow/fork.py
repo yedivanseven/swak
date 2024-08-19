@@ -1,4 +1,5 @@
-from typing import Iterator, Any, Callable, Self, Iterable, ParamSpec
+from typing import Any, Self, ParamSpec
+from collections.abc import Iterator, Callable, Iterable
 from functools import singledispatchmethod
 from ..magic import IndentRepr
 from .exceptions import ForkError
@@ -98,8 +99,8 @@ class Fork[**P, T](IndentRepr):
         -------
         tuple or object
             Concatenation of all return values of all `calls` in order. If only
-            one of the `calls` returns something other than an empty tuple, that
-            object is returned.
+            one of the `calls` returns something other than an empty tuple,
+            that object is returned.
 
         Raises
         ------
@@ -116,7 +117,7 @@ class Fork[**P, T](IndentRepr):
                 err_cls = error.__class__.__name__
                 name = self._name(call)
                 fmt = msg.format(err_cls, name, i, self, error)
-                raise ForkError(fmt)
+                raise ForkError(fmt) from error
             else:
                 if isinstance(result, tuple):
                     results.extend(result)

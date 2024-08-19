@@ -1,4 +1,5 @@
-from typing import Any, Iterator, Callable, Self, Sequence, Iterable
+from typing import Any, Self
+from collections.abc import Iterator, Callable, Sequence, Iterable
 from functools import singledispatchmethod
 from ..magic import IndentRepr
 from .exceptions import RouteError
@@ -12,10 +13,10 @@ class Route[**P, T](IndentRepr):
     """Flexibly route arguments to a sequence of callables and collect results.
 
     Generic type annotation of instances is recommended. Provide a list of
-    one or more input types that will be routed to the callables and a ``tuple``
-    specifying the concatenation of the return types of all callables, ignoring
-    empty tuples. If only a single object remains, the type of that object
-    should be annotated.
+    one or more input types that will be routed to the callables and a
+    ``tuple`` specifying the concatenation of the return types of all
+    callables,  ignoring empty tuples. If only a single object remains, the
+    type of that object should be annotated.
 
     Parameters
     ----------
@@ -117,8 +118,8 @@ class Route[**P, T](IndentRepr):
         -------
         tuple or object
             Concatenation of all return values of all `calls` in order. If only
-            one of the `calls` returns something other than an empty tuple, that
-            object is returned.
+            one of the `calls` returns something other than an empty tuple,
+            that object is returned.
 
         Raises
         ------
@@ -139,7 +140,7 @@ class Route[**P, T](IndentRepr):
                 err_cls = error.__class__.__name__
                 name = self._name(call)
                 fmt = msg.format(err_cls, name, i, route, self, error)
-                raise RouteError(fmt)
+                raise RouteError(fmt) from error
             else:
                 if isinstance(result, tuple):
                     results.extend(result)
@@ -177,7 +178,7 @@ class Route[**P, T](IndentRepr):
         """Check if the number of routes matches the number of callables."""
         if (n_routes := len(self.routes)) == (n_calls := len(calls)):
             return calls
-        msg = 'Number of callables (={}) must match the number of routes (={})!'
+        msg = 'Number of callables (={}) must match number of routes (={})!'
         raise RouteError(msg.format(n_calls, n_routes))
 
     @staticmethod
@@ -187,9 +188,9 @@ class Route[**P, T](IndentRepr):
         msg = 'Routes must be integers or tuples thereof, not {}'
         # Routes could be of completely wrong type, i.e., not iterable.
         try:
-            safe_routes = [route for route in routes]
-        except TypeError:
-            raise RouteError(msg.format(routes))
+            safe_routes = [*routes]
+        except TypeError as error:
+            raise RouteError(msg.format(routes)) from error
         # If routes are iterable, elements could be ...
         for route in safe_routes:
             try:
@@ -199,8 +200,8 @@ class Route[**P, T](IndentRepr):
                 # ... or just a single integer.
                 try:
                     tuples.append((int(route),))
-                except TypeError:
-                    raise RouteError(msg.format(route))
-            except ValueError:
-                raise RouteError(msg.format(route))
+                except TypeError as error:
+                    raise RouteError(msg.format(route)) from error
+            except ValueError as error:
+                raise RouteError(msg.format(route)) from error
         return tuple(tuples)

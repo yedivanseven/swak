@@ -54,15 +54,15 @@ class Importer(ArgRepr):
         """
         try:
             location = import_module(self.path)
-        except (TypeError, ModuleNotFoundError):
+        except (TypeError, ModuleNotFoundError) as error:
             msg = 'Could not import module "{}"!'
-            raise ImporterError(msg.format(self.path))
+            raise ImporterError(msg.format(self.path)) from error
         imports = []
         for name in names:
             try:
                 imported = getattr(location, name)
-            except AttributeError:
+            except AttributeError as err:
                 msg = 'Could not import "{}" from module "{}"!'
-                raise ImporterError(msg.format(name, self.path))
+                raise ImporterError(msg.format(name, self.path)) from err
             imports.append(imported)
         return imports

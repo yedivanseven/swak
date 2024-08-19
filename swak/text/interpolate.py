@@ -1,5 +1,6 @@
 import string
-from typing import Mapping, Any
+from typing import Any
+from collections.abc import Mapping
 
 type M = Mapping[str, Any] | None
 
@@ -43,7 +44,12 @@ class TemplateRenderer:
 
     """
 
-    def __init__(self, template: str, mapping: M = None, **kwargs: Any) -> None:
+    def __init__(
+            self,
+            template: str,
+            mapping: M = None,
+            **kwargs: Any
+    ) -> None:
         mapping = {} if mapping is None else mapping
         # We could also delay this until instances are called
         self.template = _Template(template).safe_substitute(mapping, **kwargs)

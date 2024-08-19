@@ -50,8 +50,9 @@ class GbqDataset:
         Number of days after which tables are dropped. Defaults to ``None``,
         which results in tables never being dropped.
     partition_expire_days: int, optional
-        Number of days after which partitions of partitioned tables are dropped.
-        Defaults to ``None``, which results in partitions never being dropped.
+        Number of days after which partitions of partitioned tables are
+        dropped. Defaults to ``None``, which results in partitions never
+        being dropped.
     labels: dict, optional
         Any number of string-valued labels of the dataset. Defaults to none.
     access: list of dict, optional
@@ -78,8 +79,8 @@ class GbqDataset:
         Default billing mode for tables. Defaults to ``None``, which lets
         Google BigQuery choose. Use the ``Billing`` enum to specify explicitly.
     tags: dict, optional
-        Associate globally defined tags with this dataset. Defaults to ``None``,
-        which result in no tags to be associated.
+        Associate globally defined tags with this dataset. Defaults to
+        ``None``, which result in no tags to be associated.
     **kwargs
         Additional keyword arguments are passed to the constructor of the
         Google BigQuery ``Client`` (see `documentation <https://cloud.google.
@@ -148,7 +149,7 @@ class GbqDataset:
 
     @staticmethod
     def to_ms(days):
-        """Convert integer days to a millisecond string for the GCP API call."""
+        """Convert integer days to millisecond string for the GCP API call."""
         return None if days is None else f'{int(days * 1000 * 60 * 60 * 24)}'
 
     @property
@@ -224,7 +225,7 @@ class GbqDataset:
         try:
             _ = client.get_dataset(dataset.reference, retry, timeout)
         except NotFound:
-            exists = False
+            exist = False
         else:
-            exists = True
-        return client.create_dataset(dataset, exists_ok, retry, timeout), exists
+            exist = True
+        return client.create_dataset(dataset, exists_ok, retry, timeout), exist

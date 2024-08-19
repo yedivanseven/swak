@@ -1,4 +1,4 @@
-from typing import Iterable, Callable
+from collections.abc import Iterable, Callable
 from ..magic import ArgRepr
 from .exceptions import ReduceError
 
@@ -23,7 +23,11 @@ class Reduce[T, S](ArgRepr):
 
     """
 
-    def __init__(self, call: Callable[[T, S], T], acc: T | None = None) -> None:
+    def __init__(
+            self,
+            call: Callable[[T, S], T],
+            acc: T | None = None
+    ) -> None:
         super().__init__(call, acc)
         self.call = call
         self.acc = acc
@@ -52,5 +56,5 @@ class Reduce[T, S](ArgRepr):
                 name = self._name(self.call)
                 err_cls = error.__class__.__name__
                 fmt = msg.format(err_cls, name, i + 1, element, error)
-                raise ReduceError(fmt)
+                raise ReduceError(fmt) from error
         return acc

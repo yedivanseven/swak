@@ -1,4 +1,5 @@
-from typing import Any, Callable, Sequence
+from typing import Any
+from collections.abc import Callable, Sequence
 
 
 class ReprName:
@@ -60,7 +61,12 @@ class IndentRepr(ReprName):
 
     """
 
-    def __init__(self, items: Sequence = (), *args: Any, **kwargs: Any) -> None:
+    def __init__(
+            self,
+            items: Sequence = (),
+            *args: Any,
+            **kwargs: Any
+    ) -> None:
         self.__items = items
         self.__args = args
         self.__kwargs = kwargs

@@ -104,7 +104,7 @@ class TestAttributes(unittest.TestCase):
 class TestPrefix(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.stream = open(Path(__file__).parent / 'file.pqt', 'rb')
+        self.stream = open(Path(__file__).parent / 'file.pqt', 'rb')  # noqa: SIM115
         self.blob = Mock()
         self.blob.name = 'blob.pqt'
         self.blob.open = Mock(return_value=self.stream)
@@ -187,7 +187,7 @@ class TestPrefix(unittest.TestCase):
 class TestCloud(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.stream = open(Path(__file__).parent / 'file.pqt', 'rb')
+        self.stream = open(Path(__file__).parent / 'file.pqt', 'rb')  # noqa: SIM115
         self.blob = Mock()
         self.blob.name = 'prefix/blob.pqt'
         self.blob.open = Mock(return_value=self.stream)

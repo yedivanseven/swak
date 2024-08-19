@@ -165,7 +165,7 @@ class TestMagic(unittest.TestCase):
         self.assertIn('{"a": 1, "b": "foo"}', self.items)
 
     def test_contains_true_bytes(self):
-        self.assertIn('{"a": 1, "b": "foo"}'.encode(), self.items)
+        self.assertIn(b'{"a": 1, "b": "foo"}', self.items)
 
     def test_contains_true_series(self):
         self.assertIn(pd.Series({'a': 1, 'b': 'foo'}), self.items)

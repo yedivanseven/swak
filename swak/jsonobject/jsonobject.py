@@ -1,5 +1,5 @@
-from typing import Callable, Any, Iterator, Self
-from collections.abc import KeysView
+from typing import Any, Self
+from collections.abc import KeysView, Callable, Iterator
 from functools import reduce
 from ast import literal_eval
 import json
@@ -18,6 +18,7 @@ type Json = dict[str, Any]
 type Raw = str | bytes | bytearray | Json | Series | None
 type Schema = dict[str, type | Callable[[Any], Any]]
 type Types = tuple[type, ...]
+type Tried = tuple[Json, list[Exception]]
 
 
 class SchemaMeta(type):
@@ -48,7 +49,7 @@ class SchemaMeta(type):
     __respect_none__ = False
 
     def __new__(
-            mcs,
+            mcs,  # noqa: N804
             name: str,
             bases: Types,
             attrs: Json,
@@ -152,7 +153,7 @@ class SchemaMeta(type):
         return schema, errors
 
     @staticmethod
-    def __tried(defaults: Json, schema: Schema) -> tuple[Json, list[Exception]]:
+    def __tried(defaults: Json, schema: Schema) -> Tried:
         """Ensure that class-variable defaults are sane."""
         errors = []
         for item in defaults:
@@ -248,15 +249,16 @@ class JsonObject(metaclass=SchemaMeta):
         # Try and split the (string) key by dots
         try:
             root, *children = key.split('.')
-        except AttributeError:
+        except AttributeError as error:
             cls = type(key).__name__
-            raise KeyError(f'Keys must be strings, not {cls} like {key}!')
+            msg = f'Keys must be strings, not {cls} like {key}!'
+            raise KeyError(msg) from error
         # The key could also refer to an attribute like a property or a method
         try:
             value = self.__dict__.get(root, getattr(self, root))
         # ... but we still raise a KeyError to meet expectations
-        except AttributeError:
-            raise KeyError(key)
+        except AttributeError as error:
+            raise KeyError(key) from error
         # If the key contains dots, recurse down into the value
         return reduce(lambda x, y: x[y], children, value)
 
@@ -321,8 +323,10 @@ class JsonObject(metaclass=SchemaMeta):
         # Fully nest the parsed and purged dictionaries with dot.separated keys
         parsed = self.__nest(self.__purge(self.__parse(mapping)))
         kwargs = self.__nest(self.__purge(self.__parse(kwargs, 1)))
-        # Merge the fully nested dictionaries
-        merged = self.__merge(self.__dict__, self.__merge(parsed, kwargs), True)
+        # Merge the call arguments
+        merged = self.__merge(parsed, kwargs)
+        # Left merge with self
+        merged = self.__merge(self.__dict__, merged,True)
         # Instantiate a new, updated copy of self from the fully nested update
         return self.__class__(merged)
 
@@ -378,12 +382,12 @@ class JsonObject(metaclass=SchemaMeta):
         try:
             parsed = {**parsed}
         # If not ...
-        except TypeError:
+        except TypeError as error:
             # ... we're done with the recursion and simply return the input ...
             if level > 0:
                 return obj
             # ... unless this was the initial, root-level call. Then we fail
-            raise ParseError(f'Could not parse {obj} as JSON!')
+            raise ParseError(f'Could not parse {obj} as JSON!') from error
         # Recurse further down into the value of the parsed dictionary
         return {key: self.__parse(parsed[key], level + 1) for key in parsed}
 
@@ -415,7 +419,7 @@ class JsonObject(metaclass=SchemaMeta):
         # If it is, initialize the return value ...
         result = {}
         # ... and iterate through the keys
-        for key in mapping.keys():
+        for key in mapping.keys():  # noqa: SIM118
             # Get the value to the current key
             value = mapping[key]
             # Depending on the type to key ...
@@ -445,11 +449,11 @@ class JsonObject(metaclass=SchemaMeta):
             return new
         # First the old values in order of appearance ...
         result = {key: old[key] for key in old if key not in new}
-        # ... then the intersection of old and new in order of appearance in old
+        # ... then intersection of old and new in order of appearance in old
         for key in [key for key in old if key in new]:
             result[key] = self.__merge(old[key], new[key], left)
         # If requested, add fields only present in new in order of appearance
-        right = {} if left else {key: new[key] for key in new if key not in old}
+        right = {} if left else {k: new[k] for k in new if k not in old}
         return result | right
 
     def __cast(self, mapping: Json) -> Json:

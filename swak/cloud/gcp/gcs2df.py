@@ -21,7 +21,8 @@ class GcsParquet2DataFrame(ArgRepr):
         can also be provided later, when the callable instance is called, it
         is optional here. Defaults to an empty string.
     n_threads: int, optional
-        Maximum number of parquet files to download in parallel. Defaults to 16.
+        Maximum number of parquet files to download in parallel.
+        Defaults to 16.
     chunk_size: int, optional
         Chunk size to read from Google Cloud Storage in one API call in MiB.
         Defaults to 10 MiB.
@@ -67,7 +68,7 @@ class GcsParquet2DataFrame(ArgRepr):
         return in_multiples_of_256kb * 256 * 1024
 
     def __call__(self, prefix: str = '') -> DataFrame:
-        """Load parquet files from Google Cloud Storage into a pandas DataFrame.
+        """Load parquet files from Google Cloud Storage into pandas DataFrame.
 
         Parameters
         ----------

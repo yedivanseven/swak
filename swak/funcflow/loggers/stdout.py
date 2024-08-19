@@ -1,6 +1,7 @@
 import sys
 import logging
-from typing import ParamSpec, Callable
+from typing import ParamSpec
+from collections.abc import Callable
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
 from ...magic import ArgRepr

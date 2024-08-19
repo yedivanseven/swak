@@ -1,4 +1,4 @@
-from typing import Iterable, Callable
+from collections.abc import Iterable, Callable
 from ..magic import ArgRepr
 from .exceptions import MapError
 
@@ -75,7 +75,7 @@ class Map[**P, S, T](ArgRepr):
                 err_cls = error.__class__.__name__
                 display = elements[0] if len(elements) == 1 else elements
                 fmt = msg.format(err_cls, name, i, display, error)
-                raise MapError(fmt)
+                raise MapError(fmt) from error
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(mapped)
@@ -83,5 +83,5 @@ class Map[**P, S, T](ArgRepr):
             msg = '\n{} calling wrapper\n{}\non map results:\n{}'
             name = self._name(wrap)
             err_cls = error.__class__.__name__
-            raise MapError(msg.format(err_cls, name, error))
+            raise MapError(msg.format(err_cls, name, error)) from error
         return wrapped

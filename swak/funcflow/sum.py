@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 from ..magic import ArgRepr
 from .exceptions import SumError
 
@@ -46,5 +46,5 @@ class Sum[S, T](ArgRepr):
                 msg = 'Error adding element #{}:\n{}\n{}:\n{}'
                 err_cls = error.__class__.__name__
                 fmt = msg.format(i + offset, element, err_cls, error)
-                raise SumError(fmt)
+                raise SumError(fmt) from error
         return acc

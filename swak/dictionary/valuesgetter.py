@@ -1,5 +1,6 @@
 from operator import itemgetter
-from typing import Hashable, Mapping, Callable, Self, Iterator, Iterable
+from typing import Self
+from collections.abc import Hashable, Mapping, Callable, Iterator, Iterable
 from functools import singledispatchmethod
 from ..magic import ArgRepr
 
@@ -34,7 +35,8 @@ class ValuesGetter[T](ArgRepr):
             *keys: Hashable,
             wrapper: type[T] | Callable[[tuple], T] = list
     ) -> None:
-        self.keys: tuple[Hashable, ...] = self.__valid(key) + self.__valid(keys)
+        key = self.__valid(key)
+        self.keys: tuple[Hashable, ...] = key + self.__valid(keys)
         self.wrapper = wrapper
         super().__init__(*self.keys, wrapper=wrapper)
 

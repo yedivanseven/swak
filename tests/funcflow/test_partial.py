@@ -210,7 +210,8 @@ class TestMisc(unittest.TestCase):
 
     def test_indentrepr(self):
         partial = Partial(Ind([1, 2, 3]), Ind([1, 2, 3]), answer=42)
-        self.assertEqual("Partial(Ind()[3], Ind()[3], answer=42)", repr(partial))
+        expected = "Partial(Ind()[3], Ind()[3], answer=42)"
+        self.assertEqual(expected, repr(partial))
 
     def test_type_annotation(self):
         _ = Partial[int](f, 42)

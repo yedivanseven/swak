@@ -303,7 +303,7 @@ class TestName(unittest.TestCase):
         actual = self.i._name(Cls.c)
         self.assertEqual('Cls.c', actual)
 
-    def test_name_of_None(self):
+    def test_name_of_none(self):
         actual = self.i._name(None)
         self.assertEqual('None', actual)
 

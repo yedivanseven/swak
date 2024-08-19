@@ -446,7 +446,10 @@ class TestInheritance(unittest.TestCase):
             c: float = 2.0
 
         self.assertIsInstance(C, SchemaMeta)
-        self.assertDictEqual({'a': int, 'b': str, 'c': float}, C.__annotations__)
+        self.assertDictEqual(
+            {'a': int, 'b': str, 'c': float},
+            C.__annotations__
+        )
         self.assertDictEqual({'b': 'foo', 'c': 2.0}, C.__defaults__)
 
     def test_multiple_inheritance(self):
@@ -458,7 +461,10 @@ class TestInheritance(unittest.TestCase):
             c: float = 2.0
 
         self.assertIsInstance(C, SchemaMeta)
-        self.assertDictEqual({'a': int, 'b': str, 'c': float}, C.__annotations__)
+        self.assertDictEqual(
+            {'a': int, 'b': str, 'c': float},
+            C.__annotations__
+        )
         self.assertDictEqual({'b': 'foo', 'c': 2.0}, C.__defaults__)
 
     def test_mro(self):

@@ -1,4 +1,5 @@
-from typing import Iterator, Any, Callable, Self, Iterable, ParamSpec
+from typing import Any, Self, ParamSpec
+from collections.abc import Iterator, Callable, Iterable
 from functools import singledispatchmethod
 from concurrent.futures import ThreadPoolExecutor
 from ...magic import IndentRepr
@@ -57,7 +58,7 @@ class ThreadFork[**P, T](IndentRepr):
             thread_name_prefix: str = '',
             initializer: Callable[..., Any] | None = None,
             initargs: tuple[Any, ...] = (),
-            timeout: int | float | None = None
+            timeout: float | None = None
     ) -> None:
         self.calls = self.__valid(call) + self.__valid(calls)
         self.max_workers = max_workers
@@ -137,8 +138,8 @@ class ThreadFork[**P, T](IndentRepr):
         -------
         tuple or object
             Concatenation of all return values of all `calls` in order. If only
-            one of the `calls` returns something other than an empty tuple, that
-            object is returned.
+            one of the `calls` returns something other than an empty tuple,
+            that object is returned.
 
         Raises
         ------
@@ -162,7 +163,7 @@ class ThreadFork[**P, T](IndentRepr):
                     err_cls = error.__class__.__name__
                     name = self._name(self.calls[i])
                     fmt = msg.format(err_cls, name, i, self, error)
-                    raise ForkError(fmt)
+                    raise ForkError(fmt) from error
                 else:
                     if isinstance(result, tuple):
                         results.extend(result)

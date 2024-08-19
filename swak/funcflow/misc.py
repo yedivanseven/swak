@@ -1,4 +1,5 @@
-from typing import Any, overload, Callable
+from typing import Any, overload
+from collections.abc import Callable
 
 
 def apply[**P, T](call: type[T] | Callable[P, T], *args: P.args) -> T:

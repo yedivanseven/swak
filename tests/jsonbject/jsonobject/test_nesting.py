@@ -49,11 +49,11 @@ class TestInstantiationDict(unittest.TestCase):
         self.check_attributes(p)
 
     def test_dict_bytes(self):
-        p = Parent({'child': bytes('{"c": 1}'.encode('utf-8'))})
+        p = Parent({'child': b'{"c": 1}'})
         self.check_attributes(p)
 
     def test_dict_bytearray(self):
-        p = Parent({'child': bytearray('{"c": 1}'.encode('utf-8'))})
+        p = Parent({'child': bytearray(b'{"c": 1}')})
         self.check_attributes(p)
 
     def test_nested_error(self):
@@ -98,11 +98,11 @@ class TestInstantiationKwarg(unittest.TestCase):
         self.check_attributes(p)
 
     def test_kwarg_bytes(self):
-        p = Parent(child=bytes('{"c": 1}'.encode('utf-8')))
+        p = Parent(child=b'{"c": 1}')
         self.check_attributes(p)
 
     def test_kwarg_bytearray(self):
-        p = Parent(child=bytearray('{"c": 1}'.encode('utf-8')))
+        p = Parent(child=bytearray(b'{"c": 1}'))
         self.check_attributes(p)
 
     def test_empty_kwarg_dict(self):
@@ -126,11 +126,11 @@ class TestInstantiationKwarg(unittest.TestCase):
         self.check_attributes(p)
 
     def test_empty_kwarg_bytes(self):
-        p = Parent({}, child=bytes('{"c": 1}'.encode('utf-8')))
+        p = Parent({}, child=b'{"c": 1}')
         self.check_attributes(p)
 
     def test_empty_kwarg_bytearray(self):
-        p = Parent({}, child=bytearray('{"c": 1}'.encode('utf-8')))
+        p = Parent({}, child=bytearray(b'{"c": 1}'))
         self.check_attributes(p)
 
     def test_none_kwarg_dict(self):
@@ -154,11 +154,11 @@ class TestInstantiationKwarg(unittest.TestCase):
         self.check_attributes(p)
 
     def test_none_kwarg_bytes(self):
-        p = Parent(None, child=bytes('{"c": 1}'.encode('utf-8')))
+        p = Parent(None, child=b'{"c": 1}')
         self.check_attributes(p)
 
     def test_none_kwarg_bytearray(self):
-        p = Parent(None, child=bytearray('{"c": 1}'.encode('utf-8')))
+        p = Parent(None, child=bytearray(b'{"c": 1}'))
         self.check_attributes(p)
 
 
@@ -197,11 +197,11 @@ class TestInstantiationSeries(unittest.TestCase):
         self.check_attributes(p)
 
     def test_series_bytes(self):
-        p = Parent(pd.Series({'child': bytes('{"c": 1}'.encode('utf-8'))}))
+        p = Parent(pd.Series({'child': b'{"c": 1}'}))
         self.check_attributes(p)
 
     def test_series_bytearray(self):
-        p = Parent(pd.Series({'child': bytearray('{"c": 1}'.encode('utf-8'))}))
+        p = Parent(pd.Series({'child': bytearray(b'{"c": 1}')}))
         self.check_attributes(p)
 
 
@@ -228,11 +228,11 @@ class TestInstantiationOther(unittest.TestCase):
         self.check_attributes(p)
 
     def test_bytes(self):
-        p = Parent(bytes('{"child": {"c": 1}}'.encode('utf-8')))
+        p = Parent(b'{"child": {"c": 1}}')
         self.check_attributes(p)
 
     def test_bytearray(self):
-        p = Parent(bytearray('{"child": {"c": 1}}'.encode('utf-8')))
+        p = Parent(bytearray(b'{"child": {"c": 1}}'))
         self.check_attributes(p)
 
 
@@ -275,14 +275,11 @@ class TestKwargOverWrites(unittest.TestCase):
         self.check_attributes(p)
 
     def test_bytes(self):
-        p = Parent({'child': {'c': 2}}, child=bytes('{"c": 1}'.encode('utf-8')))
+        p = Parent({'child': {'c': 2}}, child=b'{"c": 1}')
         self.check_attributes(p)
 
     def test_bytearray(self):
-        p = Parent(
-            {'child': {'c': 2}},
-            child=bytearray('{"c": 1}'.encode('utf-8'))
-        )
+        p = Parent({'child': {'c': 2}}, child=bytearray(b'{"c": 1}'))
         self.check_attributes(p)
 
     def test_kwarg_nest_dict(self):

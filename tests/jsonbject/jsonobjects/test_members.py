@@ -122,7 +122,10 @@ class TestAttributes(unittest.TestCase):
 
     def test_instantiation_from_custom_as_dtype(self):
         items = CustomItems(self.custom_items)
-        self.assertListEqual(items.as_json, CustomItems(items.as_dtype).as_json)
+        self.assertListEqual(
+            items.as_json,
+            CustomItems(items.as_dtype).as_json
+        )
 
     def test_as_df(self):
         items = Items(self.items)
@@ -192,7 +195,10 @@ class TestAttributes(unittest.TestCase):
 
     def test_getattr_staticmethod(self):
         items = CustomItems(self.custom_items)
-        self.assertListEqual([CustomItem.stat, CustomItem.stat], items.stat)
+        self.assertListEqual(
+            [CustomItem.stat, CustomItem.stat],
+            items.stat
+        )
 
     def test_getattr_method(self):
         items = CustomItems(self.custom_items)

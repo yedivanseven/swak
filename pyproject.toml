@@ -13,13 +13,8 @@ dependencies = [
   "pandas>=2.2",
   "pyarrow>=17.0",
   "pyyaml>=6.0",
-  "google-cloud-bigquery>=3.25",
-  "google-cloud-storage>=2.18",
-  "pandas-gbq>=0.23"
 ]
-authors = [
-  {name = "yedivanseven", email = "yedivanseven@icloud.com"},
-]
+authors = [{name = "yedivanseven", email = "yedivanseven@icloud.com"}]
 description = "Swiss army knife for functional data-science projects."
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -37,6 +32,13 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 
+[project.optional-dependencies]
+cloud = [
+  "google-cloud-bigquery>=3.25",
+  "google-cloud-storage>=2.18",
+  "pandas-gbq>=0.23"
+]
+
 [tool.setuptools]
 packages = ["swak"]
 
@@ -44,3 +46,36 @@ packages = ["swak"]
 version_file = "version.env"
 version_file_template = "SETUPTOOLS_SCM_PRETEND_VERSION={version}"
 
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+ignore = ["PLR"]
+select = [
+    "F",
+    "E",
+    "W",
+    "N",
+    "T",
+    "UP",
+    "YTT",
+    "ASYNC",
+    "C4",
+    "T100",
+    "EXE",
+    "ISC",
+    "ICN",
+    "PIE",
+    "PYI",
+    "RSE",
+    "SLOT",
+    "SIM",
+    "INT",
+    "PL",
+    "NPY",
+    "PERF",
+    "FURB"
+]

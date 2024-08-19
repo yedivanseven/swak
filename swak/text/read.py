@@ -1,7 +1,8 @@
 import os
 import warnings
 import tomllib
-from typing import Callable, Any
+from typing import Any
+from collections.abc import Callable
 import yaml
 from yaml import Loader
 from ..magic import ArgRepr
@@ -46,7 +47,10 @@ class TomlReader(ArgRepr):
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
-        self.base_dir = '/' + base_dir.strip(' /') if base_dir else os.getcwd()
+        if stripped := base_dir.strip(' /'):
+            self.base_dir = '/' + stripped
+        else:
+            self.base_dir = os.getcwd()
         self.not_found = not_found
         self.parse_float = parse_float
         if 'mode' in kwargs:
@@ -71,8 +75,8 @@ class TomlReader(ArgRepr):
         path: str
             Path (including file name) under the `base_dir` of the TOML file
             to read. May contain any number of forward slashes to access
-            nested subdirectories, or string placeholders (i.e., curly brackets)
-            to interpolate with `args`.
+            nested subdirectories, or string placeholders (i.e., curly
+            brackets) to interpolate with `args`.
 
         Returns
         -------
@@ -131,7 +135,10 @@ class YamlReader(ArgRepr):
             loader: type = Loader,
             **kwargs: Any
     ) -> None:
-        self.base_dir = '/' + base_dir.strip(' /') if base_dir else os.getcwd()
+        if stripped := base_dir.strip(' /'):
+            self.base_dir = '/' + stripped
+        else:
+            self.base_dir = os.getcwd()
         self.not_found = not_found
         self.loader = loader
         if 'mode' in kwargs:
@@ -151,8 +158,8 @@ class YamlReader(ArgRepr):
         path: str
             Path (including file name) under the `base_dir` of the YAML file
             to read. May contain any number of forward slashes to access
-            nested subdirectories, or string placeholders (i.e., curly brackets)
-            to interpolate with `args`.
+            nested subdirectories, or string placeholders (i.e., curly
+            brackets) to interpolate with `args`.
 
         Returns
         -------
