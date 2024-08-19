@@ -19,9 +19,8 @@ class TomlReader(ArgRepr):
     ----------
     base_dir: str, optional
         Base directory of the TOML file(s) to read. May contain any number of
-        forward slashes to access nested subdirectories, or string placeholders
-        (i.e., curly brackets) to interpolate later. Defaults to the current
-        working directory of the python interpreter.
+        forward slashes to access nested subdirectories. Defaults to the
+        current working directory of the python interpreter.
     not_found: str, optional
         What to do if the specified TOML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -75,8 +74,7 @@ class TomlReader(ArgRepr):
         path: str
             Path (including file name) under the `base_dir` of the TOML file
             to read. May contain any number of forward slashes to access
-            nested subdirectories, or string placeholders (i.e., curly
-            brackets) to interpolate with `args`.
+            nested subdirectories.
 
         Returns
         -------
@@ -108,9 +106,8 @@ class YamlReader(ArgRepr):
     ----------
     base_dir: str, optional
         Base directory of the YAML file(s) to read. May contain any number of
-        forward slashes to access nested subdirectories, or string placeholders
-        (i.e., curly brackets) to interpolate later. Defaults to the current
-        working directory of the python interpreter.
+        forward slashes to access nested subdirectories. Defaults to the
+        current working directory of the python interpreter.
     not_found: str, optional
         What to do if the specified YAML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -158,8 +155,7 @@ class YamlReader(ArgRepr):
         path: str
             Path (including file name) under the `base_dir` of the YAML file
             to read. May contain any number of forward slashes to access
-            nested subdirectories, or string placeholders (i.e., curly
-            brackets) to interpolate with `args`.
+            nested subdirectories.
 
         Returns
         -------
