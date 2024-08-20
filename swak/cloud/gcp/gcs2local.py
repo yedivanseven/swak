@@ -164,6 +164,6 @@ class GcsDir2LocalDir(ArgRepr):
         blob.chunk_size = self.chunk_bytes
         file = blob.name.split('/')[-1]
         path = Path(self.base_dir) / local / file
-        with open(path, 'wb') as stream:
+        with path.open('wb') as stream:
             blob.download_to_file(stream, raw_download=True)
         return str(path.resolve())

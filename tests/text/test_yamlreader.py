@@ -11,23 +11,23 @@ class TestAttributes(unittest.TestCase):
 
     def test_empty(self):
         y = YamlReader()
-        self.assertTrue(hasattr(y, 'base_dir'))
-        self.assertEqual(os.getcwd(), y.base_dir)
+        self.assertTrue(hasattr(y, 'path'))
+        self.assertEqual(os.getcwd(), y.path)
 
     def test_dir(self):
         y = YamlReader('/hello')
-        self.assertTrue(hasattr(y, 'base_dir'))
-        self.assertEqual('/hello', y.base_dir)
+        self.assertTrue(hasattr(y, 'path'))
+        self.assertEqual('/hello', y.path)
 
     def test_dir_stripped(self):
         y = YamlReader('/ hello/ ')
-        self.assertTrue(hasattr(y, 'base_dir'))
-        self.assertEqual('/hello', y.base_dir)
+        self.assertTrue(hasattr(y, 'path'))
+        self.assertEqual('/hello', y.path)
 
     def test_dir_completed(self):
         y = YamlReader('hello')
-        self.assertTrue(hasattr(y, 'base_dir'))
-        self.assertEqual('/hello', y.base_dir)
+        self.assertTrue(hasattr(y, 'path'))
+        self.assertEqual('/hello', y.path)
 
     def test_default_not_found(self):
         y = YamlReader('hello')
@@ -134,10 +134,40 @@ class TestUsage(unittest.TestCase):
         _ = y('foo/bar.yml')
         load.assert_called_once_with('file', SafeLoader)
 
-    def test_read_yaml(self):
+    def test_read_yaml_instantiation(self):
+        y = YamlReader(self.dir + '/foo/bar.yml')
+        actual = y()
+        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
+
+    def test_read_yaml_call(self):
         y = YamlReader(self.dir)
         actual = y('foo/bar.yml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
+
+    def test_read_yaml_split(self):
+        y = YamlReader(self.dir + '/foo/')
+        actual = y('/bar.yml')
+        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
+
+    def test_read_subdir_yaml_instantiation(self):
+        y = YamlReader(self.dir + '/foo/hello/world.yml')
+        actual = y()
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
+
+    def test_read_subdir_yaml_call(self):
+        y = YamlReader(self.dir)
+        actual = y('foo/hello/world.yml')
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
+
+    def test_read_subdir_yaml_split_instantiation(self):
+        y = YamlReader(self.dir + '/foo/hello ')
+        actual = y('/world.yml')
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
+
+    def test_read_subdir_yaml_split_call(self):
+        y = YamlReader(self.dir + '/foo/ ')
+        actual = y('hello/world.yml')
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_empty_yaml(self):
         y = YamlReader(self.dir)

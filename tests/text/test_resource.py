@@ -24,17 +24,17 @@ class TestDefaultAttributes(unittest.TestCase):
         load = TextResourceLoader(' /tests.text /')
         self.assertEqual('tests.text', load.package)
 
-    def test_has_base_dir(self):
+    def test_has_path(self):
         load = TextResourceLoader('tests.text')
-        self.assertTrue(hasattr(load, 'base_dir'))
+        self.assertTrue(hasattr(load, 'path'))
 
-    def test_base_dir_type(self):
+    def test_path_type(self):
         load = TextResourceLoader('tests.text')
-        self.assertIsInstance(load.base_dir, str)
+        self.assertIsInstance(load.path, str)
 
-    def test_base_dir_value(self):
+    def test_path_value(self):
         load = TextResourceLoader('tests.text')
-        self.assertEqual('resources', load.base_dir)
+        self.assertEqual('resources', load.path)
 
     def test_has_not_found(self):
         load = TextResourceLoader('tests.text')
@@ -65,15 +65,15 @@ class TestAttributes(unittest.TestCase):
 
     def test_base_dir_type(self):
         load = TextResourceLoader('tests.text', 'base_dir')
-        self.assertIsInstance(load.base_dir, str)
+        self.assertIsInstance(load.path, str)
 
     def test_base_dir_value(self):
         load = TextResourceLoader('tests.text', 'base_dir')
-        self.assertEqual('base_dir', load.base_dir)
+        self.assertEqual('base_dir', load.path)
 
     def test_base_dir_strip(self):
         load = TextResourceLoader('tests.text', '/ base_dir/ ')
-        self.assertEqual('base_dir', load.base_dir)
+        self.assertEqual('base_dir', load.path)
 
     def test_not_found_type(self):
         load = TextResourceLoader('tests.text', 'base_dir', NotFound.WARN)
@@ -119,16 +119,6 @@ class TestUsage(unittest.TestCase):
         txt = load('hello.txt')
         self.assertEqual('hello\n', txt)
 
-    def test_base_dir_file(self):
-        load = TextResourceLoader('tests.text', 'foo')
-        txt = load('bar.txt')
-        self.assertEqual('bar\n', txt)
-
-    def test_subbase_dir_file(self):
-        load = TextResourceLoader('tests.text', 'foo/hello')
-        txt = load('world.txt')
-        self.assertEqual('world\n', txt)
-
     def test_defaults_dir(self):
         load = TextResourceLoader('tests.text')
         txt = load('dir/world.txt')
@@ -138,6 +128,41 @@ class TestUsage(unittest.TestCase):
         load = TextResourceLoader('tests.text')
         txt = load('dir/subdir/baz.txt')
         self.assertEqual('baz\n', txt)
+
+    def test_path_file_instantiation(self):
+        load = TextResourceLoader('tests.text', 'foo/bar.txt')
+        txt = load()
+        self.assertEqual('bar\n', txt)
+
+    def test_path_file_call(self):
+        load = TextResourceLoader('tests.text', 'foo')
+        txt = load('bar.txt')
+        self.assertEqual('bar\n', txt)
+
+    def test_path_file_split(self):
+        load = TextResourceLoader('tests.text', '')
+        txt = load('foo/bar.txt')
+        self.assertEqual('bar\n', txt)
+
+    def test_subpath_file_instantiation(self):
+        load = TextResourceLoader('tests.text', 'foo/hello/world.txt')
+        txt = load()
+        self.assertEqual('world\n', txt)
+
+    def test_subpath_file_call(self):
+        load = TextResourceLoader('tests.text', 'foo/hello')
+        txt = load('world.txt')
+        self.assertEqual('world\n', txt)
+
+    def test_subpath_file_split(self):
+        load = TextResourceLoader('tests.text', 'foo')
+        txt = load('hello/world.txt')
+        self.assertEqual('world\n', txt)
+
+    def test_subpath_file_empty(self):
+        load = TextResourceLoader('tests.text', '')
+        txt = load('foo/hello/world.txt')
+        self.assertEqual('world\n', txt)
 
     def test_default_raises_file_not_found(self):
         load = TextResourceLoader('tests.text')
@@ -174,22 +199,22 @@ class TestStrip(unittest.TestCase):
         txt = load('/hello.txt ')
         self.assertEqual('hello\n', txt)
 
-    def test_base_dir_trailing(self):
+    def test_path_trailing(self):
         load = TextResourceLoader('tests.text', ' foo/')
         txt = load('bar.txt')
         self.assertEqual('bar\n', txt)
 
-    def test_base_dir_preceding(self):
+    def test_path_preceding(self):
         load = TextResourceLoader('tests.text', '/foo')
         txt = load('bar.txt')
         self.assertEqual('bar\n', txt)
 
-    def test_subbase_dir_trailing(self):
+    def test_subpath_trailing(self):
         load = TextResourceLoader('tests.text', ' foo/hello/')
         txt = load('world.txt')
         self.assertEqual('world\n', txt)
 
-    def test_subbase_dir_preceding(self):
+    def test_subpath_preceding(self):
         load = TextResourceLoader('tests.text', '/foo/hello ')
         txt = load('world.txt')
         self.assertEqual('world\n', txt)
@@ -218,7 +243,7 @@ class TestStrip(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_repr(self):
-        load = TextResourceLoader('tests.text', base_dir='foo')
+        load = TextResourceLoader('tests.text', path='foo')
         expected = "TextResourceLoader('tests.text', 'foo', 'raise', 'utf-8')"
         self.assertEqual(expected, repr(load))
 

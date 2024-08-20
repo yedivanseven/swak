@@ -17,10 +17,11 @@ class TomlReader(ArgRepr):
 
     Parameters
     ----------
-    base_dir: str, optional
-        Base directory of the TOML file(s) to read. May contain any number of
-        forward slashes to access nested subdirectories. Defaults to the
-        current working directory of the python interpreter.
+    path: str, optional
+        Directory under which the TOML file is located or full path to the
+        TOML file. If not fully specified here, the path must be completed on
+        calling the instance. Defaults to the current working directory of the
+        python interpreter.
     not_found: str, optional
         What to do if the specified TOML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -41,29 +42,21 @@ class TomlReader(ArgRepr):
 
     def __init__(
             self,
-            base_dir: str = '',
+            path: str = '',
             not_found: str = NotFound.RAISE,
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
-        if stripped := base_dir.strip(' /'):
-            self.base_dir = '/' + stripped
-        else:
-            self.base_dir = os.getcwd()
+        self.path = '/' + path.strip(' /') if path.strip(' /') else os.getcwd()
         self.not_found = not_found
         self.parse_float = parse_float
         if 'mode' in kwargs:
             self.kwargs = (kwargs.pop('mode'), kwargs)[1]
         else:
             self.kwargs = kwargs
-        super().__init__(
-            self.base_dir,
-            str(not_found),
-            parse_float,
-            **self.kwargs
-        )
+        super().__init__(self.path, str(not_found), parse_float, **self.kwargs)
 
-    def __call__(self, path: str) -> Toml:
+    def __call__(self, path: str = '') -> Toml:
         """Read a specific TOML file.
 
         If `not_found` is set to "warn" or "ignore" and the file cannot be
@@ -72,9 +65,9 @@ class TomlReader(ArgRepr):
         Parameters
         ----------
         path: str
-            Path (including file name) under the `base_dir` of the TOML file
-            to read. May contain any number of forward slashes to access
-            nested subdirectories.
+            Path (including file name) relative to the `path` specified at
+            instantiation. Defaults to an empty string, which results in an
+            unchanged `path` on concatenation.
 
         Returns
         -------
@@ -82,7 +75,8 @@ class TomlReader(ArgRepr):
             The parsed contents of the TOML file.
 
         """
-        full_path = self.base_dir + '/' + path.strip(' /')
+        path = '/' + path.strip(' /') if path.strip(' /') else ''
+        full_path = self.path + path
         try:
             with open(full_path, 'rb', **self.kwargs) as file:
                 toml = tomllib.load(file, parse_float=self.parse_float)
@@ -104,10 +98,11 @@ class YamlReader(ArgRepr):
 
     Parameters
     ----------
-    base_dir: str, optional
-        Base directory of the YAML file(s) to read. May contain any number of
-        forward slashes to access nested subdirectories. Defaults to the
-        current working directory of the python interpreter.
+    path: str, optional
+        Directory under which the YAML file is located or full path to the
+        TOML file. If not fully specified here, the path must be completed on
+        calling the instance. Defaults to the current working directory of the
+        python interpreter.
     not_found: str, optional
         What to do if the specified YAML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -127,24 +122,21 @@ class YamlReader(ArgRepr):
 
     def __init__(
             self,
-            base_dir: str = '',
+            path: str = '',
             not_found: str = NotFound.RAISE,
             loader: type = Loader,
             **kwargs: Any
     ) -> None:
-        if stripped := base_dir.strip(' /'):
-            self.base_dir = '/' + stripped
-        else:
-            self.base_dir = os.getcwd()
+        self.path = '/' + path.strip(' /') if path.strip(' /') else os.getcwd()
         self.not_found = not_found
         self.loader = loader
         if 'mode' in kwargs:
             self.kwargs = (kwargs.pop('mode'), kwargs)[1]
         else:
             self.kwargs = kwargs
-        super().__init__(self.base_dir, str(not_found), loader, **self.kwargs)
+        super().__init__(self.path, str(not_found), loader, **self.kwargs)
 
-    def __call__(self, path: str) -> Yaml:
+    def __call__(self, path: str = '') -> Yaml:
         """Read a specific YAML file.
 
         If `not_found` is set to "warn" or "ignore" and the file cannot be
@@ -153,9 +145,9 @@ class YamlReader(ArgRepr):
         Parameters
         ----------
         path: str
-            Path (including file name) under the `base_dir` of the YAML file
-            to read. May contain any number of forward slashes to access
-            nested subdirectories.
+            Path (including file name) relative to the `path` specified at
+            instantiation. Defaults to an empty string, which results in an
+            unchanged `path` on concatenation.
 
         Returns
         -------
@@ -163,7 +155,8 @@ class YamlReader(ArgRepr):
             The parsed contents of the YAML file.
 
         """
-        full_path = self.base_dir + '/' + path.strip(' /')
+        path = '/' + path.strip(' /') if path.strip(' /') else ''
+        full_path = self.path + path
         try:
             with open(full_path, 'rb', **self.kwargs) as file:
                 yml = yaml.load(file, self.loader)

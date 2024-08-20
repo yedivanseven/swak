@@ -3,13 +3,19 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+url = "https://download.pytorch.org/whl/cpu"
+verify_ssl = false
+name = "pytorch"
+
 [packages]
 pandas = "*"
-pyyaml = "*"
 pyarrow = "*"
+pyyaml = "*"
 google-cloud-storage = "*"
 google-cloud-bigquery = "*"
 pandas-gbq = "*"
+torch = "*"
 
 [dev-packages]
 jupyter = "*"

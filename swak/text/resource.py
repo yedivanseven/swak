@@ -1,5 +1,6 @@
 import pkgutil
 import warnings
+
 from ..magic import ArgRepr
 from .misc import NotFound
 
@@ -11,10 +12,11 @@ class TextResourceLoader(ArgRepr):
     ----------
     package: str
         Name of the python package under which the text file is located.
-    base_dir: str, optional
+    path: str, optional
         Directory under which the text file is located within the python
-        package. May contain any number of forward slashes to access nested
-        subdirectories. Defaults to "resources".
+        package or full path to the text file. If not fully specified here,
+        the path must be completed on calling the instance.
+        Defaults to "resources".
     not_found: str, optional
         What to do if the specified file is not found. One of "ignore", "warn",
         or "raise". Defaults to "raise". Use the ``NotFound`` enum
@@ -31,28 +33,30 @@ class TextResourceLoader(ArgRepr):
     def __init__(
             self,
             package: str,
-            base_dir: str = 'resources',
+            path: str = 'resources',
             not_found: str = NotFound.RAISE,
             encoding: str = 'utf-8'
     ) -> None:
         self.package = package.strip(' ./')
-        self.base_dir = base_dir.strip(' /')
+        self.path = path.strip(' /')
         self.not_found = not_found
         self.encoding = encoding.strip()
         super().__init__(
             self.package,
-            self.base_dir,
+            self.path,
             str(not_found),
             self.encoding
         )
 
-    def __call__(self, path: str) -> str:
+    def __call__(self, path: str = '') -> str:
         """Load text file from a directory within the specified python package.
 
         Parameters
         ----------
-        path: str
-            Path (including file name) relative to the parent python package.
+        path: str, optional
+            Path (including file name) relative to the `path` specified at
+            instantiation. Defaults to an empty string, which results in an
+            unchanged `path` on concatenation.
 
         Returns
         -------
@@ -60,7 +64,8 @@ class TextResourceLoader(ArgRepr):
             Decoded contents of the specified text file.
 
         """
-        full_path = self.base_dir + '/' + path.strip(' /')
+        path = '/' + path.strip(' /') if path.strip(' /') else ''
+        full_path = self.path + path
         try:
             content = pkgutil.get_data(self.package, full_path)
         except FileNotFoundError as error:

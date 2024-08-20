@@ -38,6 +38,9 @@ cloud = [
   "google-cloud-storage>=2.18",
   "pandas-gbq>=0.23"
 ]
+torch = [
+    "torch>=2.4"
+]
 
 [tool.setuptools]
 packages = ["swak"]
