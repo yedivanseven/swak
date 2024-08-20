@@ -5,7 +5,7 @@ from ...magic import ArgRepr
 
 
 class GbqQuery2DataFrame(ArgRepr):
-    """Partial of the ``read_gbq`` function in the``pandas_gbq`` package.
+    """Partial of the ``read_gbq`` function in the ``pandas_gbq`` package.
 
     As such, it may not bet suitable for downloading large amounts of data (see
     its `documentation <https://googleapis.dev/python/pandas-gbq/latest/>`__
