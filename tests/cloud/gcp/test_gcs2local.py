@@ -147,7 +147,7 @@ class TestPrefix(unittest.TestCase):
         self.tmp = TemporaryDirectory()
         self.base_dir = self.tmp.name
         self.blob = Mock()
-        self.blob.name = 'blob.pqt'
+        self.blob.name = 'blob.parquet'
         self.blob.download_to_file = Mock(return_value=b'Hello World')
         self.bucket = Mock()
         self.bucket.get_blob = Mock(return_value=self.blob)
@@ -171,7 +171,7 @@ class TestPrefix(unittest.TestCase):
             base_dir=self.base_dir
         )
         _ = download()
-        file = Path(self.base_dir) / 'blob.pqt'
+        file = Path(self.base_dir) / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -180,7 +180,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_instantiation_prefix(self):
-        self.blob.name = 'pre/fix/blob.pqt'
+        self.blob.name = 'pre/fix/blob.parquet'
         download = GcsDir2LocalDir(
             'project',
             'bucket',
@@ -191,7 +191,7 @@ class TestPrefix(unittest.TestCase):
         directory = Path(self.base_dir) / 'pre' / 'fix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -200,7 +200,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_call_prefix(self):
-        self.blob.name = 'pre/fix/blob.pqt'
+        self.blob.name = 'pre/fix/blob.parquet'
         download = GcsDir2LocalDir(
             'project',
             'bucket',
@@ -210,7 +210,7 @@ class TestPrefix(unittest.TestCase):
         directory = Path(self.base_dir) / 'pre' / 'fix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -219,7 +219,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_partial_prefixes(self):
-        self.blob.name = 'pre/fix/blob.pqt'
+        self.blob.name = 'pre/fix/blob.parquet'
         download = GcsDir2LocalDir(
             'project',
             'bucket',
@@ -230,7 +230,7 @@ class TestPrefix(unittest.TestCase):
         directory = Path(self.base_dir) / 'pre' / 'fix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -239,7 +239,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_subdirectories_filtered_prefixes(self):
-        self.blob.name = 'prefix/foo/blob.pqt'
+        self.blob.name = 'prefix/foo/blob.parquet'
         download = GcsDir2LocalDir(
             'project',
             'bucket',
@@ -251,7 +251,7 @@ class TestPrefix(unittest.TestCase):
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
         self.assertFalse(any(directory.iterdir()))
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertFalse(file.exists())
         self.client_instance.list_blobs.assert_called_once_with(
             'bucket',
@@ -259,7 +259,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_local_exists_empty(self):
-        self.blob.name = 'prefix/blob.pqt'
+        self.blob.name = 'prefix/blob.parquet'
         download = GcsDir2LocalDir(
             'project',
             'bucket',
@@ -269,7 +269,7 @@ class TestPrefix(unittest.TestCase):
         directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         _ = download()
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -278,7 +278,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_raises_on_local_exists_non_empty(self):
-        self.blob.name = 'prefix/blob.pqt'
+        self.blob.name = 'prefix/blob.parquet'
         download = GcsDir2LocalDir(
             'project',
             'bucket',
@@ -300,7 +300,7 @@ class TestSkipOverwrite(unittest.TestCase):
         self.tmp = TemporaryDirectory()
         self.base_dir = self.tmp.name
         self.blob = Mock()
-        self.blob.name = 'prefix/blob.pqt'
+        self.blob.name = 'prefix/blob.parquet'
         self.blob.download_to_file = Mock(return_value=b'Hello World')
         self.bucket = Mock()
         self.bucket.get_blob = Mock(return_value=self.blob)
@@ -328,7 +328,7 @@ class TestSkipOverwrite(unittest.TestCase):
         directory = Path(self.base_dir) / 'prefix'
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -360,7 +360,7 @@ class TestSkipOverwrite(unittest.TestCase):
         directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
         _ = download('prefix')
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -400,7 +400,7 @@ class TestSkipOverwrite(unittest.TestCase):
         _ = download('prefix')
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -417,14 +417,14 @@ class TestSkipOverwrite(unittest.TestCase):
         )
         directory = Path(self.base_dir) / 'prefix'
         directory.mkdir()
-        existing = directory / 'foo.pqt'
+        existing = directory / 'foo.parquet'
         with existing.open('w') as stream:
             stream.write('Hello World')
         _ = download('prefix')
         self.assertTrue(directory.exists())
         self.assertTrue(directory.is_dir())
         self.assertFalse(existing.exists())
-        file = directory / 'blob.pqt'
+        file = directory / 'blob.parquet'
         self.assertTrue(file.exists())
         self.assertTrue(file.is_file())
         self.client_instance.list_blobs.assert_called_once_with(
@@ -439,7 +439,7 @@ class TestCloud(unittest.TestCase):
         self.tmp = TemporaryDirectory()
         self.base_dir = self.tmp.name
         self.blob = Mock()
-        self.blob.name = 'prefix/blob.pqt'
+        self.blob.name = 'prefix/blob.parquet'
         self.blob.download_to_file = Mock(return_value=b'Hello World')
         self.blob.chunk_size = 'chunk_size'
         self.bucket = Mock()
@@ -514,7 +514,7 @@ class TestCloud(unittest.TestCase):
             base_dir=self.base_dir,
         )
         _ = download()
-        self.bucket.get_blob.assert_called_once_with('prefix/blob.pqt')
+        self.bucket.get_blob.assert_called_once_with('prefix/blob.parquet')
 
     def test_chunk_size_set(self):
         download = GcsDir2LocalDir(
@@ -541,7 +541,7 @@ class TestCloud(unittest.TestCase):
         self.assertEqual(1, len(args[0]))
         self.assertTrue(hasattr(args[0][0], 'name'))
         self.assertTrue(args[0][0].name.startswith('/tmp/'))
-        self.assertTrue(args[0][0].name.endswith('/prefix/blob.pqt'))
+        self.assertTrue(args[0][0].name.endswith('/prefix/blob.parquet'))
         self.assertDictEqual({'raw_download': True}, args[1])
 
 

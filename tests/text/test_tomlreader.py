@@ -1,8 +1,7 @@
-import os
 import pickle
-from pathlib import Path
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, mock_open
+from pathlib import Path
 from swak.text import TomlReader, NotFound
 
 
@@ -15,22 +14,17 @@ class TestAttributes(unittest.TestCase):
     def test_empty(self):
         t = TomlReader()
         self.assertTrue(hasattr(t, 'path'))
-        self.assertEqual(os.getcwd(), t.path)
+        self.assertEqual('', t.path)
 
-    def test_dir(self):
+    def test_path(self):
         t = TomlReader('/hello')
         self.assertTrue(hasattr(t, 'path'))
         self.assertEqual('/hello', t.path)
 
-    def test_dir_stripped(self):
-        t = TomlReader('/ hello/ ')
+    def test_path_stripped(self):
+        t = TomlReader(' hello  ')
         self.assertTrue(hasattr(t, 'path'))
-        self.assertEqual('/hello', t.path)
-
-    def test_dir_completed(self):
-        t = TomlReader('hello')
-        self.assertTrue(hasattr(t, 'path'))
-        self.assertEqual('/hello', t.path)
+        self.assertEqual('hello', t.path)
 
     def test_default_not_found(self):
         t = TomlReader('hello')
@@ -78,36 +72,33 @@ class TestUsage(unittest.TestCase):
         t = TomlReader('')
         self.assertTrue(callable(t))
 
-    @patch('builtins.open')
-    def test_open_called(self, mock):
-        mock.return_value = (self.path / 'foo/bar.toml').open('rb')
-        t = TomlReader(self.dir)
-        _ = t('foo/bar.toml')
+    def test_open_called(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            t = TomlReader(self.dir)
+            _ = t('foo/bar.toml')
         mock.assert_called_once()
 
-    @patch('builtins.open')
-    def test_open_called_with_defaults(self, mock):
-        path = self.path / 'foo/bar.toml'
-        mock.return_value = path.open('rb')
-        t = TomlReader(self.dir)
-        _ = t('foo/bar.toml')
-        mock.assert_called_once_with(str(path), 'rb')
+    def test_open_called_with_defaults(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            t = TomlReader(self.dir)
+            _ = t('foo/bar.toml')
+        mock.assert_called_once_with('rb')
 
-    @patch('builtins.open')
-    def test_open_called_with_kwargs(self, mock):
-        path = self.path / 'foo/bar.toml'
-        mock.return_value = path.open('rb')
-        t = TomlReader(self.dir, encoding='utf-8')
-        _ = t('foo/bar.toml')
-        mock.assert_called_once_with(str(path), 'rb', encoding='utf-8')
+    def test_open_called_with_kwargs(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            t = TomlReader(self.dir, encoding='utf-8')
+            _ = t('foo/bar.toml')
+        mock.assert_called_once_with('rb', encoding='utf-8')
 
-    @patch('builtins.open')
-    def test_open_called_with_mode_purged(self, mock):
-        path = self.path / 'foo/bar.toml'
-        mock.return_value = path.open('rb')
-        t = TomlReader(self.dir, encoding='utf-8', mode='w+')
-        _ = t('foo/bar.toml')
-        mock.assert_called_once_with(str(path), 'rb', encoding='utf-8')
+    def test_open_called_with_mode_purged(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            t = TomlReader(self.dir, encoding='utf-8', mode='w+')
+            _ = t('foo/bar.toml')
+        mock.assert_called_once_with('rb', encoding='utf-8')
 
     @patch('swak.text.read.tomllib.load')
     def test_load_called(self, mock):
@@ -115,7 +106,7 @@ class TestUsage(unittest.TestCase):
         _ = t('foo/bar.toml')
         mock.assert_called_once()
 
-    @patch('builtins.open')
+    @patch('swak.text.read.Path.open')
     @patch('swak.text.read.tomllib.load')
     def test_load_called_with_defaults(self, load, mock):
         context = Mock()
@@ -126,7 +117,7 @@ class TestUsage(unittest.TestCase):
         _ = t('foo/bar.toml')
         load.assert_called_once_with('file', parse_float=float)
 
-    @patch('builtins.open')
+    @patch('swak.text.read.Path.open')
     @patch('swak.text.read.tomllib.load')
     def test_load_called_with_custom(self, load, mock):
         context = Mock()
@@ -142,24 +133,19 @@ class TestUsage(unittest.TestCase):
         actual = t()
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
-    def test_read_toml_call(self):
-        t = TomlReader(self.dir)
-        actual = t('foo/bar.toml')
-        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
-
     def test_read_toml_split(self):
         t = TomlReader(self.dir + '/foo')
         actual = t('bar.toml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
+    def test_read_toml_call_only(self):
+        t = TomlReader('/')
+        actual = t(self.dir + '/foo/bar.toml')
+        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
+
     def test_read_subdir_toml_instantiation(self):
         t = TomlReader(self.dir + '/foo/hello/world.toml')
         actual = t()
-        self.assertDictEqual({'world': {'answer': 42}}, actual)
-
-    def test_read_subdir_toml_call(self):
-        t = TomlReader(self.dir)
-        actual = t('foo/hello/world.toml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_subdir_toml_split_instantiation(self):
@@ -168,8 +154,18 @@ class TestUsage(unittest.TestCase):
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_subdir_toml_split_call(self):
-        t = TomlReader(self.dir + '/foo /')
-        actual = t(' hello/world.toml')
+        t = TomlReader(self.dir + '/foo/')
+        actual = t('hello/world.toml')
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
+
+    def test_read_subdir_toml_call(self):
+        t = TomlReader(self.dir)
+        actual = t('foo/hello/world.toml')
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
+
+    def test_read_subdir_toml_call_only(self):
+        t = TomlReader('/')
+        actual = t(self.dir + '/foo/hello/world.toml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_empty_toml(self):
@@ -179,7 +175,7 @@ class TestUsage(unittest.TestCase):
 
     def test_path_stripped(self):
         t = TomlReader(self.dir)
-        actual = t('/ foo/bar.toml/ ')
+        actual = t(' foo/bar.toml/ ')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
     def test_default_raises_file_not_found(self):
@@ -208,11 +204,11 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         t = TomlReader('hello')
-        self.assertEqual("TomlReader('/hello', 'raise', float)", repr(t))
+        self.assertEqual("TomlReader('hello', 'raise', float)", repr(t))
 
     def test_custom_repr(self):
         t = TomlReader('hello', NotFound.IGNORE, f)
-        self.assertEqual("TomlReader('/hello', 'ignore', f)", repr(t))
+        self.assertEqual("TomlReader('hello', 'ignore', f)", repr(t))
 
     def test_pickle_works(self):
         t = TomlReader()

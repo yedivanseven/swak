@@ -104,9 +104,9 @@ class TestAttributes(unittest.TestCase):
 class TestPrefix(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.stream = open(Path(__file__).parent / 'file.pqt', 'rb')  # noqa: SIM115
+        self.stream = open(Path(__file__).parent / 'file.parquet', 'rb')  # noqa: SIM115
         self.blob = Mock()
-        self.blob.name = 'blob.pqt'
+        self.blob.name = 'blob.parquet'
         self.blob.open = Mock(return_value=self.stream)
         self.bucket = Mock()
         self.bucket.get_blob = Mock(return_value=self.blob)
@@ -135,7 +135,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_instantiation_prefix(self):
-        self.blob.name = 'pre/fix/blob.pqt'
+        self.blob.name = 'pre/fix/blob.parquet'
         download = GcsParquet2DataFrame(
             'project',
             'bucket',
@@ -148,7 +148,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_call_prefix(self):
-        self.blob.name = 'pre/fix/blob.pqt'
+        self.blob.name = 'pre/fix/blob.parquet'
         download = GcsParquet2DataFrame(
             'project',
             'bucket'
@@ -160,7 +160,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_partial_prefixes(self):
-        self.blob.name = 'pre/fix/blob.pqt'
+        self.blob.name = 'pre/fix/blob.parquet'
         download = GcsParquet2DataFrame(
             'project',
             'bucket',
@@ -173,7 +173,7 @@ class TestPrefix(unittest.TestCase):
         )
 
     def test_subdirectories_filtered_prefixes(self):
-        self.blob.name = 'prefix/foo/blob.pqt'
+        self.blob.name = 'prefix/foo/blob.parquet'
         download = GcsParquet2DataFrame(
             'project',
             'bucket',
@@ -187,9 +187,9 @@ class TestPrefix(unittest.TestCase):
 class TestCloud(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.stream = open(Path(__file__).parent / 'file.pqt', 'rb')  # noqa: SIM115
+        self.stream = open(Path(__file__).parent / 'file.parquet', 'rb')  # noqa: SIM115
         self.blob = Mock()
-        self.blob.name = 'prefix/blob.pqt'
+        self.blob.name = 'prefix/blob.parquet'
         self.blob.open = Mock(return_value=self.stream)
         self.bucket = Mock()
         self.bucket.get_blob = Mock(return_value=self.blob)
@@ -258,7 +258,7 @@ class TestCloud(unittest.TestCase):
             'prefix'
         )
         _ = download()
-        self.bucket.get_blob.assert_called_once_with('prefix/blob.pqt')
+        self.bucket.get_blob.assert_called_once_with('prefix/blob.parquet')
 
     def test_blob_open_called(self):
         download = GcsParquet2DataFrame(

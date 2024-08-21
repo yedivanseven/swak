@@ -21,7 +21,8 @@ class GcsDir2LocalDir(ArgRepr):
         can also be provided later, when the callable instance is called, it
         is optional here. Defaults to an empty string.
     base_dir: str, optional
-        Base directory on the local filesystem. Defaults to "/tmp".
+        Absolute path to a base directory on the local filesystem.
+        Defaults to "/tmp".
     overwrite: bool, optional
         Whether to silently overwrite local destination directory. Defaults
         to ``False``, which will raise an exception if it already exists.

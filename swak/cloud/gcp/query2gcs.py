@@ -57,7 +57,7 @@ class GbqQuery2GcsParquet(ArgRepr):
     """
 
     _template = """    EXPORT DATA OPTIONS(
-        uri="gs://{}/{}*.pqt"
+        uri="gs://{}/{}*.parquet"
       , format="PARQUET"
       , compression="SNAPPY"
       , overwrite={}

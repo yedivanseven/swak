@@ -1,8 +1,7 @@
-import os
 import pickle
-from pathlib import Path
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, mock_open
+from pathlib import Path
 from swak.text import YamlReader, NotFound
 from yaml import SafeLoader, Loader
 
@@ -12,22 +11,17 @@ class TestAttributes(unittest.TestCase):
     def test_empty(self):
         y = YamlReader()
         self.assertTrue(hasattr(y, 'path'))
-        self.assertEqual(os.getcwd(), y.path)
+        self.assertEqual('', y.path)
 
-    def test_dir(self):
+    def test_path(self):
         y = YamlReader('/hello')
         self.assertTrue(hasattr(y, 'path'))
         self.assertEqual('/hello', y.path)
 
-    def test_dir_stripped(self):
-        y = YamlReader('/ hello/ ')
+    def test_path_stripped(self):
+        y = YamlReader(' hello ')
         self.assertTrue(hasattr(y, 'path'))
-        self.assertEqual('/hello', y.path)
-
-    def test_dir_completed(self):
-        y = YamlReader('hello')
-        self.assertTrue(hasattr(y, 'path'))
-        self.assertEqual('/hello', y.path)
+        self.assertEqual('hello', y.path)
 
     def test_default_not_found(self):
         y = YamlReader('hello')
@@ -75,36 +69,33 @@ class TestUsage(unittest.TestCase):
         y = YamlReader('')
         self.assertTrue(callable(y))
 
-    @patch('builtins.open')
-    def test_open_called(self, mock):
-        mock.return_value = (self.path / 'foo/bar.yml').open('rb')
-        y = YamlReader(self.dir)
-        _ = y('foo/bar.yml')
+    def test_open_called(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            y = YamlReader(self.dir)
+            _ = y('foo/bar.yml')
         mock.assert_called_once()
 
-    @patch('builtins.open')
-    def test_open_called_with_defaults(self, mock):
-        path = self.path / 'foo/bar.yml'
-        mock.return_value = path.open('rb')
-        y = YamlReader(self.dir)
-        _ = y('foo/bar.yml')
-        mock.assert_called_once_with(str(path), 'rb')
+    def test_open_called_with_defaults(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            y = YamlReader(self.dir)
+            _ = y('foo/bar.yml')
+        mock.assert_called_once_with('rb')
 
-    @patch('builtins.open')
-    def test_open_called_with_kwargs(self, mock):
-        path = self.path / 'foo/bar.yml'
-        mock.return_value = path.open('rb')
-        y = YamlReader(self.dir, encoding='utf-8')
-        _ = y('foo/bar.yml')
-        mock.assert_called_once_with(str(path), 'rb', encoding='utf-8')
+    def test_open_called_with_kwargs(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            y = YamlReader(self.dir, encoding='utf-8')
+            _ = y('foo/bar.yml')
+        mock.assert_called_once_with('rb', encoding='utf-8')
 
-    @patch('builtins.open')
-    def test_open_called_with_mode_purged(self, mock):
-        path = self.path / 'foo/bar.yml'
-        mock.return_value = path.open('rb')
-        y = YamlReader(self.dir, encoding='utf-8', mode='w+')
-        _ = y('foo/bar.yml')
-        mock.assert_called_once_with(str(path), 'rb', encoding='utf-8')
+    def test_open_called_with_mode_purged(self):
+        mock = mock_open(read_data=b'')
+        with patch('swak.text.read.Path.open', mock):
+            y = YamlReader(self.dir, encoding='utf-8', mode='w+')
+            _ = y('foo/bar.yml')
+        mock.assert_called_once_with('rb', encoding='utf-8')
 
     @patch('swak.text.read.yaml.load')
     def test_load_called(self, mock):
@@ -112,7 +103,7 @@ class TestUsage(unittest.TestCase):
         _ = y('foo/bar.yml')
         mock.assert_called_once()
 
-    @patch('builtins.open')
+    @patch('swak.text.read.Path.open')
     @patch('swak.text.read.yaml.load')
     def test_load_called_with_defaults(self, load, mock):
         context = Mock()
@@ -123,7 +114,7 @@ class TestUsage(unittest.TestCase):
         _ = y('foo/bar.yml')
         load.assert_called_once_with('file', Loader)
 
-    @patch('builtins.open')
+    @patch('swak.text.read.Path.open')
     @patch('swak.text.read.yaml.load')
     def test_load_called_with_custom(self, load, mock):
         context = Mock()
@@ -139,24 +130,24 @@ class TestUsage(unittest.TestCase):
         actual = y()
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
-    def test_read_yaml_call(self):
-        y = YamlReader(self.dir)
-        actual = y('foo/bar.yml')
-        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
-
     def test_read_yaml_split(self):
         y = YamlReader(self.dir + '/foo/')
         actual = y('/bar.yml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
+    def test_read_yaml_call(self):
+        y = YamlReader(self.dir)
+        actual = y('foo/bar.yml')
+        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
+
+    def test_read_yaml_call_only(self):
+        y = YamlReader('/')
+        actual = y(self.dir + '/foo/bar.yml')
+        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
+
     def test_read_subdir_yaml_instantiation(self):
         y = YamlReader(self.dir + '/foo/hello/world.yml')
         actual = y()
-        self.assertDictEqual({'world': {'answer': 42}}, actual)
-
-    def test_read_subdir_yaml_call(self):
-        y = YamlReader(self.dir)
-        actual = y('foo/hello/world.yml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_subdir_yaml_split_instantiation(self):
@@ -167,6 +158,16 @@ class TestUsage(unittest.TestCase):
     def test_read_subdir_yaml_split_call(self):
         y = YamlReader(self.dir + '/foo/ ')
         actual = y('hello/world.yml')
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
+
+    def test_read_subdir_yaml_call(self):
+        y = YamlReader(self.dir)
+        actual = y('foo/hello/world.yml')
+        self.assertDictEqual({'world': {'answer': 42}}, actual)
+
+    def test_read_subdir_yaml_call_only(self):
+        y = YamlReader('/')
+        actual = y(self.dir + '/foo/hello/world.yml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_empty_yaml(self):
@@ -205,11 +206,11 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         y = YamlReader('hello')
-        self.assertEqual("YamlReader('/hello', 'raise', Loader)", repr(y))
+        self.assertEqual("YamlReader('hello', 'raise', Loader)", repr(y))
 
     def test_custom_repr(self):
         y = YamlReader('hello', NotFound.WARN, SafeLoader)
-        self.assertEqual("YamlReader('/hello', 'warn', SafeLoader)", repr(y))
+        self.assertEqual("YamlReader('hello', 'warn', SafeLoader)", repr(y))
 
     def test_pickle_works(self):
         y = YamlReader()

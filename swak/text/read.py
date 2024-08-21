@@ -1,8 +1,8 @@
-import os
 import warnings
 import tomllib
 from typing import Any
 from collections.abc import Callable
+from pathlib import Path
 import yaml
 from yaml import Loader
 from ..magic import ArgRepr
@@ -47,7 +47,7 @@ class TomlReader(ArgRepr):
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
-        self.path = '/' + path.strip(' /') if path.strip(' /') else os.getcwd()
+        self.path = path.strip()
         self.not_found = not_found
         self.parse_float = parse_float
         if 'mode' in kwargs:
@@ -75,16 +75,15 @@ class TomlReader(ArgRepr):
             The parsed contents of the TOML file.
 
         """
-        path = '/' + path.strip(' /') if path.strip(' /') else ''
-        full_path = self.path + path
+        path = Path(self.path) / path.strip(' /')
         try:
-            with open(full_path, 'rb', **self.kwargs) as file:
+            with path.open('rb', **self.kwargs) as file:
                 toml = tomllib.load(file, parse_float=self.parse_float)
         except FileNotFoundError as error:
             match self.not_found:
                 case NotFound.WARN:
                     msg = 'File {} not found!\nReturning empty TOML.'
-                    warnings.warn(msg.format(full_path))
+                    warnings.warn(msg.format(path.resolve()))
                     toml = {}
                 case NotFound.IGNORE:
                     toml = {}
@@ -100,7 +99,7 @@ class YamlReader(ArgRepr):
     ----------
     path: str, optional
         Directory under which the YAML file is located or full path to the
-        TOML file. If not fully specified here, the path must be completed on
+        YAML file. If not fully specified here, the path must be completed on
         calling the instance. Defaults to the current working directory of the
         python interpreter.
     not_found: str, optional
@@ -127,7 +126,7 @@ class YamlReader(ArgRepr):
             loader: type = Loader,
             **kwargs: Any
     ) -> None:
-        self.path = '/' + path.strip(' /') if path.strip(' /') else os.getcwd()
+        self.path = path.strip()
         self.not_found = not_found
         self.loader = loader
         if 'mode' in kwargs:
@@ -155,16 +154,15 @@ class YamlReader(ArgRepr):
             The parsed contents of the YAML file.
 
         """
-        path = '/' + path.strip(' /') if path.strip(' /') else ''
-        full_path = self.path + path
+        path = Path(self.path) / path.strip(' /')
         try:
-            with open(full_path, 'rb', **self.kwargs) as file:
+            with path.open('rb', **self.kwargs) as file:
                 yml = yaml.load(file, self.loader)
         except FileNotFoundError as error:
             match self.not_found:
                 case NotFound.WARN:
                     msg = 'File {} not found!\nReturning empty YAML.'
-                    warnings.warn(msg.format(full_path))
+                    warnings.warn(msg.format(path.resolve()))
                     yml = {}
                 case NotFound.IGNORE:
                     yml = {}

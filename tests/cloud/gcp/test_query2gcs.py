@@ -247,7 +247,7 @@ class TestUsage(unittest.TestCase):
         _ = export('SELECT *\n')
         expected = ('\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/prefix/*.pqt"\n'
+                    '        uri="gs://bucket/prefix/*.parquet"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=false\n'
@@ -260,7 +260,7 @@ class TestUsage(unittest.TestCase):
         _ = export('SELECT *\n', 'prefix')
         expected = ('\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/prefix/*.pqt"\n'
+                    '        uri="gs://bucket/prefix/*.parquet"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=false\n'
@@ -273,7 +273,7 @@ class TestUsage(unittest.TestCase):
         _ = export('SELECT *\n', ' . / prefix./ ')
         expected = ('\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/prefix/*.pqt"\n'
+                    '        uri="gs://bucket/prefix/*.parquet"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=false\n'
@@ -286,7 +286,7 @@ class TestUsage(unittest.TestCase):
         _ = export('SELECT *\n', 'fix')
         expected = ('\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/*.pqt"\n'
+                    '        uri="gs://bucket/pre/fix/*.parquet"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=false\n'
@@ -301,7 +301,7 @@ class TestUsage(unittest.TestCase):
                     'SET;\n'
                     '\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/*.pqt"\n'
+                    '        uri="gs://bucket/pre/fix/*.parquet"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=false\n'
@@ -319,7 +319,7 @@ class TestUsage(unittest.TestCase):
         _ = export('SELECT *\n', 'fix')
         expected = ('\n'
                     '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/*.pqt"\n'
+                    '        uri="gs://bucket/pre/fix/*.parquet"\n'
                     '      , format="PARQUET"\n'
                     '      , compression="SNAPPY"\n'
                     '      , overwrite=true\n'
