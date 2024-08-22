@@ -152,7 +152,7 @@ class GbqQuery2GcsParquet(ArgRepr):
 
     def __render(self, prefix: str) -> tuple[str, str]:
         """Render the EXPORT header template with the given parameters."""
-        prefix = os.path.join(self.prefix, prefix) if prefix else self.prefix
+        prefix = os.path.join(self.prefix, prefix) if prefix else self.prefix  # noqa: PTH118
         prefix = prefix or str(uuid.uuid4())
         prefix = prefix + '/' if prefix else ''
         header = self._template.format(

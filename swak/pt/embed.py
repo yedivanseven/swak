@@ -138,7 +138,8 @@ class NumericalEmbedder(Module):
         dimension of the input tensor.
     emb_cls: type
         The PyTorch module to use as embedding class. Must take `out_dim` as
-        its first argument on instantiation.
+        its first argument on instantiation, take tensors of size 1 in their
+        last dimension and append a dimension of size `out_dim` to them.
     **kwargs
         Additional keyword arguments to use when instantiating `emb_cls`.
 
@@ -245,12 +246,13 @@ class CategoricalEmbedder(Module):
     out_dim: int
         Desired embedding size. Will become the size of the last dimension of
         the output tensor.
-    cat_count: int or iterable of int
-        One integer or an iterable (e.g., tuple or list) of integers, each
+    cat_count: int or iterable of int, optional
+        One integer or an iterable (e.g., a tuple or list) of integers, each
         specifying the total number of categories in the respective feature.
+        Defaults to an emtpy tuple.
     *cat_counts: int
         Category counts for additional features. Together with the `cat_count`,
-        the total number of category counts, i.e., the tota number of features
+        the total number of category counts, i.e., the total number of features
         to embed must match the size of the last dimension of the input tensor.
     **kwargs
         Keyword arguments are forwarded to the PyTorch ``Embedding`` class.
@@ -259,15 +261,15 @@ class CategoricalEmbedder(Module):
     -----
     The integer numbers identifying a category are expected to be zero-base,
     i.e., if the category count of a feature is 3, the allowed category
-    identifier are 0, 1, and 2. If you need a padding index, do not forget
-    to  increase all `cat_counts` by one!
+    identifier are 0, 1, and 2. If you need a padding index (e.g., to mark
+    missing/unknown values), do not forget to increase all `cat_counts` by one!
 
     """
 
     def __init__(
             self,
             out_dim: int,
-            cat_count: int | Iterable[int],
+            cat_count: int | Iterable[int] = (),
             *cat_counts: int,
             **kwargs: Any
     ) -> None:
@@ -316,7 +318,7 @@ class CategoricalEmbedder(Module):
             `cat_counts`) than the `inp`, containing the stacked embeddings.
 
         """
-        emb = [self.embed[f](inp[..., [f]]) for f in self.features]
+        emb = [self.embed[cat](inp[..., cat]) for cat in self.features]
         return pt.stack(emb or self.out_dim * [pt.zeros(*inp.shape)], self.dim)
 
     def new(
@@ -334,11 +336,11 @@ class CategoricalEmbedder(Module):
 
         Parameters
         ----------
-        out_dim: int
+        out_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
             of the output tensor. Overwrites the `out_dim` of the current
             instance if given. Defaults to ``None``.
-        cat_count: int or iterable of int
+        cat_count: int or iterable of int, optional
             One integer or an iterable (e.g., tuple or list) of integers, each
             specifying the number of categories in the respective feature.
             Overwrites the `cat_counts` of the current instance if given.
@@ -358,14 +360,20 @@ class CategoricalEmbedder(Module):
             A fresh, new instance of itself.
 
         """
+        return self.__class__(
+            self.out_dim if out_dim is None else out_dim,
+            self.cat_counts if cat_count is None else cat_count,
+            *cat_counts,
+            **(self.kwargs | kwargs)
+        )
 
     @staticmethod
     def __valid(cat_counts: int | Iterable[int]) -> tuple[int, ...]:
         """Ensure that the argument is indeed an iterable of integers."""
         try:
-            return tuple(int(cat_count) for cat_count in cat_counts)
+            return tuple(abs(int(cat_count)) for cat_count in cat_counts)
         except TypeError:
-            return int(cat_counts),
+            return abs(int(cat_counts)),
 
 
 class FeatureEmbedder(Module):
@@ -379,7 +387,9 @@ class FeatureEmbedder(Module):
     Parameters
     ----------
     embed_num: NumericalEmbedder
+        A fully configured instance of ``NumericalEmbedder``.
     embed_cat: CategoricalEmbedder
+        A fully configured instance of ``CategoricalEmbedder``.
 
     Raises
     ------
@@ -458,7 +468,7 @@ class FeatureEmbedder(Module):
         embed_num: NumericalEmbedder, optional
             Overwrites the `embed_num` of the current instance if given.
             Defaults to ``None``.
-        embed_cat: CategoricalEmbedder
+        embed_cat: CategoricalEmbedder, optional
             Overwrites the `embed_cat` of the current instance if given.
             Defaults to ``None``.
 

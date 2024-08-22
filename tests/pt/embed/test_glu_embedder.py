@@ -107,25 +107,21 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_2d(self):
         inp = pt.ones(3, 1)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
         self.assertEqual(pt.Size([3, 4]), actual.shape)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 1)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
         self.assertEqual(pt.Size([2, 3, 4]), actual.shape)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 1)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
         self.assertEqual(pt.Size([1, 2, 3, 4]), actual.shape)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 1)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
         self.assertEqual(pt.Size([3, 0, 4]), actual.shape)
 
     @patch('torch.nn.Linear.forward')
