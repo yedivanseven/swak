@@ -323,6 +323,17 @@ class TestKwargFields(unittest.TestCase):
         self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
+    def test_add_keys_from_string(self):
+
+        class Test(metaclass=SchemaMeta, keys_from={'foo': 'bar'}):
+            a: int = 1
+            b: float
+
+        expected_schema = {'a': int, 'b': float, 'foo': str}
+        expected_defaults = {'a': 1, 'foo': 'foo'}
+        self.assertDictEqual(expected_schema, Test.__annotations__)
+        self.assertDictEqual(expected_defaults, Test.__defaults__)
+
     def test_add_kwarg_field_float(self):
 
         class Test(metaclass=SchemaMeta, foo=1.0):
@@ -333,6 +344,33 @@ class TestKwargFields(unittest.TestCase):
         expected_defaults = {'a': 1, 'foo': 'foo'}
         self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
+
+    def test_add_keys_from_float(self):
+
+        class Test(metaclass=SchemaMeta, keys_from={'foo': 1.0}):
+            a: int = 1
+            b: float
+
+        expected_schema = {'a': int, 'b': float, 'foo': str}
+        expected_defaults = {'a': 1, 'foo': 'foo'}
+        self.assertDictEqual(expected_schema, Test.__annotations__)
+        self.assertDictEqual(expected_defaults, Test.__defaults__)
+
+    def test_add_keys_from_and_kwargs(self):
+
+        class Test(
+                metaclass=SchemaMeta,
+                keys_from={'foo': 'bar', 'baz': 42},
+                baz='cheese',
+                hello='world'
+        ):
+            a: int = 1
+            b: float
+
+        schema = {'a': int, 'b': float, 'foo': str, 'baz': str, 'hello': str}
+        defaults = {'a': 1, 'foo': 'foo', 'baz': 'baz', 'hello': 'hello'}
+        self.assertDictEqual(schema, Test.__annotations__)
+        self.assertDictEqual(defaults, Test.__defaults__)
 
     def test_body_field_overwrites_kwarg_field_and_default(self):
 
@@ -561,50 +599,70 @@ class TestInheritance(unittest.TestCase):
 
     def test_add_kwarg_field_string(self):
 
-        class Test(self.A, foo='bar'):
+        class Test(self.A, foo='bar', keys_from={'baz': 42}):
             pass
 
-        expected_schema = {'a': int, 'foo': str}
-        expected_defaults = {'foo': 'foo'}
+        expected_schema = {'a': int, 'foo': str, 'baz': str}
+        expected_defaults = {'foo': 'foo', 'baz': 'baz'}
         self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_add_kwarg_field_float(self):
 
-        class Test(self.A, foo=1.0):
+        class Test(self.A, foo=1.0, keys_from={'baz': 42}):
             pass
 
-        expected_schema = {'a': int, 'foo': str}
-        expected_defaults = {'foo': 'foo'}
+        expected_schema = {'a': int, 'foo': str, 'baz': str}
+        expected_defaults = {'foo': 'foo', 'baz': 'baz'}
         self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_add_kwarg_field_inherited(self):
 
-        class Test(self.A, foo='bar'):
+        class Test(self.A, foo='bar', keys_from={'baz': 42}):
             pass
 
         class Child(Test):
             pass
 
-        expected_schema = {'a': int, 'foo': str}
-        expected_defaults = {'foo': 'foo'}
+        expected_schema = {'a': int, 'foo': str, 'baz': str}
+        expected_defaults = {'foo': 'foo', 'baz': 'baz'}
         self.assertDictEqual(expected_schema, Child.__annotations__)
         self.assertDictEqual(expected_defaults, Child.__defaults__)
 
-    def test_body_field_overwrites_kwarg_field_and_default(self):
+    def test_kwarg_overwrites_inherited_field_and_default(self):
 
         class Test(self.A, a=True):
             pass
 
-        expected_schema = {'a': int}
-        expected_defaults = {}
+        expected_schema = {'a': str}
+        expected_defaults = {'a': 'a'}
+        self.assertDictEqual(expected_schema, Test.__annotations__)
+        self.assertDictEqual(expected_defaults, Test.__defaults__)
+
+    def test_keys_from_overwrites_inherited_field_and_default(self):
+
+        class Test(self.A, keys_from={'a': True}):
+            pass
+
+        expected_schema = {'a': str}
+        expected_defaults = {'a': 'a'}
         self.assertDictEqual(expected_schema, Test.__annotations__)
         self.assertDictEqual(expected_defaults, Test.__defaults__)
 
     def test_body_default_overwrites_kwarg_default(self):
 
         class Test(self.Adef, a=True):
+            a: int = 1
+
+        expected_schema = {'a': int}
+        expected_defaults = {'a': 1}
+        self.assertDictEqual(expected_schema, Test.__annotations__)
+        self.assertDictEqual(expected_defaults, Test.__defaults__)
+
+    def test_body_default_overwrites_keys_from_default(self):
+
+        class Test(self.Adef, keys_from={'a': True}):
             a: int = 1
 
         expected_schema = {'a': int}

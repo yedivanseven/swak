@@ -59,7 +59,7 @@ class SchemaMeta(type):
         cls = super().__new__(mcs, name, bases, attrs)
 
         # Set behavior from past and present class keywords
-        ancestral_variables = mcs.__ancestral(cls, '__dict__', 1)
+        ancestral_variables = mcs.__ancestral(cls, '__dict__')
         cls.__ignore_extra__ = kwargs.pop(
             'ignore_extra',
             ancestral_variables.get('__ignore_extra__', mcs.__ignore_extra__)
@@ -73,27 +73,28 @@ class SchemaMeta(type):
             ancestral_variables.get('__respect_none__', mcs.__respect_none__)
         )
 
+        # Consolidate values from "keys_from" keyword and the remaining kwargs
+        kwargs = kwargs.pop('keys_from', {}) | kwargs
+
         # The schema is in the class __annotations__
         ancestral_schema = mcs.__ancestral(cls, '__annotations__')
         # Extract (string) keys from additional keyword arguments
         kwarg_schema = {key: str for key in kwargs}
-        # Fields defined in the class body overwrite keyword fields
-        schema = kwarg_schema | ancestral_schema
-        # Set the updated class __annotations__
+        # Class body fields overwrite keyword fields overwrite inherited fields
+        schema = ancestral_schema | kwarg_schema | cls.__annotations__
+        # Validate the schema just assembled
         schema, schema_errors = mcs.__valid(name, schema, mcs.__blacklist__)
 
         # Ancestral defaults are in the class __defaults__
         ancestral_defaults = mcs.__ancestral(cls, '__defaults__')
-        # Current class variables overwrite ancestral defaults
-        updated_defaults = ancestral_defaults | cls.__dict__
+        # Defaults for additional fields from keyword arguments are the keys
+        kwarg_defaults = {k: k for k in kwargs if k not in cls.__annotations__}
+        # Class variables overwrite keyword defaults overwrite ancestry
+        updated_defaults = ancestral_defaults | kwarg_defaults | cls.__dict__
         # Only type-annotated class variables are relevant
         filtered_defaults = mcs.__filter(schema, updated_defaults)
-        # Defaults for additional fields from keyword arguments are the keys
-        kwarg_defaults = {k: k for k in kwargs if k not in ancestral_schema}
-        # Fields defined in the class body overwrite keyword fields
-        defaults = kwarg_defaults | filtered_defaults
         # Use __defaults__ because __dict__ cannot be set or updated directly
-        defaults, default_errors = mcs.__tried(defaults, schema)
+        defaults, default_errors = mcs.__tried(filtered_defaults, schema)
 
         # Raise accumulated errors, if any
         errors = schema_errors + default_errors
@@ -108,10 +109,10 @@ class SchemaMeta(type):
         return cls
 
     @staticmethod
-    def __ancestral(cls: 'SchemaMeta', attribute: str, start: int = 0) -> Json:
+    def __ancestral(cls: 'SchemaMeta', attribute: str) -> Json:
         """Accumulate dictionary class variables down the inheritance tree."""
         # Get class ancestors starting with the oldest
-        lineage = reversed(cls.mro()[start:])
+        lineage = reversed(cls.mro()[1:])
         # Accumulate inherited dictionary attributes, overwriting old with new
         return reduce(cls.__merge(attribute), lineage, {})
 
