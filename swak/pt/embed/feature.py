@@ -1,0 +1,114 @@
+from typing import Self
+import torch as pt
+from ..types import Tensor, Module
+from ..exceptions import EmbeddingError
+from .numerical import NumericalEmbedder
+from .categorical import CategoricalEmbedder
+
+
+class FeatureEmbedder(Module):
+    """Jointly embed numerical and categorical features into stacked vectors.
+
+    Given a float tensor where both, numerical and categorical features
+    appear (one before the other in the last dimension), instances of this
+    class treat them on equal footing and produce stacked embedding vectors
+    for all of them.
+
+    Parameters
+    ----------
+    embed_num: NumericalEmbedder
+        A fully configured instance of ``NumericalEmbedder``.
+    embed_cat: CategoricalEmbedder
+        A fully configured instance of ``CategoricalEmbedder``.
+
+    Raises
+    ------
+    EmbeddingError
+        If the embedding dimension of the numerical and the categorical
+        embedders do not match.
+
+    """
+
+    def __init__(
+            self,
+            embed_num: NumericalEmbedder,
+            embed_cat: CategoricalEmbedder
+    ) -> None:
+        super().__init__()
+        if embed_num.out_dim != embed_cat.out_dim:
+            msg = (f'Numerical ({embed_num.out_dim}) and categorical ('
+                   f'{embed_cat.out_dim}) embedding dimensions must match!')
+            raise EmbeddingError(msg)
+        self.embed_num = embed_num
+        self.embed_cat = embed_cat
+
+    @property
+    def n_num(self) -> int:
+        """Number of numerical features."""
+        return self.embed_num.n_features
+
+    @property
+    def n_cat(self) -> int:
+        """Number of categorical features."""
+        return self.embed_cat.n_features
+
+    @property
+    def n_features(self) -> int:
+        """Total number of features."""
+        return self.n_num + self.n_cat
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass for numerical and categorical feature embeddings.
+
+        Parameters
+        ----------
+        inp: Tensor
+            Input tensor of dtype float with at least 2 dimensions. The last
+            dimension is expected to contain first the values of all numerical
+            features, followed by those of the categorical features.
+
+        Returns
+        -------
+        Tensor
+            The output tensor has one more dimension of size `out_dim` added
+            after the last dimension (with a size equal to the total number of
+            features`) than the `inp`, containing the stacked embeddings, first
+            those fo the numerical and then those of teh categorical features.
+
+        """
+        embedded = [
+            self.embed_num(inp[..., :self.n_num]),
+            self.embed_cat(inp[..., self.n_num:].long())
+        ]
+        return pt.cat(embedded, dim=-2)
+
+    def new(
+            self,
+            embed_num: NumericalEmbedder | None = None,
+            embed_cat: CategoricalEmbedder | None = None
+    ) -> Self:
+        """Return a fresh instance with the same or updated parameters.
+
+        Needed to reset all parameters when the class or its initialization
+        parameters are not readily at hand at the point in the code where a
+        reset is desired.
+
+        Parameters
+        ----------
+        embed_num: NumericalEmbedder, optional
+            Overwrites the `embed_num` of the current instance if given.
+            Defaults to ``None``.
+        embed_cat: CategoricalEmbedder, optional
+            Overwrites the `embed_cat` of the current instance if given.
+            Defaults to ``None``.
+
+        Returns
+        -------
+        FeatureEmbedder
+            A fresh, new instance of itself.
+
+        """
+        return self.__class__(
+            self.embed_num.new() if embed_num is None else embed_num,
+            self.embed_cat.new() if embed_cat is None else embed_cat
+        )

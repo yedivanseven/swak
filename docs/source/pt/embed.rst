@@ -1,6 +1,12 @@
 embed
 =====
 
+.. autoclass:: swak.pt.embed.LinearEmbedder
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.pt.embed.GluEmbedder
    :members:
    :special-members: __call__

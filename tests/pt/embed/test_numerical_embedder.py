@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 import torch as pt
 import torch.nn as ptn
-from swak.pt.embed import NumericalEmbedder, GluEmbedder
+from swak.pt.embed import NumericalEmbedder, LinearEmbedder, GluEmbedder
 
 
 class EmbCls(ptn.Module):
@@ -122,7 +122,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.embed = NumericalEmbedder(4, 2, GluEmbedder)
+        self.embed = NumericalEmbedder(4, 2, LinearEmbedder)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
