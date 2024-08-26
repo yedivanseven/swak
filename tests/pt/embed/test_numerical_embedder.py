@@ -15,6 +15,9 @@ class EmbCls(ptn.Module):
     def forward(self, *args):
         return args[0] if len(args) == 1 else args
 
+    def reset_parameters(self):
+        pass
+
 
 class NewEmbCls(ptn.Module):
 
@@ -32,12 +35,12 @@ class TestAttributes(unittest.TestCase):
     def setUp(self):
         self.embed = NumericalEmbedder(4, 2, EmbCls, foo='bar')
 
-    def test_has_out_dim(self):
-        self.assertTrue(hasattr(self.embed, 'out_dim'))
+    def test_has_mod_dim(self):
+        self.assertTrue(hasattr(self.embed, 'mod_dim'))
 
-    def test_out_dim(self):
-        self.assertIsInstance(self.embed.out_dim, int)
-        self.assertEqual(4, self.embed.out_dim)
+    def test_mod_dim(self):
+        self.assertIsInstance(self.embed.mod_dim, int)
+        self.assertEqual(4, self.embed.mod_dim)
 
     def test_has_n_features(self):
         self.assertTrue(hasattr(self.embed, 'n_features'))
@@ -95,6 +98,17 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(embed.dim, int)
         self.assertEqual(-1, embed.dim)
 
+    def test_has_reset_parameters(self):
+        self.assertTrue(hasattr(self.embed, 'reset_parameters'))
+
+    def test_reset_parameters(self):
+        self.assertTrue(callable(self.embed.reset_parameters))
+
+    @patch.object(EmbCls, 'reset_parameters')
+    def test_reset_parameters_called(self, mock):
+        self.embed.reset_parameters()
+        self.assertEqual(2, mock.call_count)
+
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))
 
@@ -105,7 +119,7 @@ class TestAttributes(unittest.TestCase):
         new = self.embed.new()
         self.assertIsInstance(new, NumericalEmbedder)
         self.assertIsNot(new, self.embed)
-        self.assertEqual(self.embed.out_dim, new.out_dim)
+        self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertEqual(self.embed.n_features, new.n_features)
         self.assertIs(new.emb_cls, self.embed.emb_cls)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
@@ -113,7 +127,7 @@ class TestAttributes(unittest.TestCase):
     def test_call_new_update(self):
         new = self.embed.new(8, 5, NewEmbCls, foo=42, bar='baz')
         self.assertIsInstance(new, NumericalEmbedder)
-        self.assertEqual(8, new.out_dim)
+        self.assertEqual(8, new.mod_dim)
         self.assertEqual(5, new.n_features)
         self.assertIs(new.emb_cls, NewEmbCls)
         self.assertDictEqual({'foo': 42, 'bar': 'baz'}, new.kwargs)

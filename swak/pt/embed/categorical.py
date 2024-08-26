@@ -11,7 +11,7 @@ class CategoricalEmbedder(Module):
 
     Parameters
     ----------
-    out_dim: int
+    mod_dim: int
         Desired embedding size. Will become the size of the last dimension of
         the output tensor.
     cat_count: int or iterable of int, optional
@@ -36,18 +36,18 @@ class CategoricalEmbedder(Module):
 
     def __init__(
             self,
-            out_dim: int,
+            mod_dim: int,
             cat_count: int | Iterable[int] = (),
             *cat_counts: int,
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.out_dim = out_dim
+        self.mod_dim = mod_dim
         cat_count = self.__valid(cat_count)
         self.cat_counts: tuple[int, ...] = cat_count + self.__valid(cat_counts)
         self.kwargs = kwargs
         self.embed = ptn.ModuleList([
-            ptn.Embedding(count, out_dim, **kwargs)
+            ptn.Embedding(count, mod_dim, **kwargs)
             for count in self.cat_counts
         ])
 
@@ -87,24 +87,25 @@ class CategoricalEmbedder(Module):
 
         """
         emb = [self.embed[cat](inp[..., cat]) for cat in self.features]
-        return pt.stack(emb or self.out_dim * [pt.zeros(*inp.shape)], self.dim)
+        return pt.stack(emb or self.mod_dim * [pt.zeros(*inp.shape)], self.dim)
+
+    def reset_parameters(self) -> None:
+        """Re-initialize all internal parameters."""
+        for emb in self.embed:
+            emb.reset_parameters()
 
     def new(
             self,
-            out_dim: int | None = None,
+            mod_dim: int | None = None,
             cat_count: int | Iterable[int] | None = None,
             *cat_counts: int,
             **kwargs: Any
     ) -> Self:
         """Return a fresh instance with the same or updated parameters.
 
-        Needed to reset all parameters when the class or its initialization
-        parameters are not readily at hand at the point in the code where a
-        reset is desired.
-
         Parameters
         ----------
-        out_dim: int, optional
+        mod_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
             of the output tensor. Overwrites the `out_dim` of the current
             instance if given. Defaults to ``None``.
@@ -129,7 +130,7 @@ class CategoricalEmbedder(Module):
 
         """
         return self.__class__(
-            self.out_dim if out_dim is None else out_dim,
+            self.mod_dim if mod_dim is None else mod_dim,
             self.cat_counts if cat_count is None else cat_count,
             *cat_counts,
             **(self.kwargs | kwargs)

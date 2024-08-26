@@ -3,6 +3,10 @@ from functools import cached_property
 import torch as pt
 import torch.nn as ptn
 from ..types import Tensor, Module
+from .linear import LinearEmbedder
+from .glu import GluEmbedder
+
+type EmbCls = type[LinearEmbedder | GluEmbedder]
 
 
 class NumericalEmbedder(Module):
@@ -10,7 +14,7 @@ class NumericalEmbedder(Module):
 
     Parameters
     ----------
-    out_dim: int
+    mod_dim: int
         Desired embedding size. Will become the size of the last dimension of
         the output tensor.
     n_features: int
@@ -23,22 +27,27 @@ class NumericalEmbedder(Module):
     **kwargs
         Additional keyword arguments to use when instantiating `emb_cls`.
 
+    See Also
+    --------
+    LinearEmbedder
+    GluEmbedder
+
     """
 
     def __init__(
             self,
-            out_dim: int,
+            mod_dim: int,
             n_features: int,
-            emb_cls: type[Module],
+            emb_cls: EmbCls,
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.out_dim = out_dim
+        self.mod_dim = mod_dim
         self.n_features = n_features
         self.emb_cls = emb_cls
         self.kwargs = kwargs
         self.embed = ptn.ModuleList(
-            [emb_cls(out_dim, **kwargs)] * n_features
+            [emb_cls(mod_dim, **kwargs) for _ in self.features]
         )
 
     @cached_property
@@ -70,24 +79,25 @@ class NumericalEmbedder(Module):
 
         """
         emb = [self.embed[f](inp[..., [f]]) for f in self.features]
-        return pt.stack(emb or self.out_dim * [pt.zeros(*inp.shape)], self.dim)
+        return pt.stack(emb or self.mod_dim * [pt.zeros(*inp.shape)], self.dim)
+
+    def reset_parameters(self) -> None:
+        """Re-initialize all internal parameters."""
+        for emb in self.embed:
+            emb.reset_parameters()
 
     def new(
             self,
-            out_dim: int | None = None,
+            mod_dim: int | None = None,
             n_features: int | None = None,
-            emb_cls: type[Module] | None = None,
+            emb_cls: EmbCls | None = None,
             **kwargs: Any
     ) -> Self:
         """Return a fresh instance with the same or updated parameters.
 
-        Needed to reset all parameters when the class or its initialization
-        parameters are not readily at hand at the point in the code where a
-        reset is desired.
-
         Parameters
         ----------
-        out_dim: int, optional
+        mod_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
             the output tensor. Overwrites the `out_dim` of the current
             instance if given. Defaults to ``None``.
@@ -109,9 +119,14 @@ class NumericalEmbedder(Module):
         NumericalEmbedder
             A fresh, new instance of itself.
 
+        See Also
+        --------
+        LinearEmbedder
+        GluEmbedder
+
         """
         return self.__class__(
-            self.out_dim if out_dim is None else out_dim,
+            self.mod_dim if mod_dim is None else mod_dim,
             self.n_features if n_features is None else n_features,
             self.emb_cls if emb_cls is None else emb_cls,
             **(self.kwargs | kwargs)

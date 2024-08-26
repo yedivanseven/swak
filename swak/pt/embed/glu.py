@@ -8,7 +8,7 @@ class GluEmbedder(Module):
 
     Parameters
     ----------
-    out_dim: int
+    mod_dim: int
         Desired embedding size. Will become the size of the last dimension of
         the output tensor.
     gate: Module, optional
@@ -26,17 +26,17 @@ class GluEmbedder(Module):
 
     def __init__(
             self,
-            out_dim: int,
+            mod_dim: int,
             gate: Module | Functional = ptn.Sigmoid(),
             inp_dim: int = 1,
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.out_dim = out_dim
+        self.mod_dim = mod_dim
         self.gate = gate
         self.inp_dim = inp_dim
         self.kwargs = kwargs
-        self.embed = ptn.Linear(inp_dim, 2 * out_dim, **kwargs)
+        self.embed = ptn.Linear(inp_dim, 2 * mod_dim, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Embed a single numerical feature through a Gated Linear Unit (GLU).
@@ -59,24 +59,24 @@ class GluEmbedder(Module):
 
         """
         emb = self.embed(inp)
-        return emb[..., :self.out_dim] * self.gate(emb[..., self.out_dim:])
+        return emb[..., :self.mod_dim] * self.gate(emb[..., self.mod_dim:])
+
+    def reset_parameters(self) -> None:
+        """Re-initialize all internal parameters."""
+        self.embed.reset_parameters()
 
     def new(
             self,
-            out_dim: int | None = None,
+            mod_dim: int | None = None,
             gate: Module | Functional | None = None,
             inp_dim: int | None = None,
             **kwargs: Any
     ) -> Self:
         """Return a fresh instance with the same or updated parameters.
 
-        Needed to reset all parameters when the class or its initialization
-        parameters are not readily at hand at the point in the code where a
-        reset is desired.
-
         Parameters
         ----------
-        out_dim: int, optional
+        mod_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
             of the output tensor. Overwrites the `out_dim` of the current
             instance if given. Defaults to ``None``.
@@ -85,7 +85,7 @@ class GluEmbedder(Module):
             transformed input before multiplying with the other half. Must be
             a callable that accepts a tensor as sole argument, like a module
             from ``torch.nn`` or a function from ``torch.nn.functional``.
-            Overwrites the `out_dim` of the current instance if given.
+            Overwrites the `gate` of the current instance if given.
             Defaults to ``None``.
         inp_dim: int, optional
             The number of features to embed. Overwrites the `inp_dim` of the
@@ -102,7 +102,7 @@ class GluEmbedder(Module):
 
         """
         return self.__class__(
-            self.out_dim if out_dim is None else out_dim,
+            self.mod_dim if mod_dim is None else mod_dim,
             self.gate if gate is None else gate,
             self.inp_dim if inp_dim is None else inp_dim,
             **(self.kwargs | kwargs)

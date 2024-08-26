@@ -51,6 +51,15 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(self.embed.n_features, int)
         self.assertEqual(5, self.embed.n_features)
 
+    def test_has_reset_parameters(self):
+        self.assertTrue(hasattr(self.embed, 'reset_parameters'))
+
+    def test_reset_parameters(self):
+        self.assertTrue(callable(self.embed.reset_parameters))
+
+    def test_call_reset_parameters(self):
+        self.embed.reset_parameters()
+
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))
 
@@ -65,10 +74,10 @@ class TestAttributes(unittest.TestCase):
         self.assertIsNot(new.embed_num, self.embed_num)
         self.assertIsInstance(new.embed_cat, CategoricalEmbedder)
         self.assertIsNot(new.embed_cat, self.embed_cat)
-        self.assertEqual(4, new.embed_num.out_dim)
+        self.assertEqual(4, new.embed_num.mod_dim)
         self.assertEqual(2, new.embed_num.n_features)
         self.assertIs(new.embed_num.emb_cls, LinearEmbedder)
-        self.assertEqual(4, new.embed_cat.out_dim)
+        self.assertEqual(4, new.embed_cat.mod_dim)
         self.assertTupleEqual((6, 7, 8), new.embed_cat.cat_counts)
 
     def test_call_new_update(self):

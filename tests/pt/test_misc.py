@@ -4,8 +4,17 @@ from swak.pt.misc import Identity
 
 class TestIdentity(unittest.TestCase):
 
-    def test_instantiation(self):
+    def test_empty_instantiation(self):
         _ = Identity()
+
+    def test_instantiation_accepts_args(self):
+        _ = Identity(1, 'foo', 4.2)
+
+    def test_instantiation_accepts_kwargs(self):
+        _ = Identity(foo=1, bar='baz', answer=4.2)
+
+    def test_instantiation_accepts_kargs_and_kwargs(self):
+        _ = Identity(1, 42, foo='bar')
 
     def test_callable(self):
         self.assertTrue(callable(Identity()))

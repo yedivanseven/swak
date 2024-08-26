@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from pandas import DataFrame
 from torch import Tensor, dtype, device
-from torch.nn import Module
+from torch.nn import Module, Dropout, AlphaDropout
 
 type Functional = Callable[[Tensor, ...], Tensor]
 type Tensors1T = tuple[Tensor]
@@ -11,6 +11,7 @@ type Tensors4T = tuple[Tensor, Tensor, Tensor, Tensor]
 type TensorsT = tuple[Tensor, ...]
 type Dtype = dtype
 type Device = device
+type Drop = Dropout | AlphaDropout
 
 __all__ = [
     'DataFrame',
@@ -23,5 +24,6 @@ __all__ = [
     'Tensors4T',
     'TensorsT',
     'Dtype',
-    'Device'
+    'Device',
+    'Drop'
 ]

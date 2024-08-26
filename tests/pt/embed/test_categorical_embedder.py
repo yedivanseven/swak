@@ -15,12 +15,12 @@ class TestAttributes(unittest.TestCase):
             scale_grad_by_freq=True
         )
 
-    def test_has_out_dim(self):
-        self.assertTrue(hasattr(self.embed, 'out_dim'))
+    def test_has_mod_dim(self):
+        self.assertTrue(hasattr(self.embed, 'mod_dim'))
 
-    def test_out_dim(self):
-        self.assertIsInstance(self.embed.out_dim, int)
-        self.assertEqual(2, self.embed.out_dim)
+    def test_mod_dim(self):
+        self.assertIsInstance(self.embed.mod_dim, int)
+        self.assertEqual(2, self.embed.mod_dim)
 
     def test_has_cat_counts(self):
         self.assertTrue(hasattr(self.embed, 'cat_counts'))
@@ -107,6 +107,17 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(embed.dim, int)
         self.assertEqual(-1, embed.dim)
 
+    def test_has_reset_parameters(self):
+        self.assertTrue(hasattr(self.embed, 'reset_parameters'))
+
+    def test_reset_parameters(self):
+        self.assertTrue(callable(self.embed.reset_parameters))
+
+    @patch('torch.nn.Embedding.reset_parameters')
+    def test_reset_parameters_called(self, mock):
+        self.embed.reset_parameters()
+        self.assertEqual(4, mock.call_count)
+
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))
 
@@ -117,7 +128,7 @@ class TestAttributes(unittest.TestCase):
         new = self.embed.new()
         self.assertIsInstance(new, CategoricalEmbedder)
         self.assertIsNot(new, self.embed)
-        self.assertEqual(self.embed.out_dim, new.out_dim)
+        self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertTupleEqual(self.embed.cat_counts, new.cat_counts)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
 
@@ -131,7 +142,7 @@ class TestAttributes(unittest.TestCase):
             max_norm=1
         )
         self.assertIsInstance(new, CategoricalEmbedder)
-        self.assertEqual(8, new.out_dim)
+        self.assertEqual(8, new.mod_dim)
         self.assertTupleEqual((1, 2, 3, 4), new.cat_counts)
         self.assertDictEqual(
             {'scale_grad_by_freq': False, 'max_norm': 1},

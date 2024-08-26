@@ -8,3 +8,4 @@ pt
    pt/misc
    pt/create
    pt/embed
+   pt/mix

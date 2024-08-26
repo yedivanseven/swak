@@ -35,9 +35,9 @@ class FeatureEmbedder(Module):
             embed_cat: CategoricalEmbedder
     ) -> None:
         super().__init__()
-        if embed_num.out_dim != embed_cat.out_dim:
-            msg = (f'Numerical ({embed_num.out_dim}) and categorical ('
-                   f'{embed_cat.out_dim}) embedding dimensions must match!')
+        if embed_num.mod_dim != embed_cat.mod_dim:
+            msg = (f'Numerical ({embed_num.mod_dim}) and categorical ('
+                   f'{embed_cat.mod_dim}) embedding dimensions must match!')
             raise EmbeddingError(msg)
         self.embed_num = embed_num
         self.embed_cat = embed_cat
@@ -82,16 +82,17 @@ class FeatureEmbedder(Module):
         ]
         return pt.cat(embedded, dim=-2)
 
+    def reset_parameters(self) -> None:
+        """Re-initialize all internal parameters."""
+        self.embed_num.reset_parameters()
+        self.embed_cat.reset_parameters()
+
     def new(
             self,
             embed_num: NumericalEmbedder | None = None,
             embed_cat: CategoricalEmbedder | None = None
     ) -> Self:
         """Return a fresh instance with the same or updated parameters.
-
-        Needed to reset all parameters when the class or its initialization
-        parameters are not readily at hand at the point in the code where a
-        reset is desired.
 
         Parameters
         ----------

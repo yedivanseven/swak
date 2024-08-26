@@ -10,11 +10,13 @@ class Identity(Module):
     """PyTorch module that passes tensors right through, doing nothing.
 
     To stay consistent with the PyTorch API, this is a class (instantiated
-    with nothing) with callable instances rather than a function.
+    with nothing) with callable instances rather than a function. While
+    passing (keyword) arguments on instantiation is permitted, they will be
+    ignored.
 
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *_, **__) -> None:
         super().__init__()
 
     def forward(self, *tensors: Tensor, **_: Any) -> Tensor | TensorsT:

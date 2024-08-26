@@ -10,12 +10,12 @@ class TestDefaultAttributes(unittest.TestCase):
     def setUp(self):
         self.embed = GluEmbedder(4)
 
-    def test_has_out_dim(self):
-        self.assertTrue(hasattr(self.embed, 'out_dim'))
+    def test_has_mod_dim(self):
+        self.assertTrue(hasattr(self.embed, 'mod_dim'))
 
-    def test_out_dim(self):
-        self.assertIsInstance(self.embed.out_dim, int)
-        self.assertEqual(4, self.embed.out_dim)
+    def test_mod_dim(self):
+        self.assertIsInstance(self.embed.mod_dim, int)
+        self.assertEqual(4, self.embed.mod_dim)
 
     def test_has_gate(self):
         self.assertTrue(hasattr(self.embed, 'gate'))
@@ -47,6 +47,17 @@ class TestDefaultAttributes(unittest.TestCase):
         _ = GluEmbedder(4)
         mock.assert_called_once_with(1, 8)
 
+    def test_has_reset_parameters(self):
+        self.assertTrue(hasattr(self.embed, 'reset_parameters'))
+
+    def test_reset_parameters(self):
+        self.assertTrue(callable(self.embed.reset_parameters))
+
+    @patch('torch.nn.Linear.reset_parameters')
+    def test_reset_parameters_called(self, mock):
+        self.embed.reset_parameters()
+        mock.assert_called_once_with()
+
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))
 
@@ -56,7 +67,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_call_new(self):
         new = self.embed.new()
         self.assertIsInstance(new, GluEmbedder)
-        self.assertEqual(self.embed.out_dim, new.out_dim)
+        self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertIsInstance(self.embed.gate, Sigmoid)
         self.assertEqual(self.embed.inp_dim, new.inp_dim)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
@@ -84,7 +95,7 @@ class TestAttributes(unittest.TestCase):
 
     def test_call_new(self):
         new = self.embed.new(8, Sigmoid(), 4, bias=True)
-        self.assertEqual(8, new.out_dim)
+        self.assertEqual(8, new.mod_dim)
         self.assertIsInstance(new.gate, Sigmoid)
         self.assertEqual(4, new.inp_dim)
         self.assertDictEqual({'bias': True}, new.kwargs)
