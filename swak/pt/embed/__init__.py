@@ -1,12 +1,14 @@
-from .linear import LinearEmbedder
-from .glu import GluEmbedder
+from .activated import ActivatedEmbedder
+from .gated import GatedEmbedder
+from .gated_residual import GatedResidualEmbedder
 from .numerical import NumericalEmbedder
 from .categorical import CategoricalEmbedder
 from .feature import FeatureEmbedder
 
 __all__ = [
-    'LinearEmbedder',
-    'GluEmbedder',
+    'ActivatedEmbedder',
+    'GatedEmbedder',
+    'GatedResidualEmbedder',
     'NumericalEmbedder',
     'CategoricalEmbedder',
     'FeatureEmbedder'

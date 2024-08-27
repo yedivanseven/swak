@@ -63,17 +63,17 @@ class FeatureEmbedder(Module):
         Parameters
         ----------
         inp: Tensor
-            Input tensor of dtype float with at least 2 dimensions. The last
-            dimension is expected to contain first the values of all numerical
-            features, followed by those of the categorical features.
+            Input tensor of must be of dtype ``float``. The last dimension is
+            expected to contain first the values of all numerical features,
+            followed by those of the categorical features.
 
         Returns
         -------
         Tensor
             The output tensor has one more dimension of size `out_dim` added
             after the last dimension (with a size equal to the total number of
-            features`) than the `inp`, containing the stacked embeddings, first
-            those fo the numerical and then those of teh categorical features.
+            features) than the `inp`, containing the stacked embeddings, first
+            those of the numerical and then those of the categorical features.
 
         """
         embedded = [

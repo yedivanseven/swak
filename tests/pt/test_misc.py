@@ -1,8 +1,46 @@
 import unittest
-from swak.pt.misc import Identity
+from swak.pt.misc import identity, Identity
 
 
-class TestIdentity(unittest.TestCase):
+class TestIdentityFunction(unittest.TestCase):
+
+    def test_callable(self):
+        self.assertTrue(callable(Identity()))
+
+    def test_empty(self):
+        result = identity()
+        self.assertIsInstance(result, tuple)
+        self.assertTupleEqual((), result)
+
+    def test_empty_and_kwargs(self):
+        result = identity(foo='bar', answer=42)
+        self.assertIsInstance(result, tuple)
+        self.assertTupleEqual((), result)
+
+    def test_one_arg(self):
+        obj = object()
+        result = identity(obj)
+        self.assertIs(result, obj)
+
+    def test_one_arg_and_kwargs(self):
+        obj = object()
+        result = identity(obj, foo='bar', answer=42)
+        self.assertIs(result, obj)
+
+    def test_args(self):
+        args = 1, 'foo'
+        result = identity(*args)
+        self.assertIsInstance(result, tuple)
+        self.assertTupleEqual(args, result)
+
+    def test_args_and_kwargs(self):
+        args = 1, 'foo'
+        result = identity(*args, foo='bar', answer=42)
+        self.assertIsInstance(result, tuple)
+        self.assertTupleEqual(args, result)
+
+
+class TestIdentityModule(unittest.TestCase):
 
     def test_empty_instantiation(self):
         _ = Identity()

@@ -1,14 +1,15 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import torch as pt
-from torch.nn import Linear
-from swak.pt.embed import LinearEmbedder
+import torch.nn as ptn
+from swak.pt.misc import identity
+from swak.pt.embed import ActivatedEmbedder
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.embed = LinearEmbedder(4)
+        self.embed = ActivatedEmbedder(4)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.embed, 'mod_dim'))
@@ -16,6 +17,12 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_mod_dim(self):
         self.assertIsInstance(self.embed.mod_dim, int)
         self.assertEqual(4, self.embed.mod_dim)
+
+    def test_has_activate(self):
+        self.assertTrue(hasattr(self.embed, 'activate'))
+
+    def test_activate(self):
+        self.assertIs(self.embed.activate, identity)
 
     def test_has_inp_dim(self):
         self.assertTrue(hasattr(self.embed, 'inp_dim'))
@@ -34,11 +41,11 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.embed, 'embed'))
 
     def test_embed(self):
-        self.assertIsInstance(self.embed.embed, Linear)
+        self.assertIsInstance(self.embed.embed, ptn.Linear)
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = LinearEmbedder(4)
+        _ = ActivatedEmbedder(4)
         mock.assert_called_once_with(1, 4)
 
     def test_has_reset_parameters(self):
@@ -60,8 +67,9 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_call_new(self):
         new = self.embed.new()
-        self.assertIsInstance(new, LinearEmbedder)
+        self.assertIsInstance(new, ActivatedEmbedder)
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
+        self.assertIs(new.activate, self.embed.activate)
         self.assertEqual(self.embed.inp_dim, new.inp_dim)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
 
@@ -69,7 +77,10 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.embed = LinearEmbedder(4, 2, bias=False)
+        self.embed = ActivatedEmbedder(4, ptn.functional.relu, 2, bias=False)
+
+    def test_activate(self):
+        self.assertIs(self.embed.activate, ptn.functional.relu)
 
     def test_inp_dim(self):
         self.assertIsInstance(self.embed.inp_dim, int)
@@ -80,12 +91,13 @@ class TestAttributes(unittest.TestCase):
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = LinearEmbedder(4, bias=False)
+        _ = ActivatedEmbedder(4, bias=False)
         mock.assert_called_once_with(1, 4, bias=False)
 
     def test_call_new(self):
-        new = self.embed.new(8,4, bias=True)
+        new = self.embed.new(8, ptn.functional.gelu, 4, bias=True)
         self.assertEqual(8, new.mod_dim)
+        self.assertIs(new.activate, ptn.functional.gelu)
         self.assertEqual(4, new.inp_dim)
         self.assertDictEqual({'bias': True}, new.kwargs)
 
@@ -93,7 +105,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsageSingleFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = LinearEmbedder(4)
+        self.embed = ActivatedEmbedder(4)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -128,15 +140,24 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_linear_called(self, linear):
         inp = pt.ones(1)
         linear.return_value = pt.ones(1, 4)
-        embed = LinearEmbedder(4)
+        embed = ActivatedEmbedder(4)
         _ = embed(inp)
         linear.assert_called_once_with(inp)
+
+    def test_activate_called(self):
+        mock = Mock()
+        embed = ActivatedEmbedder(4, mock, bias=False)
+        embed.embed.weight.data = pt.ones(4, 1)
+        inp = pt.ones(1)
+        _ = embed(inp)
+        actual = mock.call_args[0][0]
+        pt.testing.assert_close(actual, pt.ones(4))
 
 
 class TestUsageMultiFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = LinearEmbedder(4, 2)
+        self.embed = ActivatedEmbedder(4, inp_dim=2)
 
     def test_1d(self):
         inp = pt.ones(2)
@@ -172,9 +193,18 @@ class TestUsageMultiFeature(unittest.TestCase):
     def test_linear_called(self, linear):
         inp = pt.ones(2)
         linear.return_value = pt.tensor([[1.0, 1.0, 0.0, 0.0]])
-        embed = LinearEmbedder(4, 2)
+        embed = ActivatedEmbedder(4, inp_dim=2)
         _ = embed(inp)
         linear.assert_called_once_with(inp)
+
+    def test_activate_called(self):
+        mock = Mock()
+        embed = ActivatedEmbedder(4, mock, 2, bias=False)
+        embed.embed.weight.data = pt.ones(4, 2)
+        inp = pt.ones(2)
+        _ = embed(inp)
+        actual = mock.call_args[0][0]
+        pt.testing.assert_close(actual, pt.ones(4) * 2)
 
 
 if __name__ == '__main__':

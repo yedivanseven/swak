@@ -2,13 +2,13 @@ import unittest
 from unittest.mock import patch
 import torch as pt
 from torch.nn import Sigmoid, Linear, GELU
-from swak.pt.embed import GluEmbedder
+from swak.pt.embed import GatedEmbedder
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.embed = GluEmbedder(4)
+        self.embed = GatedEmbedder(4)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.embed, 'mod_dim'))
@@ -44,7 +44,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = GluEmbedder(4)
+        _ = GatedEmbedder(4)
         mock.assert_called_once_with(1, 8)
 
     def test_has_reset_parameters(self):
@@ -66,7 +66,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_call_new(self):
         new = self.embed.new()
-        self.assertIsInstance(new, GluEmbedder)
+        self.assertIsInstance(new, GatedEmbedder)
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertIsInstance(self.embed.gate, Sigmoid)
         self.assertEqual(self.embed.inp_dim, new.inp_dim)
@@ -76,7 +76,7 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.embed = GluEmbedder(4, GELU(), 2, bias=False)
+        self.embed = GatedEmbedder(4, GELU(), 2, bias=False)
 
     def test_gate(self):
         self.assertIsInstance(self.embed.gate, GELU)
@@ -90,7 +90,7 @@ class TestAttributes(unittest.TestCase):
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = GluEmbedder(4, GELU(), bias=False)
+        _ = GatedEmbedder(4, GELU(), bias=False)
         mock.assert_called_once_with(1, 8, bias=False)
 
     def test_call_new(self):
@@ -104,7 +104,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsageSingleFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = GluEmbedder(4)
+        self.embed = GatedEmbedder(4)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -139,7 +139,7 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_linear_called(self, linear):
         inp = pt.ones(1)
         linear.return_value = pt.ones(1, 4)
-        embed = GluEmbedder(2)
+        embed = GatedEmbedder(2)
         _ = embed(inp)
         linear.assert_called_once_with(inp)
 
@@ -148,7 +148,7 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_sigmoid_called(self, linear, sigmoid):
         inp = pt.ones(1)
         linear.return_value = pt.tensor([[1.0, 1.0, 2.0, 3.0]])
-        embed = GluEmbedder(2)
+        embed = GatedEmbedder(2)
         _ = embed(inp)
         actual = sigmoid.call_args[0][0]
         pt.testing.assert_close(actual, pt.tensor([[2.0, 3.0]]))
@@ -159,7 +159,7 @@ class TestUsageSingleFeature(unittest.TestCase):
         inp = pt.ones(1)
         linear.return_value = pt.tensor([[2.0, 3.0, 1.0, 1.0]])
         sigmoid.return_value = pt.tensor([[0.4, 0.5]])
-        embed = GluEmbedder(2)
+        embed = GatedEmbedder(2)
         actual = embed(inp)
         pt.testing.assert_close(actual, pt.tensor([[0.8, 1.5]]))
 
@@ -167,7 +167,7 @@ class TestUsageSingleFeature(unittest.TestCase):
 class TestUsageMultiFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = GluEmbedder(4, Sigmoid(), 2)
+        self.embed = GatedEmbedder(4, Sigmoid(), 2)
 
     def test_1d(self):
         inp = pt.ones(2)
@@ -203,7 +203,7 @@ class TestUsageMultiFeature(unittest.TestCase):
     def test_linear_called(self, linear):
         inp = pt.ones(2)
         linear.return_value = pt.tensor([[1.0, 1.0, 0.0, 0.0]])
-        embed = GluEmbedder(2, Sigmoid(), 2)
+        embed = GatedEmbedder(2, Sigmoid(), 2)
         _ = embed(inp)
         linear.assert_called_once_with(inp)
 
@@ -212,7 +212,7 @@ class TestUsageMultiFeature(unittest.TestCase):
     def test_sigmoid_called(self, linear, sigmoid):
         inp = pt.ones(1)
         linear.return_value = pt.tensor([[1.0, 1.0, 2.0, 3.0]])
-        embed = GluEmbedder(2, Sigmoid(), 2)
+        embed = GatedEmbedder(2, Sigmoid(), 2)
         _ = embed(inp)
         actual = sigmoid.call_args[0][0]
         pt.testing.assert_close(actual, pt.tensor([[2.0, 3.0]]))
@@ -223,7 +223,7 @@ class TestUsageMultiFeature(unittest.TestCase):
         inp = pt.ones(1)
         linear.return_value = pt.tensor([[2.0, 3.0, 1.0, 1.0]])
         sigmoid.return_value = pt.tensor([[0.4, 0.5]])
-        embed = GluEmbedder(2, Sigmoid(), 2)
+        embed = GatedEmbedder(2, Sigmoid(), 2)
         actual = embed(inp)
         pt.testing.assert_close(actual, pt.tensor([[0.8, 1.5]]))
 

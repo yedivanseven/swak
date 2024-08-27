@@ -3,10 +3,11 @@ from functools import cached_property
 import torch as pt
 import torch.nn as ptn
 from ..types import Tensor, Module
-from .linear import LinearEmbedder
-from .glu import GluEmbedder
+from .activated import ActivatedEmbedder
+from .gated import GatedEmbedder
+from .gated_residual import GatedResidualEmbedder
 
-type EmbCls = type[LinearEmbedder | GluEmbedder]
+type EmbCls = type[ActivatedEmbedder | GatedEmbedder | GatedResidualEmbedder]
 
 
 class NumericalEmbedder(Module):
@@ -23,14 +24,17 @@ class NumericalEmbedder(Module):
     emb_cls: type
         The PyTorch module to use as embedding class. Must take `out_dim` as
         its first argument on instantiation, take tensors of size 1 in their
-        last dimension and append a dimension of size `out_dim` to them.
+        last dimension change that dimension to size `out_dim`.
+    **args
+        Additional arguments to use when instantiating `emb_cls`.
     **kwargs
         Additional keyword arguments to use when instantiating `emb_cls`.
 
     See Also
     --------
-    LinearEmbedder
-    GluEmbedder
+    ActivatedEmbedder
+    GatedEmbedder
+    GatedResidualEmbedder
 
     """
 
@@ -39,15 +43,17 @@ class NumericalEmbedder(Module):
             mod_dim: int,
             n_features: int,
             emb_cls: EmbCls,
+            *args: Any,
             **kwargs: Any
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
         self.n_features = n_features
         self.emb_cls = emb_cls
+        self.args = args
         self.kwargs = kwargs
         self.embed = ptn.ModuleList(
-            [emb_cls(mod_dim, **kwargs) for _ in self.features]
+            [emb_cls(mod_dim, *args, **kwargs) for _ in self.features]
         )
 
     @cached_property
@@ -66,9 +72,9 @@ class NumericalEmbedder(Module):
         Parameters
         ----------
         inp: Tensor
-            Input tensor with at least 2 dimensions. The last dimension is
-            expected to be of size `n_features`. and to contain the scalar
-            values of the individual  numerical features.
+            The last dimension of the input tensor is expected to be of size
+            `n_features` and to contain the scalar values of the individual
+            numerical features.
 
         Returns
         -------
@@ -91,6 +97,7 @@ class NumericalEmbedder(Module):
             mod_dim: int | None = None,
             n_features: int | None = None,
             emb_cls: EmbCls | None = None,
+            *args: Any,
             **kwargs: Any
     ) -> Self:
         """Return a fresh instance with the same or updated parameters.
@@ -109,6 +116,9 @@ class NumericalEmbedder(Module):
             The PyTorch module to use as embedding class. Must take `out_dim`
             as its first argument on instantiation. Overwrites the `emb_cls`
             of the current instance if given. Defaults to ``None``.
+        *args
+            Additional arguments replace those of the current instance and are
+            then used when instantiating `emb_cls`.
         **kwargs
             Additional keyword arguments are merged into the keyword arguments
             of the current instance and are then used together when
@@ -121,13 +131,14 @@ class NumericalEmbedder(Module):
 
         See Also
         --------
-        LinearEmbedder
-        GluEmbedder
+        ActivatedEmbedder
+        GatedEmbedder
 
         """
         return self.__class__(
             self.mod_dim if mod_dim is None else mod_dim,
             self.n_features if n_features is None else n_features,
             self.emb_cls if emb_cls is None else emb_cls,
+            *args,
             **(self.kwargs | kwargs)
         )

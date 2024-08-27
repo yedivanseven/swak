@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 import torch as pt
 import torch.nn as ptn
-from swak.pt.embed import NumericalEmbedder, LinearEmbedder, GluEmbedder
+from swak.pt.embed import NumericalEmbedder, ActivatedEmbedder, GatedEmbedder
 
 
 class EmbCls(ptn.Module):
@@ -33,7 +33,7 @@ class NewEmbCls(ptn.Module):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.embed = NumericalEmbedder(4, 2, EmbCls, foo='bar')
+        self.embed = NumericalEmbedder(4, 2, EmbCls, 42, foo='bar')
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.embed, 'mod_dim'))
@@ -55,6 +55,16 @@ class TestAttributes(unittest.TestCase):
     def test_emb_cls(self):
         self.assertIs(self.embed.emb_cls, EmbCls)
 
+    def test_has_args(self):
+        self.assertTrue(hasattr(self.embed, 'args'))
+
+    def test_args(self):
+        self.assertTupleEqual((42,), self.embed.args)
+
+    def test_default_args(self):
+        embed = NumericalEmbedder(4, 2, EmbCls)
+        self.assertTupleEqual((), embed.args)
+
     def test_has_kwargs(self):
         self.assertTrue(hasattr(self.embed, 'kwargs'))
 
@@ -74,8 +84,8 @@ class TestAttributes(unittest.TestCase):
         e1, e2 = self.embed.embed
         self.assertIsInstance(e1, EmbCls)
         self.assertIsInstance(e2, EmbCls)
-        self.assertTupleEqual((4,), e1.args)
-        self.assertTupleEqual((4,), e2.args)
+        self.assertTupleEqual((4, 42), e1.args)
+        self.assertTupleEqual((4, 42), e2.args)
         self.assertDictEqual({'foo': 'bar'}, e1.kwargs)
         self.assertDictEqual({'foo': 'bar'}, e2.kwargs)
 
@@ -122,21 +132,23 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertEqual(self.embed.n_features, new.n_features)
         self.assertIs(new.emb_cls, self.embed.emb_cls)
+        self.assertTupleEqual((), new.args)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
 
     def test_call_new_update(self):
-        new = self.embed.new(8, 5, NewEmbCls, foo=42, bar='baz')
+        new = self.embed.new(8, 5, NewEmbCls, 'answer', foo=42, bar='baz')
         self.assertIsInstance(new, NumericalEmbedder)
         self.assertEqual(8, new.mod_dim)
         self.assertEqual(5, new.n_features)
         self.assertIs(new.emb_cls, NewEmbCls)
+        self.assertTupleEqual(('answer',), new.args)
         self.assertDictEqual({'foo': 42, 'bar': 'baz'}, new.kwargs)
 
 
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.embed = NumericalEmbedder(4, 2, LinearEmbedder)
+        self.embed = NumericalEmbedder(4, 2, ActivatedEmbedder)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -179,7 +191,7 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(pt.Size([5, 0, 2, 4]), actual.shape)
 
     def test_no_features(self):
-        embed = NumericalEmbedder(4, 0, GluEmbedder)
+        embed = NumericalEmbedder(4, 0, GatedEmbedder)
         inp = pt.ones(5, 3, 0)
         actual = embed(inp)
         self.assertEqual(pt.Size([5, 3, 0, 4]), actual.shape)

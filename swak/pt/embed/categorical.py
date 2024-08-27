@@ -72,11 +72,11 @@ class CategoricalEmbedder(Module):
         Parameters
         ----------
         inp: tensor
-            Input tensor of type ``long`` with at least 2 dimensions. The size
-            of the last dimension is expected to match the number of specified
-            `cat_counts` and to contain the integer identifiers of the
-            categories in the respective feature. These identifiers must all
-            be lower in value than their respective count.
+            Input tensor must be of dtype ``long``. The size of the last
+            dimension is expected to match the number of specified `cat_counts`
+            and to contain the integer identifiers of the categories in the
+            respective feature. These identifiers must all be lower in value
+            than their respective count.
 
         Returns
         -------

@@ -3,8 +3,8 @@ from unittest.mock import patch
 import torch as pt
 from swak.pt.exceptions import EmbeddingError
 from swak.pt.embed import (
-    LinearEmbedder,
-    GluEmbedder,
+    ActivatedEmbedder,
+    GatedEmbedder,
     NumericalEmbedder,
     CategoricalEmbedder,
     FeatureEmbedder
@@ -14,7 +14,7 @@ from swak.pt.embed import (
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.embed_num = NumericalEmbedder(4, 2, LinearEmbedder)
+        self.embed_num = NumericalEmbedder(4, 2, ActivatedEmbedder)
         self.embed_cat = CategoricalEmbedder(4, 6, 7, 8)
         self.embed = FeatureEmbedder(self.embed_num, self.embed_cat)
 
@@ -76,12 +76,12 @@ class TestAttributes(unittest.TestCase):
         self.assertIsNot(new.embed_cat, self.embed_cat)
         self.assertEqual(4, new.embed_num.mod_dim)
         self.assertEqual(2, new.embed_num.n_features)
-        self.assertIs(new.embed_num.emb_cls, LinearEmbedder)
+        self.assertIs(new.embed_num.emb_cls, ActivatedEmbedder)
         self.assertEqual(4, new.embed_cat.mod_dim)
         self.assertTupleEqual((6, 7, 8), new.embed_cat.cat_counts)
 
     def test_call_new_update(self):
-        embed_num = NumericalEmbedder(4, 2, GluEmbedder)
+        embed_num = NumericalEmbedder(4, 2, GatedEmbedder)
         embed_cat = CategoricalEmbedder(4, 6, 7, 8)
         new = self.embed.new(embed_num, embed_cat)
         self.assertIs(new.embed_num, embed_num)
@@ -91,7 +91,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.embed_num = NumericalEmbedder(4, 2, LinearEmbedder)
+        self.embed_num = NumericalEmbedder(4, 2, ActivatedEmbedder)
         self.embed_cat = CategoricalEmbedder(4, 6, 7, 8)
         self.embed = FeatureEmbedder(self.embed_num, self.embed_cat)
 
@@ -120,7 +120,7 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(pt.Size([1, 2, 3, 5, 4]), actual.shape)
 
     def test_no_num_features(self):
-        embed_num = NumericalEmbedder(4, 0, GluEmbedder)
+        embed_num = NumericalEmbedder(4, 0, GatedEmbedder)
         embed = FeatureEmbedder(embed_num, self.embed_cat)
         inp = pt.ones(1, 2, 3)
         actual = embed(inp)
@@ -139,7 +139,7 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(pt.Size([2, 0, 5, 4]), actual.shape)
 
     def test_no_features(self):
-        embed_num = NumericalEmbedder(4, 0, LinearEmbedder)
+        embed_num = NumericalEmbedder(4, 0, ActivatedEmbedder)
         embed_cat = CategoricalEmbedder(4, [])
         embed = FeatureEmbedder(embed_num, embed_cat)
         inp = pt.ones(5, 3, 0)
@@ -161,7 +161,7 @@ class TestUsage(unittest.TestCase):
         pt.testing.assert_close(actual, expected)
 
     def test_raises_on_embedding_dim_mismatch(self):
-        embed_num = NumericalEmbedder(5, 2, GluEmbedder)
+        embed_num = NumericalEmbedder(5, 2, GatedEmbedder)
         with self.assertRaises(EmbeddingError):
             _ = FeatureEmbedder(embed_num, self.embed_cat)
 
