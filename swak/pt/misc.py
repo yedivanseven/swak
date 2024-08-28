@@ -7,53 +7,49 @@ __all__ = [
 ]
 
 
-def identity(*tensors: Tensor, **_: Any) -> Tensor | TensorsT:
-    """Simply pass through tensor argument(s) and ignore keyword arguments.
+def identity(tensor: Tensor, **_: Any) -> Tensor | TensorsT:
+    """Simply pass through the argument and ignore keyword arguments.
 
     This is a placeholder for instances where a default function is required.
 
     Parameters
     ----------
-    *tensors: Tensor
-        Any number of tensors to be passed straight through.
+    tensor: Tensor
+        Any argument (typically a tensor) to be passed straight through.
 
     Returns
     -------
-    Tensor or tuple
-        A single tensor if only a single tensor was passed in, an empty
-        tuple if none were passed in, and a tuple of tensors if more than
-        one was passed in.
+    Tensor
+        The tensor passed in as argument.
 
     """
-    return tensors[0] if len(tensors) == 1 else tensors
+    return tensor
 
 
 class Identity(Module):
-    """PyTorch module that passes tensors right through, doing nothing.
+    """PyTorch module that passes a tensor right through, doing nothing.
 
     This is a placeholder for instances where a default module is required.
-    Providing (keyword) arguments on instantiation is permitted, but they will
-    be ignored.
+    Providing any number of (keyword) arguments on instantiation is permitted,
+    but they will be ignored.
 
     """
 
     def __init__(self, *_, **__) -> None:
         super().__init__()
 
-    def forward(self, *tensors: Tensor, **_: Any) -> Tensor | TensorsT:
-        """Simply pass through tensor argument(s) and ignore keyword arguments.
+    def forward(self, tensor: Tensor, **_: Any) -> Tensor | TensorsT:
+        """Simply pass through the argument and ignore keyword arguments.
 
         Parameters
         ----------
-        *tensors: Tensor
-            Any number of tensors to be passed straight through.
+        tensor: Tensor
+            Any argument (typically a tensor) to be passed straight through.
 
         Returns
         -------
-        Tensor or tuple
-            A single tensor if only a single tensor was passed in, an empty
-            tuple if none were passed in, and a tuple of tensors if more than
-            one was passed in.
+        Tensor
+            The tensor passed in as argument.
 
         """
-        return tensors[0] if len(tensors) == 1 else tensors
+        return tensor
