@@ -37,12 +37,15 @@ class GatedResidualEmbedder(Module):
     -----
     This implementation is inspired by how features are encoded in `Temporal
     Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
-    (linear) projection of features into embedding space happens inside the
-    present module with no option to add a `context vector`. Secondly, the
-    intermediate linear layer (Eq. 3) is eliminated and dropout is applied
-    directly to the activations after the first layer. Finally, the layer
-    norm (Eq. 2) is replaced by simply dividing the sum of (linearly projected)
-    input and gated signal by the square root of 2.
+    (linear) projection of scalar numerical features into embedding space
+    happens inside the present module. Secondly, this embedding vector is not
+    transformed again (as Eq. 4 seems to imply) and there is no option to add
+    a `context vector`. Thirdly, the intermediate linear layer (Eq. 3) is
+    eliminated and dropout is applied directly to the activations after the
+    first layer. Finally, the layer norm (Eq. 2) is replaced by simply
+    dividing the sum of (linearly projected) input and gated signal by the
+    square root of 2. Should additional normalization be desired, it can be
+    performed independently on the output of this module.
 
 
     References
@@ -51,10 +54,6 @@ class GatedResidualEmbedder(Module):
            Transformers for Interpretable Multi-horizon Time Series
            Forecasting`, `arXiv:1912.09363v3 <https://arxiv.org/abs/
            1912.09363>`__ (2020).
-
-    See Also
-    --------
-    swak.pt.misc.Identity
 
     """
 
