@@ -1,16 +1,16 @@
 from typing import Any, Self
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Module, Drop
-from ..misc import Identity
+from ..types import Tensor, Module, Functional
 
 
-class ArgsLinearMixer(Module):
-    """Combined multiple feature tensors through a simple linear map.
+class GatedArgsConcatMixer(Module):
+    """Combined multiple feature tensors through a gated linear unit (GLU).
 
-    Multiple tensors are concatenated to produce a single feature vector,
-    which is then projected into a space the size of the model. An optional
-    dropout is applied.
+    Multiple tensors are concatenated to produce a single, wide feature vector,
+    which is then projected into a space twice the size of the model. One half
+    is passed through an (optional) activation function to gate the other half,
+    thus reducing the final output back down to the model size.
 
     Parameters
     ----------
@@ -20,16 +20,15 @@ class ArgsLinearMixer(Module):
         will again have this size in its last dimension.
     n_features: int
         The number of features to combine. Must be equal the number of
-        arguments that instances are called with.
-    dropout: Module, optional
-        Typically an instance of ``Dropout`` or ``AlphaDropout``. Defaults to
-        ``Identity``, resulting in no dropout being applied.
+        arguments instances are called with.
+    gate: Module or function, optional
+        The activation function to be applied to half of the (linearly)
+        transformed inputs before multiplying with the other half. Must be
+        a callable that accepts a tensor as sole argument, like a module from
+        ``torch.nn`` or a function from ``torch.nn.functional``.
+        Defaults to a sigmoid.
     **kwargs
         Keyword arguments are passed on to the linear layer.
-
-    See Also
-    --------
-    swak.pt.misc.Identity
 
     """
 
@@ -37,15 +36,15 @@ class ArgsLinearMixer(Module):
             self,
             mod_dim: int,
             n_features: int,
-            dropout: Drop | Identity = Identity(),
+            gate: Module | Functional = ptn.Sigmoid(),
             **kwargs: Any
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
         self.n_features = n_features
-        self.dropout = dropout
+        self.gate = gate
         self.kwargs = kwargs
-        self.mix = ptn.Linear(n_features * mod_dim, mod_dim, **kwargs)
+        self.mix = ptn.Linear(n_features * mod_dim, 2 * mod_dim, **kwargs)
 
     def forward(self, *inps: Tensor) -> Tensor:
         """Forward pass for combining multiple feature tensors into one.
@@ -62,10 +61,11 @@ class ArgsLinearMixer(Module):
         Returns
         -------
         Tensor
-            The output tensor has the same dimensions as the input.
+            The output tensor has the same dimensions as any input tensor.
 
         """
-        return self.dropout(self.mix(pt.cat(inps, dim=-1)))
+        mixed = self.mix(pt.cat(inps, dim=-1))
+        return mixed[..., :self.mod_dim] * self.gate(mixed[..., self.mod_dim:])
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
@@ -75,7 +75,7 @@ class ArgsLinearMixer(Module):
             self,
             mod_dim: int | None = None,
             n_features: int | None = None,
-            dropout: Drop | Identity | None = None,
+            gate: Module | Functional | None = None,
             **kwargs: Any
     ) -> Self:
         """Return a fresh instance with the same or updated parameters.
@@ -88,11 +88,14 @@ class ArgsLinearMixer(Module):
             of the current instance if given. Defaults to ``None``.
         n_features: int, optional
             The number of features to combine. Must be equal the number of
-            arguments that instances are called with. Overwrites `n_features`
+            arguments instances are called with. Overwrites `n_features`
             of the current instance if given. Defaults to ``None``.
-        dropout: Module, optional
-            An instance of ``Dropout``, `AlphaDropout``, or ``Identity``.
-            Overwrites the `dropout` of the current instance if given.
+        gate: Module or function, optional
+            The activation function to be applied to half of the (linearly)
+            transformed input before multiplying with the other half. Must be
+            a callable that accepts a tensor as sole argument, like a module
+            from ``torch.nn`` or a function from ``torch.nn.functional``.
+            Overwrites the `gate` of the current instance if given.
             Defaults to ``None``.
         **kwargs
             Additional keyword arguments are merged into the keyword arguments
@@ -101,28 +104,25 @@ class ArgsLinearMixer(Module):
 
         Returns
         -------
-        ArgsLinearMixer
+        GatedArgsConcatMixer
             A fresh, new instance of itself.
-
-        See Also
-        --------
-        swak.pt.misc.Identity
 
         """
         return self.__class__(
             self.mod_dim if mod_dim is None else mod_dim,
             self.n_features if n_features is None else n_features,
-            self.dropout if dropout is None else dropout,
+            self.gate if gate is None else gate,
             **(self.kwargs | kwargs)
         )
 
 
-class StackLinearMixer(Module):
-    """Combined stacked feature vectors through a simple linear map.
+class GatedStackConcatMixer(Module):
+    """Combined stacked feature vectors through a gated linear unit (GLU).
 
-    Multiple feature vectors stacked in a single tensor are concatenated into
-    a single vector and projected down into a space the size of the model.
-    An optional dropout is applied.
+    Features are concatenated into a single, wide vector and projected into a
+    space twice the size of the model. One half is then passed through an
+    (optional) activation function to gate the other half, thus reducing
+    the final output back down to the model size.
 
     Parameters
     ----------
@@ -133,15 +133,14 @@ class StackLinearMixer(Module):
     n_features: int
         The number of features to combine. Must be equal to the size of the
         next-to-last dimension of the input tensor.
-    dropout: Module, optional
-        Typically an instance of ``Dropout`` or ``AlphaDropout``. Defaults to
-        ``Identity``, resulting in no dropout being applied.
+    gate: Module or function, optional
+        The activation function to be applied to half of the (linearly)
+        transformed inputs before multiplying with the other half. Must be
+        a callable that accepts a tensor as sole argument, like a module from
+        ``torch.nn`` or a function from ``torch.nn.functional``.
+        Defaults to a sigmoid.
     **kwargs
         Keyword arguments are passed on to the linear layer.
-
-    See Also
-    --------
-    swak.pt.misc.Identity
 
     """
 
@@ -149,13 +148,13 @@ class StackLinearMixer(Module):
             self,
             mod_dim: int,
             n_features: int,
-            dropout: Drop | Identity = Identity(),
+            gate: Module | Functional = ptn.Sigmoid(),
             **kwargs: Any
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
         self.n_features = n_features
-        self.dropout = dropout
+        self.gate = gate
         self.kwargs = kwargs
         self.mix = ptn.Linear(n_features * mod_dim, 2 * mod_dim, **kwargs)
 
@@ -178,7 +177,8 @@ class StackLinearMixer(Module):
             dimension is once again `mod_dim`.
 
         """
-        return self.dropout(self.mix(inp.flatten(start_dim=-2)))
+        mixed = self.mix(inp.flatten(start_dim=-2))
+        return mixed[..., :self.mod_dim] * self.gate(mixed[..., self.mod_dim:])
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
@@ -188,7 +188,7 @@ class StackLinearMixer(Module):
             self,
             mod_dim: int | None = None,
             n_features: int | None = None,
-            dropout: Drop | Identity | None = None,
+            gate: Module | Functional | None = None,
             **kwargs: Any
     ) -> Self:
         """Return a fresh instance with the same or updated parameters.
@@ -203,9 +203,12 @@ class StackLinearMixer(Module):
             The number of features to combine. Must be equal to the size of the
             next-to-last dimension of the input tensor. Overwrites `n_features`
             of the current instance if given. Defaults to ``None``.
-        dropout: Module, optional
-            An instance of ``Dropout``, `AlphaDropout``, or ``Identity``.
-            Overwrites the `dropout` of the current instance if given.
+        gate: Module or function, optional
+            The activation function to be applied to half of the (linearly)
+            transformed input before multiplying with the other half. Must be
+            a callable that accepts a tensor as sole argument, like a module
+            from ``torch.nn`` or a function from ``torch.nn.functional``.
+            Overwrites the `gate` of the current instance if given.
             Defaults to ``None``.
         **kwargs
             Additional keyword arguments are merged into the keyword arguments
@@ -214,17 +217,13 @@ class StackLinearMixer(Module):
 
         Returns
         -------
-        StackLinearMixer
+        GatedStackConcatMixer
             A fresh, new instance of itself.
-
-        See Also
-        --------
-        swak.pt.misc.Identity
 
         """
         return self.__class__(
             self.mod_dim if mod_dim is None else mod_dim,
             self.n_features if n_features is None else n_features,
-            self.dropout if dropout is None else dropout,
+            self.gate if gate is None else gate,
             **(self.kwargs | kwargs)
         )

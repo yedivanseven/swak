@@ -1,7 +1,6 @@
 from typing import Any, Self
 import torch as pt
 import torch.nn as ptn
-from ..misc import Identity
 from ..types import Tensor, Module, Functional, Drop
 
 
@@ -28,9 +27,9 @@ class GatedResidualEmbedder(Module):
         Defaults to a sigmoid.
     drop: Module, optional
         Typically an instance of ``Dropout`` or ``AlphaDropout``. Defaults to
-        ``Identity``, resulting in no dropout being applied.
+        ``Dropout(p=0.0)``, resulting in no dropout being applied.
     inp_dim: int, optional
-        The number of features to embed. Defaults to 1.
+        The number of features to embed together. Defaults to 1.
     **kwargs
         Additional keyword arguments to pass through to the linear layers.
 
@@ -64,7 +63,7 @@ class GatedResidualEmbedder(Module):
             mod_dim: int,
             activate: Module | Functional = ptn.ELU(),
             gate: Module | Functional = ptn.Sigmoid(),
-            drop: Drop | Identity = Identity(),
+            drop: Drop = ptn.Dropout(0.0),
             inp_dim: int = 1,
             **kwargs: Any
     ) -> None:
@@ -113,7 +112,7 @@ class GatedResidualEmbedder(Module):
             mod_dim: int | None = None,
             activate: Module | Functional | None = None,
             gate: Module | Functional | None = None,
-            drop: Drop | Identity | None = None,
+            drop: Drop | None = None,
             inp_dim: int | None = None,
             **kwargs: Any
     ) -> Self:
@@ -132,7 +131,7 @@ class GatedResidualEmbedder(Module):
             or a function from `torch.nn.functional``, depending on whether it
             needs to be further parameterized or not. Overwrites the `activate`
             of the current instance if given. Defaults to ``None``.
-        gate: Module, optional
+        gate: Module or function, optional
             The activation function to be applied to half of the (non-linearly)
             projected input before multiplying with the other half. Must be
             a callable that accepts a tensor as sole argument, like a module
@@ -144,8 +143,8 @@ class GatedResidualEmbedder(Module):
             Overwrites the `drop` of the current instance if given.
             Defaults to ``None``.
         inp_dim: int, optional
-            The number of features to embed. Overwrites the `inp_dim` of the
-            current instance if given. Defaults to ``None``.
+            The number of features to embed together. Overwrites the `inp_dim`
+            of the current instance if given. Defaults to ``None``.
         **kwargs
             Additional keyword arguments are merged into the keyword arguments
             of the current instance and are then passed through to the linear

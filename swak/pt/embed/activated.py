@@ -20,7 +20,7 @@ class ActivatedEmbedder(Module):
         parameterized or not. Defaults to ``identity``, resulting in no
         non-linear activation whatsoever.
     inp_dim: int, optional
-        The number of features to embed. Defaults to 1.
+        The number of features to embed together. Defaults to 1.
     **kwargs
         Additional keyword arguments to pass through to the linear layer.
 
@@ -88,8 +88,8 @@ class ActivatedEmbedder(Module):
             parameterized or not. Overwrites the `out_dim` of the current
             instance if given. Defaults to ``None``.
         inp_dim: int, optional
-            The number of features to embed. Overwrites the `inp_dim` of the
-            current instance if given. Defaults to ``None``.
+            The number of features to embed together. Overwrites the `inp_dim`
+            of the current instance if given. Defaults to ``None``.
         **kwargs
             Additional keyword arguments are merged into the keyword arguments
             of the current instance and are then passed through to the linear

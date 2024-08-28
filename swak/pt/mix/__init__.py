@@ -1,9 +1,9 @@
-from .linear import ArgsLinearMixer, StackLinearMixer
-from .glu import ArgsGluMixer, StackGluMixer
+from .activated import ActivatedArgsConcatMixer, ActivatedStackConcatMixer
+from .gated import GatedArgsConcatMixer, GatedStackConcatMixer
 
 __all__ = [
-    'ArgsLinearMixer',
-    'StackLinearMixer',
-    'ArgsGluMixer',
-    'StackGluMixer'
+    'ActivatedArgsConcatMixer',
+    'ActivatedStackConcatMixer',
+    'GatedArgsConcatMixer',
+    'GatedStackConcatMixer'
 ]

@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 import torch as pt
-from torch.nn import Sigmoid, Linear, GELU, ELU, Dropout
-from swak.pt.misc import Identity
+from torch.nn import Sigmoid, Linear, GELU, ELU, Dropout, AlphaDropout
 from swak.pt.embed import GatedResidualEmbedder
 
 
@@ -34,7 +33,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.embed, 'drop'))
 
     def test_drop(self):
-        self.assertIsInstance(self.embed.drop, Identity)
+        self.assertIsInstance(self.embed.drop, Dropout)
 
     def test_has_inp_dim(self):
         self.assertTrue(hasattr(self.embed, 'inp_dim'))
@@ -91,7 +90,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertIsInstance(self.embed.activate, ELU)
         self.assertIsInstance(self.embed.gate, Sigmoid)
-        self.assertIsInstance(self.embed.drop, Identity)
+        self.assertIsInstance(self.embed.drop, Dropout)
         self.assertEqual(self.embed.inp_dim, new.inp_dim)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
 
@@ -103,7 +102,7 @@ class TestAttributes(unittest.TestCase):
             4,
             GELU(),
             ELU(),
-            Dropout(),
+            AlphaDropout(),
             2,
             bias=False
         )
@@ -115,7 +114,7 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(self.embed.gate, ELU)
 
     def test_drop(self):
-        self.assertIsInstance(self.embed.drop, Dropout)
+        self.assertIsInstance(self.embed.drop, AlphaDropout)
 
     def test_inp_dim(self):
         self.assertIsInstance(self.embed.inp_dim, int)
@@ -134,12 +133,12 @@ class TestAttributes(unittest.TestCase):
         self.assertDictEqual({'bias': False}, args_2[1])
 
     def test_call_new(self):
-        new = self.embed.new(8, GELU(), ELU(), Dropout(), 2, bias=False)
+        new = self.embed.new(8, GELU(), ELU(), AlphaDropout(), 2, bias=False)
         self.assertIsInstance(new, GatedResidualEmbedder)
         self.assertEqual(8, new.mod_dim)
         self.assertIsInstance(self.embed.activate, GELU)
         self.assertIsInstance(self.embed.gate, ELU)
-        self.assertIsInstance(self.embed.drop, Dropout)
+        self.assertIsInstance(self.embed.drop, AlphaDropout)
         self.assertEqual(2, new.inp_dim)
         self.assertDictEqual({'bias': False}, new.kwargs)
 

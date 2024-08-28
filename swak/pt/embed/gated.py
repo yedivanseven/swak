@@ -19,7 +19,7 @@ class GatedEmbedder(Module):
         on whether it needs to be further parameterized or not.
         Defaults to a sigmoid.
     inp_dim: int, optional
-        The number of features to embed. Defaults to 1.
+        The number of features to embed together. Defaults to 1.
     **kwargs
         Additional keyword arguments to pass through to the linear layer.
 
@@ -80,7 +80,7 @@ class GatedEmbedder(Module):
             Desired embedding size. Will become the size of the last dimension
             of the output tensor. Overwrites the `out_dim` of the current
             instance if given. Defaults to ``None``.
-        gate: Module, optional
+        gate: Module or function, optional
             The activation function to be applied to half of the (linearly)
             projected input before multiplying with the other half. Must be
             a callable that accepts a tensor as sole argument, like a module
@@ -88,8 +88,8 @@ class GatedEmbedder(Module):
             Overwrites the `gate` of the current instance if given.
             Defaults to ``None``.
         inp_dim: int, optional
-            The number of features to embed. Overwrites the `inp_dim` of the
-            current instance if given. Defaults to ``None``.
+            The number of features to embed together. Overwrites the `inp_dim`
+            of the current instance if given. Defaults to ``None``.
         **kwargs
             Additional keyword arguments are merged into the keyword arguments
             of the current instance and are then passed through to the linear
