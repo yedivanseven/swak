@@ -53,10 +53,10 @@ class GatedArgsConcatMixer(Module):
         ----------
         *inps: Tensor
             Each input tensor represents one feature with the size of the last
-            dimension representing the length of the feature vector. This
-            length is expected to be the same in all input tensors. The number
-            of call arguments must match the `n_features` specified at
-            instantiation.
+            dimension representing the length of the feature vector. The size
+            of this and all other dimensions must be the same for all `inps`.
+            The number of call arguments must match the `n_features` specified
+            at instantiation.
 
         Returns
         -------
@@ -172,7 +172,7 @@ class GatedStackConcatMixer(Module):
         Returns
         -------
         Tensor
-            The output tensor has one fewer dimensions as the input.
+            The output tensor has one fewer dimensions than the input.
             The next-to-last dimension is dropped and the size of the last
             dimension is once again `mod_dim`.
 

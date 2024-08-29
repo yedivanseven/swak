@@ -92,8 +92,8 @@ class GatedResidualEmbedder(Module):
         Returns
         -------
         Tensor
-            The output has the same number of dimensions as the input with the
-            size of the last dimension changed to the specified `out_dim`.
+            The output has the same number of dimensions as the input with
+            the size of the last dimension changed to the specified `out_dim`.
 
         """
         projected = self.project(inp)
