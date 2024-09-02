@@ -19,7 +19,7 @@ class GatedArgsConcatMixer(Module):
         to be of that size in its last dimension at the input and the output
         will again have this size in its last dimension.
     n_features: int
-        The number of features to combine. Must be equal the number of
+        The number of features to combine. Must be equal to the number of
         arguments instances are called with.
     gate: Module or function, optional
         The activation function to be applied to half of the (linearly)
@@ -87,7 +87,7 @@ class GatedArgsConcatMixer(Module):
             to be of that size in its last dimension. Overwrites the `mod_dim`
             of the current instance if given. Defaults to ``None``.
         n_features: int, optional
-            The number of features to combine. Must be equal the number of
+            The number of features to combine. Must be equal to the number of
             arguments instances are called with. Overwrites `n_features`
             of the current instance if given. Defaults to ``None``.
         gate: Module or function, optional

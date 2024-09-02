@@ -3,6 +3,7 @@ from collections.abc import Callable
 from ..magic import ArgRepr
 
 
+# ToDo: Reverse ordering of instance args and call args
 class Partial[T](ArgRepr):
     """Alternative implementation of ``functools.partial``.
 

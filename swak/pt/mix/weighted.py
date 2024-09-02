@@ -1,32 +1,40 @@
 from typing import Self
 import torch as pt
+import torch.nn as ptn
 from ..types import Tensor, Module
 
 
-class ArgsSumMixer(Module):
-    """Combined multiple feature tensors by simply summing them up.
+class ArgsWeightedSumMixer(Module):
+    """Combine multiple feature tensors through a (normed) linear combination.
 
-    The sum is then normalized by the square root of the number of tensors.
+    The coefficients of the linear combinations are learned during training
+    and sum to 1. They can, thus, be seen as a sort of feature importance.
 
     Parameters
     ----------
     n_features: int
-        The number of features to combine. Must be to equal the number of
+        The number of features to combine. Must be equal to the number of
         arguments instances are called with.
 
     """
 
-    def __init__(self, n_features: int):
+    def __init__(self, n_features: int) -> None:
         super().__init__()
         self.n_features = n_features
-        self._rsqrt = pt.tensor(n_features).rsqrt()
+        self._coefficients = ptn.Parameter(pt.ones(n_features))
+        self.norm = ptn.Softmax(dim=0)
+
+    @property
+    def importance(self) -> Tensor:
+        """Normalized coefficients of the linear combination of features."""
+        return self.norm(self._coefficients).detach()
 
     def forward(self, *inps: Tensor) -> Tensor:
-        """Forward pass for combining multiple feature tensors into one.
+        """Learn coefficients for linearly combining input feature tensors.
 
         Parameters
         ----------
-        *inps: Tensor
+        *inps: tensor
             Each input tensor represents one feature with the size of the last
             dimension representing the length of the feature vector. The size
             of this and all other dimensions must be the same for all `inps`.
@@ -35,14 +43,15 @@ class ArgsSumMixer(Module):
 
         Returns
         -------
-        Tensor
+        Tensor:
             The output tensor has the same dimensions as any input tensor.
 
         """
-        return pt.stack(inps, dim=-2).sum(dim=-2) * self._rsqrt
+        return self.norm(self._coefficients) @  pt.stack(inps, dim=-2)
 
     def reset_parameters(self) -> None:
-        """Does nothing because there are no internal parameters to reset."""
+        """Re-initialize the coefficients of the linear combination."""
+        self._coefficients = ptn.Parameter(pt.ones(self.n_features))
 
     def new(self, n_features: int | None = None) -> Self:
         """Return a fresh instance with the same or updated parameters.
@@ -56,7 +65,7 @@ class ArgsSumMixer(Module):
 
         Returns
         -------
-        ArgsSumMixer
+        ArgsWeightedSumMixer
             A fresh, new instance of itself.
 
         """
@@ -65,10 +74,11 @@ class ArgsSumMixer(Module):
         )
 
 
-class StackSumMixer(Module):
-    """Combined stacked feature vectors by simply summing them up.
+class StackWeightedSumMixer(Module):
+    """Combine stacked feature vectors through a (normed) linear combination.
 
-    The sum is then normalized by the square root of the number of features.
+    The coefficients of the linear combinations are learned during training
+    and sum to 1. They can, thus, be seen as a sort of feature importance.
 
     Parameters
     ----------
@@ -78,13 +88,19 @@ class StackSumMixer(Module):
 
     """
 
-    def __init__(self, n_features: int):
+    def __init__(self, n_features: int) -> None:
         super().__init__()
         self.n_features = n_features
-        self._rsqrt = pt.tensor(n_features).rsqrt()
+        self._coefficients = ptn.Parameter(pt.ones(n_features))
+        self.norm = ptn.Softmax(dim=0)
+
+    @property
+    def importance(self) -> Tensor:
+        """Normalized coefficients of the linear combination of features."""
+        return self.norm(self._coefficients).detach()
 
     def forward(self, inp: Tensor) -> Tensor:
-        """Forward pass for combining multiple stacked feature vectors.
+        """Learn coefficients for linearly combining stacked feature vectors.
 
         Parameters
         ----------
@@ -95,16 +111,17 @@ class StackSumMixer(Module):
 
         Returns
         -------
-        Tensor
+        Tensor:
             The output tensor has one fewer dimensions than the input.
-            The next-to-last dimension is dropped and the last dimension
-            now carries the normed sum of all features.
+            The next-to-last dimension is dropped and the size of the last
+            dimension is once again the size of feature space.
 
         """
-        return inp.sum(dim=-2) * self._rsqrt
+        return self.norm(self._coefficients) @  inp
 
     def reset_parameters(self) -> None:
-        """Does nothing because there are no internal parameters to reset."""
+        """Re-initialize the coefficients of the linear combination."""
+        self._coefficients = ptn.Parameter(pt.ones(self.n_features))
 
     def new(self, n_features: int | None = None) -> Self:
         """Return a fresh instance with the same or updated parameters.
@@ -118,7 +135,7 @@ class StackSumMixer(Module):
 
         Returns
         -------
-        StackSumMixer
+        StackWeightedSumMixer
             A fresh, new instance of itself.
 
         """
