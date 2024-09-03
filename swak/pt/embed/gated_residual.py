@@ -75,7 +75,7 @@ class GatedResidualEmbedder(Module):
         self.kwargs = kwargs
         self.project = ptn.Linear(inp_dim, mod_dim, **kwargs)
         self.expand =  ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
-        self._rsqrt2 = pt.tensor(2).rsqrt()
+        self.register_buffer('_rsqrt2', pt.tensor(2.0).rsqrt(), False)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Embed a numerical feature through a Gated Residual Network (GRN).

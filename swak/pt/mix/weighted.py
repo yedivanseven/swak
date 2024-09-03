@@ -47,7 +47,7 @@ class ArgsWeightedSumMixer(Module):
             The output tensor has the same dimensions as any input tensor.
 
         """
-        return self.norm(self._coefficients) @  pt.stack(inps, dim=-2)
+        return self.norm(self._coefficients) @ pt.stack(inps, dim=-2)
 
     def reset_parameters(self) -> None:
         """Re-initialize the coefficients of the linear combination."""
@@ -117,7 +117,7 @@ class StackWeightedSumMixer(Module):
             dimension is once again the size of feature space.
 
         """
-        return self.norm(self._coefficients) @  inp
+        return self.norm(self._coefficients) @ inp
 
     def reset_parameters(self) -> None:
         """Re-initialize the coefficients of the linear combination."""

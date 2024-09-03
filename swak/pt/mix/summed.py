@@ -81,7 +81,7 @@ class StackSumMixer(Module):
     def __init__(self, n_features: int):
         super().__init__()
         self.n_features = n_features
-        self._rsqrt = pt.tensor(n_features).rsqrt()
+        self.register_buffer('_rsqrt', pt.tensor(n_features).rsqrt(), False)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass for combining multiple stacked feature vectors.
