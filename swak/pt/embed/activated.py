@@ -56,7 +56,7 @@ class ActivatedEmbedder(Module):
         -------
         Tensor
             The output has the same number of dimensions as the input with
-            the size of the last dimension changed to the specified `out_dim`.
+            the size of the last dimension changed to the specified `mod_dim`.
 
         """
         return self.activate(self.embed(inp))
@@ -78,14 +78,14 @@ class ActivatedEmbedder(Module):
         ----------
         mod_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
-            of the output tensor. Overwrites the `out_dim` of the current
+            of the output tensor. Overwrites the `mod_dim` of the current
             instance if given. Defaults to ``None``.
         activate: Module or function, optional
             The activation function to be applied after (linear) projection
             into embedding space. Must be a callable that accepts a tensor as
             sole argument, like a module from ``torch.nn`` or a function from
             `torch.nn.functional``, depending on whether it needs to be further
-            parameterized or not. Overwrites the `out_dim` of the current
+            parameterized or not. Overwrites the `activate` of the current
             instance if given. Defaults to ``None``.
         inp_dim: int, optional
             The number of features to embed together. Overwrites the `inp_dim`

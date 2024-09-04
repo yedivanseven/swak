@@ -105,7 +105,8 @@ class TestAttributes(unittest.TestCase):
 class TestUsageSingleFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = ActivatedEmbedder(4)
+        self.embed = ActivatedEmbedder(4, bias=False)
+        self.embed.embed.weight.data = pt.ones(4, 1)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -113,43 +114,44 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_1d(self):
         inp = pt.ones(1)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([4]), actual.shape)
+        expected = pt.ones(4)
+        pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([3, 4]), actual.shape)
+        expected = pt.ones(3, 4)
+        pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([2, 3, 4]), actual.shape)
+        expected = pt.ones(2, 3, 4)
+        pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([1, 2, 3, 4]), actual.shape)
+        expected = pt.ones(1, 2, 3, 4)
+        pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([3, 0, 4]), actual.shape)
+        expected = pt.ones(3, 0, 4)
+        pt.testing.assert_close(actual, expected)
 
-    @patch('torch.nn.Linear.forward')
+    @patch('torch.nn.Linear.forward', return_value=pt.ones(1, 4))
     def test_linear_called(self, linear):
         inp = pt.ones(1)
-        linear.return_value = pt.ones(1, 4)
-        embed = ActivatedEmbedder(4)
-        _ = embed(inp)
+        _ = self.embed(inp)
         linear.assert_called_once_with(inp)
 
     def test_activate_called(self):
-        mock = Mock()
-        embed = ActivatedEmbedder(4, mock, bias=False)
-        embed.embed.weight.data = pt.ones(4, 1)
+        mock = Mock(return_value=pt.ones(4))
+        self.embed.activate = mock
         inp = pt.ones(1)
-        _ = embed(inp)
+        _ = self.embed(inp)
         actual = mock.call_args[0][0]
         pt.testing.assert_close(actual, pt.ones(4))
 
@@ -157,52 +159,50 @@ class TestUsageSingleFeature(unittest.TestCase):
 class TestUsageMultiFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = ActivatedEmbedder(4, inp_dim=2)
+        self.embed = ActivatedEmbedder(4, inp_dim=2, bias=False)
+        self.embed.embed.weight.data = pt.ones(4, 2)
 
     def test_1d(self):
         inp = pt.ones(2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([4]), actual.shape)
+        expected = pt.ones(4) * 2
+        pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([3, 4]), actual.shape)
+        expected = pt.ones(3, 4) * 2
+        pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([2, 3, 4]), actual.shape)
+        expected = pt.ones(2, 3, 4) * 2
+        pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([1, 2, 3, 4]), actual.shape)
+        expected = pt.ones(1, 2, 3, 4) * 2
+        pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([3, 0, 4]), actual.shape)
+        expected = pt.ones(3, 0, 4) * 2
+        pt.testing.assert_close(actual, expected)
 
-    @patch('torch.nn.Linear.forward')
+    @patch('torch.nn.Linear.forward', return_value=pt.ones(4))
     def test_linear_called(self, linear):
         inp = pt.ones(2)
-        linear.return_value = pt.tensor([[1.0, 1.0, 0.0, 0.0]])
-        embed = ActivatedEmbedder(4, inp_dim=2)
-        _ = embed(inp)
+        _ = self.embed(inp)
         linear.assert_called_once_with(inp)
 
     def test_activate_called(self):
-        mock = Mock()
-        embed = ActivatedEmbedder(4, mock, 2, bias=False)
-        embed.embed.weight.data = pt.ones(4, 2)
+        mock = Mock(return_value=pt.ones(4))
+        self.embed.activate = mock
         inp = pt.ones(2)
-        _ = embed(inp)
+        _ = self.embed(inp)
         actual = mock.call_args[0][0]
         pt.testing.assert_close(actual, pt.ones(4) * 2)
 

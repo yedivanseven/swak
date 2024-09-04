@@ -70,7 +70,7 @@ class FeatureEmbedder(Module):
         Returns
         -------
         Tensor
-            The output tensor has one more dimension of size `out_dim` added
+            The output tensor has one more dimension of size `mod_dim` added
             after the last dimension (with a size equal to the total number of
             features) than the `inp`, containing the stacked embeddings, first
             those of the numerical and then those of the categorical features.

@@ -3,12 +3,13 @@ from collections.abc import Callable
 from ..magic import ArgRepr
 
 
-# ToDo: Reverse ordering of instance args and call args
 class Partial[T](ArgRepr):
-    """Alternative implementation of ``functools.partial``.
+    """Alternative implementation of ``functools.partial`` with one difference.
 
-    Upon subclassing and/or instantiation, annotation with the (return) type
-    of `call` is recommended.
+    Positional arguments provided at instantiation will be `appended` to the
+    positional arguments provided when calling instances (rather than the other
+    way around)! Upon subclassing and/or instantiation, annotation with the
+    (return) type of `call` is recommended.
 
     Parameters
     ----------
@@ -38,7 +39,7 @@ class Partial[T](ArgRepr):
         Parameters
         ----------
         *args
-            Additional arguments are appended to cached arguments.
+            Additional arguments are prepended to cached arguments.
         **kwargs
             Additional keyword arguments are combined with cached keyword
             arguments, overriding them in case of conflict.
@@ -49,4 +50,4 @@ class Partial[T](ArgRepr):
             Whatever `call` returns.
 
         """
-        return self.call(*(*self.args, *args), **{**self.kwargs, **kwargs})
+        return self.call(*(*args, *self.args), **{**self.kwargs, **kwargs})

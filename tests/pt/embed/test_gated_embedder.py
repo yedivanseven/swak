@@ -1,7 +1,8 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import torch as pt
 from torch.nn import Sigmoid, Linear, GELU
+from swak.pt.misc import identity
 from swak.pt.embed import GatedEmbedder
 
 
@@ -104,7 +105,8 @@ class TestAttributes(unittest.TestCase):
 class TestUsageSingleFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = GatedEmbedder(4)
+        self.embed = GatedEmbedder(4, identity, bias=False)
+        self.embed.embed.weight.data = pt.ones(8, 1)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -112,46 +114,47 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_1d(self):
         inp = pt.ones(1)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([4]), actual.shape)
+        expected = pt.ones(4)
+        pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([3, 4]), actual.shape)
+        expected = pt.ones(3, 4)
+        pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([2, 3, 4]), actual.shape)
+        expected = pt.ones(2, 3, 4)
+        pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([1, 2, 3, 4]), actual.shape)
+        expected = pt.ones(1, 2, 3, 4)
+        pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 1)
         actual = self.embed(inp)
-        self.assertEqual(pt.Size([3, 0, 4]), actual.shape)
+        expected = pt.ones(3, 0, 4)
+        pt.testing.assert_close(actual, expected)
 
-    @patch('torch.nn.Linear.forward')
+    @patch('torch.nn.Linear.forward', return_value=pt.ones(8))
     def test_linear_called(self, linear):
         inp = pt.ones(1)
-        linear.return_value = pt.ones(1, 4)
-        embed = GatedEmbedder(2)
-        _ = embed(inp)
+        _ = self.embed(inp)
         linear.assert_called_once_with(inp)
 
-    @patch('torch.nn.Sigmoid.forward')
-    @patch('torch.nn.Linear.forward')
-    def test_sigmoid_called(self, linear, sigmoid):
+    def test_gate_called(self):
+        mock = Mock(return_value=pt.ones(4))
+        self.embed.gate = mock
         inp = pt.ones(1)
-        linear.return_value = pt.tensor([[1.0, 1.0, 2.0, 3.0]])
-        embed = GatedEmbedder(2)
-        _ = embed(inp)
-        actual = sigmoid.call_args[0][0]
-        pt.testing.assert_close(actual, pt.tensor([[2.0, 3.0]]))
+        _ = self.embed(inp)
+        actual = mock.call_args[0][0]
+        expected = pt.ones(4)
+        pt.testing.assert_close(actual, expected)
 
     @patch('torch.nn.Sigmoid.forward')
     @patch('torch.nn.Linear.forward')
@@ -167,55 +170,53 @@ class TestUsageSingleFeature(unittest.TestCase):
 class TestUsageMultiFeature(unittest.TestCase):
 
     def setUp(self):
-        self.embed = GatedEmbedder(4, Sigmoid(), 2)
+        self.embed = GatedEmbedder(4, identity, 2, bias=False)
+        self.embed.embed.weight.data = pt.ones(8, 2)
 
     def test_1d(self):
         inp = pt.ones(2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([4]), actual.shape)
+        expected = pt.ones(4) * 4
+        pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([3, 4]), actual.shape)
+        expected = pt.ones(3, 4) * 4
+        pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([2, 3, 4]), actual.shape)
+        expected = pt.ones(2, 3, 4) * 4
+        pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([1, 2, 3, 4]), actual.shape)
+        expected = pt.ones(1, 2, 3, 4) * 4
+        pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 2)
         actual = self.embed(inp)
-        self.assertIsInstance(actual, pt.Tensor)
-        self.assertEqual(pt.Size([3, 0, 4]), actual.shape)
+        expected = pt.ones(3, 0, 4) * 4
+        pt.testing.assert_close(actual, expected)
 
-    @patch('torch.nn.Linear.forward')
+    @patch('torch.nn.Linear.forward', return_value=pt.ones(8))
     def test_linear_called(self, linear):
         inp = pt.ones(2)
-        linear.return_value = pt.tensor([[1.0, 1.0, 0.0, 0.0]])
-        embed = GatedEmbedder(2, Sigmoid(), 2)
-        _ = embed(inp)
+        _ = self.embed(inp)
         linear.assert_called_once_with(inp)
 
-    @patch('torch.nn.Sigmoid.forward')
-    @patch('torch.nn.Linear.forward')
-    def test_sigmoid_called(self, linear, sigmoid):
-        inp = pt.ones(1)
-        linear.return_value = pt.tensor([[1.0, 1.0, 2.0, 3.0]])
-        embed = GatedEmbedder(2, Sigmoid(), 2)
-        _ = embed(inp)
-        actual = sigmoid.call_args[0][0]
-        pt.testing.assert_close(actual, pt.tensor([[2.0, 3.0]]))
+    def test_gate_called(self):
+        mock = Mock(return_value=pt.ones(4))
+        self.embed.gate = mock
+        inp = pt.ones(2)
+        _ = self.embed(inp)
+        actual = mock.call_args[0][0]
+        expected = pt.ones(4) * 2
+        pt.testing.assert_close(actual, expected)
 
     @patch('torch.nn.Sigmoid.forward')
     @patch('torch.nn.Linear.forward')

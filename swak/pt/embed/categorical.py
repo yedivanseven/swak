@@ -81,7 +81,7 @@ class CategoricalEmbedder(Module):
         Returns
         -------
         Tensor
-            The output tensor has one more dimension of size `out_dim` added
+            The output tensor has one more dimension of size `mod_dim` added
             after the last dimension (with a size equal to the number of
             `cat_counts`) than the `inp`, containing the stacked embeddings.
 
@@ -107,12 +107,12 @@ class CategoricalEmbedder(Module):
         ----------
         mod_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
-            of the output tensor. Overwrites the `out_dim` of the current
+            of the output tensor. Overwrites the `mod_dim` of the current
             instance if given. Defaults to ``None``.
         cat_count: int or iterable of int, optional
             One integer or an iterable (e.g., tuple or list) of integers, each
             specifying the number of categories in the respective feature.
-            Overwrites the `cat_counts` of the current instance if given.
+            Overwrites the `cat_count` of the current instance if given.
             Defaults to ``None``.
         *cat_counts: int
             Category counts for additional features. Together with the

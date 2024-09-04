@@ -3,13 +3,13 @@ from unittest.mock import patch, Mock
 import torch as pt
 from torch.nn import Linear, Sigmoid
 from swak.pt.misc import identity
-from swak.pt.mix import GatedStackConcatMixer
+from swak.pt.mix import GatedConcatMixer
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.mix = GatedStackConcatMixer(4, 3)
+        self.mix = GatedConcatMixer(4, 3)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.mix, 'mod_dim'))
@@ -39,7 +39,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = GatedStackConcatMixer(4, 3)
+        _ = GatedConcatMixer(4, 3)
         mock.assert_called_once_with(12, 8)
 
     def test_has_mix(self):
@@ -69,31 +69,32 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_call_new(self):
         new = self.mix.new()
-        self.assertIsInstance(new, GatedStackConcatMixer)
+        self.assertIsInstance(new, GatedConcatMixer)
         self.assertEqual(self.mix.mod_dim, new.mod_dim)
         self.assertEqual(self.mix.n_features, new.n_features)
         self.assertIs(self.mix.gate, new.gate)
+        self.assertDictEqual(self.mix.kwargs, new.kwargs)
 
 
 class TestAttributes(unittest.TestCase):
 
     def test_gate(self):
         gate = pt.nn.SELU()
-        mix = GatedStackConcatMixer(4, 3, gate)
+        mix = GatedConcatMixer(4, 3, gate)
         self.assertIs(mix.gate, gate)
 
     def test_kwargs(self):
-        mix = GatedStackConcatMixer(4, 3, bias=False)
+        mix = GatedConcatMixer(4, 3, bias=False)
         self.assertDictEqual({'bias': False}, mix.kwargs)
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = GatedStackConcatMixer(4, 3, bias=False)
+        _ = GatedConcatMixer(4, 3, bias=False)
         mock.assert_called_once_with(12, 8, bias=False)
 
     def test_new_called(self):
         gate = pt.nn.SELU()
-        mix = GatedStackConcatMixer(4, 3)
+        mix = GatedConcatMixer(4, 3)
         new = mix.new(5, 4, gate, bias=False)
         self.assertEqual(5, new.mod_dim)
         self.assertEqual(4, new.n_features)
@@ -104,7 +105,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.mix = GatedStackConcatMixer(4, 2, identity, bias=False)
+        self.mix = GatedConcatMixer(4, 2, identity, bias=False)
         self.mix.mix.weight.data = pt.ones(8, 8)
 
     def test_1d(self):
@@ -138,7 +139,7 @@ class TestUsage(unittest.TestCase):
         pt.testing.assert_close(actual, expected)
 
     def test_no_features(self):
-        mix = GatedStackConcatMixer(4, 0, bias=False)
+        mix = GatedConcatMixer(4, 0, bias=False)
         inp = pt.ones(3, 0, 4)
         actual = mix(inp)
         expected = pt.zeros(3, 4)

@@ -66,7 +66,7 @@ class TestAttributes(unittest.TestCase):
     def test_new(self):
         self.assertTrue(callable(self.embed.new))
 
-    def test_call_new_default(self):
+    def test_call_new_defaults(self):
         new = self.embed.new()
         self.assertIsInstance(new, FeatureEmbedder)
         self.assertIsNot(new, self.embed)

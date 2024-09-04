@@ -1,14 +1,17 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional
-from ..misc import identity
+from ...types import Tensor, Module, Functional
+from ...misc import identity
 
 
-class ActivatedConcatMixer(Module):
-    """Combined stacked feature vectors through a single dense layer.
+class ActivatedSumMixer(Module):
+    """Combine stacked feature vectors by a per-instance linear combination.
 
-    Multiple feature vectors stacked in a single tensor are concatenated into a
-    single, wide vector and projected down into a space the size of the model.
+    The per-instance coefficients sum to 1 for each data point and can thus be
+    seen as some sort of per-instance feature importance. They are obtained by
+    concatenating all features into a single, wide vector, linearly projecting
+    down to a vector with the same number of elements as there are features to
+    combine, optionally activating, and then applying a softmax.
 
     Parameters
     ----------
@@ -20,8 +23,8 @@ class ActivatedConcatMixer(Module):
         The number of features to combine. Must be equal to the size of the
         next-to-last dimension of the input tensor.
     activate: Module or function, optional
-        The activation function to be applied after linearly combining
-        features. Must be a callable that accepts a tensor as sole
+        The activation function to be applied after (linearly) mixing the
+        concatenated features. Must be a callable that accepts a tensor as sole
         argument, like a module from ``torch.nn`` or a function from
         `torch.nn.functional``, depending on whether it needs to be further
         parameterized or not. Defaults to ``identity``, resulting in no
@@ -43,7 +46,28 @@ class ActivatedConcatMixer(Module):
         self.n_features = n_features
         self.activate = activate
         self.kwargs = kwargs
-        self.mix = ptn.Linear(n_features * mod_dim, mod_dim, **kwargs)
+        self.coeffs = ptn.Linear(n_features * mod_dim, n_features, **kwargs)
+        self.norm = ptn.Softmax(dim=-1)
+
+    def importance(self, inp: Tensor) -> Tensor:
+        """Per-instance weights in the normed linear combination of features.
+
+        Parameters
+        ----------
+        inp: Tensor
+            Feature vectors stacked into a tensor of at least 2 dimensions.
+            The size of the next-to-last last dimension is expected to match
+            the `n_features` provided at instantiation. The last dimension
+            (of size `mod_dim`) is expected to contain the features vectors.
+
+        Returns
+        -------
+        Tensor
+            The output tensor has one fewer dimensions than the input with the
+            last dimension being dropped.
+
+        """
+        return self.norm(self.activate(self.coeffs(inp.flatten(start_dim=-2))))
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass for combining multiple stacked feature vectors.
@@ -51,24 +75,25 @@ class ActivatedConcatMixer(Module):
         Parameters
         ----------
         inp: Tensor
-            The size of the next-to-last last dimension of the input tensor is
-            expected to match the `n_features` provided at instantiation.
-            The last dimension (of size `mod_dim`) is expected to contain the
-            features vectors themselves.
+            Feature vectors stacked into a tensor of at least 2 dimensions.
+            The size of the next-to-last last dimension is expected to match
+            the `n_features` provided at instantiation. The last dimension
+            (of size `mod_dim`) is expected to contain the features vectors.
 
         Returns
         -------
         Tensor
             The output tensor has one fewer dimensions than the input.
-            The next-to-last dimension is dropped and the size of the last
-            dimension is once again `mod_dim`.
+            The next-to-last dimension is dropped and the last dimension now
+            contains the per-instance (normed) linear combination of all
+            feature vectors.
 
         """
-        return self.activate(self.mix(inp.flatten(start_dim=-2)))
+        return (self.importance(inp).unsqueeze(dim=-2) @ inp).squeeze(dim=-2)
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
-        self.mix.reset_parameters()
+        self.coeffs.reset_parameters()
 
     def new(
             self,
@@ -91,9 +116,9 @@ class ActivatedConcatMixer(Module):
             next-to-last dimension of the input tensor. Overwrites `n_features`
             of the current instance if given. Defaults to ``None``.
         activate: Module or function, optional
-            The activation function to be applied after linearly combining
-            features. Must be a callable that accepts a tensor as sole
-            argument, like a module from ``torch.nn`` or a function from
+            The activation function to be applied after (linearly) mixing the
+            concatenated features. Must be a callable that accepts a tensor as
+            sole argument, like a module from ``torch.nn`` or a function from
             `torch.nn.functional``, depending on whether it needs to be further
             parameterized or not. Overwrites the `activate` of the current
             instance if given. Defaults to ``None``.
@@ -104,7 +129,7 @@ class ActivatedConcatMixer(Module):
 
         Returns
         -------
-        ActivatedConcatMixer
+        ActivatedSumMixer
             A fresh, new instance of itself.
 
         """

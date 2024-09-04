@@ -55,7 +55,7 @@ class GatedEmbedder(Module):
         -------
         Tensor
             The output has the same number of dimensions as the input with
-            the size of the last dimension changed to the specified `out_dim`.
+            the size of the last dimension changed to the specified `mod_dim`.
 
         """
         emb = self.embed(inp)
@@ -78,7 +78,7 @@ class GatedEmbedder(Module):
         ----------
         mod_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
-            of the output tensor. Overwrites the `out_dim` of the current
+            of the output tensor. Overwrites the `mod_dim` of the current
             instance if given. Defaults to ``None``.
         gate: Module or function, optional
             The activation function to be applied to half of the (linearly)

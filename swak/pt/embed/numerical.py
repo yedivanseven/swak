@@ -22,9 +22,9 @@ class NumericalEmbedder(Module):
         Number of features to embed, which must equal the size of the last
         dimension of the input tensor.
     emb_cls: type
-        The PyTorch module to use as embedding class. Must take `out_dim` as
+        The PyTorch module to use as embedding class. Must take `mod_dim` as
         its first argument on instantiation, take tensors of size 1 in their
-        last dimension change that dimension to size `out_dim`.
+        last dimension change that dimension to size `mod_dim`.
     **args
         Additional arguments to use when instantiating `emb_cls`.
     **kwargs
@@ -79,7 +79,7 @@ class NumericalEmbedder(Module):
         Returns
         -------
         Tensor
-            The output tensor has one more dimension of size `out_dim` added
+            The output tensor has one more dimension of size `mod_dim` added
             after the last dimension (of size `n_features`) than the `inp`,
             containing the stacked embeddings.
 
@@ -106,14 +106,14 @@ class NumericalEmbedder(Module):
         ----------
         mod_dim: int, optional
             Desired embedding size. Will become the size of the last dimension
-            the output tensor. Overwrites the `out_dim` of the current
+            the output tensor. Overwrites the `mod_dim` of the current
             instance if given. Defaults to ``None``.
         n_features: int, optional
             Number of features to embed, which must equal the size of the last
             dimension of the input tensor. Overwrites the `n_features` of the
             current instance if given. Defaults to ``None``.
         emb_cls: type, optional
-            The PyTorch module to use as embedding class. Must take `out_dim`
+            The PyTorch module to use as embedding class. Must take `mod_dim`
             as its first argument on instantiation. Overwrites the `emb_cls`
             of the current instance if given. Defaults to ``None``.
         *args

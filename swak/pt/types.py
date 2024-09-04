@@ -3,7 +3,7 @@ from pandas import DataFrame
 from torch import Tensor, dtype, device
 from torch.nn import Module, Dropout, AlphaDropout
 
-type Functional = Callable[[Tensor, ...], Tensor]
+type Functional = Callable[[Tensor], Tensor]
 type Tensors1T = tuple[Tensor]
 type Tensors2T = tuple[Tensor, Tensor]
 type Tensors3T = tuple[Tensor, Tensor, Tensor]

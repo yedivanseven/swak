@@ -3,13 +3,13 @@ from unittest.mock import patch, Mock
 import torch as pt
 from torch.nn import Linear
 from swak.pt.misc import identity
-from swak.pt.mix import ActivatedArgsConcatMixer
+from swak.pt.mix import ActivatedConcatMixer
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.mix = ActivatedArgsConcatMixer(4, 3)
+        self.mix = ActivatedConcatMixer(4, 3)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.mix, 'mod_dim'))
@@ -39,7 +39,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = ActivatedArgsConcatMixer(4, 3)
+        _ = ActivatedConcatMixer(4, 3)
         mock.assert_called_once_with(12, 4)
 
     def test_has_mix(self):
@@ -69,31 +69,32 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_call_new(self):
         new = self.mix.new()
-        self.assertIsInstance(new, ActivatedArgsConcatMixer)
+        self.assertIsInstance(new, ActivatedConcatMixer)
         self.assertEqual(self.mix.mod_dim, new.mod_dim)
         self.assertEqual(self.mix.n_features, new.n_features)
         self.assertIs(self.mix.activate, new.activate)
+        self.assertDictEqual(self.mix.kwargs, new.kwargs)
 
 
 class TestAttributes(unittest.TestCase):
 
-    def test_dropout(self):
+    def test_activate(self):
         activate = pt.nn.SELU()
-        mix = ActivatedArgsConcatMixer(4, 3, activate)
+        mix = ActivatedConcatMixer(4, 3, activate)
         self.assertIs(mix.activate, activate)
 
     def test_kwargs(self):
-        mix = ActivatedArgsConcatMixer(4, 3, bias=False)
+        mix = ActivatedConcatMixer(4, 3, bias=False)
         self.assertDictEqual({'bias': False}, mix.kwargs)
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = ActivatedArgsConcatMixer(4, 3, bias=False)
+        _ = ActivatedConcatMixer(4, 3, bias=False)
         mock.assert_called_once_with(12, 4, bias=False)
 
     def test_new_called(self):
         activate = pt.nn.SELU()
-        mix = ActivatedArgsConcatMixer(4, 3)
+        mix = ActivatedConcatMixer(4, 3)
         new = mix.new(5, 4, activate, bias=False)
         self.assertEqual(5, new.mod_dim)
         self.assertEqual(4, new.n_features)
@@ -104,61 +105,61 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.mix = ActivatedArgsConcatMixer(4, 2, bias=False)
+        self.mix = ActivatedConcatMixer(4, 2, bias=False)
         self.mix.mix.weight.data = pt.ones(4, 8)
 
     def test_1d(self):
-        inp_1 = pt.ones(4)
-        inp_2 = pt.ones(4)
-        actual = self.mix(inp_1, inp_2)
+        inp = pt.ones(2, 4)
+        actual = self.mix(inp)
         expected = pt.ones(4) * 8
         pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
-        inp_1 = pt.ones(5, 4)
-        inp_2 = pt.ones(5, 4)
-        actual = self.mix(inp_1, inp_2)
+        inp = pt.ones(5, 2, 4)
+        actual = self.mix(inp)
         expected = pt.ones(5, 4) * 8
         pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
-        inp_1 = pt.ones(3, 5, 4)
-        inp_2 = pt.ones(3, 5, 4)
-        actual = self.mix(inp_1, inp_2)
+        inp = pt.ones(3, 5, 2, 4)
+        actual = self.mix(inp)
         expected = pt.ones(3, 5, 4) * 8
         pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
-        inp_1 = pt.ones(2, 3, 5, 4)
-        inp_2 = pt.ones(2, 3, 5, 4)
-        actual = self.mix(inp_1, inp_2)
-        expected = pt.ones(2, 3, 5, 4) * 8
+        inp = pt.ones(1, 3, 5, 2, 4)
+        actual = self.mix(inp)
+        expected = pt.ones(1, 3, 5, 4) * 8
         pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
-        inp_1 = pt.ones(3, 0, 4)
-        inp_2 = pt.ones(3, 0, 4)
-        actual = self.mix(inp_1, inp_2)
+        inp = pt.ones(3, 0, 2, 4)
+        actual = self.mix(inp)
         expected = pt.ones(3, 0, 4) * 8
+        pt.testing.assert_close(actual, expected)
+
+    def test_no_features(self):
+        mix = ActivatedConcatMixer(4, 0, bias=False)
+        inp = pt.ones(3, 0, 4)
+        actual = mix(inp)
+        expected = pt.zeros(3, 4)
         pt.testing.assert_close(actual, expected)
 
     @patch('torch.nn.Linear.forward')
     def test_linear_called(self, mock):
-        inp_1 = pt.ones(3, 5, 4)
-        inp_2 = pt.ones(3, 5, 4)
-        _ = self.mix(inp_1, inp_2)
+        inp = pt.ones(3, 2, 4)
+        _ = self.mix(inp)
         actual = mock.call_args[0][0]
-        expected = pt.cat([inp_1, inp_2], -1)
+        expected = pt.ones(3, 8)
         pt.testing.assert_close(actual, expected)
 
     def test_activate_called(self):
         mock = Mock()
         self.mix.activate = mock
-        inp_1 = pt.ones(3, 5, 4)
-        inp_2 = pt.ones(3, 5, 4)
-        _ = self.mix(inp_1, inp_2)
+        inp = pt.ones(3, 2, 4)
+        _ = self.mix(inp)
         actual = mock.call_args[0][0]
-        expected = pt.ones(3, 5, 4) * 8
+        expected = pt.ones(3, 4) * 8
         pt.testing.assert_close(actual, expected)
 
 

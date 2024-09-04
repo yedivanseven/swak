@@ -132,7 +132,7 @@ class TestAttributes(unittest.TestCase):
         self.assertTupleEqual(self.embed.cat_counts, new.cat_counts)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
 
-    def test_call_new_updates(self):
+    def test_call_new_update(self):
         new = self.embed.new(
             8,
             (1, 2),

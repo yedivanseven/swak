@@ -1,21 +1,10 @@
-from .summed import ArgsSumMixer, StackSumMixer
-from .activated import ActivatedArgsConcatMixer, ActivatedStackConcatMixer
-from .gated import GatedArgsConcatMixer, GatedStackConcatMixer
-from .weighted import ArgsWeightedSumMixer, StackWeightedSumMixer
-from .instance_weighted import (
-    ArgsInstanceWeightedSumMixer,
-    StackInstanceWeightedSumMixer
-)
+from .activated import ActivatedConcatMixer
+from .gated import GatedConcatMixer
+from .gated_residual import GatedResidualConcatMixer
+
 
 __all__ = [
-    'ArgsSumMixer',
-    'ArgsWeightedSumMixer',
-    'ArgsInstanceWeightedSumMixer',
-    'StackSumMixer',
-    'StackWeightedSumMixer',
-    'StackInstanceWeightedSumMixer',
-    'ActivatedArgsConcatMixer',
-    'ActivatedStackConcatMixer',
-    'GatedArgsConcatMixer',
-    'GatedStackConcatMixer'
+    'ActivatedConcatMixer',
+    'GatedConcatMixer',
+    'GatedResidualConcatMixer'
 ]

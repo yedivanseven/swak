@@ -1,15 +1,18 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional
+from ...types import Tensor, Module, Functional
 
 
-class GatedConcatMixer(Module):
-    """Combined stacked feature vectors through a Gated Linear Unit (GLU).
+class GatedSumMixer(Module):
+    """Combine stacked feature vectors by a per-instance linear combination.
 
-    Features are concatenated into a single, wide vector and projected into a
-    space twice the size of the model. One half is then passed through an
-    (optional) activation function to gate the other half, thus reducing
-    the final output back down to the model size.
+    The per-instance coefficients sum to 1 for each data point and can thus be
+    seen as some sort of per-instance feature importance. They are obtained by
+    concatenating all features into a single, wide vector, and linearly
+    projecting it down to a vector with twice as many elements as there are
+    features. One half is then passed through an (optional) activation function
+    to gate the other half, thus reducing the final output back down to the
+    number of features to combine.
 
     Parameters
     ----------
@@ -43,7 +46,33 @@ class GatedConcatMixer(Module):
         self.n_features = n_features
         self.gate = gate
         self.kwargs = kwargs
-        self.mix = ptn.Linear(n_features * mod_dim, 2 * mod_dim, **kwargs)
+        self.coeffs = ptn.Linear(
+            n_features * mod_dim,
+            2 * n_features, **kwargs
+        )
+        self.norm = ptn.Softmax(dim=-1)
+
+    def importance(self, inp: Tensor) -> Tensor:
+        """Per-instance weights in the normed linear combination of features.
+
+        Parameters
+        ----------
+        inp: Tensor
+            Feature vectors stacked into a tensor of at least 2 dimensions.
+            The size of the next-to-last last dimension is expected to match
+            the `n_features` provided at instantiation. The last dimension
+            (of size `mod_dim`) is expected to contain the features vectors.
+
+        Returns
+        -------
+        Tensor
+            The output tensor has one fewer dimensions than the input with the
+            last dimension being dropped.
+
+        """
+        mixed = self.coeffs(inp.flatten(start_dim=-2))
+        gated = self.gate(mixed[..., self.n_features:])
+        return self.norm(mixed[..., :self.n_features] * gated)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass for combining multiple stacked feature vectors.
@@ -51,25 +80,25 @@ class GatedConcatMixer(Module):
         Parameters
         ----------
         inp: Tensor
-            The size of the next-to-last last dimension of the input tensor is
-            expected to match the `n_features` provided at instantiation.
-            The last dimension (of size `mod_dim`) is expected to contain the
-            features vectors themselves.
+            Feature vectors stacked into a tensor of at least 2 dimensions.
+            The size of the next-to-last last dimension is expected to match
+            the `n_features` provided at instantiation. The last dimension
+            (of size `mod_dim`) is expected to contain the features vectors.
 
         Returns
         -------
         Tensor
             The output tensor has one fewer dimensions than the input.
-            The next-to-last dimension is dropped and the size of the last
-            dimension is once again `mod_dim`.
+            The next-to-last dimension is dropped and the last dimension now
+            contains the per-instance (normed) linear combination of all
+            feature vectors.
 
         """
-        mixed = self.mix(inp.flatten(start_dim=-2))
-        return mixed[..., :self.mod_dim] * self.gate(mixed[..., self.mod_dim:])
+        return (self.importance(inp).unsqueeze(dim=-2) @ inp).squeeze(dim=-2)
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
-        self.mix.reset_parameters()
+        self.coeffs.reset_parameters()
 
     def new(
             self,
@@ -105,7 +134,7 @@ class GatedConcatMixer(Module):
 
         Returns
         -------
-        GatedConcatMixer
+        GatedSumMixer
             A fresh, new instance of itself.
 
         """
