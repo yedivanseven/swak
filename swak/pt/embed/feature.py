@@ -76,11 +76,10 @@ class FeatureEmbedder(Module):
             those of the numerical and then those of the categorical features.
 
         """
-        embedded = [
+        return pt.cat([
             self.embed_num(inp[..., :self.n_num]),
             self.embed_cat(inp[..., self.n_num:].long())
-        ]
-        return pt.cat(embedded, dim=-2)
+        ], dim=-2)
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
