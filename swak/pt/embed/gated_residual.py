@@ -94,8 +94,8 @@ class GatedResidualEmbedder(Module):
 
         """
         projected = self.project(inp)
-        exp = self.expand(self.drop(self.activate(projected)))
-        gated = exp[..., :self.mod_dim] * self.gate(exp[..., self.mod_dim:])
+        exp_ = self.expand(self.drop(self.activate(projected)))
+        gated = exp_[..., :self.mod_dim] * self.gate(exp_[..., self.mod_dim:])
         return (projected + gated) * 0.5
 
     def reset_parameters(self) -> None:

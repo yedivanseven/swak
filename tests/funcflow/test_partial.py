@@ -144,7 +144,7 @@ class TestUsage(unittest.TestCase):
         partial = Partial(self.call, 4, 'foo')
         _ = partial(2, 'bar')
         self.call.assert_called_once()
-        self.call.assert_called_once_with(2, 'bar', 4, 'foo')
+        self.call.assert_called_once_with(4, 'foo', 2, 'bar')
 
     def test_call_kwarg_adding(self):
         partial = Partial(self.call, foo='bar')

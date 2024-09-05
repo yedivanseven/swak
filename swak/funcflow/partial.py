@@ -4,12 +4,10 @@ from ..magic import ArgRepr
 
 
 class Partial[T](ArgRepr):
-    """Alternative implementation of ``functools.partial`` with one difference.
+    """Alternative implementation of ``functools.partial``.
 
-    Positional arguments provided at instantiation will be `appended` to the
-    positional arguments provided when calling instances (rather than the other
-    way around)! Upon subclassing and/or instantiation, annotation with the
-    (return) type of `call` is recommended.
+    Upon subclassing and/or instantiation, annotation with the (return) type of
+    `call` is recommended.
 
     Parameters
     ----------
@@ -50,4 +48,4 @@ class Partial[T](ArgRepr):
             Whatever `call` returns.
 
         """
-        return self.call(*(*args, *self.args), **{**self.kwargs, **kwargs})
+        return self.call(*(*self.args, *args), **{**self.kwargs, **kwargs})
