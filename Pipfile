@@ -15,7 +15,7 @@ pyyaml = "*"
 google-cloud-storage = "*"
 google-cloud-bigquery = "*"
 pandas-gbq = "*"
-torch = "*"
+torch = {version="*", index="pytorch"}
 
 [dev-packages]
 jupyter = "*"
