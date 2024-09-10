@@ -1,7 +1,10 @@
-from importlib.util import find_spec
-
-required = 'google_cloud_bigquery', 'google_cloud_storage', 'pandas_gbq'
-
-if find_spec('torch') is None:
+try:
+    import torch as pt
+except ModuleNotFoundError:
     msg = 'Install the "torch" package to unlock the PyTorch utilities!'
     raise ImportError(msg)
+
+__all__ = ['device']
+
+device = pt.device('cuda') if pt.cuda.is_available() else pt.device('cpu')
+pt.set_default_device(device)

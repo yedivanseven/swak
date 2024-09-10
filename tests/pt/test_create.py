@@ -75,7 +75,7 @@ class TestCreate(unittest.TestCase):
     def test_return_value_custom(self):
         device = pt.device('cpu')
         create = Create(pt.float16, device, True, False)
-        expected = pt.tensor([1, 2, 3], dtype=pt.float16)
+        expected = pt.tensor([1, 2, 3], dtype=pt.float16, device='cpu')
         actual = create([1, 2, 3])
         pt.testing.assert_close(actual, expected)
 
@@ -127,7 +127,7 @@ class TestAsTensor(unittest.TestCase):
     def test_return_value_custom(self):
         device = pt.device('cpu')
         as_tensor = AsTensor(pt.float16, device)
-        expected = pt.tensor([1, 2, 3], dtype=pt.float16)
+        expected = pt.tensor([1, 2, 3], dtype=pt.float16, device='cpu')
         actual = as_tensor([1, 2, 3])
         pt.testing.assert_close(actual, expected)
 
@@ -153,7 +153,7 @@ class TestFromDataFrame(unittest.TestCase):
     def test_return_value(self):
         df = pd.DataFrame([1, 2, 3])
         actual = from_dataframe(df)
-        pt.testing.assert_close(actual, pt.tensor(df.values))
+        pt.testing.assert_close(actual, pt.tensor(df.values, device='cpu'))
 
 
 
