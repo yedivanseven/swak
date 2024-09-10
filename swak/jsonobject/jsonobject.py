@@ -109,12 +109,12 @@ class SchemaMeta(type):
         return cls
 
     @staticmethod
-    def __ancestral(cls: 'SchemaMeta', attribute: str) -> Json:
+    def __ancestral(descendant: 'SchemaMeta', attribute: str) -> Json:
         """Accumulate dictionary class variables down the inheritance tree."""
         # Get class ancestors starting with the oldest
-        lineage = reversed(cls.mro()[1:])
+        lineage = reversed(descendant.mro()[1:])
         # Accumulate inherited dictionary attributes, overwriting old with new
-        return reduce(cls.__merge(attribute), lineage, {})
+        return reduce(descendant.__merge(attribute), lineage, {})
 
     @staticmethod
     def __merge(attribute: str) -> Callable[[Json, Any], Json]:

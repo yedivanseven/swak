@@ -5,17 +5,18 @@ name = "pypi"
 
 [[source]]
 url = "https://download.pytorch.org/whl/cpu"
-verify_ssl = false
-name = "pytorch"
+verify_ssl = true
+name = "cpu"
+
+[[source]]
+url = "https://download.pytorch.org/whl/cu124"
+verify_ssl = true
+name = "cuda"
 
 [packages]
 pandas = "*"
 pyarrow = "*"
 pyyaml = "*"
-google-cloud-storage = "*"
-google-cloud-bigquery = "*"
-pandas-gbq = "*"
-torch = {version="*", index="pytorch"}
 
 [dev-packages]
 jupyter = "*"
@@ -24,6 +25,19 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 mkdocs = "*"
 mkdocstrings-python = "*"
+
+[cloud]
+google-cloud-storage = "*"
+google-cloud-bigquery = "*"
+pandas-gbq = "*"
+
+[cpu]
+torch = {version="*", index="cpu"}
+
+[cuda]
+nvidia-pyindex = "*"
+nvidia-cuda-runtime-cu12 = "*"
+torch = {version="*", index="cuda"}
 
 [requires]
 python_version = "3.12"
