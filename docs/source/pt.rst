@@ -9,3 +9,4 @@ pt
    pt/create
    pt/embed
    pt/mix
+   pt/losses
