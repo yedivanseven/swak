@@ -24,7 +24,7 @@ class NumericalEmbedder(Module):
     emb_cls: type
         The PyTorch module to use as embedding class. Must take `mod_dim` as
         its first argument on instantiation, take tensors of size 1 in their
-        last dimension change that dimension to size `mod_dim`.
+        last dimension, and change that dimension to size `mod_dim`.
     **args
         Additional arguments to use when instantiating `emb_cls`.
     **kwargs
