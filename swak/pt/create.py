@@ -6,7 +6,8 @@ from .types import Tensor, Module, Dtype, Device, DataFrame
 __all__ = [
     'Create',
     'AsTensor',
-    'from_dataframe'
+    'from_dataframe',
+    'To'
 ]
 
 
@@ -122,8 +123,17 @@ def from_dataframe(df: DataFrame) -> Tensor:
     return pt.from_numpy(df.values)
 
 
-# ToDo: Make docstrings and tests!
+
 class To(ArgRepr):
+    """Move or change a tensor or module to a different device or dtype.
+
+    Parameters
+    ----------
+    target: device or dtype
+        The device or dtype to move the tensor or module to.
+
+
+    """
 
     def __init__(self, target: Device | Dtype) -> None:
         super().__init__(target)
@@ -138,4 +148,17 @@ class To(ArgRepr):
         ...
 
     def __call__(self, inp):
+        """Move or change a tensor or module to the specified target.
+
+        Parameters
+        ----------
+        inp: Tensor or Module
+            The input tensor or device to move or change to the `target`.
+
+        Returns
+        -------
+        Tensor or Module
+            The `inp` moved or changed to the cached `target`.
+
+        """
         return inp.to(self.target)

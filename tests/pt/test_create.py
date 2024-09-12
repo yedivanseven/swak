@@ -1,9 +1,9 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import torch as pt
 import pandas as pd
 import numpy as np
-from swak.pt.create import Create, AsTensor, from_dataframe
+from swak.pt.create import Create, AsTensor, from_dataframe, To
 
 
 class TestCreate(unittest.TestCase):
@@ -155,6 +155,32 @@ class TestFromDataFrame(unittest.TestCase):
         actual = from_dataframe(df)
         pt.testing.assert_close(actual, pt.tensor(df.values, device='cpu'))
 
+
+class TestTo(unittest.TestCase):
+
+    def setUp(self):
+        self.expected = pt.device('cpu')
+        self.to = To(self.expected)
+
+    def test_has_target(self):
+        self.assertTrue(hasattr(self.to, 'target'))
+
+    def test_target(self):
+        self.assertIs(self.to.target, self.expected)
+
+    def test_callable(self):
+        self.assertTrue(callable(self.to))
+
+    def test_to_called(self):
+        mock = Mock()
+        _ = self.to(mock)
+        mock.to.assert_called_once_with(self.expected)
+
+    def test_return_value(self):
+        mock = Mock()
+        mock.to = Mock(return_value=42)
+        actual = self.to(mock)
+        self.assertEqual(42, actual)
 
 
 if __name__ == '__main__':
