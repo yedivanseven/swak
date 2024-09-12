@@ -76,7 +76,7 @@ class GatedResidualSumMixer(Module):
         self.drop = drop
         self.kwargs = kwargs
         self.project = ptn.Linear(n_features * mod_dim, n_features, **kwargs)
-        self.expand = ptn.Linear(n_features, 2 * n_features, **kwargs)
+        self.widen = ptn.Linear(n_features, 2 * n_features, **kwargs)
         self.norm = ptn.Softmax(dim=-1)
 
     def importance(self, inp: Tensor) -> Tensor:
@@ -98,9 +98,9 @@ class GatedResidualSumMixer(Module):
 
         """
         projected = self.project(inp.flatten(start_dim=-2))
-        expanded = self.expand(self.drop(self.activate(projected)))
-        gated = self.gate(expanded[..., self.n_features:])
-        return self.norm(projected + expanded[..., :self.n_features] * gated)
+        wide = self.widen(self.drop(self.activate(projected)))
+        gated = self.gate(wide[..., self.n_features:])
+        return self.norm(projected + wide[..., :self.n_features] * gated)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass for combining multiple stacked feature vectors.
@@ -127,7 +127,7 @@ class GatedResidualSumMixer(Module):
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.project.reset_parameters()
-        self.expand.reset_parameters()
+        self.widen.reset_parameters()
 
     def new(
             self,

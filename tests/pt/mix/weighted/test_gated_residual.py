@@ -64,13 +64,13 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(12, self.mix.project.in_features)
         self.assertEqual(3, self.mix.project.out_features)
 
-    def test_has_expand(self):
-        self.assertTrue(hasattr(self.mix, 'expand'))
+    def test_has_widen(self):
+        self.assertTrue(hasattr(self.mix, 'widen'))
 
-    def test_expand(self):
-        self.assertIsInstance(self.mix.expand, Linear)
-        self.assertEqual(3, self.mix.expand.in_features)
-        self.assertEqual(6, self.mix.expand.out_features)
+    def test_widen(self):
+        self.assertIsInstance(self.mix.widen, Linear)
+        self.assertEqual(3, self.mix.widen.in_features)
+        self.assertEqual(6, self.mix.widen.out_features)
 
     def test_has_norm(self):
         self.assertTrue(hasattr(self.mix, 'norm'))
@@ -167,7 +167,7 @@ class TestUsage(unittest.TestCase):
             bias=False
         )
         self.mix.project.weight.data = pt.ones(2, 8)
-        self.mix.expand.weight.data = pt.ones(4, 2)
+        self.mix.widen.weight.data = pt.ones(4, 2)
 
     def test_callable(self):
         self.assertTrue(callable(self.mix))
@@ -206,7 +206,7 @@ class TestUsage(unittest.TestCase):
     def test_1_feature(self):
         mix = GatedResidualSumMixer(4, 1, bias=False)
         mix.project.weight.data = pt.ones(1, 4)
-        mix.expand.weight.data = pt.ones(2, 1)
+        mix.widen.weight.data = pt.ones(2, 1)
         inp = pt.ones(3, 1, 4)
         actual = mix(inp)
         expected = pt.ones(3, 4)
@@ -215,7 +215,7 @@ class TestUsage(unittest.TestCase):
     def test_5_features(self):
         mix = GatedResidualSumMixer(4, 5, bias=False)
         mix.project.weight.data = pt.ones(5, 20)
-        mix.expand.weight.data = pt.ones(10, 5)
+        mix.widen.weight.data = pt.ones(10, 5)
         inp = pt.ones(3, 5, 4)
         actual = mix(inp)
         expected = pt.ones(3, 4)
@@ -249,7 +249,7 @@ class TestUsage(unittest.TestCase):
 
     def test_expand_called(self):
         mock = Mock(return_value=pt.ones(5, 4))
-        self.mix.expand.forward = mock
+        self.mix.widen.forward = mock
         inp = pt.ones(5, 2, 4)
         _ = self.mix(inp)
         actual = mock.call_args[0][0]
@@ -280,7 +280,7 @@ class TestImportance(unittest.TestCase):
     def setUp(self):
         self.mix = GatedResidualSumMixer(4, 2, bias=False)
         self.mix.project.weight.data = pt.ones(2, 8)
-        self.mix.expand.weight.data = pt.ones(4, 2)
+        self.mix.widen.weight.data = pt.ones(4, 2)
 
     def test_2d(self):
         inp = pt.ones(2, 4)
@@ -309,7 +309,7 @@ class TestImportance(unittest.TestCase):
     def test_1_feature(self):
         mix = GatedResidualSumMixer(4, 1, bias=False)
         mix.project.weight.data = pt.ones(1, 4)
-        mix.expand.weight.data = pt.ones(2, 1)
+        mix.widen.weight.data = pt.ones(2, 1)
         inp = pt.ones(3, 1, 4)
         actual = mix.importance(inp)
         expected = pt.ones(3, 1)
@@ -318,7 +318,7 @@ class TestImportance(unittest.TestCase):
     def test_5_features(self):
         mix = GatedResidualSumMixer(4, 5, bias=False)
         mix.project.weight.data = pt.ones(5, 20)
-        mix.expand.weight.data = pt.ones(10, 5)
+        mix.widen.weight.data = pt.ones(10, 5)
         inp = pt.ones(3, 5, 4)
         actual = mix.importance(inp)
         expected = pt.ones(3, 5) * 0.2

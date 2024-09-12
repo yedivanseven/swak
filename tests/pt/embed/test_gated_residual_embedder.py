@@ -55,11 +55,11 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_project(self):
         self.assertIsInstance(self.embed.project, Linear)
 
-    def test_has_expand(self):
-        self.assertTrue(hasattr(self.embed, 'expand'))
+    def test_has_widen(self):
+        self.assertTrue(hasattr(self.embed, 'widen'))
 
-    def test_expand(self):
-        self.assertIsInstance(self.embed.expand, Linear)
+    def test_widen(self):
+        self.assertIsInstance(self.embed.widen, Linear)
 
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
@@ -149,7 +149,7 @@ class TestUsageSingleFeature(unittest.TestCase):
     def setUp(self):
         self.embed = GatedResidualEmbedder(4, identity, identity, bias=False)
         self.embed.project.weight.data = pt.ones(4, 1)
-        self.embed.expand.weight.data = pt.ones(8, 4) / 4
+        self.embed.widen.weight.data = pt.ones(8, 4) / 4
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -212,7 +212,7 @@ class TestUsageSingleFeature(unittest.TestCase):
 
     def test_expand_called(self):
         mock = Mock(return_value=pt.ones(3, 8))
-        self.embed.expand.forward = mock
+        self.embed.widen.forward = mock
         inp = pt.ones(3, 1)
         _ = self.embed(inp)
         actual = mock.call_args[0][0]
@@ -233,7 +233,7 @@ class TestUsageSingleFeature(unittest.TestCase):
         project = Mock(return_value=pt.ones(3, 4))
         expand = Mock(return_value=pt.ones(3, 8))
         self.embed.project.forward = project
-        self.embed.expand.forward = expand
+        self.embed.widen.forward = expand
         inp = pt.ones(3, 1)
         actual = self.embed(inp)
         expected = pt.ones(3, 4)
@@ -251,7 +251,7 @@ class TestUsageMultiFeature(unittest.TestCase):
             bias=False
         )
         self.embed.project.weight.data = pt.ones(4, 2) / 2
-        self.embed.expand.weight.data = pt.ones(8, 4) / 4
+        self.embed.widen.weight.data = pt.ones(8, 4) / 4
 
     def test_1d(self):
         inp = pt.ones(2)

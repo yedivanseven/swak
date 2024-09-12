@@ -1,0 +1,362 @@
+from typing import Any, Self
+from abc import ABC, abstractmethod
+import torch.nn as ptn
+from .types import Module, Tensor, Functional, Drop
+from .misc import Identity
+
+__all__ = [
+    'Block',
+    'ActivatedBlock',
+    'GatedBlock',
+    'GatedResidualBlock',
+    'SkipConnection',
+    'Stack'
+]
+
+
+class Block(Module, ABC):
+    """Abstract base class for stackable/repeatable neural-network components.
+
+    Obviously, the input and output tensors of such components must have the
+    same dimensions and sizes. Subclasses must call the ``super().__init__``
+    method with their instantiation (keyword) arguments.
+
+    Parameters
+    ----------
+    *args
+        Instantiation arguments.
+    **kwargs
+        Instantiation keyword arguments are also stored such that fresh, new,
+        independent copies can be created.
+
+    Attributes
+    ----------
+    args: tuple
+        The stored instantiation arguments needed to create fresh, new copies.
+    kwargs: dict
+        The stored instantiation keyword argument needed to create new copies.
+
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__()
+        self.args = args
+        self.kwargs = kwargs
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(*self.args, **self.kwargs)
+
+    @abstractmethod
+    def reset_parameters(self) -> None:
+        """Subclasses implement in-place reset of all internal parameters."""
+        ...
+
+
+class ActivatedBlock(Block):
+    """A single, non-linearly activated hidden layer of configurable size.
+
+    Parameters
+    ----------
+    mod_dim: int
+        Size of the feature space. The input tensor is expected to be of that
+        size in its last dimension and the output will again have this size in
+        its last dimension.
+    activate: Module or function
+        The activation function to be applied after projecting into higher-
+        dimensional space. Must be a callable that accepts a tensor as sole
+        argument, like a module from ``torch.nn`` or a function from
+        `torch.nn.functional``, depending on whether it needs to be further
+        parameterized or not.
+    hidden_factor: int, optional
+        The size of the hidden layer is this integer factor times `mod_dim`.
+    **kwargs
+        Additional keyword arguments to pass through to the linear layers.
+
+    """
+
+    def __init__(
+            self,
+            mod_dim: int,
+            activate: Module | Functional,
+            hidden_factor: int = 4,
+            **kwargs: Any
+    ) -> None:
+        super().__init__(mod_dim, activate, hidden_factor, **kwargs)
+        self.mod_dim = mod_dim
+        self.activate = activate
+        self.hidden_factor = hidden_factor
+        self.widen = ptn.Linear(mod_dim, hidden_factor * mod_dim, **kwargs)
+        self.shrink = ptn.Linear(hidden_factor * mod_dim, mod_dim, **kwargs)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a single, non-linearly activated hidden layer.
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        return self.shrink(self.activate(self.widen(inp)))
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of the linear projections."""
+        self.widen.reset_parameters()
+        self.shrink.reset_parameters()
+
+
+class GatedBlock(Block):
+    """A configurable, gated linear unit (GLU).
+
+    Parameters
+    ----------
+    mod_dim: int
+        Size of the feature space. The input tensor is expected to be of that
+        size in its last dimension and the output will again have this size in
+        its last dimension.
+    gate: Module or function
+        gate: Module or function, optional
+        The activation function to be applied to half of the (linearly)
+        projected input before multiplying with the other half. Must be
+        a callable that accepts a tensor as sole argument, like a module from
+        ``torch.nn`` or a function from ``torch.nn.functional``, depending
+        on whether it needs to be further parameterized or not.
+        Defaults to a sigmoid.
+    **kwargs
+        Additional keyword arguments to pass through to the linear layers.
+
+    """
+
+    def __init__(
+            self,
+            mod_dim: int,
+            gate: Module | Functional = ptn.Sigmoid(),
+            **kwargs: Any
+    ) -> None:
+        super().__init__(mod_dim, gate, **kwargs)
+        self.mod_dim = mod_dim
+        self.gate = gate
+        self.widen = ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a single gated linear unit (GLU).
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        wide = self.widen(inp)
+        gated = self.gate(wide[..., self.mod_dim:])
+        return self.drop(wide[..., :self.mod_dim] * gated)
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of the linear projection."""
+        self.widen.reset_parameters()
+
+
+class GatedResidualBlock(Block):
+    """Gated Residual Network (GRN) for efficiently extracting information.
+
+    Parameters
+    ----------
+    mod_dim: int
+        Size of the feature space. The input tensor is expected to be of that
+        size in its last dimension and the output will again have this size in
+        its last dimension.
+    activate: Module or function, optional
+        The activation function to be applied after (linear) projection, but
+        prior to gating. Must be a callable that accepts a tensor as sole
+        argument, like a module from ``torch.nn`` or a function from
+        `torch.nn.functional``, depending on whether it needs to be further
+        parameterized or not. Defaults to an ``ELU`` activation.
+    gate: Module or function, optional
+        The activation function to be applied to half of the (non-linearly)
+        projected input before multiplying with the other half. Must be
+        a callable that accepts a tensor as sole argument, like a module from
+        ``torch.nn`` or a function from ``torch.nn.functional``, depending
+        on whether it needs to be further parameterized or not.
+        Defaults to a sigmoid.
+    drop: Module, optional
+        Dropout to be applied within the GRN. Typically an instance of
+        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
+        resulting in no dropout being applied.
+    **kwargs
+        Additional keyword arguments to pass through to the linear layers.
+
+    Notes
+    -----
+    This implementation is inspired by how features are encoded in `Temporal
+    Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
+    intermediate linear layer (Eq. 3) is eliminated and dropout is applied
+    directly to the activations after the first layer. Secondly, the layer norm
+    (Eq. 2) is replaced by simply dividing the sum of (linearly projected)
+    input and gated signal by 2. Should additional normalization be desired, it
+    can be performed independently on the output of this module.
+
+    References
+    ----------
+    .. [1] B. Lim, S. O. Arik, N. Loeff, and T. Pfister, `Temporal Fusion
+           Transformers for Interpretable Multi-horizon Time Series
+           Forecasting`, `arXiv:1912.09363v3 <https://arxiv.org/abs/
+           1912.09363>`__ (2020).
+
+    """
+
+    def __init__(
+            self,
+            mod_dim: int,
+            activate: Module | Functional = ptn.ELU(),
+            gate: Module | Functional = ptn.Sigmoid(),
+            drop: Drop = ptn.Dropout(0.0),
+            **kwargs: Any
+    ) -> None:
+        super().__init__(mod_dim, activate, gate, drop, **kwargs)
+        self.mod_dim = mod_dim
+        self.activate = activate
+        self.gate = gate
+        self.drop = drop
+        self.kwargs = kwargs
+        self.project = ptn.Linear(mod_dim, mod_dim, **kwargs)
+        self.widen = ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a single gated residual network (GRN).
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        projected = self.project(inp)
+        wide = self.widen(self.drop(self.activate(projected)))
+        gated = wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
+        return 0.5 * (projected + gated)
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of the linear projections."""
+        self.project.reset_parameters()
+        self.widen.reset_parameters()
+
+
+class SkipConnection(Block):
+    """Add a residual/skip connection around the wrapped neural-network block.
+
+    Parameters
+    ----------
+    block: Block
+        The block to wrap the residual/skip connection around. The reason why
+        this cannot simply be a ``Module`` is that currently PyTorch does not
+        provide a reasonable way of cloning them.
+    drop: Module, optional
+        Dropout to be applied tp the output of `block` before adding it to
+        its input. Typically an instance of ``Dropout`` or ``AlphaDropout``.
+        Defaults to ``Dropout(p=0.0)``, resulting in no dropout being applied.
+    norm_cls: type
+        The class of the norm to be applied after adding input to output, e.g.,
+        ``LayerNorm`` or ``BatchNorm1d``. Again, this is needed to easily
+        create a fresh, new instances with equal, but independent parameters.
+    *args
+        Arguments used to initialize and instance of `norm_cls`.
+    **kwargs
+        Keyword arguments used to initialize and instance of `norm_cls`.
+
+    """
+
+    def __init__(
+            self,
+            block: Block,
+            drop: Drop = ptn.Dropout(0.0),
+            norm_cls: type[Module] = Identity,
+            *args,
+            **kwargs
+    ) -> None:
+        super().__init__()
+        self.block = block.new()
+        self.drop = drop
+        self.norm_cls: type[Module] = norm_cls
+        self.args = args
+        self.kwargs = kwargs
+        self.norm = norm_cls(*args, **kwargs)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a block with the input added to the output.
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        return self.norm(0.5 * (inp + self.drop(self.block(inp))))
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of the block and the norm."""
+        self.block.reset_parameters()
+        self.norm.reset_paramters()
+
+
+class Stack(Block):
+    """Repeat a residual block, distilling ever finer detail from your data.
+
+    Parameters
+    ----------
+    block: SkipConnection
+        An instance of a ``SkipConnection`` to repeat.
+    n_layers: int, optional
+        How often to repeat the `block`. Defaults to 2.
+
+    """
+
+    def __init__(self, block: SkipConnection, n_layers: int = 2) -> None:
+        super().__init__(block, n_layers)
+        self.sequence = ptn.Sequential(*[block.new() for _ in self.layers])
+
+    @property
+    def layers(self) -> range:
+        """Range of layer indices."""
+        return range(self.n_layers)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a stack of identical skip-connection blocks.
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        return self.sequence(inp)
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of all blocks."""
+        for block in self.sequencce:
+            block.reset_parameters()

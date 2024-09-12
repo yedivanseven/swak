@@ -64,13 +64,13 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(12, self.mix.project.in_features)
         self.assertEqual(4, self.mix.project.out_features)
 
-    def test_has_expand(self):
-        self.assertTrue(hasattr(self.mix, 'expand'))
+    def test_has_widen(self):
+        self.assertTrue(hasattr(self.mix, 'widen'))
 
-    def test_expand(self):
-        self.assertIsInstance(self.mix.expand, Linear)
-        self.assertEqual(4, self.mix.expand.in_features)
-        self.assertEqual(8, self.mix.expand.out_features)
+    def test_widen(self):
+        self.assertIsInstance(self.mix.widen, Linear)
+        self.assertEqual(4, self.mix.widen.in_features)
+        self.assertEqual(8, self.mix.widen.out_features)
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.mix, 'reset_parameters'))
@@ -155,7 +155,7 @@ class TestUsage(unittest.TestCase):
             bias=False
         )
         self.mix.project.weight.data = pt.ones(4, 8) / 8
-        self.mix.expand.weight.data = pt.ones(8, 4) / 4
+        self.mix.widen.weight.data = pt.ones(8, 4) / 4
 
     def test_callable(self):
         self.assertTrue(callable(self.mix))
@@ -225,7 +225,7 @@ class TestUsage(unittest.TestCase):
 
     def test_expand_called(self):
         mock = Mock(return_value=pt.ones(5, 8))
-        self.mix.expand.forward = mock
+        self.mix.widen.forward = mock
         inp = pt.ones(5, 2, 4)
         _ = self.mix(inp)
         actual = mock.call_args[0][0]

@@ -8,7 +8,7 @@ type Tensors1T = tuple[Tensor]
 type Tensors2T = tuple[Tensor, Tensor]
 type Tensors3T = tuple[Tensor, Tensor, Tensor]
 type Tensors4T = tuple[Tensor, Tensor, Tensor, Tensor]
-type TensorsT = tuple[Tensor, ...]
+type Tensors = tuple[Tensor, ...]
 type Dtype = dtype
 type Device = device
 type Drop = Dropout | AlphaDropout
@@ -22,7 +22,7 @@ __all__ = [
     'Tensors2T',
     'Tensors3T',
     'Tensors4T',
-    'TensorsT',
+    'Tensors',
     'Dtype',
     'Device',
     'Drop'

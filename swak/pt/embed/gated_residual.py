@@ -72,7 +72,7 @@ class GatedResidualEmbedder(Module):
         self.inp_dim = inp_dim
         self.kwargs = kwargs
         self.project = ptn.Linear(inp_dim, mod_dim, **kwargs)
-        self.expand =  ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
+        self.widen =  ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Embed a numerical feature through a Gated Residual Network (GRN).
@@ -94,14 +94,14 @@ class GatedResidualEmbedder(Module):
 
         """
         projected = self.project(inp)
-        exp_ = self.expand(self.drop(self.activate(projected)))
-        gated = exp_[..., :self.mod_dim] * self.gate(exp_[..., self.mod_dim:])
-        return (projected + gated) * 0.5
+        wide = self.widen(self.drop(self.activate(projected)))
+        gated = wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
+        return 0.5 * (projected + gated)
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.project.reset_parameters()
-        self.expand.reset_parameters()
+        self.widen.reset_parameters()
 
     def new(
             self,
