@@ -13,7 +13,8 @@ __all__ = [
     'TweedieLoss',
     'BetaBernoulliLoss',
     'GammaLoss',
-    'StudentLoss'
+    'StudentLoss',
+    'NegativeBinomialLoss'
 ]
 
 
@@ -324,7 +325,7 @@ class GammaLoss(_BaseLoss):
         sigma2 = sigma.pow(2.0) + self.eps
         ratio = mu_.pow(2.0) / sigma2
         y_true_ = y_true + self.eps
-        scaled = y_true_ * mu_ / sigma2
+        scaled = y_true * mu / sigma2 + self.eps
 
         negll = -(
             ratio * scaled.log() -
@@ -336,7 +337,7 @@ class GammaLoss(_BaseLoss):
 
 
 class StudentLoss(_BaseLoss):
-    """Negative log-likelihood of a Student's t distribution.
+    """Negative log-likelihood of a non-standardized Student's t distribution.
 
     Parameters
     ----------
@@ -364,25 +365,25 @@ class StudentLoss(_BaseLoss):
 
     def forward(
             self,
-            mu: Tensor,
-            sigma: Tensor,
-            nu: Tensor,
+            df: Tensor,
+            loc: Tensor,
+            scale: Tensor,
             y_true: Tensor
     ) -> Tensor:
         """Forward pass for the Student's t loss function.
 
         Parameters
         ----------
-        mu: Tensor
-            Predicted mean values.
-        sigma: Tensor
-            Predicted standard deviations. Should be greater than or equal
-            to 0, but this will not be checked for, let alone enforced.
-            However, `eps` is added to ensure numerical stability.
-        nu: tensor
+        df: tensor
             Predicted degrees of freedom. Should be greater than zero, but this
             will not be checked for, let alone enforced. However, `eps` is
             added for numerical stability.
+        loc: Tensor
+            Predicted mean values.
+        scale: Tensor
+            Predicted scales. Should be greater than or equal to 0, but this
+            will not be checked for, let alone enforced. However, `eps` is
+            added to ensure numerical stability.
         y_true:
             Actually observed values.
 
@@ -392,15 +393,99 @@ class StudentLoss(_BaseLoss):
             Negative log-likelihood of a Student's t distribution.
 
         """
-        half_nu = 0.5 * nu + self.eps
-        half_nu1p = 0.5 * (nu + 1.0)
-        scale = sigma.pow(2.0) * nu + self.eps
+        half_nu = 0.5 * df + self.eps
+        half_nu1p = 0.5 * (df + 1.0)
+        tau2nu = scale.pow(2.0) * df + self.eps
 
         negll = -(
             self.const +
             pts.gammaln(half_nu1p) -
             pts.gammaln(half_nu) -
-            0.5 * scale.log() -
-            half_nu1p * ((y_true - mu).pow(2.0) / scale).log1p()
+            0.5 * tau2nu.log() -
+            half_nu1p * ((y_true - loc).pow(2.0) / tau2nu).log1p()
+        )
+        return self._reduce(negll)
+
+
+class NegativeBinomialLoss(_BaseLoss):
+    """Negative log-likelihood of a Negative-Binomial distribution.
+
+    Potentially useful for counts data where more flexibility than provided
+    by a Poisson loss is desired because the data might be over-dispersed.
+    For convenience, the Negative-Binomial distribution is parameterized in
+    terms of mean and standard deviation instead of its standard form.
+
+    Parameters
+    ----------
+    reduction: string, optional
+        One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
+        how to aggregate the tensor resulting from evaluating the point-wise
+        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+    eps: float, optional
+        Many loss functions require input and/or target tensors to be bound
+        by some lower and/or upper value. It is the user's responsibility to
+        ensure that they are. However, evaluating a loss function just at the
+        interval boundary of its support might lead to numerical inaccuracies.
+        To avoid these, it is often advisable to shift such values away from
+        boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Notes
+    -----
+    The present parameterization only makes sense if the variance is strictly
+    greater than the mean. This is best taken into account already on the
+    model side, e.g., by forcing the output for `sigma` to be a that of `mu`
+    multiplied by one plus some (learnable) fraction of `mu`, as described
+    by D. Salinas `et al.` in their DeepAR paper. [1]_
+
+    See Also
+    --------
+    Reduction
+
+    References
+    ----------
+    .. [1] D. Salinas, V. Flunkert, and J. Gasthaus, and T. Pfister, `DeepAR:
+           Probabilistic Forecasting with Autoregressive Recurrent Networks`,
+           `arXiv:1704.04110v3 <https://arxiv.org/pdf/1704.04110>`__ (2019).
+
+    """
+
+    def __init__(self, reduction: str = 'mean', eps: float = 1e-6) -> None:
+        super().__init__(reduction, eps)
+
+
+    def forward(self, mu: Tensor, sigma: Tensor, y_true: Tensor) -> Tensor:
+        """Forward pass for the Negative-Binomial loss function.
+
+        Parameters
+        ----------
+        mu: Tensor
+            Predicted mean values. Should be greater than or equal to 0, but
+            this will not be checked for, let alone enforced. However, `eps`
+            is added to ensure numerical stability.
+        sigma: Tensor
+            Predicted standard deviations. Should be greater than or equal
+            to the square root of `mu`, but this will not be checked for,
+            let alone enforced. However, `eps` is added to ensure numerical
+            stability.
+        y_true: Tensor
+            Actually observed values. Should be greater than or equal
+            to 0, but this will not be checked for, let alone enforced.
+
+        Returns
+        -------
+        Tensor
+            The negative log-likelihood of a Negative-Binomial distribution.
+
+        """
+        sigma2 = sigma.pow(2.0) + 2 * self.eps
+        scaled = mu / sigma2 + self.eps
+        ratio = mu.pow(2.0) / (sigma2 - mu) + self.eps
+
+        negll = -(
+            pts.gammaln(y_true + ratio) +
+            y_true * (1.0 - scaled).log() +
+            ratio * scaled.log() -
+            pts.gammaln(y_true + 1.0) -
+            pts.gammaln(ratio)
         )
         return self._reduce(negll)

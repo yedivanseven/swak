@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Any, overload
 import torch as pt
 from ..magic import ArgRepr
-from .types import Tensor, Dtype, Device, DataFrame
+from .types import Tensor, Module, Dtype, Device, DataFrame
 
 __all__ = [
     'Create',
@@ -120,3 +120,22 @@ def from_dataframe(df: DataFrame) -> Tensor:
 
     """
     return pt.from_numpy(df.values)
+
+
+# ToDo: Make docstrings and tests!
+class To(ArgRepr):
+
+    def __init__(self, target: Device | Dtype) -> None:
+        super().__init__(target)
+        self.target = target
+
+    @overload
+    def __call__(self, inp: Tensor) -> Tensor:
+        ...
+
+    @overload
+    def __call__(self, inp: Module) -> Module:
+        ...
+
+    def __call__(self, inp):
+        return inp.to(self.target)

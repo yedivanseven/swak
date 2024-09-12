@@ -7,9 +7,9 @@ from swak.pt.losses import StudentLoss, _BaseLoss
 class TestStudent(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.mu = pt.tensor([[3.], [0.]])
-        self.sigma = pt.tensor([[0.5], [2.0]])
-        self.nu = pt.tensor([[4.], [1.]])
+        self.loc = pt.tensor([[3.], [0.]])
+        self.scale = pt.tensor([[0.5], [2.0]])
+        self.df = pt.tensor([[4.], [1.]])
         self.y = pt.tensor([[3.], [2.]])
         self.expected = pt.tensor([[4./3.], [4. * math.pi]]).log()
 
@@ -18,135 +18,136 @@ class TestStudent(unittest.TestCase):
 
     def test_default(self):
         loss = StudentLoss()
-        actual = loss(self.mu, self.sigma, self.nu, self.y)
+        actual = loss(self.df, self.loc, self.scale, self.y)
         pt.testing.assert_close(actual, self.expected.mean())
 
     def test_mean(self):
         loss = StudentLoss('mean')
-        actual = loss(self.mu, self.sigma, self.nu, self.y)
+        actual = loss(self.df, self.loc, self.scale, self.y)
         pt.testing.assert_close(actual, self.expected.mean())
 
     def test_sum(self):
         loss = StudentLoss('sum')
-        actual = loss(self.mu, self.sigma, self.nu, self.y)
+        actual = loss(self.df, self.loc, self.scale, self.y)
         pt.testing.assert_close(actual, self.expected.sum())
 
     def test_none(self):
         loss = StudentLoss('none')
-        actual = loss(self.mu, self.sigma, self.nu, self.y)
+        actual = loss(self.df, self.loc, self.scale, self.y)
         pt.testing.assert_close(actual, self.expected)
 
-    def test_0_mu(self):
+    def test_0_loc(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, self.sigma, self.nu, self.y)
+        loc = pt.tensor([[0.0], [0.0]])
+        actual = loss(self.df, loc, self.scale, self.y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_sigma(self):
+    def test_0_scale(self):
         loss = StudentLoss('none')
-        sigma = pt.tensor([[0.0], [0.0]])
-        actual = loss(self.mu, sigma, self.nu, self.y)
+        scale = pt.tensor([[0.0], [0.0]])
+        actual = loss(self.df, self.loc, scale, self.y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_nu(self):
+    def test_0_df(self):
         loss = StudentLoss('none')
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(self.mu, self.sigma, nu, self.y)
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, self.loc, self.scale, self.y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
     def test_0_target(self):
         loss = StudentLoss('none')
-        actual = loss(self.mu, self.sigma, self.nu, self.mu)
+        y = pt.tensor([[0.0], [0.0]])
+        actual = loss(self.df, self.loc, self.scale, y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_mu_0_sigma(self):
+    def test_0_loc_0_scale(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        sigma = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, sigma, self.nu, self.y)
+        loc = pt.tensor([[0.0], [0.0]])
+        scale = pt.tensor([[0.0], [0.0]])
+        actual = loss(self.df, loc, scale, self.y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_mu_0_nu(self):
+    def test_0_loc_0_df(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, self.sigma, nu, self.y)
+        loc = pt.tensor([[0.0], [0.0]])
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, loc, self.scale, self.y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_mu_0_target(self):
+    def test_0_loc_0_target(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, self.sigma, self.nu, mu)
+        loc = pt.tensor([[0.0], [0.0]])
+        actual = loss(self.df, loc, self.scale, loc)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_sigma_0_nu(self):
+    def test_0_scale_0_df(self):
         loss = StudentLoss('none')
-        sigma = pt.tensor([[0.0], [0.0]])
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(self.mu, sigma, nu, self.y)
+        scale = pt.tensor([[0.0], [0.0]])
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, self.loc, scale, self.y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_sigma_0_target(self):
+    def test_0_scale_0_target(self):
         loss = StudentLoss('none')
-        sigma = pt.tensor([[0.0], [0.0]])
-        actual = loss(self.mu, sigma, self.nu, self.mu)
+        scale = pt.tensor([[0.0], [0.0]])
+        actual = loss(self.df, self.loc, scale, scale)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_nu_0_target(self):
+    def test_0_df_0_target(self):
         loss = StudentLoss('none')
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(self.mu, self.sigma, nu, self.mu)
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, self.loc, self.scale, df)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_mu_0_sigma_0_nu(self):
+    def test_0_loc_0_scale_0_df(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        sigma = pt.tensor([[0.0], [0.0]])
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, sigma, nu, self.y)
+        loc = pt.tensor([[0.0], [0.0]])
+        scale = pt.tensor([[0.0], [0.0]])
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, loc, scale, self.y)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_mu_0_sigma_0_target(self):
+    def test_0_loc_0_scale_0_target(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        sigma = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, sigma, self.nu, mu)
+        loc = pt.tensor([[0.0], [0.0]])
+        scale= pt.tensor([[0.0], [0.0]])
+        actual = loss(self.df, loc, scale, loc)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_mu_0_nu_0_target(self):
+    def test_0_loc_0_df_0_target(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, self.sigma, nu, mu)
+        loc = pt.tensor([[0.0], [0.0]])
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, loc, self.scale, loc)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_sigma_0_nu_0_target(self):
+    def test_0_scale_0_df_0_target(self):
         loss = StudentLoss('none')
-        sigma = pt.tensor([[0.0], [0.0]])
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(self.mu, sigma, nu, self.mu)
+        scale = pt.tensor([[0.0], [0.0]])
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, self.loc, scale, scale)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 
-    def test_0_mu_0_sigma_0_nu_0_target(self):
+    def test_0_loc_0_scale_0_df_0_target(self):
         loss = StudentLoss('none')
-        mu = pt.tensor([[0.0], [0.0]])
-        sigma = pt.tensor([[0.0], [0.0]])
-        nu = pt.tensor([[0.0], [0.0]])
-        actual = loss(mu, sigma, nu, mu)
+        loc = pt.tensor([[0.0], [0.0]])
+        scale = pt.tensor([[0.0], [0.0]])
+        df = pt.tensor([[0.0], [0.0]])
+        actual = loss(df, loc, scale, loc)
         self.assertFalse(actual.isinf().any().item())
         self.assertFalse(actual.isnan().any().item())
 

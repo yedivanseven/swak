@@ -37,3 +37,7 @@ losses
 .. autoclass:: swak.pt.losses.StudentLoss
    :members:
    :show-inheritance:
+
+.. autoclass:: swak.pt.losses.NegativeBinomialLoss
+   :members:
+   :show-inheritance:

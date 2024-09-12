@@ -1,5 +1,5 @@
 misc
-======
+====
 
 .. automodule:: swak.pt.misc
    :members:
