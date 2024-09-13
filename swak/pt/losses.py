@@ -441,6 +441,7 @@ class NegativeBinomialLoss(_BaseLoss):
     --------
     Reduction
     swak.pt.misc.NegativeBinomialFinalizer
+    swak.pt.dists.MuSigmaNegativeBinomial
 
     References
     ----------

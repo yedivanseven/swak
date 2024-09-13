@@ -215,6 +215,7 @@ class NegativeBinomialFinalizer(Module):
     See Also
     --------
     swak.pt.losses.NegativeBinomialLoss
+    swak.pt.dists.MuSigmaNegativeBinomial
 
     References
     ----------

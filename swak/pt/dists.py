@@ -52,6 +52,11 @@ class MuSigmaNegativeBinomial(ptd.NegativeBinomial):
     model output side, but can be checked here by setting `validate_args`
     to ``True``.
 
+    See Also
+    --------
+    swak.pt.losses.NegativeBinomialLoss
+    swak.pt.misc.NegativeBinomialFinalizer
+
     """
 
     def __init__(
