@@ -62,14 +62,15 @@ class ActivatedBlock(Block):
         Size of the feature space. The input tensor is expected to be of that
         size in its last dimension and the output will again have this size in
         its last dimension.
-    activate: Module or function
+    activate: Module or function, optional
         The activation function to be applied after projecting into higher-
         dimensional space. Must be a callable that accepts a tensor as sole
         argument, like a module from ``torch.nn`` or a function from
-        `torch.nn.functional``, depending on whether it needs to be further
-        parameterized or not.
+        ``torch.nn.functional``, depending on whether it needs to be further
+        parameterized or not. Defaults to ``ELU()``.
     hidden_factor: int, optional
         The size of the hidden layer is this integer factor times `mod_dim`.
+        Defaults to 4.
     **kwargs
         Additional keyword arguments to pass through to the linear layers.
 
@@ -78,7 +79,7 @@ class ActivatedBlock(Block):
     def __init__(
             self,
             mod_dim: int,
-            activate: Module | Functional,
+            activate: Module | Functional = ptn.ELU(),
             hidden_factor: int = 4,
             **kwargs: Any
     ) -> None:
@@ -159,8 +160,7 @@ class GatedBlock(Block):
 
         """
         wide = self.widen(inp)
-        gated = self.gate(wide[..., self.mod_dim:])
-        return self.drop(wide[..., :self.mod_dim] * gated)
+        return wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the linear projection."""
@@ -267,13 +267,14 @@ class SkipConnection(Block):
         this cannot simply be a ``Module`` is that currently PyTorch does not
         provide a reasonable way of cloning them.
     drop: Module, optional
-        Dropout to be applied tp the output of `block` before adding it to
+        Dropout to be applied to the output of `block` before adding it to
         its input. Typically an instance of ``Dropout`` or ``AlphaDropout``.
         Defaults to ``Dropout(p=0.0)``, resulting in no dropout being applied.
-    norm_cls: type
+    norm_cls: type, optional
         The class of the norm to be applied after adding input to output, e.g.,
         ``LayerNorm`` or ``BatchNorm1d``. Again, this is needed to easily
         create a fresh, new instances with equal, but independent parameters.
+        Defaults to ``Identity``, resulting in no normalization whatsoever.
     *args
         Arguments used to initialize and instance of `norm_cls`.
     **kwargs
@@ -289,12 +290,10 @@ class SkipConnection(Block):
             *args,
             **kwargs
     ) -> None:
-        super().__init__()
+        super().__init__(block, drop, norm_cls, *args, **kwargs)
         self.block = block.new()
         self.drop = drop
         self.norm_cls: type[Module] = norm_cls
-        self.args = args
-        self.kwargs = kwargs
         self.norm = norm_cls(*args, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
@@ -316,24 +315,26 @@ class SkipConnection(Block):
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the block and the norm."""
         self.block.reset_parameters()
-        self.norm.reset_paramters()
+        self.norm.reset_parameters()
 
 
 class Stack(Block):
-    """Repeat a residual block, distilling ever finer detail from your data.
+    """Repeat a skip-connection, distilling ever finer detail from your data.
 
     Parameters
     ----------
-    block: SkipConnection
+    skip: SkipConnection
         An instance of a ``SkipConnection`` to repeat.
     n_layers: int, optional
-        How often to repeat the `block`. Defaults to 2.
+        How often to repeat the `skip`. Defaults to 2.
 
     """
 
-    def __init__(self, block: SkipConnection, n_layers: int = 2) -> None:
-        super().__init__(block, n_layers)
-        self.sequence = ptn.Sequential(*[block.new() for _ in self.layers])
+    def __init__(self, skip: SkipConnection, n_layers: int = 2) -> None:
+        super().__init__(skip, n_layers)
+        self.skip = skip
+        self.n_layers = n_layers
+        self.sequence = ptn.Sequential(*[skip.new() for _ in self.layers])
 
     @property
     def layers(self) -> range:
@@ -358,5 +359,5 @@ class Stack(Block):
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of all blocks."""
-        for block in self.sequencce:
+        for block in self.sequence:
             block.reset_parameters()

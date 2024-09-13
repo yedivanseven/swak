@@ -89,9 +89,9 @@ class TestDefaultAttributes(unittest.TestCase):
         new = self.embed.new()
         self.assertIsInstance(new, GatedResidualEmbedder)
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
-        self.assertIsInstance(self.embed.activate, ELU)
-        self.assertIsInstance(self.embed.gate, Sigmoid)
-        self.assertIsInstance(self.embed.drop, Dropout)
+        self.assertIs(new.activate, self.embed.activate)
+        self.assertIs(new.gate, self.embed.gate)
+        self.assertIs(new.drop, self.embed.drop)
         self.assertEqual(self.embed.inp_dim, new.inp_dim)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
 
@@ -137,9 +137,9 @@ class TestAttributes(unittest.TestCase):
         new = self.embed.new(8, GELU(), ELU(), AlphaDropout(), 2, bias=False)
         self.assertIsInstance(new, GatedResidualEmbedder)
         self.assertEqual(8, new.mod_dim)
-        self.assertIsInstance(self.embed.activate, GELU)
-        self.assertIsInstance(self.embed.gate, ELU)
-        self.assertIsInstance(self.embed.drop, AlphaDropout)
+        self.assertIsInstance(new.activate, GELU)
+        self.assertIsInstance(new.gate, ELU)
+        self.assertIsInstance(new.drop, AlphaDropout)
         self.assertEqual(2, new.inp_dim)
         self.assertDictEqual({'bias': False}, new.kwargs)
 
@@ -210,7 +210,7 @@ class TestUsageSingleFeature(unittest.TestCase):
         expected = pt.ones(3, 4)
         pt.testing.assert_close(actual, expected)
 
-    def test_expand_called(self):
+    def test_widen_called(self):
         mock = Mock(return_value=pt.ones(3, 8))
         self.embed.widen.forward = mock
         inp = pt.ones(3, 1)

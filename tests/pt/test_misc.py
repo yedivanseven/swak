@@ -301,12 +301,12 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
         self.assertIsInstance(self.default.mu, ptn.Linear)
         self.assertEqual(8, self.default.mu.in_features)
         self.assertEqual(1, self.default.mu.out_features)
-        self.assertTrue(self.default.mu.bias)
+        self.assertIsInstance(self.default.mu.bias, pt.Tensor)
 
     def test_custom_mu(self):
         self.assertEqual(4, self.custom.mu.in_features)
         self.assertEqual(1, self.custom.mu.out_features)
-        self.assertFalse(self.custom.mu.bias)
+        self.assertIsNone(self.custom.mu.bias)
 
     def test_has_alpha(self):
         self.assertTrue(hasattr(self.default, 'alpha'))
@@ -315,12 +315,12 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
         self.assertIsInstance(self.default.alpha, ptn.Linear)
         self.assertEqual(8, self.default.alpha.in_features)
         self.assertEqual(1, self.default.alpha.out_features)
-        self.assertTrue(self.default.alpha.bias)
+        self.assertIsInstance(self.default.alpha.bias, pt.Tensor)
 
     def test_custom_alpha(self):
         self.assertEqual(4, self.custom.alpha.in_features)
         self.assertEqual(1, self.custom.alpha.out_features)
-        self.assertFalse(self.custom.alpha.bias)
+        self.assertIsNone(self.custom.alpha.bias)
 
     def test_has_activate(self):
         self.assertTrue(hasattr(self.default, 'activate'))

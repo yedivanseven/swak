@@ -223,7 +223,7 @@ class TestUsage(unittest.TestCase):
         expected = pt.ones(5, 4)
         pt.testing.assert_close(actual, expected)
 
-    def test_expand_called(self):
+    def test_widen_called(self):
         mock = Mock(return_value=pt.ones(5, 8))
         self.mix.widen.forward = mock
         inp = pt.ones(5, 2, 4)
