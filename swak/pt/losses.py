@@ -440,6 +440,7 @@ class NegativeBinomialLoss(_BaseLoss):
     See Also
     --------
     Reduction
+    swak.pt.misc.NegativeBinomialFinalizer
 
     References
     ----------

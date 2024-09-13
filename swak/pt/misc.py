@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, Self
 import torch.nn as ptn
-from .types import Tensor, Module, Tensors, Tensors2T, Functional
+from .types import Tensor, Module, Tensors, Tensors2T
 
 __all__ = [
     'identity',
@@ -57,6 +57,23 @@ class Identity(Module):
         """
         return tensor
 
+    def reset_parameters(self) -> None:
+        """Does nothing because there are no internal parameters to reset."""
+
+    def new(self, *_, **__) -> Self:
+        """Return a fresh. new instance.
+
+        Providing any number of (keyword) arguments is permitted, but they will
+        be ignored.
+
+        Returns
+        -------
+        Identity
+            A fresh, new instance of itself.
+
+        """
+        return self.__class__()
+
 
 class Finalizer(Module):
     """Extract one or more numbers in the final layer of a neural network.
@@ -75,25 +92,30 @@ class Finalizer(Module):
         The size of the last dimension of the input tensor, essentially the
         "width" of the neural network before it is to be collapsed to the
         final output.
-    *activations: Module or function
-        Specify as many activation functions as you want outputs (e.g.,
-        Sigmoid for binary classification, Softplus for strictly positive
-        regression targets, etc.). For unbounded regression targets, where
-        you want no activation function at all, use ``identity``.
+    *activations: Module
+        Specify as many activations (instances of PyTorch ``Module``) as you
+        want outputs (e.g., ``Sigmoid()`` for binary classification,
+        ``Softplus()`` for strictly positive regression targets, etc.). For
+        unbounded regression targets, where you want no activation function at
+        all, use ``Identity()``.
     **kwargs
         Keyword arguments are passed on to all linear layers.
+
+    See Also
+    --------
+    Identity
 
     """
 
     def __init__(
             self,
             mod_dim: int,
-            *activations: Module | Functional,
+            *activations: Module,
             **kwargs: Any
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
-        self.activations: tuple[Module | Functional, ...] = activations
+        self.activations: tuple[Module, ...] = activations
         self.kwargs = kwargs
         self.finalize = ptn.ModuleList(
             ptn.Sequential(ptn.Linear(mod_dim, 1, **kwargs), activate)
@@ -123,6 +145,45 @@ class Finalizer(Module):
         """
         return tuple(finalize(inp) for finalize in self.finalize)
 
+    def reset_parameters(self) -> None:
+        """Re-initialize all internal parameters."""
+        for finalize in self.finalize:
+            finalize[0].reset_parameters()
+
+    def new(
+            self,
+            mod_dim: int | None = None,
+            *activations: Module,
+            **kwargs: Any
+    ) -> Self:
+        """Return a fresh instance with the same or updated parameters.
+
+        Parameters
+        ----------
+        mod_dim: int, optional
+            The size of the last dimension of the input tensor. Overwrites the
+            `mod_dim` of the current instance if given. Defaults to ``None``.
+        *activations: Module
+            Activation functions replace the ones in the current instance if
+            any are given. If none are given, the new instance will have the
+            same as the present instance.
+        **kwargs
+            Additional keyword arguments are merged into the keyword arguments
+            of the current instance and are then passed through to the linear
+            layers together.
+
+        Returns
+        -------
+        Finalizer
+            A fresh, new instance of itself.
+
+        """
+        return self.__class__(
+            self.mod_dim if mod_dim is None else mod_dim,
+            *(activations or self.activations),
+            **(self.kwargs | kwargs)
+        )
+
 
 class NegativeBinomialFinalizer(Module):
     """Consistent mean and standard deviation for over-dispersed counts.
@@ -151,6 +212,9 @@ class NegativeBinomialFinalizer(Module):
     **kwargs
         Keyword arguments are passed on to the linear layers.
 
+    See Also
+    --------
+    swak.pt.losses.NegativeBinomialLoss
 
     References
     ----------
@@ -171,9 +235,10 @@ class NegativeBinomialFinalizer(Module):
         self.mod_dim = mod_dim
         self.beta = beta
         self.threshold = threshold
+        self.kwargs = kwargs
         self.mu = ptn.Linear(mod_dim, 1, **kwargs)
         self.alpha = ptn.Linear(mod_dim, 1, **kwargs)
-        self.map = ptn.Softplus(beta, threshold)
+        self.activate = ptn.Softplus(beta, threshold)
 
     def forward(self, inp: Tensor) -> Tensors2T:
         """Forward pass for generating mean and matching standard deviation.
@@ -194,6 +259,51 @@ class NegativeBinomialFinalizer(Module):
             last dimension shrunk to 1.
 
         """
-        mu = self.map(self.mu(inp))
-        alpha = self.map(self.alpha(inp))
+        mu = self.activate(self.mu(inp))
+        alpha = self.activate(self.alpha(inp))
         return mu, (mu * (1.0 + mu * alpha)).sqrt()
+
+    def reset_parameters(self) -> None:
+        """Re-initialize all internal parameters."""
+        self.mu.reset_parameters()
+        self.alpha.reset_parameters()
+
+    def new(
+            self,
+            mod_dim: int | None = None,
+            beta: float | None = None,
+            threshold: float | None = None,
+            **kwargs: Any
+    ) -> Self:
+        """Return a fresh instance with the same or updated parameters.
+
+        Parameters
+        ----------
+        mod_dim: int, optional
+            The size of the last dimension of the input tensor. Overwrites the
+            `mod_dim` of the current instance if given. Defaults to ``None``.
+        beta: float, optional
+            Scaling parameter ot the ``Softplus`` activation function.
+            Overwrites the `beta` of the current instance if given.
+            Defaults to ``None``.
+        threshold: float, optional
+            The ``Softplus`` activation is approximated as a linear function
+            for values greater than this. Overwrites the `threshold` of the
+            current instance if given. Defaults to ``None``.
+        **kwargs
+            Additional keyword arguments are merged into the keyword arguments
+            of the current instance and are then passed through to the linear
+            layers together.
+
+        Returns
+        -------
+        NegativeBinomialFinalizer
+            A fresh, new instance of itself.
+
+        """
+        return self.__class__(
+            self.mod_dim if mod_dim is None else mod_dim,
+            self.beta if beta is None else beta,
+            self.threshold if threshold is None else threshold,
+            **(self.kwargs | kwargs)
+        )
