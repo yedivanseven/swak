@@ -10,31 +10,15 @@ __all__ = [
     'GatedBlock',
     'GatedResidualBlock',
     'SkipConnection',
-    'Stack'
+    'Repeat'
 ]
 
 
 class Block(Module, ABC):
     """Abstract base class for stackable/repeatable neural-network components.
 
-    Obviously, the input and output tensors of such components must have the
-    same dimensions and sizes. Subclasses must call the ``super().__init__``
-    method with their instantiation (keyword) arguments.
-
-    Parameters
-    ----------
-    *args
-        Instantiation arguments.
-    **kwargs
-        Instantiation keyword arguments are also stored such that fresh, new,
-        independent copies can be created.
-
-    Attributes
-    ----------
-    args: tuple
-        The stored instantiation arguments needed to create fresh, new copies.
-    kwargs: dict
-        The stored instantiation keyword argument needed to create new copies.
+    The input and output tensors of such components must have the same
+    dimensions and sizes!
 
     """
 
@@ -43,9 +27,10 @@ class Block(Module, ABC):
         self.args = args
         self.kwargs = kwargs
 
+    @abstractmethod
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters."""
-        return self.__class__(*self.args, **self.kwargs)
+        ...
 
     @abstractmethod
     def reset_parameters(self) -> None:
@@ -83,10 +68,11 @@ class ActivatedBlock(Block):
             hidden_factor: int = 4,
             **kwargs: Any
     ) -> None:
-        super().__init__(mod_dim, activate, hidden_factor, **kwargs)
+        super().__init__()
         self.mod_dim = mod_dim
         self.activate = activate
         self.hidden_factor = hidden_factor
+        self.kwargs = kwargs
         self.widen = ptn.Linear(mod_dim, hidden_factor * mod_dim, **kwargs)
         self.shrink = ptn.Linear(hidden_factor * mod_dim, mod_dim, **kwargs)
 
@@ -110,6 +96,15 @@ class ActivatedBlock(Block):
         """Re-initialize the internal parameters of the linear projections."""
         self.widen.reset_parameters()
         self.shrink.reset_parameters()
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.mod_dim,
+            self.activate,
+            self.hidden_factor,
+            **self.kwargs
+        )
 
 
 class GatedBlock(Block):
@@ -140,9 +135,10 @@ class GatedBlock(Block):
             gate: Module | Functional = ptn.Sigmoid(),
             **kwargs: Any
     ) -> None:
-        super().__init__(mod_dim, gate, **kwargs)
+        super().__init__()
         self.mod_dim = mod_dim
         self.gate = gate
+        self.kwargs = kwargs
         self.widen = ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
@@ -165,6 +161,15 @@ class GatedBlock(Block):
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the linear projection."""
         self.widen.reset_parameters()
+
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.mod_dim,
+            self.gate,
+            **self.kwargs
+        )
 
 
 class GatedResidualBlock(Block):
@@ -223,7 +228,7 @@ class GatedResidualBlock(Block):
             drop: Drop = ptn.Dropout(0.0),
             **kwargs: Any
     ) -> None:
-        super().__init__(mod_dim, activate, gate, drop, **kwargs)
+        super().__init__()
         self.mod_dim = mod_dim
         self.activate = activate
         self.gate = gate
@@ -255,6 +260,16 @@ class GatedResidualBlock(Block):
         """Re-initialize the internal parameters of the linear projections."""
         self.project.reset_parameters()
         self.widen.reset_parameters()
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.mod_dim,
+            self.activate,
+            self.gate,
+            self.drop,
+            **self.kwargs
+        )
 
 
 class SkipConnection(Block):
@@ -290,10 +305,12 @@ class SkipConnection(Block):
             *args,
             **kwargs
     ) -> None:
-        super().__init__(block, drop, norm_cls, *args, **kwargs)
-        self.block = block.new()
+        super().__init__()
+        self.block = block
         self.drop = drop
         self.norm_cls: type[Module] = norm_cls
+        self.args = args
+        self.kwargs = kwargs
         self.norm = norm_cls(*args, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
@@ -317,8 +334,18 @@ class SkipConnection(Block):
         self.block.reset_parameters()
         self.norm.reset_parameters()
 
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.block.new(),
+            self.drop,
+            self.norm_cls,
+            *self.args,
+            **self.kwargs
+        )
 
-class Stack(Block):
+
+class Repeat(Block):
     """Repeat a skip-connection, distilling ever finer detail from your data.
 
     Parameters
@@ -331,7 +358,7 @@ class Stack(Block):
     """
 
     def __init__(self, skip: SkipConnection, n_layers: int = 2) -> None:
-        super().__init__(skip, n_layers)
+        super().__init__()
         self.skip = skip
         self.n_layers = n_layers
         self.sequence = ptn.Sequential(*[skip.new() for _ in self.layers])
@@ -361,3 +388,10 @@ class Stack(Block):
         """Re-initialize the internal parameters of all blocks."""
         for block in self.sequence:
             block.reset_parameters()
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.skip,
+            self.n_layers
+        )

@@ -26,6 +26,6 @@ blocks
    :show-inheritance:
 
 
-.. autoclass:: swak.pt.blocks.Stack
+.. autoclass:: swak.pt.blocks.Repeat
    :members:
    :show-inheritance:

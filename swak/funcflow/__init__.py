@@ -2,6 +2,7 @@ from .filter import Filter
 from .fork import Fork
 from .map import Map
 from .partial import Partial
+from .curry import Curry
 from .pipe import Pipe
 from .reduce import Reduce
 from .route import Route
@@ -16,6 +17,7 @@ __all__ = [
     'Fork',
     'Map',
     'Partial',
+    'Curry',
     'Pipe',
     'Reduce',
     'Route',

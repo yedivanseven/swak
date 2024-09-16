@@ -29,17 +29,23 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_norm_cls(self):
         self.assertIs(self.skip.norm_cls, Identity)
 
-    def test_has_norm(self):
-        self.assertTrue(hasattr(self.skip, 'norm'))
+    def test_has_args(self):
+        self.assertTrue(hasattr(self.skip, 'args'))
 
-    def test_norm(self):
-        self.assertIsInstance(self.skip.norm, Identity)
+    def test_args(self):
+        self.assertTupleEqual((), self.skip.args)
 
     def test_has_kwargs(self):
         self.assertTrue(hasattr(self.skip, 'kwargs'))
 
     def test_kwargs(self):
         self.assertDictEqual({}, self.skip.kwargs)
+
+    def test_has_norm(self):
+        self.assertTrue(hasattr(self.skip, 'norm'))
+
+    def test_norm(self):
+        self.assertIsInstance(self.skip.norm, Identity)
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.skip, 'reset_parameters'))
@@ -92,13 +98,16 @@ class TestAttributes(unittest.TestCase):
     def test_norm_cls(self):
         self.assertIs(self.skip.norm_cls, ptn.BatchNorm1d)
 
+    def test_args(self):
+        self.assertTupleEqual((4,), self.skip.args)
+
+    def test_kwargs(self):
+        self.assertDictEqual({'affine': False}, self.skip.kwargs)
+
     def test_norm(self):
         self.assertIsInstance(self.skip.norm, ptn.BatchNorm1d)
         self.assertEqual(4, self.skip.norm.num_features)
         self.assertFalse(self.skip.norm.affine)
-
-    def test_kwargs(self):
-        self.assertDictEqual({'affine': False}, self.skip.kwargs)
 
 
 class TestUsage(unittest.TestCase):

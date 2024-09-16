@@ -1,7 +1,9 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from pandas import DataFrame
 from torch import Tensor, dtype, device
 from torch.nn import Module, Dropout, AlphaDropout
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 
 type Functional = Callable[[Tensor], Tensor]
 type Tensors1T = tuple[Tensor]
@@ -12,6 +14,9 @@ type Tensors = tuple[Tensor, ...]
 type Dtype = dtype
 type Device = device
 type Drop = Dropout | AlphaDropout
+type Batch = tuple[Tensors, Tensor]
+type Batches = Iterator[Batch]
+
 
 __all__ = [
     'DataFrame',
@@ -25,5 +30,9 @@ __all__ = [
     'Tensors',
     'Dtype',
     'Device',
-    'Drop'
+    'Drop',
+    'Optimizer',
+    'LRScheduler',
+    'Batch',
+    'Batches'
 ]

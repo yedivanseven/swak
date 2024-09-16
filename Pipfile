@@ -26,6 +26,8 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 mkdocs = "*"
 mkdocstrings-python = "*"
+matplotlib = "*"
+ipympl = "*"
 
 [cloud]
 google-cloud-storage = "*"

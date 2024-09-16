@@ -3,10 +3,12 @@ from collections.abc import Callable
 from ..magic import ArgRepr
 
 
-class Partial[T](ArgRepr):
-    """Alternative implementation of ``functools.partial``.
+class Curry[T](ArgRepr):
+    """Alternative implementation of ``functools.partial`` with one difference.
 
-    Upon subclassing and/or instantiation, annotation with the (return) type of
+    Positional arguments given at instantiation are *appended* to those given
+    when instances are called (as opposed to the other way around). Upon
+    subclassing and/or instantiation, annotation with the (return) type of
     `call` is recommended.
 
     Parameters
@@ -37,7 +39,7 @@ class Partial[T](ArgRepr):
         Parameters
         ----------
         *args
-            Additional arguments are appended to cached arguments.
+            Additional arguments are prepended to cached arguments.
         **kwargs
             Additional keyword arguments are combined with cached keyword
             arguments, overriding them in case of conflict.
@@ -48,4 +50,4 @@ class Partial[T](ArgRepr):
             Whatever `call` returns.
 
         """
-        return self.call(*(*self.args, *args), **{**self.kwargs, **kwargs})
+        return self.call(*(*args, *self.args), **{**self.kwargs, **kwargs})
