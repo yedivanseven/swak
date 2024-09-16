@@ -6,9 +6,13 @@ from ...magic import ArgRepr
 class NoSchedule(ArgRepr):
     """Mock learning-rate scheduler that does not actually do anything.
 
+    This class is just a placeholder for an actual PyTorch learning-rate
+    scheduler. Any additional (keyword) arguments provided at instantiation
+    are ignored.
+
     Parameters
     ----------
-    optimizer
+    optimizer: Optimizer
         A PyTorch optimizer instance.
 
     """
@@ -16,14 +20,18 @@ class NoSchedule(ArgRepr):
     def __init__(
             self,
             optimizer: Optimizer,
-            *args: Any,
-            **kwargs: Any
+            *_: Any,
+            **__: Any
     ) -> None:
-        super().__init__(optimizer, *args, **kwargs)
+        super().__init__(optimizer)
         self.optimizer = optimizer
 
     def step(self, *args: Any, **kwargs: Any) -> None:
-        """Does not do anything, certainly not touching the learning rate."""
+        """Does not do anything, certainly not touching the learning rate.
+
+        Positional and/or keyword arguments can be provided, but are ignored.
+
+        """
 
     def get_last_lr(self) -> list[float]:
         """Returns the default learning rate of the optimizer."""

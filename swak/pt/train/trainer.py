@@ -113,7 +113,7 @@ class Trainer(ArgRepr):
             train: TrainDataBase,
             test: TestDataBase | None = None
     ) -> Module:
-        """Train and, optionally, evaluate a model on train (and test) data.
+        """Train and evaluate a model on train (and, optionally, test) data.
 
         Parameters
         ----------
