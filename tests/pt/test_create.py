@@ -168,13 +168,39 @@ class TestTo(unittest.TestCase):
     def test_target(self):
         self.assertIs(self.to.target, self.expected)
 
+    def test_has_default_args(self):
+        self.assertTrue(hasattr(self.to, 'args'))
+
+    def test_default_args(self):
+        self.assertTupleEqual((), self.to.args)
+
+    def test_custom_args(self):
+        to = To(self.expected, 'foo', 1)
+        self.assertTupleEqual(('foo', 1), to.args)
+
+    def test_has_default_kwargs(self):
+        self.assertTrue(hasattr(self.to, 'kwargs'))
+
+    def test_default_kwargs(self):
+        self.assertDictEqual({}, self.to.kwargs)
+
+    def test_custom_kwargs(self):
+        to = To(self.expected, foo=1, answer=42)
+        self.assertDictEqual({'foo': 1, 'answer': 42}, to.kwargs)
+
     def test_callable(self):
         self.assertTrue(callable(self.to))
 
-    def test_to_called(self):
+    def test_to_called_default(self):
         mock = Mock()
         _ = self.to(mock)
         mock.to.assert_called_once_with(self.expected)
+
+    def test_to_called_custom(self):
+        to = To(self.expected, 'foo', bar=1)
+        mock = Mock()
+        _ = to(mock)
+        mock.to.assert_called_once_with(self.expected, 'foo', bar=1)
 
     def test_return_value(self):
         mock = Mock()

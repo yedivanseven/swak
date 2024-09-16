@@ -127,17 +127,30 @@ def from_dataframe(df: DataFrame) -> Tensor:
 class To(ArgRepr):
     """Move or change a tensor or module to a different device or dtype.
 
+    Refer to the PyTorch `documentation <https://pytorch.org/docs/stable/
+    generated/torch.Tensor.to.html#torch.Tensor.to>`__ for more information.
+
     Parameters
     ----------
     target: device or dtype
         The device or dtype to move the tensor or module to.
-
+    *args
+        Additional argument to pass to the `to` method.
+    **kwargs
+        Additional keyword arguments to pass to the `to` method.
 
     """
 
-    def __init__(self, target: Device | Dtype) -> None:
-        super().__init__(target)
+    def __init__(
+            self,
+            target: Device | Dtype,
+            *args: Any,
+            **kwargs: Any
+    ) -> None:
+        super().__init__(target, *args, **kwargs)
         self.target = target
+        self.args = args
+        self.kwargs = kwargs
 
     @overload
     def __call__(self, inp: Tensor) -> Tensor:
@@ -153,7 +166,7 @@ class To(ArgRepr):
         Parameters
         ----------
         inp: Tensor or Module
-            The input tensor or device to move or change to the `target`.
+            The input tensor or module to move or change to the `target`.
 
         Returns
         -------
@@ -161,4 +174,4 @@ class To(ArgRepr):
             The `inp` moved or changed to the cached `target`.
 
         """
-        return inp.to(self.target)
+        return inp.to(self.target, *self.args, **self.kwargs)
