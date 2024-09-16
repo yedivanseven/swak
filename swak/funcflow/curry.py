@@ -20,6 +20,10 @@ class Curry[T](ArgRepr):
     **kwargs
         Any number of keyword arguments to call `call` with.
 
+    See Also
+    --------
+    Partial
+
     """
 
     def __init__(

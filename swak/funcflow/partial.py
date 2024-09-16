@@ -6,8 +6,9 @@ from ..magic import ArgRepr
 class Partial[T](ArgRepr):
     """Alternative implementation of ``functools.partial``.
 
-    Upon subclassing and/or instantiation, annotation with the (return) type of
-    `call` is recommended.
+    Positional arguments given when instances are called are *appended* to
+    those given at instantiation . Upon subclassing and/or instantiation,
+    annotation with the (return) type of `call` is recommended.
 
     Parameters
     ----------
@@ -17,6 +18,10 @@ class Partial[T](ArgRepr):
         Any number of arguments to call `call` with.
     **kwargs
         Any number of keyword arguments to call `call` with.
+
+    See Also
+    --------
+    Curry
 
     """
 
