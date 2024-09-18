@@ -1,4 +1,5 @@
 from typing import Any
+from torch.nn.modules.module import _IncompatibleKeys
 from ..types import Optimizer
 from ...magic import ArgRepr
 
@@ -36,3 +37,11 @@ class NoSchedule(ArgRepr):
     def get_last_lr(self) -> list[float]:
         """Returns the default learning rate of the optimizer."""
         return [self.optimizer.defaults['lr']]
+
+    def state_dict(self) -> dict[str, Any]:
+        """Because there is no state return an empty, ordered dictionary."""
+        return {}
+
+    def load_state_dict(self, *_: Any, **__: Any) -> _IncompatibleKeys:
+        """Do nothing, return the object thing as other methods of that type"""
+        return _IncompatibleKeys([], [])

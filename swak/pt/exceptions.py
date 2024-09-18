@@ -2,9 +2,9 @@ class LossError(Exception):
     pass
 
 
-class FeatureError(Exception):
+class EmbeddingError(Exception):
     pass
 
 
-class EmbeddingError(Exception):
+class TrainError(Exception):
     pass

@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import Mock
+from torch.nn.modules.module import _IncompatibleKeys
 from swak.pt.train.schedulers import NoSchedule
 
 
@@ -44,6 +45,28 @@ class TestNoSchedule(unittest.TestCase):
             self.schedule.step()
         actual = self.schedule.get_last_lr()
         self.assertListEqual([self.expected], actual)
+
+    def test_has_state_dict(self):
+        self.assertTrue(hasattr(self.schedule, 'state_dict'))
+
+    def test_state_dict(self):
+        self.assertTrue(callable(self.schedule.state_dict))
+
+    def test_call_state_dict(self):
+        actual = self.schedule.state_dict()
+        self.assertDictEqual({}, actual)
+
+    def test_has_load_state_dict(self):
+        self.assertTrue(hasattr(self.schedule, 'load_state_dict'))
+
+    def test_load_state_dict(self):
+        self.assertTrue(callable(self.schedule.load_state_dict))
+
+    def test_call_load_state_dict(self):
+        actual = self.schedule.load_state_dict('foo', 1, bar=2)
+        self.assertIsInstance(actual, _IncompatibleKeys)
+        self.assertListEqual([], actual.missing_keys)
+        self.assertListEqual([], actual.unexpected_keys)
 
 
 if __name__ == '__main__':

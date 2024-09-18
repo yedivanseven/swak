@@ -13,8 +13,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon'
 ]
-# Hack function sphinx.utils.typing.stringify_annotation to not use
-# the __origin__ attribute of ParamSpec and/or TypeVarTuple!
+
 autodoc_typehints = 'none'
 add_module_names = False
 

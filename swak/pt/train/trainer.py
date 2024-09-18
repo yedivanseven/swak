@@ -1,9 +1,16 @@
-import copy
 import torch as pt
 from ...magic import ArgRepr
-from ...funcflow import Curry, unit
+from ...funcflow import Curry
 from ..types import Module, Optimizer, LRScheduler
-from .callbacks import TrainCb, EpochCb
+from ..exceptions import TrainError
+from .callbacks import (
+    EpochCallback,
+    EpochPrinter,
+    TrainCallback,
+    TrainPrinter,
+    Checkpoint,
+    InMemory
+)
 from .schedulers import NoSchedule
 from .data import TestDataBase, TrainDataBase
 
@@ -30,7 +37,7 @@ class Trainer(ArgRepr):
         construct) that returns a fully configured learning-rate scheduler
         when called with a PyTorch optimizer. Defaults to never changing the
         learning rate at all.
-    delay: int, optional
+    warmup: int, optional
         Number of epochs to wait until the learning rate scheduler is used
         for the first time. Defaults to 0.
     patience: int, optional
@@ -39,8 +46,8 @@ class Trainer(ArgRepr):
         each epoch that improved the loss below its last minimum. If no
         improvement occurs for `patience` epochs, model training is stopped
         (even if `max_epochs` has not been reached yet) and the model is reset
-        to its best state. If `delay` > 0, then the early stopping gets active
-        only after `delay` epochs have passed.
+        to its best state. If `warmup` > 0, then the early stopping gets active
+        only after `warmup` epochs have passed.
     max_n: int, optional
         Maximum number of data points to take from the training (and,
         if present, test) data for computing the train (and, optional, test)
@@ -48,22 +55,41 @@ class Trainer(ArgRepr):
         consumption might momentarily spike if not set or set too large.
         Defaults to number of data points in test set if present or train set
         if not.
-    epoch_cb: EpochCb, optional
+    checkpoint: Checkpoint, optional
+        Whenever the train (or test) loss after an epoch is smaller than the
+        loss after the last, a new snapshot of the model state is saved by
+        calling the `save` method of the `checkpoint` instance.
+    epoch_cb: EpochCallback, optional
         Callback called after each epoch with epoch, train_loss, test_loss,
         and current learning rate. Defaults to no callback.
-    train_cb: TrainCb, optional
+    train_cb: TrainCallback, optional
         Callback called after training finished with last epoch, epoch with the
         best loss, the best loss itself, whether `max_epochs` was exhausted,
         and with the training history in the form of a dictionary of lists
         with train loss, test loss and learning rate.
 
+    Warnings
+    --------
+    optimizer
+        Because the (partial) optimizer will simply be completed with
+        ``model.parameters()``, parameter groups are not supported.
+    scheduler
+        Not all learning-rate schedulers are supported . Their ``step()``
+        method is called only once after each epoch, and it is called without
+        any arguments.
+    checkpoint
+        The default for storing the state of the best epoch so far is in
+        memory. Specifically, it is stored in the same memory that your model
+        lives in, meaning that, if you train in a GPU, the model will be in
+        GPU memory twice!
 
-    Notes
-    -----
-    Because the (partial) optimizer will simply be completed with
-    ``model.parameters()``, parameter groups are not supported. Also, not all
-    learning-rate schedulers are supported . Their ``step()`` method is called
-    only once after each epoch, and it is called without any arguments.
+    See Also
+    --------
+    Checkpoint
+    InMemory
+    EpochCallback
+    EpochPrinter
+    TrainPrinter
 
     """
 
@@ -74,104 +100,157 @@ class Trainer(ArgRepr):
             loss: Module,
             optimizer: Curry[Optimizer],
             scheduler: Curry[LRScheduler] = Curry[NoSchedule](NoSchedule),
-            delay: int = 0,
+            warmup: int = 0,
             patience: int | None = None,
             max_n: int = None,
-            epoch_cb: EpochCb = unit,
-            train_cb: TrainCb = unit
+            checkpoint: Checkpoint = InMemory(),
+            epoch_cb: EpochCallback = EpochPrinter(),
+            train_cb: TrainCallback = TrainPrinter()
     ) -> None:
         self.batch_size = batch_size
         self.max_epochs = max_epochs
         self.loss = loss
         self.optimizer = optimizer
         self.scheduler = scheduler
-        self.delay = delay
+        self.warmup = warmup
         self.patience = max_epochs if patience is None else patience
         self.max_n = max_n
+        self.checkpoint = checkpoint
         self.epoch_cb = epoch_cb
         self.train_cb = train_cb
         super().__init__(
             batch_size,
             max_epochs,
             loss,
-            max_n,
             optimizer,
             scheduler,
+            warmup,
             patience,
+            max_n,
+            checkpoint,
             epoch_cb,
+            train_cb
         )
         self.history = {'train_loss': [], 'test_loss': [], 'lr': []}
 
-    @property
-    def epochs(self) -> range:
-        """Iterator over epochs starting with 1 (instead of 0)."""
-        return range(1, self.max_epochs + 1)
-
-    def __call__(
+    def train(
             self,
             model: Module,
             train: TrainDataBase,
             test: TestDataBase | None = None
     ) -> Module:
-        """Train and evaluate a model on train (and, optionally, test) data.
+        """Train a fresh model from scratch, starting from a clean slate.
 
         Parameters
         ----------
         model: Module
-            PyTorch model to train.
+            PyTorch model to train. Must have a ``reset_parameters()`` method
+            that can be called without any parameters to re-initialize all
+            trainable model parameters and buffers. Must always return a tuple
+            of tensors. Even if you need just one tensor, you must make that
+            a 1-tuple of tensors.
         train: TrainDataBase
             Training data.
         test: TestDataBase, optional
-            Hold-out data to compute test loss for early stopping (if set up).
+            Hold-out data to compute test loss. If configured, early stopping
+            will track the `test` loss if `test` is given and the `train` loss
+            if it is not.
 
         Returns
         -------
         Module
             The trained Pytorch model.
 
+        Raises
+        ------
+        TrainError
+            If the `model` does not have a ``reset_parameters()`` method.
+
+        Warnings
+        --------
+        Model training is (re-)started from scratch every time this method is
+        called. The training history is erased, all internal model parameters
+        are reset to a pristine initial state, and previously saved checkpoints
+        are irrevocably deleted!
+
         """
+        self.checkpoint.reset_parameters()
+        self.history = {'train_loss': [], 'test_loss': [], 'lr': []}
+        try:
+            model.reset_parameters()
+        except AttributeError as error:
+            msg = 'Models must have a "reset_parameters()" method!"'
+            raise TrainError(msg) from error
+        return self.resume(model, train, test)
 
-        # Initialize training cycle.
-        optimizer = self.optimizer(model.parameters())
-        scheduler = self.scheduler(optimizer)
+    def resume(
+            self,
+            model: Module,
+            train: TrainDataBase,
+            test: TestDataBase | None = None
+    ) -> Module:
+        """Resume model training from the best epoch checkpointed so far.
 
+        Parameters
+        ----------
+        model: Module
+            PyTorch model to train. Must always return a tuple of tensors. Even
+            if you need just one tensor, you must make that a 1-tuple of
+            tensors.
+        train: TrainDataBase
+            Training data.
+        test: TestDataBase, optional
+            Hold-out data to compute test loss. If configured, early stopping
+            will track the `test` loss if `test` is given and the `train` loss
+            if it is not.
+
+        Returns
+        -------
+        Module
+            The trained Pytorch model.
+
+        Notes
+        -----
+        This is safe to use even if you have never trained your model before,
+        and you are starting from scratch.
+
+        """
         # How many data points to take for computing train (and test) loss.
         n = train.n if test is None else test.n
         self.max_n = n if self.max_n is None else self.max_n
         max_n = min(self.max_n, n)
 
+        # Initialize training cycle.
+        optimizer = self.optimizer(model.parameters())
+        scheduler = self.scheduler(optimizer)
+        epoch, best_loss = self.checkpoint.load(model, optimizer, scheduler)
+
         # Initialize counting and accumulation variables.
-        epoch = 0
-        best_loss = float('inf')
-        best_state = copy.deepcopy(model.state_dict())
-        best_epoch = 0
+        best_epoch = epoch
         n_wait = 1
         max_epochs_reached = False
 
-        # In case we re-use the trainer multiple times, re-initialize history.
-        self.history = {'train_loss': [], 'test_loss': [], 'lr': []}
-
         # Loop over epochs.
-        for epoch in self.epochs:
+        for epoch in range(epoch + 1, self.max_epochs + 1):
             # Train one epoch, looping over batches.
             model.train()
-            for features, targets in train(self.batch_size):
+            for features, target in train(self.batch_size):
                 optimizer.zero_grad()
                 predictions = model(*features)
-                loss = self.loss(*predictions, targets)
+                loss = self.loss(*predictions, target)
                 loss.backward()
                 optimizer.step()
 
             # Evaluate model on train and, potentially, test data.
             model.eval()
             with pt.no_grad():
-                features, targets = train.sample(max_n)
-                train_loss = self.loss(*model(*features), targets).item()
-                if test is not None:
-                    features, targets = test.sample(max_n)
-                    test_loss = self.loss(*model(*features), targets).item()
+                features, target = train.sample(max_n)
+                train_loss = self.loss(*model(*features), target).item()
+                if test is None:
+                    test_loss = float('nan')
                 else:
-                    test_loss = None
+                    features, target = test.sample(max_n)
+                    test_loss = self.loss(*model(*features), target).item()
 
             # Append epoch metrics to training history.
             current_lr = scheduler.get_last_lr()[0]
@@ -179,31 +258,45 @@ class Trainer(ArgRepr):
             self.history['test_loss'].append(test_loss)
             self.history['lr'].append(current_lr)
 
-            # Call callback with epoch metrics.
-            self.epoch_cb(epoch, train_loss, test_loss, current_lr)
+            # Call callback with epoch metrics and information.
+            self.epoch_cb(
+                epoch,
+                train_loss,
+                test_loss,
+                current_lr,
+                model,
+                features,
+                target
+            )
 
-            # Update the learning rate of the optimizer if delay is exhausted.
-            if epoch >= self.delay:
+            # Update the learning rate of the optimizer if warmup is exhausted.
+            if epoch >= self.warmup:
                 scheduler.step()
-
-                # After delaying, check if loss improved within our patience.
-                track_loss = train_loss if test_loss is None else test_loss
+                # After warm-up, check if loss improved within our patience.
+                track_loss = train_loss if test is None else test_loss
                 if track_loss < best_loss:
                     best_loss = track_loss
-                    best_state = copy.deepcopy(model.state_dict())
                     best_epoch = epoch
                     n_wait = 1
+                    self.checkpoint.save(
+                        best_epoch,
+                        best_loss,
+                        model,
+                        optimizer,
+                        scheduler
+                    )
                 elif n_wait < self.patience:
                     n_wait += 1
                 else:
-                    model.load_state_dict(best_state)
+                    self.checkpoint.load(model)
                     break
 
         # Did we exhaust the maximum number of epochs?
         else:
             max_epochs_reached = True
 
-        # Call callback on finished training.
+        # Call callbacks on finished training.
+        self.epoch_cb.close()
         self.train_cb(
             epoch,
             best_epoch,

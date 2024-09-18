@@ -37,8 +37,8 @@ class JsonObjects[T]:
     SchemaError
         If `item_type` is not a subclass of ``JsonObject``.
 
-    Notes
-    -----
+    Warnings
+    --------
     This class is rather heavy, so do not use it to, e.g., wrap JSON payloads
     in high-throughput low-latency web services!
 

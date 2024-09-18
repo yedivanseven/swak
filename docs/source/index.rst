@@ -16,6 +16,7 @@ Welcome to swak's documentation!
    pd
    cloud
    pt
+   misc
 
 
 Indices and tables

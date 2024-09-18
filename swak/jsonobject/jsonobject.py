@@ -220,8 +220,8 @@ class JsonObject(metaclass=SchemaMeta):
         If the dictionary values cannot be cast into the types specified in
         the schema.
 
-    Notes
-    -----
+    Warnings
+    --------
     This class is rather heavy, so do not use it to, e.g., wrap JSON payloads
     in high-throughput low-latency web services!
 
