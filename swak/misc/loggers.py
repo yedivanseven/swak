@@ -21,6 +21,15 @@ def get_stdout_logger(
     fmt: str, optional
         Format string for the log messages in ``str.format()`` format.
 
+    Notes
+    -----
+    To avoid creating and adding new Handler every time the same Logger is
+    requested, one of the existing StreamHandlers will be modified if there
+    are any. A new one will be created and added only if there aren't.
+    By consequence, requesting the same Logger multiple times with a different
+    `level` and/or a different `fmt` might change that Logger wherever it is
+    used.
+
     """
     # Get logger with the given name
     logger = logging.getLogger(name)
