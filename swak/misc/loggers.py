@@ -33,7 +33,7 @@ def get_stdout_logger(
     """
     # Get logger with the given name
     logger = logging.getLogger(name)
-    # The logging level can only be decreased but never increased
+    # Adjust the logger level so that messages from the handler get through
     logger.setLevel(max(min(level, logger.level), logging.DEBUG))
     # Prepare a formatter
     formatter = Formatter(fmt=fmt, style='{')

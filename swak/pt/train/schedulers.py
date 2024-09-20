@@ -3,6 +3,10 @@ from torch.nn.modules.module import _IncompatibleKeys
 from ..types import Optimizer
 from ...magic import ArgRepr
 
+__all__ = [
+    'NoSchedule'
+]
+
 
 class NoSchedule(ArgRepr):
     """Mock learning-rate scheduler that does not actually do anything.

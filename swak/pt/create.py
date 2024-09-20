@@ -32,7 +32,7 @@ class Create(ArgRepr):
     def __init__(
             self,
             dtype: Dtype | None = None,
-            device: Device | None = None,
+            device: Device | str | None = None,
             requires_grad: bool = False,
             pin_memory: bool = False
     ) -> None:
@@ -80,7 +80,7 @@ class AsTensor(ArgRepr):
     def __init__(
             self,
             dtype: Dtype | None = None,
-            device: Device | None = None
+            device: Device | str | None = None
     ) -> None:
         super().__init__(dtype, device)
         self.dtype = dtype
@@ -143,7 +143,7 @@ class To(ArgRepr):
 
     def __init__(
             self,
-            target: Device | Dtype,
+            target: str | Device | Dtype,
             *args: Any,
             **kwargs: Any
     ) -> None:

@@ -3,16 +3,12 @@ from ...magic import ArgRepr
 from ...funcflow import Curry
 from ..types import Module, Optimizer, LRScheduler
 from ..exceptions import TrainError
-from .callbacks import (
-    EpochCallback,
-    EpochPrinter,
-    TrainCallback,
-    TrainPrinter,
-    Checkpoint,
-    InMemory
-)
+from .callbacks import EpochCallback, EpochPrinter, TrainCallback, TrainPrinter
+from .checkpoints import Checkpoint, InMemory
 from .schedulers import NoSchedule
 from .data import TestDataBase, TrainDataBase
+
+__all__ = ['Trainer']
 
 
 class Trainer(ArgRepr):
@@ -58,15 +54,17 @@ class Trainer(ArgRepr):
     checkpoint: Checkpoint, optional
         Whenever the train (or test) loss after an epoch is smaller than the
         loss after the last, a new snapshot of the model state is saved by
-        calling the `save` method of the `checkpoint` instance.
+        calling the `save` method of the `checkpoint` instance. Defaults to
+        ``InMemory``.
     epoch_cb: EpochCallback, optional
         Callback called after each epoch with epoch, train_loss, test_loss,
-        and current learning rate. Defaults to no callback.
+        and current learning rate. Defaults to ``EpochPrinter``.
     train_cb: TrainCallback, optional
         Callback called after training finished with last epoch, epoch with the
         best loss, the best loss itself, whether `max_epochs` was exhausted,
         and with the training history in the form of a dictionary of lists
         with train loss, test loss and learning rate.
+        Defaults to ``TrainPrinter``.
 
     Warnings
     --------
@@ -77,15 +75,9 @@ class Trainer(ArgRepr):
         Not all learning-rate schedulers are supported . Their ``step()``
         method is called only once after each epoch, and it is called without
         any arguments.
-    checkpoint
-        The default for storing the state of the best epoch so far is in
-        memory. Specifically, it is stored in the same memory that your model
-        lives in, meaning that, if you train in a GPU, the model will be in
-        GPU memory twice!
 
     See Also
     --------
-    Checkpoint
     InMemory
     EpochCallback
     EpochPrinter
@@ -272,6 +264,7 @@ class Trainer(ArgRepr):
             # Update the learning rate of the optimizer if warmup is exhausted.
             if epoch >= self.warmup:
                 scheduler.step()
+
                 # After warm-up, check if loss improved within our patience.
                 track_loss = train_loss if test is None else test_loss
                 if track_loss < best_loss:
@@ -288,7 +281,7 @@ class Trainer(ArgRepr):
                 elif n_wait < self.patience:
                     n_wait += 1
                 else:
-                    self.checkpoint.load(model)
+                    self.checkpoint.load(model, optimizer, scheduler)
                     break
 
         # Did we exhaust the maximum number of epochs?

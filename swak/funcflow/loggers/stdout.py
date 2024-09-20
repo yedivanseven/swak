@@ -184,7 +184,7 @@ class StdOut(ArgRepr):
         """The specified Logger with one StreamHandler configured to specs."""
         # Get logger with the given name
         logger = logging.getLogger(self.name)
-        # The logging level can only be decreased but never increased
+        # Adjust the logger level so that messages from the handler get through
         logger.setLevel(max(min(self.level, logger.level), logging.DEBUG))
         # Get StreamHandlers to stdout
         handlers = self.__filtered(logger.handlers)

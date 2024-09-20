@@ -6,6 +6,18 @@ train
    :show-inheritance:
 
 
+.. autoclass:: swak.pt.train.InMemory
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+
+.. autoclass:: swak.pt.train.OnDisk
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+
 .. autoclass:: swak.pt.train.EpochPrinter
    :members:
    :special-members: __call__
@@ -17,14 +29,13 @@ train
    :special-members: __call__
    :show-inheritance:
 
-
-.. autoclass:: swak.pt.train.InMemory
+.. autoclass:: swak.pt.train.History
    :members:
    :show-inheritance:
-   :inherited-members:
 
 
-Base Classes
+
+Base classes
 ------------
 
 .. autoclass:: swak.pt.train.TestDataBase
@@ -41,9 +52,4 @@ Base Classes
 .. autoclass:: swak.pt.train.EpochCallback
    :members:
    :special-members: __call__
-   :show-inheritance:
-
-
-.. autoclass:: swak.pt.train.Checkpoint
-   :members:
    :show-inheritance:

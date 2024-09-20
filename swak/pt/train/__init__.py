@@ -1,20 +1,23 @@
 from .data import TestDataBase, TrainDataBase
 from .trainer import Trainer
+from .checkpoints import Checkpoint, InMemory, OnDisk, State
 from .callbacks import (
-    EpochCallback,
     EpochPrinter,
     TrainPrinter,
-    Checkpoint,
-    InMemory
+    EpochCallback,
+    History
 )
 
 __all__ = [
     'Trainer',
+    'InMemory',
+    'OnDisk',
     'EpochPrinter',
     'TrainPrinter',
-    'InMemory',
     'TrainDataBase',
     'TestDataBase',
+    'Checkpoint',
     'EpochCallback',
-    'Checkpoint'
+    'State',
+    'History'
 ]

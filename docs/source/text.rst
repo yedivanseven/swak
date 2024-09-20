@@ -1,9 +1,6 @@
 text
 ====
 
-Classes
--------
-
 .. autoclass:: swak.text.resource.TextResourceLoader
    :members:
    :special-members: __call__
