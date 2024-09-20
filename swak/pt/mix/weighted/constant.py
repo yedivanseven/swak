@@ -19,7 +19,7 @@ class ConstantSumMixer(Module):
     def __init__(self, n_features: int):
         super().__init__()
         self.n_features = n_features
-        self.register_buffer('coeffs', pt.tensor(1.0 / n_features), False)
+        self.register_buffer('coeffs', pt.tensor(1.0 / n_features))
 
     def importance(self, inp: Tensor) -> Tensor:
         """Constant feature weights in the normed sum over all features.
