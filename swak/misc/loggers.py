@@ -9,7 +9,7 @@ def get_stdout_logger(
         name: str,
         level: int = logging.DEBUG,
         fmt: str = DEFAULT_FMT
-) -> Logger
+) -> Logger:
     """Logger to stdout with at least one formatted StreamHandler.
 
     Parameters
