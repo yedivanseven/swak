@@ -13,17 +13,15 @@ __all__ = [
 ]
 
 
-# ToDo: Write unit tests
 class StateSaver(ArgRepr):
     """Save the state of a model to file.
 
     Parameters
     ----------
     path: str
-        Path (including file name) to save the stateful object's
-        ``state_dict()`` to. May include any number of string placeholders
-        (i.e., pairs of curly brackets) that will be interpolated when
-        instances are called.
+        Path (including file name) to save a model's ``state_dict()`` to.
+        May include any number of string placeholders (i.e., pairs of curly
+        brackets) that will be interpolated when instances are called.
 
     """
 
@@ -49,7 +47,7 @@ class StateSaver(ArgRepr):
             An empty tuple.
 
         """
-        file = self.path.format(*parts)
+        file = self.path.format(*parts).strip()
         pt.save(model.state_dict(), file)
         return ()
 
@@ -65,15 +63,16 @@ class StateLoader(ArgRepr):
         brackets) that will be interpolated when instances are called.
     map_location: str or Device, optional
         The device to load the state onto. Defaults to ``None`` which loads
-        to the PyTorch default device.
+        to the PyTorch device(s) that were saved with the model.
     merge: bool, optional
         Whether the loaded state should be merged into the state of the model
         (``True``) or replace its state (``False``). Defaults to ``True``.
     not_found: str, optional
         What to do if the specified file is not found. One of "ignore",
         "warn", or "raise" (use the ``NotFound`` enum to avoid typos).
-        Defaults to "raise", which is the only option where `merge` can be
-        ``True`` if no file is found, nothing can be merged.
+        Defaults to "raise". If set to "ignore" or "warn" and the specified
+        file is not found, `merge` is overridden to ``True``, thus returning
+        the unaltered model.
 
     See Also
     --------
@@ -91,8 +90,8 @@ class StateLoader(ArgRepr):
         self.path = str(Path(path.strip()).resolve())
         self.map_location = map_location
         self.merge = merge
-        self.not_found = not_found
-        super().__init__(self.path, map_location, merge, not_found)
+        self.not_found = not_found.strip().lower()
+        super().__init__(self.path, map_location, merge, self.not_found)
 
     def __call__(self, model: Module, *parts: str) -> Module:
         """Load the state of a model from file.
@@ -112,7 +111,7 @@ class StateLoader(ArgRepr):
             The `model` with its state restored.
 
         """
-        file = self.path.format(*parts)
+        file = self.path.format(*parts).strip()
         try:
             loaded = pt.load(file, self.map_location, weights_only=True)
             we_should_merge = self.merge
@@ -122,10 +121,10 @@ class StateLoader(ArgRepr):
                     msg = 'File {} not found!\nReturning empty state dict.'
                     warnings.warn(msg.format(file))
                     loaded = {}
-                    we_should_merge = False
+                    we_should_merge = True
                 case NotFound.IGNORE:
                     loaded = {}
-                    we_should_merge = False
+                    we_should_merge = True
                 case _:
                     raise error
         state = model.state_dict() | loaded if we_should_merge else loaded
@@ -150,7 +149,7 @@ class ModelSaver(ArgRepr):
         super().__init__(self.path)
 
     def __call__(self, model: Module, *parts: str) -> tuple[()]:
-        """Save a model, optimizer, or scheduler to file.
+        """Save a model to file.
 
         Parameters
         ----------
@@ -167,7 +166,7 @@ class ModelSaver(ArgRepr):
             An empty tuple.
 
         """
-        file = self.path.format(*parts)
+        file = self.path.format(*parts).strip()
         pt.save(model, file)
         return ()
 
@@ -214,5 +213,5 @@ class ModelLoader(ArgRepr):
 
         """
         path = '/' + path.strip(' /') if path.strip(' /') else ''
-        obj = pt.load(self.path + path, self.map_location, weights_only=True)
-        return obj.to(self.map_location) if hasattr(obj, 'to') else obj
+        model = pt.load(self.path + path, self.map_location, weights_only=True)
+        return model.to(self.map_location) if hasattr(model, 'to') else model

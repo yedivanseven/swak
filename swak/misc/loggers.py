@@ -4,7 +4,7 @@ from logging import Logger, Formatter, StreamHandler
 from ..funcflow.loggers import DEFAULT_FMT
 
 
-# ToDo: Write unit tests
+# ToDo: Rewrite as class (same as functools) and write unit tests
 def get_stdout_logger(
         name: str,
         level: int = logging.DEBUG,

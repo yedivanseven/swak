@@ -176,6 +176,8 @@ class InMemory(Checkpoint):
             for key, value in obj.items():
                 clone[key] = self._to_cpu(value)
             return clone
+        if isinstance(obj, list):
+            return [self._to_cpu(item) for item in obj]
         if isinstance(obj, Tensor):
             clone = pt.empty_like(obj, device='cpu').copy_(obj, True)
             clone.target = obj.device
@@ -183,12 +185,14 @@ class InMemory(Checkpoint):
         return obj
 
     def _to_device(self, obj: Any) -> Any:
-        """Recursively copy backup tensors back to their original devices."""
+        """Recursively copy backed-up tensors to their original devices."""
         if isinstance(obj, dict):
             clone = {}
             for key, value in obj.items():
                 clone[key] = self._to_device(value)
             return clone
+        if isinstance(obj, list):
+            return [self._to_device(item) for item in obj]
         if isinstance(obj, pt.Tensor):
             return pt.empty_like(obj, device=obj.target).copy_(obj, True)
         return obj
@@ -212,13 +216,13 @@ class OnDisk(Checkpoint):
 
     """
 
-    def __init__(self, path: str, overwrite: bool = True) -> None:
+    def __init__(self, path: str) -> None:
         super().__init__()
         self.path = str(Path(path.strip()).resolve())
         self.reset_parameters()
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self.path})'
+        return f"{self.__class__.__name__}('{self.path}')"
 
     def _save_state(self, state: State) -> None:
         """Save the combined state to file."""

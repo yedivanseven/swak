@@ -46,7 +46,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_not_found_value(self):
         load = TextResourceLoader('tests.text')
-        self.assertIs(load.not_found, NotFound.RAISE)
+        self.assertEqual('raise', load.not_found)
 
     def test_has_encoding(self):
         load = TextResourceLoader('tests.text')
@@ -81,7 +81,7 @@ class TestAttributes(unittest.TestCase):
 
     def test_not_found_value(self):
         load = TextResourceLoader('tests.text', 'base_dir', NotFound.WARN)
-        self.assertIs(load.not_found, NotFound.WARN)
+        self.assertEqual('warn', load.not_found)
 
     def test_encoding_type(self):
         load = TextResourceLoader('tests.text', encoding='foo')

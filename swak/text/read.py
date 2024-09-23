@@ -48,13 +48,13 @@ class TomlReader(ArgRepr):
             **kwargs: Any
     ) -> None:
         self.path = path.strip()
-        self.not_found = not_found
+        self.not_found = not_found.strip().lower()
         self.parse_float = parse_float
         if 'mode' in kwargs:
             self.kwargs = (kwargs.pop('mode'), kwargs)[1]
         else:
             self.kwargs = kwargs
-        super().__init__(self.path, str(not_found), parse_float, **self.kwargs)
+        super().__init__(self.path, self.not_found, parse_float, **self.kwargs)
 
     def __call__(self, path: str = '') -> Toml:
         """Read a specific TOML file.
@@ -127,13 +127,13 @@ class YamlReader(ArgRepr):
             **kwargs: Any
     ) -> None:
         self.path = path.strip()
-        self.not_found = not_found
+        self.not_found = not_found.strip().lower()
         self.loader = loader
         if 'mode' in kwargs:
             self.kwargs = (kwargs.pop('mode'), kwargs)[1]
         else:
             self.kwargs = kwargs
-        super().__init__(self.path, str(not_found), loader, **self.kwargs)
+        super().__init__(self.path, self.not_found, loader, **self.kwargs)
 
     def __call__(self, path: str = '') -> Yaml:
         """Read a specific YAML file.

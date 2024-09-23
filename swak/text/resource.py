@@ -39,12 +39,12 @@ class TextResourceLoader(ArgRepr):
     ) -> None:
         self.package = package.strip(' ./')
         self.path = path.strip(' /')
-        self.not_found = not_found
+        self.not_found = not_found.strip().lower()
         self.encoding = encoding.strip()
         super().__init__(
             self.package,
             self.path,
-            str(not_found),
+            self.not_found,
             self.encoding
         )
 

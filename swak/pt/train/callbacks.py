@@ -22,7 +22,6 @@ class History(TypedDict):
     lr: list[float]  #: List of learning rates.
 
 
-# ToDo: Write unit tests
 class EpochCallback(ABC):
     """Base class to inherit from when implementing custom epoch callbacks."""
 
@@ -87,8 +86,8 @@ class EpochPrinter(ArgRepr, EpochCallback):
     def __call__(
             self,
             epoch: int,
-            train_loss: int,
-            test_loss: int,
+            train_loss: float,
+            test_loss: float,
             learning_rate: float,
             model: Module,
             features: Tensors,
