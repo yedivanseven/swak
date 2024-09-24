@@ -13,7 +13,7 @@ DEFAULT_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name})'
 PID_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name} | PID-{process})'
 
 
-class StdOut(ArgRepr):
+class PassThroughStdOut(ArgRepr):
     """Pass-through Logger to stdout with at least one formatted StreamHandler.
 
     Parameters
@@ -28,7 +28,7 @@ class StdOut(ArgRepr):
     Notes
     -----
     To avoid creating and adding new Handler every time the same Logger is
-    requested, one of the existing StreamHandlers will be modified if there
+    requested, one of its existing StreamHandlers will be modified if there
     are any. A new one will be created and added only if there aren't.
     By consequence, requesting the same Logger multiple times with a different
     `level` and/or a different `fmt` might change that Logger wherever it is
@@ -63,7 +63,12 @@ class StdOut(ArgRepr):
 
         """
 
-        def __init__(self, parent: 'StdOut', level: int, msg: Message) -> None:
+        def __init__(
+                self,
+                parent: 'PassThroughStdOut',
+                level: int,
+                msg: Message
+        ) -> None:
             self.parent = parent
             self.level = level
             self.msg = msg
@@ -188,15 +193,16 @@ class StdOut(ArgRepr):
         logger.setLevel(max(min(self.level, logger.level), logging.DEBUG))
         # Get StreamHandlers to stdout
         handlers = self.__filtered(logger.handlers)
-        # If there is at least one, configure the first according to specs
-        if handlers:
-            self.__configure(handlers[0])
-        # If not, configure a new one and add it to the logger
-        else:
-            logger.addHandler(self.__configure(StreamHandler(sys.stdout)))
+        # Get the first matching handler if there is one or make a new one
+        handler = handlers[0] if handlers else StreamHandler(sys.stdout)
+        # Configure that handler according to specs
+        configured = self.__configure(handler)
+        # If the now configured handler was newly created, add it to the logger
+        if not handlers:
+            logger.addHandler(configured)
         return logger
 
-    def __filtered(self, handlers: list[Handler]) -> tuple[StreamHandler]:
+    def __filtered(self, handlers: list[Handler]) -> tuple[StreamHandler, ...]:
         """Filter the Logger's Handlers according to the filter criterion."""
         return tuple(filter(self.__is_stdout_streamhandler, handlers))
 

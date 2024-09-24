@@ -1,7 +1,7 @@
-from .stdout import StdOut, DEFAULT_FMT, PID_FMT
+from .stdout import PassThroughStdOut, DEFAULT_FMT, PID_FMT
 
 __all__ = [
-    'StdOut',
+    'PassThroughStdOut',
     'DEFAULT_FMT',
     'PID_FMT'
 ]

@@ -1,5 +1,8 @@
-from .loggers import get_stdout_logger
+from ..funcflow.loggers import DEFAULT_FMT, PID_FMT
+from .loggers import StdOutLogger
 
 __all__ = [
-    'get_stdout_logger'
+    'StdOutLogger',
+    'DEFAULT_FMT',
+    'PID_FMT'
 ]
