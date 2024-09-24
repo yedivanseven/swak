@@ -2,6 +2,7 @@ Welcome to swak's documentation!
 =================================
 *Swiss army knife for functional data-science projects.*
 
+
 .. toctree::
    :hidden:
    :maxdepth: 1
