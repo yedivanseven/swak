@@ -4,4 +4,4 @@ prune docs
 prune site
 prune .ruff_cache
 prune *.egg-info
-exclude .gitignore .python_version mkdocs.yml version.env
+exclude .gitignore .python_version version.env Pipfile Pipfile.lock
