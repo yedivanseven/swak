@@ -1,3 +1,6 @@
+[requires]
+python_version = "3.12"
+
 [[source]]
 url = "https://pypi.org/simple"
 verify_ssl = true
@@ -38,6 +41,3 @@ nvidia-pyindex = "*"
 nvidia-cuda-runtime-cu12 = "*"
 nvitop = "*"
 torch = {version="*", index="cuda"}
-
-[requires]
-python_version = "3.12"
