@@ -152,7 +152,7 @@ class TestUsage(unittest.TestCase):
 
     def test_logs_string_empty(self):
         log = self.logger.debug('msg')
-        with self.assertLogs(self.logger.logger, 10) as msg:
+        with self.assertLogs('default', 10) as msg:
             out = log()
         self.assertTupleEqual((), out)
         self.assertListEqual(['DEBUG:default:msg'], msg.output)
@@ -160,7 +160,7 @@ class TestUsage(unittest.TestCase):
     def test_logs_string_arg(self):
         log = self.logger.debug('msg')
         obj = object()
-        with self.assertLogs(self.logger.logger, 10) as msg:
+        with self.assertLogs('default', 10) as msg:
             out = log(obj)
         self.assertIs(obj, out)
         self.assertListEqual(['DEBUG:default:msg'], msg.output)
@@ -169,7 +169,7 @@ class TestUsage(unittest.TestCase):
         log = self.logger.debug('msg')
         obj_1 = object()
         obj_2 = object()
-        with self.assertLogs(self.logger.logger, 10) as msg:
+        with self.assertLogs('default', 10) as msg:
             out = log(obj_1, obj_2)
         self.assertTupleEqual((obj_1, obj_2), out)
         self.assertListEqual(['DEBUG:default:msg'], msg.output)
@@ -177,7 +177,7 @@ class TestUsage(unittest.TestCase):
     def test_logs_call_empty(self):
         mock = Mock(return_value='msg')
         log = self.logger.debug(mock)
-        with self.assertLogs(self.logger.logger, 10) as msg:
+        with self.assertLogs('default', 10) as msg:
             out = log()
         self.assertTupleEqual((), out)
         mock.assert_called_once_with()
@@ -187,7 +187,7 @@ class TestUsage(unittest.TestCase):
         mock = Mock(return_value='msg')
         log = self.logger.debug(mock)
         obj = object()
-        with self.assertLogs(self.logger.logger, 10) as msg:
+        with self.assertLogs('default', 10) as msg:
             out = log(obj)
         self.assertIs(obj, out)
         mock.assert_called_once_with(obj)
@@ -198,7 +198,7 @@ class TestUsage(unittest.TestCase):
         log = self.logger.debug(mock)
         obj_1 = object()
         obj_2 = object()
-        with self.assertLogs(self.logger.logger, 10) as msg:
+        with self.assertLogs('default', 10) as msg:
             out = log(obj_1, obj_2)
         self.assertTupleEqual((obj_1, obj_2), out)
         mock.assert_called_once_with(obj_1, obj_2)
@@ -210,32 +210,24 @@ class TestLogLevel(unittest.TestCase):
     def setUp(self):
         self.logger = PassThroughStdOut('default', 30, PID_FMT)
 
-    def test_debug_logs(self):
-        with self.assertLogs(self.logger.logger, 10):
-            _ = self.logger.debug('msg')()
-
     def test_debug_does_not_log(self):
-        with self.assertNoLogs(self.logger.logger, 30):
+        with self.assertNoLogs('default', 10):
             _ = self.logger.debug('msg')()
-
-    def test_info_logs(self):
-        with self.assertLogs(self.logger.logger, 20):
-            _ = self.logger.info('msg')()
 
     def test_info_does_not_log(self):
-        with self.assertNoLogs(self.logger.logger, 30):
+        with self.assertNoLogs('default', 30):
             _ = self.logger.info('msg')()
 
     def test_warning_logs(self):
-        with self.assertLogs(self.logger.logger, 30):
+        with self.assertLogs('default', 30):
             _ = self.logger.warning('msg')()
 
     def test_error_logs(self):
-        with self.assertLogs(self.logger.logger, 40):
+        with self.assertLogs('default', 40):
             _ = self.logger.error('msg')()
 
     def test_critical_logs(self):
-        with self.assertLogs(self.logger.logger, 50):
+        with self.assertLogs('default', 50):
             _ = self.logger.critical('msg')()
 
 
@@ -264,7 +256,7 @@ class TestMisc(unittest.TestCase):
     def test_string_pickle_works_after(self):
         logger = PassThroughStdOut('default')
         log = logger.debug('msg')
-        with self.assertLogs(logger.logger, 10):
+        with self.assertLogs('default', 10):
             _ = log()
         _ = pickle.dumps(logger)
         _ = pickle.dumps(log)
@@ -278,7 +270,7 @@ class TestMisc(unittest.TestCase):
     def test_call_pickle_works_after(self):
         logger = PassThroughStdOut('default')
         log = logger.debug(f)
-        with self.assertLogs(logger.logger, 10):
+        with self.assertLogs('default', 10):
             _ = log()
         _ = pickle.dumps(logger)
         _ = pickle.dumps(log)

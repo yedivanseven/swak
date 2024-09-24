@@ -123,32 +123,32 @@ class TestUsage(unittest.TestCase):
         self.logger = StdOutLogger('default')
 
     def test_log_returns_empty_tuple(self):
-        with self.assertLogs(self.logger.logger, 10):
+        with self.assertLogs('default', 10):
             actual = self.logger.log(10, 'msg')
             self.assertTupleEqual((), actual)
 
     def test_debug_returns_empty_tuple(self):
-        with self.assertLogs(self.logger.logger, 10):
+        with self.assertLogs('default', 10):
             actual = self.logger.debug('msg')
             self.assertTupleEqual((), actual)
 
     def test_info_returns_empty_tuple(self):
-        with self.assertLogs(self.logger.logger, 20):
+        with self.assertLogs('default', 20):
             actual = self.logger.info('msg')
             self.assertTupleEqual((), actual)
 
     def test_warning_returns_empty_tuple(self):
-        with self.assertLogs(self.logger.logger, 30):
+        with self.assertLogs('default', 30):
             actual = self.logger.warning('msg')
             self.assertTupleEqual((), actual)
 
     def test_error_returns_empty_tuple(self):
-        with self.assertLogs(self.logger.logger, 40):
+        with self.assertLogs('default', 40):
             actual = self.logger.error('msg')
             self.assertTupleEqual((), actual)
 
     def test_critical_returns_empty_tuple(self):
-        with self.assertLogs(self.logger.logger, 50):
+        with self.assertLogs('default', 50):
             actual = self.logger.critical('msg')
             self.assertTupleEqual((), actual)
 
@@ -158,32 +158,24 @@ class TestLogLevel(unittest.TestCase):
     def setUp(self):
         self.logger = StdOutLogger('default', 30, PID_FMT)
 
-    def test_debug_logs(self):
-        with self.assertLogs(self.logger.logger, 10):
-            _ = self.logger.debug('msg')
-
     def test_debug_does_not_log(self):
-        with self.assertNoLogs(self.logger.logger, 30):
+        with self.assertNoLogs('default', 10):
             _ = self.logger.debug('msg')
-
-    def test_info_logs(self):
-        with self.assertLogs(self.logger.logger, 20):
-            _ = self.logger.info('msg')
 
     def test_info_does_not_log(self):
-        with self.assertNoLogs(self.logger.logger, 30):
+        with self.assertNoLogs('default', 20):
             _ = self.logger.info('msg')
 
     def test_warning_logs(self):
-        with self.assertLogs(self.logger.logger, 30):
+        with self.assertLogs('default', 30):
             _ = self.logger.warning('msg')
 
     def test_error_logs(self):
-        with self.assertLogs(self.logger.logger, 40):
+        with self.assertLogs('default', 40):
             _ = self.logger.error('msg')
 
     def test_critical_logs(self):
-        with self.assertLogs(self.logger.logger, 50):
+        with self.assertLogs('default', 50):
             _ = self.logger.critical('msg')
 
 

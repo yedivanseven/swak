@@ -6,7 +6,6 @@ from ..magic import ArgRepr
 from ..funcflow.loggers import DEFAULT_FMT
 
 
-# ToDo: Write unit tests
 class StdOutLogger(ArgRepr):
     """Logger to stdout with at least one formatted StreamHandler.
 
@@ -19,14 +18,13 @@ class StdOutLogger(ArgRepr):
     fmt: str, optional
         Format string for the log messages in ``str.format()`` format.
 
-    Notes
-    -----
+    Warnings
+    --------
     To avoid creating and adding new Handler every time the same Logger is
     requested, one of its existing StreamHandlers will be modified if there
     are any. A new one will be created and added only if there aren't.
     By consequence, requesting the same Logger multiple times with a different
-    `level` and/or a different `fmt` might change that Logger wherever it is
-    used.
+    `level` and/or a different `fmt` might change that Logger globally.
 
     """
     def __init__(
@@ -145,7 +143,7 @@ class StdOutLogger(ArgRepr):
         # Get logger with the given name
         logger = logging.getLogger(self.name)
         # Adjust the logger level so that messages from the handler get through
-        logger.setLevel(max(min(self.level, logger.level), logging.DEBUG))
+        logger.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
         # Get StreamHandlers to stdout
         handlers = self.__filtered(logger.handlers)
         # Get the first matching handler if there is one or make a new one
@@ -170,8 +168,8 @@ class StdOutLogger(ArgRepr):
 
     def __configure(self, handler: StreamHandler) -> StreamHandler:
         """Configure the selected StreamHandler to stdout."""
-        # The logging level can only be decreased but never increased
-        handler.setLevel(max(min(self.level, handler.level), logging.DEBUG))
+        # Set the level of the handler
+        handler.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
         # Set the configured formatter
         handler.setFormatter(self.__formatter)
         return handler
