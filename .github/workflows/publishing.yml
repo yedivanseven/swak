@@ -1,8 +1,11 @@
 name: Publishing
 
 on:
-  release:
-    types: [published]
+#   release:
+#     types: [published]
+  pull_request:
+    branches:
+      - feature/add_publishing_to_pypi/cmayrhofer
 
 jobs:
   publish-package:
