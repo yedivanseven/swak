@@ -11,6 +11,9 @@ PID_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name} | PID-{process})'
 class StdOutLogger(ArgRepr):
     """Wrapped logger to stdout with at least one formatted StreamHandler.
 
+    The instantiation of the actual, underlying Logger is delayed until it is
+    first needed to facilitate usage in multiprocessing scenarios.
+
     Parameters
     ----------
     name: str
