@@ -22,7 +22,7 @@ jobs:
         run: uv sync --all-extras --dev --frozen
 
       - name: Run lint
-        run: uv run ruff check
+        run: uv run ruff check --verbose
 
       - name: Run tests
         run: uv run pytest tests
