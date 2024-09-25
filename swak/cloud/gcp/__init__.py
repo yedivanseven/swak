@@ -1,3 +1,10 @@
+"""Tools to interact with elements of the Google Cloud Project (GCP).
+
+Specifically, data scientists tend to interact mostly with Google's BigQuery
+(BQ) data-warehouse solution and the Google Cloud Storage (GCS).
+
+"""
+
 from .dataset import Collation, Rounding, Billing, GbqDataset
 from .bucket import Storage, GcsBucket
 from .query import GbqQuery

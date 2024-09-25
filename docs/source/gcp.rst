@@ -1,6 +1,9 @@
 gcp
 ===
 
+.. automodule:: swak.cloud.gcp
+
+
 .. autoclass:: swak.cloud.gcp.GbqDataset
    :members:
    :special-members: __call__

@@ -1,6 +1,9 @@
 embed
 =====
 
+.. automodule:: swak.pt.embed
+
+
 .. autoclass:: swak.pt.embed.ActivatedEmbedder
    :members:
    :show-inheritance:

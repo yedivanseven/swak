@@ -1,6 +1,9 @@
 losses
 ======
 
+.. automodule:: swak.pt.losses
+
+
 .. autoclass:: swak.pt.losses.Reduction
    :show-inheritance:
 

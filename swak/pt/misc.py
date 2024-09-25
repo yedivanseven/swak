@@ -1,3 +1,5 @@
+"""Convenient classes (and functions) that do not fit any other category."""
+
 from typing import Any, Self
 import torch.nn as ptn
 from .types import Tensor, Module, Tensors, Tensors2T
@@ -61,7 +63,7 @@ class Identity(Module):
         """Does nothing because there are no internal parameters to reset."""
 
     def new(self, *_, **__) -> Self:
-        """Return a fresh. new instance.
+        """Return a fresh, new instance.
 
         Providing any number of (keyword) arguments is permitted, but they will
         be ignored.
@@ -76,7 +78,7 @@ class Identity(Module):
 
 
 class Finalizer(Module):
-    """Extract one or more numbers in the final layer of a neural network.
+    """Extract one or more numbers from the final layer of a neural network.
 
     Instances of this class serve as a convenient final layer in any neural
     network, no matter if it is for regression, for classification, for

@@ -1,6 +1,9 @@
 misc
 ====
 
+.. automodule:: swak.pt.misc
+
+
 .. autofunction:: swak.pt.misc.identity
 
 

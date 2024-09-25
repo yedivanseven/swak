@@ -7,6 +7,7 @@ jsonobject
 
    fields
 
+
 .. automodule:: swak.jsonobject
    :members:
    :special-members: __call__
