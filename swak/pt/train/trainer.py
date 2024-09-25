@@ -138,9 +138,7 @@ class Trainer(ArgRepr):
         model: Module
             PyTorch model to train. Must have a ``reset_parameters()`` method
             that can be called without any parameters to re-initialize all
-            trainable model parameters and buffers. Must always return a tuple
-            of tensors. Even if you need just one tensor, you must make that
-            a 1-tuple of tensors.
+            trainable model parameters and buffers.
         train: TrainDataBase
             Training data.
         test: TestDataBase, optional
@@ -157,6 +155,12 @@ class Trainer(ArgRepr):
         ------
         TrainError
             If the `model` does not have a ``reset_parameters()`` method.
+
+        Important
+        ---------
+        The `model` to train must always return a *tuple* of tensors, not just
+        a single tensor. If it produces only one tensor, return it as a 1-tuple
+        of tensors.
 
         Warnings
         --------
@@ -186,9 +190,7 @@ class Trainer(ArgRepr):
         Parameters
         ----------
         model: Module
-            PyTorch model to train. Must always return a tuple of tensors. Even
-            if you need just one tensor, you must make that a 1-tuple of
-            tensors.
+            PyTorch model to train.
         train: TrainDataBase
             Training data.
         test: TestDataBase, optional
@@ -205,6 +207,12 @@ class Trainer(ArgRepr):
         -----
         This is safe to use even if you have never trained your model before,
         and you are starting from scratch.
+
+        Important
+        ---------
+        The `model` to train must always return a *tuple* of tensors, not just
+        a single tensor. If it produces only one tensor, return it as a 1-tuple
+        of tensors.
 
         """
         # How many data points to take for computing train (and test) loss.

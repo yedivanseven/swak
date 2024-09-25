@@ -1,3 +1,5 @@
+"""Thread- and process-parallel versions for elements of your workflow."""
+
 from .threadmap import ThreadMap
 from .threadfork import ThreadFork
 from .processmap import ProcessMap

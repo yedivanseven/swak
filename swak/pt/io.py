@@ -1,3 +1,5 @@
+"""Save and load (the state of) PyTorch models to and from disk."""
+
 import warnings
 import torch as pt
 from pathlib import Path

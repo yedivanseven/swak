@@ -1,3 +1,12 @@
+"""Flexible and composable building blocks for constructing neural-networks.
+
+After features are embedded and combined, it is time to extract as much
+information as possible to predict the desired target. One way of doing this
+systematically is to repeat layers of identical internal architecture with
+residual (or skip) connections between them.
+
+"""
+
 from typing import Any, Self
 from abc import ABC, abstractmethod
 import torch.nn as ptn

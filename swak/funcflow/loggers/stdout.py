@@ -16,6 +16,9 @@ PID_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name} | PID-{process})'
 class PassThroughStdOut(ArgRepr):
     """Pass-through Logger to stdout with at least one formatted StreamHandler.
 
+    The instantiation of the actual, underlying Logger is delayed until it is
+    first needed to facilitate usage in multiprocessing scenarios.
+
     Parameters
     ----------
     name: str
@@ -54,11 +57,11 @@ class PassThroughStdOut(ArgRepr):
 
         See Also
         --------
-        StdOut.debug
-        StdOut.info
-        StdOut.warning
-        StdOut.error
-        StdOut.critical
+        PassThroughStdOut.debug
+        PassThroughStdOut.info
+        PassThroughStdOut.warning
+        PassThroughStdOut.error
+        PassThroughStdOut.critical
 
         """
 

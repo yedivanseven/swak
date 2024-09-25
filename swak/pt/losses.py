@@ -1,3 +1,13 @@
+"""Custom loss functions not (yet) shipped with PyTorch  out of the box.
+
+Especially when networks should make probabilistic predictions, that is, when
+they are set up to predict the parameters of an analytical probability mass or
+density function instead of just an expectation value, special loss functions
+are required that implement the negative log-likelihood of the matching
+probability distribution.
+
+"""
+
 from enum import StrEnum
 import math
 import torch as pt

@@ -1,3 +1,14 @@
+"""PyTorch probability distributions re-parameterized for convenience.
+
+The output of networks designed to provide probabilistic predictions becomes
+much more interpretable when they predict the mean and the standard deviation
+of some probability distribution rather than its (often arcance) natural
+parameters. To that end, this module provides re-parameterized versions
+of probability distributions to match the parameterization of the respective
+log-likelihoods implemented as loss functions.
+
+"""
+
 import torch.distributions as ptd
 from .types import Tensor
 
@@ -19,6 +30,10 @@ class MuSigmaGamma(ptd.Gamma):
     validate_args: bool, optional
         Whether the parent class should validate the transformed parameters
         or not. Defaults to ``False``
+
+    See Also
+    --------
+    swak.pt.losses.GammaLoss
 
     """
 

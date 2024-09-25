@@ -1,6 +1,9 @@
 text
 ====
 
+.. automodule:: swak.text
+
+
 .. autoclass:: swak.text.resource.TextResourceLoader
    :members:
    :special-members: __call__
@@ -36,9 +39,6 @@ text
    :special-members: __call__
    :show-inheritance:
 
-
-Enums
------
 
 .. autoclass:: swak.text.misc.NotFound
    :show-inheritance:

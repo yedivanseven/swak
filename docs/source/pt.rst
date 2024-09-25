@@ -1,6 +1,9 @@
 pt
 ==
 
+.. automodule:: swak.pt
+
+
 .. toctree::
    :maxdepth: 1
    :caption: Subpackages

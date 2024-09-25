@@ -1,6 +1,9 @@
 blocks
 ======
 
+.. automodule:: swak.pt.blocks
+
+
 .. autoclass:: swak.pt.blocks.Block
    :members:
    :show-inheritance:

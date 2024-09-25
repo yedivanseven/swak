@@ -1,3 +1,5 @@
+"""Create tensors from other array-like data, and change device and type."""
+
 from typing import Any, overload
 import torch as pt
 from ..misc import ArgRepr

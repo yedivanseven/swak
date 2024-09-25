@@ -1,6 +1,9 @@
 train
 =====
 
+.. automodule:: swak.pt.train
+
+
 .. autoclass:: swak.pt.train.Trainer
    :members:
    :show-inheritance:
@@ -45,6 +48,7 @@ Base classes
 
 .. autoclass:: swak.pt.train.TrainDataBase
    :members:
+   :inherited-members: n, sample
    :special-members: __call__
    :show-inheritance:
 
