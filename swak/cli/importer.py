@@ -1,5 +1,5 @@
 from importlib import import_module
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 from .exceptions import ImporterError
 
 

@@ -1,7 +1,7 @@
 import warnings
 import torch as pt
 from pathlib import Path
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 from ..text import NotFound
 from .types import Module, Device
 

@@ -2,13 +2,14 @@ from operator import itemgetter
 from typing import Self
 from collections.abc import Hashable, Mapping, Callable, Iterator, Iterable
 from functools import singledispatchmethod
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 
 
 class ValuesGetter[T](ArgRepr):
-    """Extract the sequence of dictionary values according to the given `keys`.
+    """Extract a sequence of dictionary values according to the given `keys`.
 
-    Generic type annotation with the (return) type of `wrapper` is recommended.
+    Instances behave like sequences of these `keys` and can be interacted with
+    accortdingly (e.g., one can index, slice, or reverse instances).
 
     Parameters
     ----------
@@ -26,6 +27,16 @@ class ValuesGetter[T](ArgRepr):
     ------
     TypeError
         If (any of) `key` or any of `keys` are not, in fact, hashable.
+
+    Notes
+    -----
+    Generic type annotation with the (return) type of `wrapper` is recommended.
+
+    Examples
+    --------
+    >>> get_values = ValuesGetter('name', 'age')
+    >>> get_values({'name': 'John', 'weight': 82, 'age': 32})
+    ['John', 32]
 
     """
 

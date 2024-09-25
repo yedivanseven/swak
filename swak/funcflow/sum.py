@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 from .exceptions import SumError
 
 

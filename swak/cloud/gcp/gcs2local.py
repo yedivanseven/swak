@@ -4,7 +4,7 @@ from typing import Any
 from pathlib import Path
 import shutil
 from google.cloud import storage as gcs
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 
 class GcsDir2LocalDir(ArgRepr):

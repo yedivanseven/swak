@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Any, Literal
 from google.cloud.storage import Client, Bucket
 from google.api_core.retry import Retry
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 type StorageType = Literal['STANDARD', 'NEARLINE', 'COLDLINE', 'ARCHIVE']
 

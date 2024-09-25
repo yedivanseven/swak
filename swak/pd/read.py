@@ -2,7 +2,7 @@ from typing import Any
 from pathlib import Path
 import pandas as pd
 from pandas import DataFrame
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 
 
 class ParquetReader(ArgRepr):

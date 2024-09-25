@@ -5,7 +5,7 @@ from typing import Any
 from google.cloud import bigquery as gbq
 from google.cloud import storage as gcs
 from .exceptions import GbqError
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 
 class GbqQuery2GcsParquet(ArgRepr):

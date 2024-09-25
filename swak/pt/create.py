@@ -1,6 +1,6 @@
 from typing import Any, overload
 import torch as pt
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 from .types import Tensor, Module, Dtype, Device, DataFrame
 
 __all__ = [

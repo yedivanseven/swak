@@ -1,7 +1,7 @@
 from typing import Any
 from torch.nn.modules.module import _IncompatibleKeys
 from ..types import Optimizer
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 __all__ = [
     'NoSchedule'

@@ -1,7 +1,7 @@
 from typing import TypedDict
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 from ..types import Tensor, Tensors, Module
 
 __all__ = [

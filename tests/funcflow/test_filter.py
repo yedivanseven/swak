@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import Mock
 from swak.funcflow import Filter
 from swak.funcflow.exceptions import FilterError
-from swak.magic import ArgRepr, IndentRepr
+from swak.misc import ArgRepr, IndentRepr
 
 
 def g(x: int) -> bool:

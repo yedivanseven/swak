@@ -8,7 +8,6 @@ Welcome to swak's documentation!
    :maxdepth: 1
    :caption: API Reference
 
-   magic
    dictionary
    funcflow
    text

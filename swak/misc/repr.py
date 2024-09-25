@@ -59,6 +59,21 @@ class IndentRepr(ReprName):
         Additional keyword arguments to appear in the class instantiation
         signature in the first line of the representation.
 
+    Examples
+    --------
+    >>> class Fancy(IndentRepr):
+    ...     def __init__(self, foo, *args, **kwargs) -> None:
+    ...         super().__init__(args, foo, **kwargs)
+    ...
+    >>> Fancy('bar', 1, 2, Fancy('baz', 3, 4), 5, answer=42)
+    Fancy('bar', answer=42):
+    [ 0] 1
+    [ 1] 2
+    [ 2] Fancy('baz'):
+         [ 0] 3
+         [ 1] 4
+    [ 3] 5
+
     """
 
     def __init__(
@@ -110,6 +125,15 @@ class ArgRepr(ReprName):
     **kwargs
         Appear as keyword arguments within parentheses in the child
         representation after its class name and arguments.
+
+    Examples
+    --------
+    >>> class Pretty(ArgRepr):
+    ...     def __init__(self, foo, answer):
+    ...         super().__init__(foo, answer=answer)
+    ...
+    >>> Pretty('good', 42)
+    Pretty('good', answer=42)
 
     """
 

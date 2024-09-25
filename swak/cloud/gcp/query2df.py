@@ -1,7 +1,7 @@
 from typing import Any
 import pandas_gbq as pq
 from pandas import DataFrame
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 
 class GbqQuery2DataFrame(ArgRepr):

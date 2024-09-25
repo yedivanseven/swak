@@ -1,7 +1,7 @@
 from typing import Any, Self
 from collections.abc import Iterator, Callable, Iterable
 from functools import singledispatchmethod
-from ..magic import IndentRepr
+from ..misc import IndentRepr
 from .exceptions import PipeError
 
 type Call = type | Callable[..., Any]

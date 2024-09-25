@@ -2,7 +2,7 @@ import unittest
 import pickle
 from unittest.mock import Mock
 from swak.funcflow import Safe, SafeError
-from swak.magic import ArgRepr, IndentRepr
+from swak.misc import ArgRepr, IndentRepr
 
 
 def f(x, y):

@@ -1,6 +1,6 @@
 import unittest
 import pickle
-from swak.magic import IndentRepr, ArgRepr
+from swak.misc import IndentRepr, ArgRepr
 
 
 def f():

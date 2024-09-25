@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import Mock
 from swak.funcflow import Fork
 from swak.funcflow.exceptions import ForkError
-from swak.magic import ArgRepr, IndentRepr
+from swak.misc import ArgRepr, IndentRepr
 
 
 def f():

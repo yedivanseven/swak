@@ -3,7 +3,7 @@ import json
 from json import JSONDecodeError
 from ast import literal_eval
 from typing import Any
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 
 
 class EnvParser(ArgRepr):

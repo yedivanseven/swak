@@ -1,6 +1,6 @@
 from typing import Any
 from collections.abc import Callable
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 
 
 class Partial[T](ArgRepr):

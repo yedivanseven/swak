@@ -1,7 +1,7 @@
 import time
 from typing import Any
 from google.cloud.bigquery import Client, QueryJobConfig
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 from .exceptions import GbqError
 
 

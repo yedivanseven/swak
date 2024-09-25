@@ -1,7 +1,7 @@
 import pkgutil
 import warnings
 
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 from .misc import NotFound
 
 

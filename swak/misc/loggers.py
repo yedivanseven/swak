@@ -2,12 +2,14 @@ import sys
 import logging
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
-from ..magic import ArgRepr
-from ..funcflow.loggers import DEFAULT_FMT
+from .repr import ArgRepr
+
+DEFAULT_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name})'
+PID_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name} | PID-{process})'
 
 
 class StdOutLogger(ArgRepr):
-    """Logger to stdout with at least one formatted StreamHandler.
+    """Wrapped logger to stdout with at least one formatted StreamHandler.
 
     Parameters
     ----------

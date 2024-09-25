@@ -1,7 +1,7 @@
 from typing import Any
 from collections.abc import Iterable, Callable
 from concurrent.futures import ProcessPoolExecutor
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 from ..exceptions import MapError
 
 

@@ -4,7 +4,7 @@ from typing import ParamSpec
 from collections.abc import Callable
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 P = ParamSpec('P')
 type Message = str | Callable[P, str]

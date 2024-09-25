@@ -3,8 +3,8 @@ from collections.abc import Hashable, Iterable, Callable
 from numpy import dtype, ndarray
 from pandas.core.dtypes.base import ExtensionDtype
 from pandas import DataFrame, Series
-from ..magic.repr import ReprName
-from ..magic import ArgRepr
+from ..misc.repr import ReprName
+from ..misc import ArgRepr
 
 type Type = str | type | dtype | ExtensionDtype
 type Types = dict[Hashable, Type]

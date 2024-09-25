@@ -1,5 +1,5 @@
 import torch as pt
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 from ...funcflow import Curry
 from ..types import Module, Optimizer, LRScheduler
 from ..exceptions import TrainError

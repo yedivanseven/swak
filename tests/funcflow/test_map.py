@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import Mock
 from swak.funcflow import Map
 from swak.funcflow.exceptions import MapError
-from swak.magic import ArgRepr, IndentRepr
+from swak.misc import ArgRepr, IndentRepr
 
 
 def plus_2(x: int) -> int:

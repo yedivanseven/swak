@@ -2,7 +2,7 @@ import unittest
 import pickle
 from swak.funcflow import Sum
 from swak.funcflow.exceptions import SumError
-from swak.magic import ArgRepr, IndentRepr
+from swak.misc import ArgRepr, IndentRepr
 
 
 class A(ArgRepr):

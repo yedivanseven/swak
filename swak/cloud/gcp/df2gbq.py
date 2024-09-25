@@ -3,7 +3,7 @@ from enum import StrEnum
 import pandas_gbq as pq
 from pandas import DataFrame
 from .exceptions import GbqError
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 
 class IfExists(StrEnum):

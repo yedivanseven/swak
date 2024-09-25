@@ -1,7 +1,7 @@
 from typing import Any
 import yaml
 from yaml import Loader
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 
 type Yaml = dict[str, Any] | list[Any]
 

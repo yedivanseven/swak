@@ -5,7 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 import yaml
 from yaml import Loader
-from ..magic import ArgRepr
+from ..misc import ArgRepr
 from .misc import NotFound
 
 type Toml = dict[str, Any]

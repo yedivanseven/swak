@@ -4,7 +4,7 @@ from typing import Any
 from pandas import DataFrame
 import pandas as pd
 from google.cloud import storage as gcs
-from ...magic import ArgRepr
+from ...misc import ArgRepr
 
 
 class GcsParquet2DataFrame(ArgRepr):
