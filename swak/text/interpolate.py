@@ -21,7 +21,7 @@ class TemplateRenderer:
     """Substitute bash-style "${key}" placeholders in a template string.
 
     This is a light wrapper around the standard library's ``string.Template``,
-    calling its method `safe_substitute` upon instantiation and its method
+    calling its method ``safe_substitute`` upon instantiation and its method
     ``substitute`` when calling the (callable) instance. At first, not all keys
     need to be provided, but when the object is called and the substitution
     is finalized, all keys must have been provided.

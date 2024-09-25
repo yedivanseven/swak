@@ -1,6 +1,9 @@
 misc
 =====
 
+.. automodule:: swak.misc
+
+
 .. autoclass:: swak.misc.StdOutLogger
    :members:
    :show-inheritance:
