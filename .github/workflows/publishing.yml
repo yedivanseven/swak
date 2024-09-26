@@ -26,7 +26,7 @@ jobs:
         run: uv publish
 
   deploy-docs:
-    needs: publish-package
+    # needs: publish-package
     runs-on: ubuntu-latest
 
     steps:
