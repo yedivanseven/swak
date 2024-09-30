@@ -25,3 +25,23 @@ jobs:
         run: pipenv install ruff
       - name: Run ruff
         run: pipenv run ruff check --verbose
+
+  test:
+    name: Run unittest
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pipenv"
+        name: Set up python
+      - name: Install pipenv
+        run: pip install --upgrade pipenv --user
+      - name: Install dependencies
+        run: pipenv install --categories="packages cloud cpu"
+      - name: Run unittest
+        run: python -m unittest
+
