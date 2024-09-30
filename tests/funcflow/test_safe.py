@@ -122,34 +122,34 @@ class TestExceptionsAttributes(unittest.TestCase):
         self.assertTupleEqual((Exception, ), s.exceptions)
 
     def test_list_two_exceptions(self):
-        # _exceptions_to_catch = [ZeroDivisionError, StopIteration]
-        # s = Safe(f, _exceptions_to_catch)
+        s = Safe(f, [ZeroDivisionError, StopIteration])
+        self.assertTrue(hasattr(s, 'call'))
+        self.assertIs(s.call, f)
+        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertSetEqual(
+            {ZeroDivisionError, StopIteration},
+            set(s.exceptions)
+        )
+
+    def test_list_one_exception_one_exception(self):
+        s = Safe(f, [ZeroDivisionError], StopIteration)
+        self.assertTrue(hasattr(s, 'call'))
+        self.assertIs(s.call, f)
+        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertSetEqual(
+            {ZeroDivisionError, StopIteration},
+            set(s.exceptions)
+        )
+
+    def test_two_exceptions(self):
         s = Safe(f, ZeroDivisionError, StopIteration)
         self.assertTrue(hasattr(s, 'call'))
         self.assertIs(s.call, f)
         self.assertTrue(hasattr(s, 'exceptions'))
-        self.assertTupleEqual((ZeroDivisionError, StopIteration), s.exceptions)
-        # for _exception in _exceptions_to_catch:
-        #     self.assertIn(_exception, s.exceptions)
-
-    def test_list_one_exception_one_exception(self):
-        _exceptions_to_catch = [ZeroDivisionError, StopIteration]
-        s = Safe(f, [_exceptions_to_catch[0]], _exceptions_to_catch[1])
-        self.assertTrue(hasattr(s, 'call'))
-        self.assertIs(s.call, f)
-        self.assertTrue(hasattr(s, 'exceptions'))
-        for _exception in _exceptions_to_catch:
-            self.assertIn(_exception, s.exceptions)
-
-    def test_two_exceptions(self):
-        _exceptions_to_catch = [ZeroDivisionError, StopIteration]
-        s = Safe(f, _exceptions_to_catch[0], _exceptions_to_catch[1])
-        self.assertTrue(hasattr(s, 'call'))
-        self.assertIs(s.call, f)
-        self.assertTrue(hasattr(s, 'exceptions'))
-        for _exception in _exceptions_to_catch:
-            self.assertIn(_exception, s.exceptions)
-
+        self.assertSetEqual(
+            {ZeroDivisionError, StopIteration},
+            set(s.exceptions)
+        )
 
 class TestExceptionsUsage(unittest.TestCase):
 
