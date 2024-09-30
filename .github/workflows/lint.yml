@@ -17,4 +17,5 @@ jobs:
           python-version: "3.12"
           cache: "pipenv"
         name: Set up python
+      - name: Test pipenv
         run: which pipenv
