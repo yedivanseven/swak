@@ -1,11 +1,11 @@
 name: Publishing
 
 on:
-#   release:
-#     types: [published]
-  pull_request:
-    branches:
-      - featue/add_github_actions/cmayrhofer
+  release:
+    types: [published]
+  # pull_request:
+  #   branches:
+  #     - main
 
 jobs:
 
@@ -49,7 +49,7 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        if: ${{ github.event_name == 'release' }}
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
