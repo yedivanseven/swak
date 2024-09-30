@@ -17,5 +17,5 @@ jobs:
           python-version: "3.12"
           cache: "pipenv"
         name: Set up python
-      - name: Test pipenv
-        run: python --version
+      - name: Install pipenv
+        run: pip install --upgrade pipenv --user
