@@ -132,6 +132,9 @@ dmypy.json
 # PyCharm
 .idea/
 
+# vscode
+.vscode
+
 # setuptools_scm
 version.env
 
