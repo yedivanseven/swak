@@ -43,5 +43,5 @@ jobs:
       - name: Install dependencies
         run: pipenv install --categories="packages cloud cpu"
       - name: Run unittest
-        run: python -m unittest
+        run: pipenv run python -m unittest
 
