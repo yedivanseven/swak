@@ -20,7 +20,6 @@ name = "cuda"
 pandas = "*"
 pyarrow = "*"
 pyyaml = "*"
-nvitop = "*"
 
 [dev-packages]
 jupyter = "*"
@@ -39,5 +38,4 @@ torch = {version="*", index="cpu"}
 [cuda]
 nvidia-pyindex = "*"
 nvidia-cuda-runtime-cu12 = "*"
-nvitop = "*"
 torch = {version="*", index="cuda"}
