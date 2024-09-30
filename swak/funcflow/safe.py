@@ -39,7 +39,7 @@ class Safe[**P, T](ArgRepr):
             exception = exception,
         self.exceptions = tuple(set(exception + exceptions))
         super().__init__(call, *self.exceptions)
-        self.exceptions = self.exceptions if self.exceptions else (Exception, )
+        self.exceptions = self.exceptions if self.exceptions else (Exception,)
 
     def __call__(self, *args: P.args) -> T | SafeError:
         """Call the cached callable, catching any or all exceptions raised.
