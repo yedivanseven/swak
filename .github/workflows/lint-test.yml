@@ -1,8 +1,8 @@
-name: Lint
+name: Lint & Test
 on:
-  push:
+  pull_request:
     branches:
-      - test-actions
+      - main
 
 jobs:
   lint:
@@ -19,10 +19,10 @@ jobs:
         name: Set up python
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
-      - name: Install dependencies
-        run: pipenv install --categories="packages cloud cpu"
+      - name: Sync dependencies
+        run: pipenv sync --categories="packages cloud cpu"
       - name: Install ruff
-        run: pipenv install ruff
+        run: pipenv install --dev ruff
       - name: Run ruff
         run: pipenv run ruff check --verbose
 
@@ -40,7 +40,7 @@ jobs:
         name: Set up python
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
-      - name: Install dependencies
-        run: pipenv install --categories="packages cloud cpu"
+      - name: Sync dependencies
+        run: pipenv sync --categories="packages cloud cpu"
       - name: Run unittest
         run: pipenv run python -m unittest
