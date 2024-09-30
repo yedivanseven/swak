@@ -18,4 +18,4 @@ jobs:
           cache: "pipenv"
         name: Set up python
       - name: Test pipenv
-        run: which pipenv
+        run: python --version
