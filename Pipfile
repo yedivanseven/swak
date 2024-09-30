@@ -20,7 +20,6 @@ name = "cuda"
 pandas = "*"
 pyarrow = "*"
 pyyaml = "*"
-nvitop = "*"
 
 [dev-packages]
 jupyter = "*"
