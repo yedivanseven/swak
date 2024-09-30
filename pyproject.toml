@@ -38,6 +38,9 @@ cloud = [
   "google-cloud-storage>=2.18",
   "pandas-gbq>=0.23"
 ]
+torch = [
+    "torch>=2.4"
+]
 
 [tool.setuptools]
 packages = ["swak"]
@@ -79,4 +82,14 @@ select = [
     "NPY",
     "PERF",
     "FURB"
+]
+
+[tool.uv]
+dev-dependencies = [
+  "pytest >=8.1.1,<9",
+  "ruff <1"
+]
+extra-index-url = [
+  "https://download.pytorch.org/whl/cpu",
+  "https://download.pytorch.org/whl/cu124"
 ]
