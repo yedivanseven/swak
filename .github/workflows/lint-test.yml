@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pipenv"
+          # cache: "pipenv"
         name: Set up python
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
@@ -37,12 +37,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pipenv"
+          # cache: "pipenv"
         name: Set up python
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
-#      - name: Install package
-#        run: pipenv run pip install .[cloud]
       - name: Sync PyTorch
         run: pipenv sync --categories=cpu
       - name: Run unittest
