@@ -1,0 +1,36 @@
+name: Publish Python Package
+#on:
+#  release:
+#    types: [released]
+#    branches:
+#      - main
+#  workflow_dispatch:
+on:
+  push:
+    branches:
+      - test-build
+
+
+jobs:
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+        name: Set up python
+      - name: Install pipenv
+        run: pip install --upgrade pipenv --user
+      - name: Install build
+        run: pipenv install --dev build
+      - name: Run build
+        run: pipenv run build
+      - name: Upload the package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distribution
+          path: dist/
