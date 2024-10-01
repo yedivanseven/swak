@@ -22,12 +22,12 @@ jobs:
         run: pip install --upgrade pipenv --user
       - name: Sync PyTorch CPU
         run: pipenv sync --categories=cpu
-      - name: Install Sphinx
-        run: pipenv install sphinx sphinx-rtd-theme
+      - name: Install sphinx
+        run: pipenv install --dev sphinx sphinx-rtd-theme
       - name: Install package
         run: pipenv run pip install .[cloud]
-      - name: Build the Docs
-        run: pipenv run cd docs & make html
+      - name: Build the docs
+        run: pipenv run pwd & ls
 #      - name: Deploy to GitHub Pages
 #        uses: peaceiris/actions-gh-pages@v3
 #        if: ${{ github.event_name == 'release' }}
