@@ -1,0 +1,40 @@
+name: Deploy GitHub Pages
+on:
+  # release:
+  #   types: [published]
+  push:
+    branches:
+      - test-gh-pages
+
+jobs:
+  github_pages:
+    name: GitHub pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+        name: Set up python
+      - name: Install pipenv
+        run: pip install --upgrade pipenv --user
+      - name: Sync PyTorch CPU
+        run: pipenv sync --categories=cpu
+      - name: Install package
+        run: pipenv run pip install .[cloud]
+      - name: Build the Docs
+        run: |
+          pipenv shell
+          cd docs
+          make html
+          exit
+#      - name: Deploy to GitHub Pages
+#        uses: peaceiris/actions-gh-pages@v3
+#        if: ${{ github.event_name == 'release' }}
+#        with:
+#          publish_branch: gh-pages
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          publish_dir: docs/build/
+#          force_orphan: true
