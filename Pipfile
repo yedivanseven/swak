@@ -26,6 +26,7 @@ jupyter = "*"
 ruff = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+build = "*"
 
 [cloud]
 google-cloud-storage = "*"
