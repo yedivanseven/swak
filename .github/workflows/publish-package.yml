@@ -26,10 +26,8 @@ jobs:
         run: pipenv run pip install .[cloud]
       - name: Build the Docs
         run: |
-          pipenv shell
           cd docs
-          make html
-          exit
+          pipenv run make html
 #      - name: Deploy to GitHub Pages
 #        uses: peaceiris/actions-gh-pages@v3
 #        if: ${{ github.event_name == 'release' }}
