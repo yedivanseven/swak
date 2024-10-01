@@ -3,12 +3,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+
 
 jobs:
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         name: Checkout repository
@@ -26,7 +28,6 @@ jobs:
   test:
     name: Run unittest
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
         name: Checkout repository
