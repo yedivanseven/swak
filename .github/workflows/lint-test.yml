@@ -41,8 +41,8 @@ jobs:
         name: Set up python
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
-      - name: Install package
-        run: pipenv run pip install .[cloud]
+#      - name: Install package
+#        run: pipenv run pip install .[cloud]
       - name: Sync PyTorch
         run: pipenv sync --categories=cpu
       - name: Run unittest
