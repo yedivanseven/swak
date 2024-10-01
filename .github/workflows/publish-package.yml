@@ -5,14 +5,22 @@ on:
   push:
     branches:
       - test-gh-pages
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   github_pages:
     name: GitHub pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
         name: Checkout repository
@@ -32,10 +40,46 @@ jobs:
         run: |
           cd docs
           pipenv run make html
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Setup GitHub pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build/html
-          force_orphan: true
+          # Upload entire repository
+          path: docs/build/html
+      - name: Deploy to GitHub pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+#jobs:
+#  github_pages:
+#    name: GitHub pages
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: write
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#        name: Checkout repository
+#      - uses: actions/setup-python@v5
+#        with:
+#          python-version: "3.12"
+#        name: Set up python
+#      - name: Install pipenv
+#        run: pip install --upgrade pipenv --user
+#      - name: Sync PyTorch CPU
+#        run: pipenv sync --categories=cpu
+#      - name: Install sphinx
+#        run: pipenv install --dev sphinx sphinx-rtd-theme
+#      - name: Install package
+#        run: pipenv run pip install .[cloud]
+#      - name: Build the docs
+#        run: |
+#          cd docs
+#          pipenv run make html
+#      - name: Deploy to GitHub Pages
+#        uses: peaceiris/actions-gh-pages@v4
+#        with:
+#          publish_branch: gh-pages
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          publish_dir: docs/build/html
+#          force_orphan: true
