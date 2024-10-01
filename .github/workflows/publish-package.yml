@@ -1,14 +1,10 @@
 name: Publish Python Package
-#on:
-#  release:
-#    types: [released]
-#    branches:
-#      - main
-#  workflow_dispatch:
 on:
-  push:
+  release:
+    types: [released]
     branches:
-      - test-build
+      - main
+  workflow_dispatch:
 
 
 jobs:
