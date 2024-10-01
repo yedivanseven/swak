@@ -6,3 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.4] - 2024-10-01
 - Initial GitHub actions implemented
+
+## [0.0.5] - 2024-10-01
+- Removed explicit license statement from pyproject.toml
