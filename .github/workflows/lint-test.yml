@@ -22,12 +22,12 @@ jobs:
         name: Set up python
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
-      - name: Sync dependencies
-        run: pipenv sync --categories=cpu
+#      - name: Sync dependencies
+#        run: pipenv sync --categories=cpu
       - name: Install ruff
         run: pipenv install --dev ruff
-      - name: Install package
-        run: pipenv install -e .[cloud]
+#      - name: Install package
+#        run: pipenv install -e .[cloud]
       - name: Run ruff
         run: pipenv run ruff check --verbose
 
