@@ -22,30 +22,28 @@ jobs:
         name: Set up python
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
-#      - name: Sync dependencies
-#        run: pipenv sync --categories=cpu
       - name: Install ruff
         run: pipenv install --dev ruff
-#      - name: Install package
-#        run: pipenv install -e .[cloud]
       - name: Run ruff
         run: pipenv run ruff check --verbose
 
-#  test:
-#    name: Run unittest
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - uses: actions/checkout@v4
-#        name: Checkout repository
-#      - uses: actions/setup-python@v5
-#        with:
-#          python-version: "3.12"
-#          cache: "pipenv"
-#        name: Set up python
-#      - name: Install pipenv
-#        run: pip install --upgrade pipenv --user
-#      - name: Sync dependencies
-#        run: pipenv sync --categories="packages cloud cpu"
-#      - name: Run unittest
-#        run: pipenv run python -m unittest
+  test:
+    name: Run unittest
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pipenv"
+        name: Set up python
+      - name: Install pipenv
+        run: pip install --upgrade pipenv --user
+      - name: Install package
+        run: pipenv install .[cloud]
+      - name: Sync PyTorch
+        run: pipenv sync --categories=cpu
+      - name: Run unittest
+        run: pipenv run python -m unittest
