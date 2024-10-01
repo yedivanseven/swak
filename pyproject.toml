@@ -17,7 +17,6 @@ dependencies = [
 authors = [{name = "yedivanseven", email = "yedivanseven@outlook.de"}]
 description = "Swiss army knife for functional data-science projects."
 readme = "README.md"
-license = {file = "LICENSE"}
 keywords = [
     "functional",
     "tools",
