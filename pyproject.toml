@@ -32,6 +32,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 
+[project.urls]
+Documentation = "https://yedivanseven.github.io/swak/"
+Repository = "https://github.com/yedivanseven/swak.git"
+Issues = "https://github.com/yedivanseven/swak/issues"
+Changelog = "https://github.com/yedivanseven/swak/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
 cloud = [
   "google-cloud-bigquery>=3.25",
