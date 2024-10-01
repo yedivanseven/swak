@@ -39,9 +39,6 @@ cloud = [
   "pandas-gbq>=0.23"
 ]
 
-[tool.setuptools]
-packages = ["swak"]
-
 [tool.setuptools_scm]
 version_file = "version.env"
 version_file_template = "SETUPTOOLS_SCM_PRETEND_VERSION={version}"
@@ -80,4 +77,3 @@ select = [
     "PERF",
     "FURB"
 ]
-
