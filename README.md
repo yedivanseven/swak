@@ -57,14 +57,3 @@ If you are using `pipenv` for dependency management, you can also have a look at
 
 ## Documentation
 The API documentation to `swak` is hosted on [GitHub Pages](https://yedivanseven.github.io/swak/).
-
-## Versioning
-The `swak` package uses [semantic versioning](https://semver.org/spec/v2.0.0.html), that is,
-`vMAJOR.MINOR.PATCH`.
-* Changes that break backwards compatibility or other major milestones will be reflected in
-  a change of the `MAJOR` version.
-* Added functionality will be reflected by a change in the `MINOR` version.
-* Bugfixes, typos, and other small changes will be reflected in a jump of the `PATCH` version.
-
-**Important**: _Prior to major version 1, that is, all versions before `v1.x.y` are to be
-considered beta versions and any version jump micht break backwards compatibility!_
