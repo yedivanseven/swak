@@ -55,6 +55,11 @@ Installation
 
   if I want GPU support.
 
+Usage
+-----
+Try making a new repository using the `swak-template <https://github.com/yedivanseven/swak-template)>`__
+as a, well, template.
+
 
 .. toctree::
    :hidden:

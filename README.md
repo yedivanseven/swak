@@ -54,5 +54,9 @@ If you are using `pipenv` for dependency management, you can also have a look at
   ```
   if I want GPU support.
 
+## Usage
+Try making a new repository using the [swak-template](https://github.com/yedivanseven/swak-template)
+as a, well, template.
+
 ## Documentation
 The API documentation to `swak` is hosted on [GitHub Pages](https://yedivanseven.github.io/swak/).
