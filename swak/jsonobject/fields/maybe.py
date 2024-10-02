@@ -15,8 +15,8 @@ class Maybe[T]:
     cast: callable
         Casts value to desired type if value is not ``None``.
 
-    Notes
-    -----
+    Note
+    ----
     Upon instantiation, the generic class can be type-annotated with the
     return type of `cast`.
 

@@ -29,8 +29,8 @@ class Pipe[**P, T](IndentRepr):
     PipeError
         If (any of) `call` or any of `calls` are not, in fact, callable.
 
-    Notes
-    -----
+    Note
+    ----
     Upon instantiation, the generic class can be type-annotated with the list
     of argument types of the first callable in the chain, followed by the
     return type of the last callable.

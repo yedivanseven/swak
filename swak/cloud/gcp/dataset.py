@@ -87,8 +87,8 @@ class GbqDataset:
         com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
         client.Client#parameters>`__ for options).
 
-    Notes
-    -----
+    Note
+    ----
     Options for linked and external dataset sources, as well as for encryption
     configuration are deliberately omitted. You probably should not play with
     those without consulting your organization's data engineers.

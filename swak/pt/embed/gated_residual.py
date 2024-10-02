@@ -32,8 +32,8 @@ class GatedResidualEmbedder(Module):
     **kwargs
         Additional keyword arguments to pass through to the linear layers.
 
-    Notes
-    -----
+    Note
+    ----
     This implementation is inspired by how features are encoded in `Temporal
     Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
     (linear) projection of scalar numerical features into embedding space

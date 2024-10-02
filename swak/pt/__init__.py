@@ -7,8 +7,8 @@ distributions allow you to make probabilistic predictions. The training loop
 is conveniently abstracted away, allowing for (ready-to-use or custom-made)
 callbacks and checkpoints. Finally trained models can be saved and (re)loaded.
 
-Notes
------
+Note
+----
 The tools in this subpackage are mostly geared towards tabular and sequence
 data. Image processing is not currently the main focus.
 

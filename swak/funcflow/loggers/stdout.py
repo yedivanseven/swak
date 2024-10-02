@@ -51,8 +51,8 @@ class PassThroughStdOut(ArgRepr):
     class Log:
         """Return type of the logging methods.
 
-        Notes
-        -----
+        Note
+        ----
         This class is not intended to ever be instantiated directly.
 
         See Also

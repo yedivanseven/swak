@@ -34,8 +34,8 @@ class GatedResidualConcatMixer(Module):
     **kwargs
         Additional keyword arguments to pass through to the linear layers.
 
-    Notes
-    -----
+    Note
+    ----
     This implementation is inspired by how features are encoded in `Temporal
     Fusion Transformers`, [1]_ but it is not quite the same. Specifically, the
     intermediate linear layer (Eq. 3) is eliminated and dropout is applied

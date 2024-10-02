@@ -40,8 +40,8 @@ class GatedResidualSumMixer(Module):
     **kwargs
         Additional keyword arguments to pass through to the linear layers.
 
-    Notes
-    -----
+    Note
+    ----
     This implementation is inspired by how features are combined in `Temporal
     Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
     inputs are not the raw feature embeddings but the final feature embeddings

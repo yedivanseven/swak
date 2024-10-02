@@ -23,8 +23,8 @@ class Filter[S, T](ArgRepr):
         `wrapper` will be called with a list of filtered elements.
         Consequently, the return type will be the (return) type of `wrapper`.
 
-    Notes
-    -----
+    Note
+    ----
     In contrast to python's builtin lazy ``filter`` function, which returns a
     generator object, the filtered iterable is fully manifested first and only
     then wrapped.

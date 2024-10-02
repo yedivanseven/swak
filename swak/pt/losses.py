@@ -439,8 +439,8 @@ class NegativeBinomialLoss(_BaseLoss):
         To avoid these, it is often advisable to shift such values away from
         boundaries by a small value `eps`. Defaults to 1e-6.
 
-    Notes
-    -----
+    Note
+    ----
     The present parameterization only makes sense if the variance is strictly
     greater than the mean. This is best taken into account already on the
     model side, e.g., by forcing the output for `sigma` to be a that of `mu`

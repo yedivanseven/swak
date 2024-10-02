@@ -45,8 +45,8 @@ class ProcessMap[**P, S, T](ArgRepr):
         time. Defaults to 1. Will be forwarded to the ``map`` method of the
         ``ProcessPoolExecutor``.
 
-    Notes
-    -----
+    Note
+    ----
     In contrast to calling the ``map`` method of a ``ProcessPoolExecutor``
     directly, which returns a generator object, the mapped iterable is fully
     manifested first and only then wrapped.

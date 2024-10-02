@@ -203,8 +203,8 @@ class Trainer(ArgRepr):
         Module
             The trained Pytorch model.
 
-        Notes
-        -----
+        Note
+        ----
         This is safe to use even if you have never trained your model before,
         and you are starting from scratch.
 

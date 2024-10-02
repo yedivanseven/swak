@@ -26,8 +26,8 @@ class GbqQuery(ArgRepr):
         com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
         client.Client#parameters>`__ for options).
 
-    Notes
-    -----
+    Note
+    ----
     Typical use cases would be to create, move, alter, or delete tables.
     As such, the possibility to route the output of the query into a
     destination table is not foreseen.

@@ -40,8 +40,8 @@ class GcsDir2LocalDir(ArgRepr):
         com/python/docs/reference/storage/latest/google.cloud.storage.
         client.Client#parameters>`__ for options).
 
-    Notes
-    -----
+    Note
+    ----
     Blobs that have any more forward slashes in their name than the
     instantiation and call prefixes combined, i.e., that reside in virtual
     "subdirectories", are ignored and are not downloaded.

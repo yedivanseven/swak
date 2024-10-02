@@ -37,8 +37,8 @@ class TemplateRenderer:
         Keyword arguments replace respective placeholders with whatever value
         is passed, overwriting values in `mapping`.
 
-    Notes
-    -----
+    Note
+    ----
     Instances evaluate to ``True`` if all keys were provided at instantiation
     and to ``False`` if there are still keys missing.
 
@@ -119,8 +119,8 @@ class FormFiller:
         Keyword arguments replace respective placeholders with whatever value
         is passed, overwriting respective values in `mapping`.
 
-    Notes
-    -----
+    Note
+    ----
     Instances evaluate to ``False`` if no keys were provided at instantiation
     and to ``True`` if there are any keys cached.
 

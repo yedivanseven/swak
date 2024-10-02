@@ -25,8 +25,8 @@ class CategoricalEmbedder(Module):
     **kwargs
         Keyword arguments are forwarded to the PyTorch ``Embedding`` class.
 
-    Notes
-    -----
+    Note
+    ----
     The integer numbers identifying a category are expected to be zero-base,
     i.e., if the category count of a feature is 3, the allowed category
     identifier are 0, 1, and 2. If you need a padding index (e.g., to mark

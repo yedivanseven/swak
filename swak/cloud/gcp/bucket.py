@@ -50,8 +50,8 @@ class GcsBucket(ArgRepr):
         com/python/docs/reference/storage/latest/google.cloud.storage.
         client.Client#parameters>`__ for options).
 
-    Notes
-    -----
+    Note
+    ----
     There are a lot more options to set, which have been deliberately omitted
     because of the complexity involved.
 

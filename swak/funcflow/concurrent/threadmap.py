@@ -40,8 +40,8 @@ class ThreadMap[**P, S, T](ArgRepr):
         to ``None``, which means there is no limit for the time to wait. Will
         be forwarded to the ``map`` method of the ``ThreadPoolExecutor``.
 
-    Notes
-    -----
+    Note
+    ----
     In contrast to calling the ``map`` method of a ``ThreadPoolExecutor``
     directly, which returns a generator object, the mapped iterable is fully
     manifested first and only then wrapped.

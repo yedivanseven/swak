@@ -60,8 +60,8 @@ class MuSigmaNegativeBinomial(ptd.NegativeBinomial):
         Whether the parent class should validate the transformed parameters
         or not. Defaults to ``False``
 
-    Notes
-    -----
+    Note
+    ----
     This parameterization only makes sense if the variance is strictly
     greater than the mean. This is best taken into account already on the
     model output side, but can be checked here by setting `validate_args`

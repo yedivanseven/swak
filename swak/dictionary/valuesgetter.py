@@ -28,8 +28,8 @@ class ValuesGetter[T](ArgRepr):
     TypeError
         If (any of) `key` or any of `keys` are not, in fact, hashable.
 
-    Notes
-    -----
+    Note
+    ----
     Generic type annotation with the (return) type of `wrapper` is recommended.
 
     Examples
