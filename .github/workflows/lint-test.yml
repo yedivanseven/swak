@@ -26,7 +26,7 @@ jobs:
         run: pipenv run ruff check --verbose
 
   test:
-    name: Run unittest
+    name: Unittest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
