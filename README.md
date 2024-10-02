@@ -33,7 +33,7 @@ applications. In abstracting away boiler-plate code, it thus saves time and effo
   ```
   or treat it like any other python package in your dependency management.
 * If you need support for interacting with the Google Cloud Project,
-in particular Google BigQuery and Google CLoud Storage, install
+in particular Google BigQuery and Google Cloud Storage, install
 _extra_ dependencies with:
   ```shell
   pip install swak[cloud]
