@@ -1,7 +1,6 @@
 ![GitHub Pages](https://github.com/yedivanseven/swak/actions/workflows/publish-documentation.yml/badge.svg)
 ![PyPI](https://github.com/yedivanseven/swak/actions/workflows/publish-package.yml/badge.svg)
 
-
 # swak
 _Swiss army knife for functional data-science projects._
 
