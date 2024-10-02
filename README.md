@@ -1,3 +1,7 @@
+![GitHub Pages](https://github.com/yedivanseven/swak/actions/workflows/publish-documentation.yml/badge.svg)
+![PyPI](https://github.com/yedivanseven/swak/actions/workflows/publish-package.yml/badge.svg)
+
+
 # swak
 _Swiss army knife for functional data-science projects._
 
@@ -8,10 +12,10 @@ applications. In abstracting away boiler-plate code, it thus saves time and effo
 * Consolidate all ways to configure your project (command-line arguments,
   environment variables, and config files) with the `cli` and `text`
   packages, respectively.
-* Wrap the project config into a versatile `jsonobjects`.
+* Wrap the project config into a versatile `jsonobject`.
 * Focus on writing small, configurable, modular, reusable, and testable 
   building blocks. Then use the flow controls in `funcflow` to compose them
-  into arbitrarily complex workflows, that are still easy to maintain and expand.
+  into arbitrarily complex workflows, that are still easy to maintain and to expand.
 * Quickly set up projects on Google BigQuery and Google Cloud Storage, and
   efficiently download lots of data in parallel with `cloud.gcp`.
 * Build powerful neural-network architectures from the elements in `pt` and
@@ -23,13 +27,13 @@ applications. In abstracting away boiler-plate code, it thus saves time and effo
 ## Installation
 * Create a new virtual environment running at least `python 3.12`.
 * The easiest way of installing `swak` is from the python package index
-[PyPi](https://pypi.org/project/swak/), where it is hosted. Simply type
+[PyPI](https://pypi.org/project/swak/), where it is hosted. Simply type
   ```shell
   pip install swak
   ```
   or treat it like any other python package in your dependency management.
-* If you need support for interacting with the Google Cloud Project (GCP),
-in particular Google BigQuery (BQ) and Google CLoud Storage (GCS), install
+* If you need support for interacting with the Google Cloud Project,
+in particular Google BigQuery and Google CLoud Storage, install
 _extra_ dependencies with:
   ```shell
   pip install swak[cloud]
