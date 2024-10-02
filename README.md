@@ -1,10 +1,10 @@
 # swak
 _Swiss army knife for functional data-science projects._
 
-## 1. Introduction
+## Introduction
 This package is a collection of small, modular, and composable building
-blocks implementing frequently occurring operations in building data-science
-applications. It thus saves time in abstracting away boiler-plate code.
+blocks implementing frequently occurring operations in typical data-science
+applications. In abstracting away boiler-plate code, it thus saves time and effort.
 * Consolidate all ways to configure your project (command-line arguments,
   environment variables, and config files) with the `cli` and `text`
   packages, respectively.
@@ -20,7 +20,7 @@ applications. It thus saves time in abstracting away boiler-plate code.
   a broad variety of options is available.
 * And much more ...
 
-## 2. Installation
+## Installation
 * Create a new virtual environment running at least `python 3.12`.
 * The easiest way of installing `swak` is from the python package index
 [PyPi](https://pypi.org/project/swak/), where it is hosted. Simply type
@@ -51,10 +51,10 @@ If you are using `pipenv` for dependency management, you can also have a look at
   ```
   if I want GPU support.
 
-## 3. Documentation
+## Documentation
 The API documentation to `swak` is hosted on [GitHub Pages](https://yedivanseven.github.io/swak/).
 
-## 4. Versioning
+## Versioning
 The `swak` package uses [semantic versioning](https://semver.org/spec/v2.0.0.html), that is,
 `vMAJOR.MINOR.PATCH`.
 * Changes that break backwards compatibility or other major milestones will be reflected in
