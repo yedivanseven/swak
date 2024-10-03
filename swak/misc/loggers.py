@@ -25,7 +25,7 @@ class StdOutLogger(ArgRepr):
 
     Warnings
     --------
-    To avoid creating and adding new Handler every time the same Logger is
+    To avoid creating and adding a new Handler every time the same Logger is
     requested, one of its existing StreamHandlers will be modified if there
     are any. A new one will be created and added only if there aren't.
     By consequence, requesting the same Logger multiple times with a different
