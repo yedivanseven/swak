@@ -222,7 +222,7 @@ class Trainer(ArgRepr):
         max_n = min(self.max_n, n)
 
         # How many batches do we have?
-        n_batches = train.n // self.batch_size
+        n_batches = train.n // self.batch_size + 1
 
         # Initialize training cycle.
         optimizer = self.optimizer(model.parameters())
