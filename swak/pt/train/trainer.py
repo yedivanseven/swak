@@ -1,4 +1,5 @@
 import torch as pt
+from tqdm import tqdm
 from ...misc import ArgRepr
 from ...funcflow import Curry
 from ..types import Module, Optimizer, LRScheduler
@@ -220,6 +221,9 @@ class Trainer(ArgRepr):
         self.max_n = n if self.max_n is None else self.max_n
         max_n = min(self.max_n, n)
 
+        # How many batches do we have?
+        n_batches = train.n // self.batch_size
+
         # Initialize training cycle.
         optimizer = self.optimizer(model.parameters())
         scheduler = self.scheduler(optimizer)
@@ -234,7 +238,8 @@ class Trainer(ArgRepr):
         for epoch in range(epoch + 1, self.max_epochs + 1):
             # Train one epoch, looping over batches.
             model.train()
-            for features, target in train(self.batch_size):
+            data = tqdm(train(self.batch_size), 'Batches', n_batches)
+            for features, target in data:
                 optimizer.zero_grad()
                 predictions = model(*features)
                 loss = self.loss(*predictions, target)
