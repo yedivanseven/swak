@@ -238,7 +238,7 @@ class Trainer(ArgRepr):
         for epoch in range(epoch + 1, self.max_epochs + 1):
             # Train one epoch, looping over batches.
             model.train()
-            data = tqdm(train(self.batch_size), 'Batches', n_batches)
+            data = tqdm(train(self.batch_size), 'Batches', n_batches, False)
             for features, target in data:
                 optimizer.zero_grad()
                 predictions = model(*features)
