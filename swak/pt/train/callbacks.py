@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, Any
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from ...misc import ArgRepr
@@ -79,7 +79,7 @@ class EpochPrinter(ArgRepr, EpochCallback):
 
     """
 
-    def __init__(self, printer: Callable[[str], None] = print) -> None:
+    def __init__(self, printer: Callable[[str], Any] = print) -> None:
         super().__init__(printer)
         self.printer = printer
 
@@ -96,7 +96,7 @@ class EpochPrinter(ArgRepr, EpochCallback):
         """Assemble training-progress message and call the printer with it."""
         msg = (f'Epoch: {epoch:>4} | learning rate: {learning_rate:7.5f} | '
                f'train loss: {train_loss:7.5f} | test loss: {test_loss:7.5f}')
-        return self.printer(msg)
+        self.printer(msg)
 
     def close(self) -> None:
         """Does nothing because there is nothing to close."""
@@ -112,7 +112,7 @@ class TrainPrinter(ArgRepr):
         builtin ``print`` function, but could also be a logging command.
 
     """
-    def __init__(self, printer: Callable[[str], None] = print) -> None:
+    def __init__(self, printer: Callable[[str], Any] = print) -> None:
         super().__init__(printer)
         self.printer = printer
 
