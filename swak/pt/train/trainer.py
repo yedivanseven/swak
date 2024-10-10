@@ -1,3 +1,4 @@
+import math
 import torch as pt
 from tqdm import tqdm
 from ...misc import ArgRepr
@@ -222,7 +223,7 @@ class Trainer(ArgRepr):
         max_n = min(self.max_n, n)
 
         # How many batches do we have?
-        n_batches = train.n // self.batch_size + 1
+        n_batches = math.ceil(train.n / self.batch_size)
 
         # Initialize training cycle.
         optimizer = self.optimizer(model.parameters())
