@@ -24,9 +24,9 @@ class TestDataBase(ABC):
 
         Parameters
         ----------
-        size: int
+        size: int, optional
             Number of data points in (or `batch_size` of) the reproducible
-            sample of your data. Every time `step` is called with the same
+            sample of your data. Every time `sample` is called with the same
             `size`, the exact same output should be returned so that train and
             test errors can be used to track training convergence.
 
