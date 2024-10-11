@@ -96,7 +96,7 @@ class Trainer(ArgRepr):
             scheduler: Curry[LRScheduler] = Curry[NoSchedule](NoSchedule),
             warmup: int = 0,
             patience: int | None = None,
-            max_n: int = None,
+            max_n: int | None = None,
             checkpoint: Checkpoint = InMemory(),
             epoch_cb: EpochCallback = EpochPrinter(),
             train_cb: TrainCallback = TrainPrinter()
