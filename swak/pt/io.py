@@ -215,5 +215,5 @@ class ModelLoader(ArgRepr):
 
         """
         path = '/' + path.strip(' /') if path.strip(' /') else ''
-        model = pt.load(self.path + path, self.map_location, weights_only=True)
-        return model.to(self.map_location) if hasattr(model, 'to') else model
+        obj = pt.load(self.path + path, self.map_location, weights_only=False)
+        return obj.to(self.map_location) if hasattr(obj, 'to') else obj

@@ -341,7 +341,7 @@ class TestModelLoader(unittest.TestCase):
         mock.assert_called_once_with(
             self.path,
             self.load.map_location,
-            weights_only=True
+            weights_only=False
         )
 
     @patch('torch.load', return_value={'foo': 42})
@@ -351,7 +351,7 @@ class TestModelLoader(unittest.TestCase):
         mock.assert_called_once_with(
             self.path,
             'cpu',
-            weights_only=True
+            weights_only=False
         )
 
     @patch('torch.load')
@@ -390,7 +390,7 @@ class TestModelLoader(unittest.TestCase):
         mock.assert_called_once_with(
             self.path,
             load.map_location,
-            weights_only=True
+            weights_only=False
         )
 
     @patch('torch.load', return_value={'foo': 42})
@@ -400,7 +400,7 @@ class TestModelLoader(unittest.TestCase):
         mock.assert_called_once_with(
             self.path,
             load.map_location,
-            weights_only=True
+            weights_only=False
         )
 
     @patch('torch.load', return_value={'foo': 42})
@@ -410,7 +410,7 @@ class TestModelLoader(unittest.TestCase):
         mock.assert_called_once_with(
             self.path,
             load.map_location,
-            weights_only=True
+            weights_only=False
         )
 
 
