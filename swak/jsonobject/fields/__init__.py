@@ -4,10 +4,12 @@ from .maybe import Maybe
 from .flexidate import FlexiDate
 from .flexitime import FlexiTime
 from .custom import CustomField
+from .resolve import resolve
 
 __all__ = [
     'Maybe',
     'FlexiDate',
     'FlexiTime',
-    'CustomField'
+    'CustomField',
+    'resolve'
 ]
