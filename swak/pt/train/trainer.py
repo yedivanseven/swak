@@ -219,8 +219,7 @@ class Trainer(ArgRepr):
         """
         # How many data points to take for computing train (and test) loss.
         n = train.n if test is None else test.n
-        self.max_n = n if self.max_n is None else self.max_n
-        max_n = min(self.max_n, n)
+        max_n = n if self.max_n is None else min(self.max_n, n)
 
         # How many batches do we have?
         n_batches = math.ceil(train.n / self.batch_size)
