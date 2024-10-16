@@ -53,8 +53,7 @@ class TestEpochPrinter(unittest.TestCase):
             0.2,
             0.3,
             'model',
-            'features',
-            'target'
+            'data'
         )
         mock.assert_called_once()
         actual = mock.call_args[0][0]

@@ -245,17 +245,30 @@ class Trainer(ArgRepr):
                 loss = self.loss(*predictions, target)
                 loss.backward()
                 optimizer.step()
-
-            # Evaluate model on train and, potentially, test data.
             model.eval()
+
+            # Evaluate model on training data ...
+            n = 0
+            train_loss = 0.0
             with pt.no_grad():
-                features, target = train.sample(max_n)
-                train_loss = self.loss(*model(*features), target).item()
-                if test is None:
-                    test_loss = float('nan')
-                else:
-                    features, target = test.sample(max_n)
-                    test_loss = self.loss(*model(*features), target).item()
+                for features, target in train.sample(self.batch_size, max_n):
+                    n_new = target.shape[0]
+                    loss = self.loss(*model(*features), target).item()
+                    train_loss += n_new * (loss - train_loss) / (n + n_new)
+                    n += n_new
+
+            # ... and, potentially, on test data.
+            if test is None:
+                test_loss = float('nan')
+            else:
+                n = 0
+                test_loss = 0.0
+                with pt.no_grad():
+                    for features, target in test.sample(self.batch_size):
+                        n_new = target.shape[0]
+                        loss = self.loss(*model(*features), target).item()
+                        test_loss += n_new * (loss - test_loss) / (n + n_new)
+                        n += n_new
 
             # Append epoch metrics to training history.
             current_lr = scheduler.get_last_lr()[0]
@@ -264,14 +277,17 @@ class Trainer(ArgRepr):
             self.history['lr'].append(current_lr)
 
             # Call callback with epoch metrics and information.
+            if test is None:
+                sample = train.sample(self.batch_size, max_n)
+            else:
+                sample = test.sample(self.batch_size)
             self.epoch_cb(
                 epoch,
                 train_loss,
                 test_loss,
                 current_lr,
                 model,
-                features,
-                target
+                sample
             )
 
             # Update the learning rate of the optimizer if warmup is exhausted.

@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.4] - 2024-10-16
 - Added field type to resolve paths to jsonobject fields
+- Added filed type to lowercase and strip strings
+- Refactored PyTorch model trainer
+- Refactored PyTorch data base classes
+- Adapted callbacks accordingly
 
 ## [0.1.3] - 2024-10-11
 - Make progress bar disappear after each epoch

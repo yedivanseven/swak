@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from ..types import Batch, Batches
+from ..types import Batches
 
 __all__ = [
     'TestDataBase',
@@ -16,19 +16,26 @@ class TestDataBase(ABC):
         ...
 
     @abstractmethod
-    def sample(self, size: int) -> Batch:
-        """Return a reproducible (sub-)sample of your data with the given size.
+    def sample(self, batch_size: int, max_n: int | None = None) -> Batches:
+        """Interator over batches from a reproducible sample of your data.
 
         Needed to consistently evaluate (and report) the train and/or test
-        error after every epoch of training.
+        error after every epoch of training. Every time `sample` is called with
+        the same arguments, the exact same output should be returned so that
+        train and test errors can be used to track training convergence.
 
         Parameters
         ----------
-        size: int, optional
+        batch_size: int
             Number of data points in (or `batch_size` of) the reproducible
             sample of your data. Every time `sample` is called with the same
             `size`, the exact same output should be returned so that train and
             test errors can be used to track training convergence.
+        max_n: int, optional
+            Total number of data points to return mini-batches for. Defaults to
+            ``None``, resulting in all available data points being used.
+            To save some time, however, you might want to not use all available
+            training data points just for evaluating your model metrics.
 
         Returns
         -------
@@ -54,6 +61,9 @@ class TrainDataBase(TestDataBase):
     @abstractmethod
     def __call__(self, batch_size: int) -> Batches:
         """Return an iterator over the mini-batches your model is trained on.
+
+        Every time a training-data instance is called, it should re-shuffle
+        data points so as not to randomize their ordering.
 
         Parameters
         ----------

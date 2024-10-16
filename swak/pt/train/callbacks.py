@@ -2,7 +2,7 @@ from typing import TypedDict, Any
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from ...misc import ArgRepr
-from ..types import Tensor, Tensors, Module
+from ..types import Module, Batches
 
 __all__ = [
     'EpochCallback',
@@ -33,8 +33,7 @@ class EpochCallback(ABC):
             test_loss: int,
             learning_rate: float,
             model: Module,
-            features: Tensors,
-            target: Tensor
+            data: Batches,
     ) -> None:
         """Called after each epoch to print, log, or otherwise analyse metrics.
 
@@ -52,12 +51,10 @@ class EpochCallback(ABC):
             Learning rate of the optimizer in the current `epoch`.
         model: Module
             A reference to the model being trained.
-        features: tuple
-            A (potentially 1-)tuple of tensors with features to call the
-            `model` with. Sampled from the test data if present and from the
-            train data otherwise.
-        target: Tensor
-            Target matching the `features`.
+        data: Batches
+            An iterator over 2-tuples of a feature-tensor tuple and a target
+            tensor to call the `model` with. Sampled from the test data if
+            present and from the train data otherwise.
 
         """
         ...
@@ -90,8 +87,7 @@ class EpochPrinter(ArgRepr, EpochCallback):
             test_loss: float,
             learning_rate: float,
             model: Module,
-            features: Tensors,
-            target: Tensor
+            data: Batches
     ) -> None:
         """Assemble training-progress message and call the printer with it."""
         msg = (f'Epoch: {epoch:>4} | learning rate: {learning_rate:7.5f} | '
