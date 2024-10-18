@@ -240,7 +240,7 @@ class Trainer(ArgRepr):
             model.train()
             data = tqdm(train(self.batch_size), 'Batches', n_batches, False)
             for features, target in data:
-                optimizer.zero_grad()
+                optimizer.zero_grad(set_to_none=True)
                 predictions = model(*features)
                 loss = self.loss(*predictions, target)
                 loss.backward()

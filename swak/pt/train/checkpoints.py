@@ -219,7 +219,6 @@ class OnDisk(Checkpoint):
     def __init__(self, path: str) -> None:
         super().__init__()
         self.path = str(Path(path.strip()).resolve())
-        self.reset_parameters()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self.path}')"

@@ -258,11 +258,6 @@ class TestOnDisk(unittest.TestCase):
         self.assertEqual(expected, repr(self.check))
 
     @patch('torch.save')
-    def test_save_called_on_instantiation(self, mock):
-        _ = OnDisk(self.path)
-        mock.assert_called_once()
-
-    @patch('torch.save')
     def test_save_called_on_save(self, mock):
         self.check.save(1, 2.3, self.model)
         mock.assert_called_once_with({
@@ -276,7 +271,7 @@ class TestOnDisk(unittest.TestCase):
         )
 
     @patch('torch.load')
-    def test_load_called_on_laod(self, mock):
+    def test_load_called_on_load(self, mock):
         _ = self.check.load(self.model)
         mock.assert_called_once_with(self.path, weights_only=True)
 
