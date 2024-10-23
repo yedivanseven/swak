@@ -11,11 +11,6 @@ url = "https://download.pytorch.org/whl/cpu"
 verify_ssl = true
 name = "cpu"
 
-[[source]]
-url = "https://download.pytorch.org/whl/cu124"
-verify_ssl = true
-name = "cuda"
-
 [packages]
 pandas = "*"
 pyarrow = "*"
@@ -38,6 +33,5 @@ pandas-gbq = "*"
 torch = {version="*", index="cpu"}
 
 [cuda]
-nvidia-cuda-runtime-cu12 = {version="*", index="cuda"}
-torch = {version="2.4.1", index="cuda"}
+torch = "*"
 nvitop = "*"
