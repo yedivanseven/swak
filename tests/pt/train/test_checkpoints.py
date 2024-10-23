@@ -239,8 +239,8 @@ class TestInMemory(unittest.TestCase):
 class TestOnDisk(unittest.TestCase):
 
     def setUp(self):
-        self.file = NamedTemporaryFile()
-        self.path = self.file.name
+        with NamedTemporaryFile() as file:
+            self.path = file.name
         self.check = OnDisk(self.path)
         self.model = Mock()
         self.model.state_dict = Mock(
@@ -274,9 +274,6 @@ class TestOnDisk(unittest.TestCase):
     def test_load_called_on_load(self, mock):
         _ = self.check.load(self.model)
         mock.assert_called_once_with(self.path, weights_only=True)
-
-    def tearDown(self):
-        self.file.close()
 
 
 if __name__ == '__main__':

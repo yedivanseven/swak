@@ -38,7 +38,6 @@ pandas-gbq = "*"
 torch = {version="*", index="cpu"}
 
 [cuda]
-nvidia-pyindex = "*"
-nvidia-cuda-runtime-cu12 = "*"
+nvidia-cuda-runtime-cu12 = {version="*", index="cuda"}
+torch = {version="2.4.1", index="cuda"}
 nvitop = "*"
-torch = {version="*", index="cuda"}
