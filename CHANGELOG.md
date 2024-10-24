@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Minor change to Pipfile
 - Minor change to a unit test setup
+- Added loss reporting to progress bar in training loop
 
 ## [0.1.5] - 2024-10-23
 - No longer delete checkpoint file on instantiation in OnDisk
