@@ -27,7 +27,7 @@ class GbqQuery2DataFrame(ArgRepr):
     """
 
     def __init__(self, project: str, **kwargs: Any) -> None:
-        self.project = project.strip(' ./')
+        self.project = project.strip().strip(' /.')
         self.kwargs = kwargs
         super().__init__(self.project, **kwargs)
 

@@ -58,6 +58,7 @@ quote-style = "single"
 [tool.ruff.lint]
 ignore = ["PLR"]
 select = [
+    "A",
     "F",
     "E",
     "W",

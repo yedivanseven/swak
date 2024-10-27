@@ -75,7 +75,7 @@ class TomlReader(ArgRepr):
             The parsed contents of the TOML file.
 
         """
-        path = Path(self.path) / path.strip(' /')
+        path = Path(self.path) / path.strip().strip(' /')
         try:
             with path.open('rb', **self.kwargs) as file:
                 toml = tomllib.load(file, parse_float=self.parse_float)
@@ -154,7 +154,7 @@ class YamlReader(ArgRepr):
             The parsed contents of the YAML file.
 
         """
-        path = Path(self.path) / path.strip(' /')
+        path = Path(self.path) / path.strip().strip(' /')
         try:
             with path.open('rb', **self.kwargs) as file:
                 yml = yaml.load(file, self.loader)

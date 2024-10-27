@@ -45,8 +45,8 @@ class GcsParquet2DataFrame(ArgRepr):
             chunk_size: int = 10,
             **kwargs: Any
     ) -> None:
-        self.project = project.strip(' /.')
-        self.bucket = bucket.strip(' /.')
+        self.project = project.strip().strip(' /.')
+        self.bucket = bucket.strip().strip(' /.')
         self.prefix = prefix.strip(' ./') + '/' if prefix.strip(' ./') else ''
         self.n_threads = n_threads
         self.chunk_size = chunk_size

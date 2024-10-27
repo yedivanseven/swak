@@ -41,7 +41,7 @@ class GbqQuery(ArgRepr):
             priority: str = 'BATCH',
             **kwargs: Any
     ) -> None:
-        self.project = project.strip(' /.')
+        self.project = project.strip().strip(' /.')
         self.polling_interval = polling_interval
         self.priority = priority.strip().upper()
         self.kwargs = kwargs

@@ -62,10 +62,10 @@ class GcsDir2LocalDir(ArgRepr):
             chunk_size: int = 10,
             **kwargs: Any
     ) -> None:
-        self.project = project.strip(' /.')
-        self.bucket = bucket.strip(' /.')
+        self.project = project.strip().strip(' /.')
+        self.bucket = bucket.strip().strip(' /.')
         self.prefix = prefix.strip(' ./') + '/' if prefix.strip(' ./') else ''
-        self.base_dir = '/' + base_dir.strip(' /')
+        self.base_dir = '/' + base_dir.strip().strip(' /')
         self.overwrite = overwrite
         self.skip = skip
         self.n_threads = n_threads

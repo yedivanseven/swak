@@ -63,9 +63,9 @@ class DataFrame2Gbq(ArgRepr):
             chunksize: int | None = None,
             **kwargs: Any
     ) -> None:
-        self.project = project.strip(' ./')
-        self.dataset = dataset.strip(' ./')
-        self.table = table.strip(' ./')
+        self.project = project.strip().strip(' /.')
+        self.dataset = dataset.strip().strip(' /.')
+        self.table = table.strip().strip(' /.')
         self.location = location.strip().lower()
         self.if_exists = if_exists.strip().lower()
         self.chunksize = chunksize
@@ -103,7 +103,7 @@ class DataFrame2Gbq(ArgRepr):
             If no `table` was given, neither at instantiation nor when called.
 
         """
-        table = self.table + table.strip(' ./')
+        table = self.table + table.strip().strip(' /.')
 
         if not table:
             raise GbqError('You must provide a table name!')

@@ -120,8 +120,8 @@ class GbqDataset:
             tags: dict[str, str] | None = None,
             **kwargs: Any
     ) -> None:
-        self.project = project.strip(' /.')
-        self.dataset = dataset.strip(' /.')
+        self.project = project.strip().strip(' /.')
+        self.dataset = dataset.strip().strip(' /.')
         self.location = location.strip().lower()
         self.name = self.dataset if name is None else name.strip()
         self.description = description

@@ -4,7 +4,7 @@ import importlib.metadata as meta
 PROJECT = find_packages('../..', exclude=['test*', 'Notebook*'])[0]
 
 project = PROJECT
-copyright = '2024, Georg Heimel'
+copyright = '2024, Georg Heimel'  # noqa: A001
 author = 'Georg Heimel'
 release = meta.version(PROJECT)
 version = '.'.join(release.split('.')[:2])

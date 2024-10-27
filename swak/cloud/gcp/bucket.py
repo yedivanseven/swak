@@ -73,15 +73,15 @@ class GcsBucket(ArgRepr):
             requester_pays: bool = False,
             **kwargs: Any
     ) -> None:
-        self.project = project.strip(' /.')
-        self.bucket = bucket.strip(' /.')
+        self.project = project.strip().strip(' /.')
+        self.bucket = bucket.strip().strip(' /.')
         self.location = location.strip().upper()
         self.blob_expire_days = blob_expire_days
         self.labels = {} if labels is None else labels
         if user_project is None:
             self.user_project = self.project
         else:
-            self.user_project = user_project.strip(' /.')
+            self.user_project = user_project.strip().strip(' /.')
         self.storage_class = storage_class
         self.requester_pays = requester_pays
         self.kwargs = kwargs

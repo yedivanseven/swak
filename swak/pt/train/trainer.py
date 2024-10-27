@@ -243,7 +243,7 @@ class Trainer(ArgRepr):
                 optimizer.zero_grad(set_to_none=True)
                 predictions = model(*features)
                 loss = self.loss(*predictions, target)
-                data.set_postfix({'loss': loss.item()})
+                data.set_postfix(loss=loss.item())
                 loss.backward()
                 optimizer.step()
             model.eval()

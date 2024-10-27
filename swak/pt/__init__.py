@@ -5,7 +5,7 @@ extracting feature importance), and pass them through repeated residual layers
 of flexible architecture. Custom loss functions and re-parameterized
 distributions allow you to make probabilistic predictions. The training loop
 is conveniently abstracted away, allowing for (ready-to-use or custom-made)
-callbacks and checkpoints. Finally trained models can be saved and (re)loaded.
+callbacks and checkpoints. Finally, trained models can be saved and (re)loaded.
 
 Note
 ----
@@ -20,9 +20,13 @@ except ModuleNotFoundError:
     msg = 'Install the "torch" package to unlock the PyTorch utilities!'
     raise ImportError(msg)
 
-__all__ = ['device']
+__all__ = [
+    'device',
+    'dtype'
+]
 
 device = pt.device('cuda') if pt.cuda.is_available() else pt.device('cpu')
+dtype = pt.bfloat16 if pt.cuda.is_available() else pt.float32
 pt.set_default_device(device)
 pt.set_float32_matmul_precision('medium')
 

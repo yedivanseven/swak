@@ -37,8 +37,8 @@ class TextResourceLoader(ArgRepr):
             not_found: str = NotFound.RAISE,
             encoding: str = 'utf-8'
     ) -> None:
-        self.package = package.strip(' ./')
-        self.path = path.strip(' /')
+        self.package = package.strip().strip(' /.')
+        self.path = path.strip().strip(' /')
         self.not_found = not_found.strip().lower()
         self.encoding = encoding.strip()
         super().__init__(

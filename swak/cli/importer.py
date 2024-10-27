@@ -23,8 +23,8 @@ class Importer(ArgRepr):
     """
 
     def __init__(self, package: str, module: str = 'steps') -> None:
-        self.package = package.strip(' ./')
-        self.module = module.strip(' ./')
+        self.package = package.strip().strip(' /.')
+        self.module = module.strip().strip(' /.')
         super().__init__(self.package, self.module)
 
     @property

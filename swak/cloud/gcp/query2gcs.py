@@ -75,9 +75,9 @@ class GbqQuery2GcsParquet(ArgRepr):
             gbq_kws: dict[str, Any] | None = None,
             gcs_kws: dict[str, Any] | None = None,
     ) -> None:
-        self.project = project.strip(' /.')
-        self.bucket = bucket.strip(' /.')
-        self.prefix = prefix.strip(' /.')
+        self.project = project.strip().strip(' /.')
+        self.bucket = bucket.strip().strip(' /.')
+        self.prefix = prefix.strip().strip(' /.')
         self.overwrite = overwrite
         self.skip = skip
         self.polling_interval = polling_interval
@@ -127,7 +127,7 @@ class GbqQuery2GcsParquet(ArgRepr):
 
         """
         scripts, main = self.__split(query)
-        prefix, header = self.__render(prefix.strip(' ./'))
+        prefix, header = self.__render(prefix.strip().strip(' /.'))
         if self.__skip_query_for(prefix):
             return prefix
         client = gbq.Client(self.project, **self.gbq_kws)

@@ -40,5 +40,5 @@ class ParquetReader(ArgRepr):
         DataFrame
 
         """
-        path = Path(self.path) / path.strip(' /')
+        path = Path(self.path) / path.strip().strip(' /')
         return pd.read_parquet(path, **self.kwargs).reset_index(drop=True)
