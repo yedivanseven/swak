@@ -53,6 +53,9 @@ class Trainer(ArgRepr):
         consumption might momentarily spike if not set or set too large.
         Defaults to number of data points in test set if present or train set
         if not.
+    grad_freq: int, optional
+        For how many batches to accumulate gradients before taking an
+        optimization step. Defaults to 1, which corresponds to no accumulation.
     checkpoint: Checkpoint, optional
         Whenever the train (or test) loss after an epoch is smaller than the
         loss after the last, a new snapshot of the model state is saved by
@@ -77,6 +80,12 @@ class Trainer(ArgRepr):
         Not all learning-rate schedulers are supported . Their ``step()``
         method is called only once after each epoch, and it is called without
         any arguments.
+    grad_freq
+        If the ``reduction`` of the `loss` is "mean", the loss of each batch is
+        divided by this number before performing the backward pass. Strictly
+        speaking, each batch should thus have the exact same number of data
+        points in this case. Furthermore, complications might arise when
+        the model to train contains elements like ``BatchNorm``.
 
     See Also
     --------
@@ -97,6 +106,7 @@ class Trainer(ArgRepr):
             warmup: int = 0,
             patience: int | None = None,
             max_n: int | None = None,
+            grad_freq: int = 1,
             checkpoint: Checkpoint = InMemory(),
             epoch_cb: EpochCallback = EpochPrinter(),
             train_cb: TrainCallback = TrainPrinter()
@@ -109,6 +119,7 @@ class Trainer(ArgRepr):
         self.warmup = warmup
         self.patience = max_epochs if patience is None else patience
         self.max_n = max_n
+        self.grad_freq = grad_freq
         self.checkpoint = checkpoint
         self.epoch_cb = epoch_cb
         self.train_cb = train_cb
@@ -126,6 +137,11 @@ class Trainer(ArgRepr):
             train_cb
         )
         self.history = {'train_loss': [], 'test_loss': [], 'lr': []}
+
+    @property
+    def scale(self) -> float:
+        """Scaling factor for the accumulated loss before the backward pass."""
+        return 1.0 / self.grad_freq if self.loss.reduction == 'mean' else 1.0
 
     def train(
             self,
@@ -221,7 +237,7 @@ class Trainer(ArgRepr):
         n = train.n if test is None else test.n
         max_n = n if self.max_n is None else min(self.max_n, n)
 
-        # How many batches do we have?
+        # How many batches do we have (plus/minus one)?
         n_batches = math.ceil(train.n / self.batch_size)
 
         # Initialize training cycle.
@@ -238,14 +254,15 @@ class Trainer(ArgRepr):
         for epoch in range(epoch + 1, self.max_epochs + 1):
             # Train one epoch, looping over batches.
             model.train()
+            model.zero_grad(set_to_none=True)
             data = tqdm(train(self.batch_size), 'Batches', n_batches, False)
-            for features, target in data:
-                optimizer.zero_grad(set_to_none=True)
-                predictions = model(*features)
-                loss = self.loss(*predictions, target)
-                data.set_postfix(loss=loss.item())
-                loss.backward()
-                optimizer.step()
+            for batch_index, (features, target) in enumerate(data):
+                loss = self.loss(*model(*features), target)
+                data.set_postfix_str(f'loss={loss.item():6.4f}')
+                (self.scale * loss).backward()
+                if (batch_index + 1) % self.grad_freq == 0:
+                    optimizer.step()
+                    optimizer.zero_grad(set_to_none=True)
             model.eval()
 
             # Evaluate model on training data ...
