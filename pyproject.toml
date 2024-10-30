@@ -13,7 +13,8 @@ dependencies = [
   "pandas>=2.2",
   "pyarrow>=17.0",
   "pyyaml>=6.0",
-  "tqdm >= 4.66"
+  "tomli-w>=1.1",
+  "tqdm>=4.6"
 ]
 authors = [{name = "yedivanseven", email = "yedivanseven@outlook.de"}]
 description = "Swiss army knife for functional data-science projects."
