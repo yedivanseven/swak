@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.7] - 2024-10-30
 - Added option to accumulate gradients over multiple batches
+- Learning rate scheduler now called after every epoch
+- Added scheduling functions for learning rate
+- Added TOML and YAML writers
 
 ## [0.1.6] - 2024-10-27
 - Minor change to Pipfile

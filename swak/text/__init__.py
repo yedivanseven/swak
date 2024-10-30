@@ -1,4 +1,4 @@
-"""Tools for loading, completing, and parsing text and configuration files.
+"""Tools for loading, completing, and writing text and configuration files.
 
 Parameters that are known at program start are used to initialize the classes
 so that, at runtime, the information only available then can flow through a
@@ -10,6 +10,7 @@ from .resource import TextResourceLoader
 from .interpolate import TemplateRenderer, FormFiller
 from .read import TomlReader, YamlReader
 from .parse import YamlParser
+from .write import TomlWriter, YamlWriter
 from .misc import NotFound
 
 __all__ = [
@@ -19,5 +20,7 @@ __all__ = [
     'NotFound',
     'TomlReader',
     'YamlReader',
-    'YamlParser'
+    'YamlParser',
+    'TomlWriter',
+    'YamlWriter'
 ]

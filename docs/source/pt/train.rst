@@ -32,8 +32,25 @@ train
    :special-members: __call__
    :show-inheritance:
 
+
 .. autoclass:: swak.pt.train.History
    :members:
+   :show-inheritance:
+
+
+
+Schedulers
+----------
+
+.. autoclass:: swak.pt.train.LinearInverse
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.train.LinearExponential
+   :members:
+   :special-members: __call__
    :show-inheritance:
 
 

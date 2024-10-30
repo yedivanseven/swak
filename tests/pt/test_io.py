@@ -11,7 +11,7 @@ class TestStateSaver(unittest.TestCase):
         self.model = Mock()
         self.model.state_dict = Mock(return_value=42)
 
-    def test_has_has_path(self):
+    def test_has_path(self):
         self.assertTrue(hasattr(self.save, 'path'))
 
     def test_path(self):
@@ -64,7 +64,7 @@ class TestStateLoader(unittest.TestCase):
         self.model.load_state_dict = Mock()
         self.model.to = Mock(return_value=self.model)
 
-    def test_has_has_path(self):
+    def test_has_path(self):
         self.assertTrue(hasattr(self.load, 'path'))
 
     def test_path(self):
@@ -251,7 +251,7 @@ class TestModelSaver(unittest.TestCase):
         self.save = ModelSaver(self.path)
         self.model = Mock()
 
-    def test_has_has_path(self):
+    def test_has_path(self):
         self.assertTrue(hasattr(self.save, 'path'))
 
     def test_path(self):
@@ -301,7 +301,7 @@ class TestModelLoader(unittest.TestCase):
         self.path = '/path/model.pt'
         self.load = ModelLoader(self.path)
 
-    def test_has_has_path(self):
+    def test_has_path(self):
         self.assertTrue(hasattr(self.load, 'path'))
 
     def test_path(self):

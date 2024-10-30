@@ -36,15 +36,16 @@ class Trainer(ArgRepr):
         when called with a PyTorch optimizer. Defaults to never changing the
         learning rate at all.
     warmup: int, optional
-        Number of epochs to wait until the learning rate scheduler is used
-        for the first time. Defaults to 0.
+        Number of epochs to wait until checking for loss improvement and
+        saving checkpoints accordingly. Defaults to 1 because we train for
+        at least one epoch.
     patience: int, optional
         If patience is not ``None`` and smaller than `max_epochs`, early
         stopping is active. A snapshot of the model's state is taken after
         each epoch that improved the loss below its last minimum. If no
         improvement occurs for `patience` epochs, model training is stopped
         (even if `max_epochs` has not been reached yet) and the model is reset
-        to its best state. If `warmup` > 0, then the early stopping gets active
+        to its best state. If `warmup` > 1, then the early stopping gets active
         only after `warmup` epochs have passed.
     max_n: int, optional
         Maximum number of data points to take from the training (and,
@@ -103,7 +104,7 @@ class Trainer(ArgRepr):
             loss: Module,
             optimizer: Curry[Optimizer],
             scheduler: Curry[LRScheduler] = Curry[NoSchedule](NoSchedule),
-            warmup: int = 0,
+            warmup: int = 1,
             patience: int | None = None,
             max_n: int | None = None,
             grad_freq: int = 1,
@@ -308,11 +309,11 @@ class Trainer(ArgRepr):
                 sample
             )
 
-            # Update the learning rate of the optimizer if warmup is exhausted.
-            if epoch >= self.warmup:
-                scheduler.step()
+            # Update the learning rate of the optimizer.
+            scheduler.step()
 
-                # After warm-up, check if loss improved within our patience.
+            # After warm-up, check if loss improved within our patience.
+            if epoch >= self.warmup:
                 track_loss = train_loss if test is None else test_loss
                 if track_loss < best_loss:
                     best_loss = track_loss

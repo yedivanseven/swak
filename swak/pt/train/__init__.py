@@ -11,6 +11,7 @@ loop are also provided.
 from .data import TestDataBase, TrainDataBase
 from .trainer import Trainer
 from .checkpoints import Checkpoint, InMemory, OnDisk, State
+from .schedulers import LinearInverse, LinearExponential
 from .callbacks import (
     EpochPrinter,
     TrainPrinter,
@@ -29,5 +30,7 @@ __all__ = [
     'Checkpoint',
     'EpochCallback',
     'State',
-    'History'
+    'History',
+    'LinearInverse',
+    'LinearExponential'
 ]

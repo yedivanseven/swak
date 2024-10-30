@@ -6,10 +6,7 @@ from pathlib import Path
 import yaml
 from yaml import Loader
 from ..misc import ArgRepr
-from .misc import NotFound
-
-type Toml = dict[str, Any]
-type Yaml = dict[str, Any] | list[Any]
+from .misc import NotFound, Toml, Yaml, NotFoundLiteral
 
 
 class TomlReader(ArgRepr):
@@ -43,7 +40,7 @@ class TomlReader(ArgRepr):
     def __init__(
             self,
             path: str = '',
-            not_found: str = NotFound.RAISE,
+            not_found: NotFoundLiteral = NotFound.RAISE,
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
@@ -122,7 +119,7 @@ class YamlReader(ArgRepr):
     def __init__(
             self,
             path: str = '',
-            not_found: str = NotFound.RAISE,
+            not_found: NotFoundLiteral = NotFound.RAISE,
             loader: type = Loader,
             **kwargs: Any
     ) -> None:

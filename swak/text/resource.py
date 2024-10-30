@@ -1,6 +1,5 @@
 import pkgutil
 import warnings
-
 from ..misc import ArgRepr
 from .misc import NotFound
 

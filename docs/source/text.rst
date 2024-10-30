@@ -27,6 +27,11 @@ text
    :special-members: __call__
    :show-inheritance:
 
+.. autoclass:: swak.text.write.TomlWriter
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
 
 .. autoclass:: swak.text.read.YamlReader
    :members:
@@ -35,6 +40,12 @@ text
 
 
 .. autoclass:: swak.text.parse.YamlParser
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.text.write.YamlWriter
    :members:
    :special-members: __call__
    :show-inheritance:
