@@ -1,5 +1,4 @@
 from typing import Any
-from functools import cached_property
 from torch.nn.modules.module import _IncompatibleKeys
 from ..types import Optimizer
 from ...misc import ArgRepr
@@ -66,35 +65,30 @@ class LinearInverse(ArgRepr):
     Parameters
     ----------
     warmup: int, optional
-        Number of epochs during which the learning rate will be linearly
-        scaled up to the one specified in the optimizer. Defaults to 1,
-        resulting in the learning rate already at its maximum value in the
-        first epoch.
+        Number of steps during which the learning rate will be linearly
+        scaled up to the one specified in the optimizer. Defaults to 0,
+        resulting in the learning rate already at its maximum value for the
+        first step and only decaying thereafter.
     power: float, optional
-        After `warmup` epochs, the learning rate is scaled down with the
-        inverse epoch number taken to the power of this number. Values are
+        After `warmup` steps, the learning rate is scaled down with the
+        inverse step number taken to the power of this number. Values are
         cut to lie in the interval [0.5, 1.0].
         Defaults to 0.5, the slowest decay.
 
     """
 
-    def __init__(self, warmup: int = 1, power: float = 0.5) -> None:
+    def __init__(self, warmup: int = 0, power: float = 0.5) -> None:
         super().__init__(warmup, power)
-        self.warmup = max(warmup, 1)
+        self.warmup = max(warmup, 0)
         self.power = min(max(power, 0.5), 1.0)
 
-    @cached_property
-    def ramp(self) -> list[float]:
-        """Learning-rate scaling factors during the warmup period."""
-        return [epoch / self.warmup for epoch in range(1, self.warmup + 1)]
-
-    def __call__(self, epoch: int) -> float:
-        """Learning rate scaling factor depending on the epoch.
+    def __call__(self, step: int) -> float:
+        """Learning rate scaling factor depending on the step.
 
         Parameters
         ----------
-        epoch: int
-            Epoch to return the learning-rate scaling factor for.
+        step: int
+            Step to return the learning-rate scaling factor for.
 
         Returns
         -------
@@ -102,9 +96,11 @@ class LinearInverse(ArgRepr):
             The learning-rate scaling factor
 
         """
-        if epoch < self.warmup:
-            return self.ramp[epoch]
-        return (2 + (epoch - self.warmup)) ** -self.power
+        if step < self.warmup:
+            return (step + 1) / self.warmup
+        if step == self.warmup:
+            return 1.0
+        return (step - self.warmup) ** -self.power
 
 
 class LinearExponential(ArgRepr):
@@ -119,34 +115,29 @@ class LinearExponential(ArgRepr):
     Parameters
     ----------
     warmup: int, optional
-        Number of epochs during which the learning rate will be linearly
-        scaled up to the one specified in the optimizer. Defaults to 1,
-        resulting in the learning rate already at its maximum value in the
-        first epoch.
+        Number of steps during which the learning rate will be linearly
+        scaled up to the one specified in the optimizer. Defaults to 0,
+        resulting in the learning rate already at its maximum value for the
+        first step and only decaying thereafter.
     gamma: float, optional
-        After `warmup` epochs, the learning rate is scaled down with this
-        number to the power of the epoch number. Therefore, it must lie in
+        After `warmup` steps, the learning rate is scaled down with this
+        number to the power of the step number. Therefore, it must lie in
         the interval (0.0, 1.0). Defaults to 0.95.
 
     """
 
-    def __init__(self, warmup: int = 1, gamma: float = 0.95) -> None:
+    def __init__(self, warmup: int = 0, gamma: float = 0.95) -> None:
         super().__init__(warmup, gamma)
-        self.warmup = max(warmup, 1)
+        self.warmup = max(warmup, 0)
         self.gamma = min(max(gamma, 0.0), 1.0)
 
-    @cached_property
-    def ramp(self) -> list[float]:
-        """Learning-rate scaling factors during the warmup period."""
-        return [epoch / self.warmup for epoch in range(1, self.warmup + 1)]
-
-    def __call__(self, epoch: int) -> float:
-        """Learning rate scaling factor depending on the epoch.
+    def __call__(self, step: int) -> float:
+        """Learning rate scaling factor depending on the step.
 
         Parameters
         ----------
-        epoch: int
-            Epoch to return the learning-rate scaling factor for.
+        step: int
+            Step to return the learning-rate scaling factor for.
 
         Returns
         -------
@@ -154,6 +145,6 @@ class LinearExponential(ArgRepr):
             The learning-rate scaling factor
 
         """
-        if epoch < self.warmup:
-            return self.ramp[epoch]
-        return self.gamma ** (1 + epoch - self.warmup)
+        if step < self.warmup:
+            return (step + 1) / self.warmup
+        return self.gamma ** (step - self.warmup)

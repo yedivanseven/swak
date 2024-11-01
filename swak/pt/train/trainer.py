@@ -18,10 +18,6 @@ class Trainer(ArgRepr):
 
     Parameters
     ----------
-    batch_size: int
-        Size of the mini-batches to request from the training data.
-    max_epochs: int
-        Maximum number of epochs to train for.
     loss: Module
         PyTorch module that accepts the output(s) of the model to train as
         first argument(s) and the target as last argument and that produces
@@ -30,31 +26,34 @@ class Trainer(ArgRepr):
         A curry of a preconfigured PyTorch Optimizer (or some other custom
         construct) that returns a fully configured PyTorch Optimizer when
         called with the ``model.parameters()`` of the model to train.
+    batch_size: int, optional
+        Size of the mini-batches to request from the training data.
+        Defaults to 64.
+    max_epochs: int, optional
+        Maximum number of epochs to train for. Defaults to 100.
     scheduler: Curry[LRScheduler], optional
         A curry of a PyTorch learning-rate scheduler (or some other custom
         construct) that returns a fully configured learning-rate scheduler
         when called with a PyTorch optimizer. Defaults to never changing the
         learning rate at all.
     warmup: int, optional
-        Number of epochs to wait until checking for loss improvement and
-        saving checkpoints accordingly. Defaults to 1 because we train for
-        at least one epoch.
+        In the beginning of training, the learning-rate `scheduler` will be
+        stepped after every optimizer step for this many times. Afterward, it
+        will only be stepped at the end of each epoch. Defaults to 0, which
+        results in no warmup and the learning-rate `scheduler` being stepped
+        at the end of the first epoch for the first time.
     patience: int, optional
         If patience is not ``None`` and smaller than `max_epochs`, early
         stopping is active. A snapshot of the model's state is taken after
         each epoch that improved the loss below its last minimum. If no
         improvement occurs for `patience` epochs, model training is stopped
         (even if `max_epochs` has not been reached yet) and the model is reset
-        to its best state. If `warmup` > 1, then the early stopping gets active
-        only after `warmup` epochs have passed.
+        to its best state.
     max_n: int, optional
-        Maximum number of data points to take from the training (and,
-        if present, test) data for computing the train (and, optional, test)
-        loss after each epoch. Since this is done in a single batch, memory
-        consumption might momentarily spike if not set or set too large.
-        Defaults to number of data points in test set if present or train set
-        if not.
-    grad_freq: int, optional
+        Maximum number of data points to take from the training data to
+        evaluate the train loss after each epoch. Defaults to number of data
+        points in the test set (if present) or the train set (if not).
+    step_freq: int, optional
         For how many batches to accumulate gradients before taking an
         optimization step. Defaults to 1, which corresponds to no accumulation.
     checkpoint: Checkpoint, optional
@@ -78,10 +77,10 @@ class Trainer(ArgRepr):
         Because the (partial) optimizer will simply be completed with
         ``model.parameters()``, parameter groups are not supported.
     scheduler
-        Not all learning-rate schedulers are supported . Their ``step()``
-        method is called only once after each epoch, and it is called without
-        any arguments.
-    grad_freq
+        During `warmup`, the scheduler is called after each optimizer step and,
+        afterward, at the end of each epoch. The scheduler thus needs to be
+        aware of the `warmup` settings and act accordingly.
+    step_freq
         If the ``reduction`` of the `loss` is "mean", the loss of each batch is
         divided by this number before performing the backward pass. Strictly
         speaking, each batch should thus have the exact same number of data
@@ -99,36 +98,36 @@ class Trainer(ArgRepr):
 
     def __init__(
             self,
-            batch_size: int,
-            max_epochs: int,
             loss: Module,
             optimizer: Curry[Optimizer],
+            batch_size: int = 64,
+            max_epochs: int = 100,
             scheduler: Curry[LRScheduler] = Curry[NoSchedule](NoSchedule),
-            warmup: int = 1,
+            warmup: int = 0,
             patience: int | None = None,
             max_n: int | None = None,
-            grad_freq: int = 1,
+            step_freq: int = 1,
             checkpoint: Checkpoint = InMemory(),
             epoch_cb: EpochCallback = EpochPrinter(),
             train_cb: TrainCallback = TrainPrinter()
     ) -> None:
-        self.batch_size = batch_size
-        self.max_epochs = max_epochs
         self.loss = loss
         self.optimizer = optimizer
+        self.batch_size = batch_size
+        self.max_epochs = max_epochs
         self.scheduler = scheduler
         self.warmup = warmup
         self.patience = max_epochs if patience is None else patience
         self.max_n = max_n
-        self.grad_freq = grad_freq
+        self.step_freq = step_freq
         self.checkpoint = checkpoint
         self.epoch_cb = epoch_cb
         self.train_cb = train_cb
         super().__init__(
-            batch_size,
-            max_epochs,
             loss,
             optimizer,
+            batch_size,
+            max_epochs,
             scheduler,
             warmup,
             patience,
@@ -142,7 +141,7 @@ class Trainer(ArgRepr):
     @property
     def scale(self) -> float:
         """Scaling factor for the accumulated loss before the backward pass."""
-        return 1.0 / self.grad_freq if self.loss.reduction == 'mean' else 1.0
+        return 1.0 / self.step_freq if self.loss.reduction == 'mean' else 1.0
 
     def train(
             self,
@@ -244,6 +243,7 @@ class Trainer(ArgRepr):
         # Initialize training cycle.
         optimizer = self.optimizer(model.parameters())
         scheduler = self.scheduler(optimizer)
+        scheduler_not_stepped_yet = True
         epoch, best_loss = self.checkpoint.load(model, optimizer, scheduler)
 
         # Initialize counting and accumulation variables.
@@ -253,22 +253,33 @@ class Trainer(ArgRepr):
 
         # Loop over epochs.
         for epoch in range(epoch + 1, self.max_epochs + 1):
-            # Train one epoch, looping over batches.
+            # Prepare the model for training
             model.train()
             model.zero_grad(set_to_none=True)
+            # Get an iterator over batches for one epoch of training data
             data = tqdm(train(self.batch_size), 'Batches', n_batches, False)
-            for batch_index, (features, target) in enumerate(data):
+            for batch_index, (features, target) in enumerate(data, 1):
                 loss = self.loss(*model(*features), target)
+                # Report loss to the tqdm progress bar for visual feedback
                 data.set_postfix_str(f'loss={loss.item():6.4f}')
+                # Scale down gradients for multi-batch accumulation if required
                 (self.scale * loss).backward()
-                if (batch_index + 1) % self.grad_freq == 0:
+                # Remember whether the scheduler has been stepped yet
+                scheduler_not_stepped_yet = True
+                # Step on accumulated gradients every step_freq batches
+                if batch_index % self.step_freq == 0:
                     optimizer.step()
                     optimizer.zero_grad(set_to_none=True)
-            model.eval()
+                    # During warmup, step the scheduler after each opti step
+                    if scheduler.last_epoch < self.warmup:
+                        scheduler.step()
+                        # Remember whether to step at the end of the epoch
+                        scheduler_not_stepped_yet = False
 
             # Evaluate model on training data ...
             n = 0
             train_loss = 0.0
+            model.eval()
             with pt.no_grad():
                 for features, target in train.sample(self.batch_size, max_n):
                     n_new = target.shape[0]
@@ -276,7 +287,7 @@ class Trainer(ArgRepr):
                     train_loss += n_new * (loss - train_loss) / (n + n_new)
                     n += n_new
 
-            # ... and, potentially, on test data.
+            # ... and, if present, on test data.
             if test is None:
                 test_loss = float('nan')
             else:
@@ -309,28 +320,28 @@ class Trainer(ArgRepr):
                 sample
             )
 
-            # Update the learning rate of the optimizer.
-            scheduler.step()
+            # Update the learning rate of the optimizer if still required
+            if scheduler_not_stepped_yet:
+                scheduler.step()
 
-            # After warm-up, check if loss improved within our patience.
-            if epoch >= self.warmup:
-                track_loss = train_loss if test is None else test_loss
-                if track_loss < best_loss:
-                    best_loss = track_loss
-                    best_epoch = epoch
-                    n_wait = 1
-                    self.checkpoint.save(
-                        best_epoch,
-                        best_loss,
-                        model,
-                        optimizer,
-                        scheduler
-                    )
-                elif n_wait < self.patience:
-                    n_wait += 1
-                else:
-                    self.checkpoint.load(model, optimizer, scheduler)
-                    break
+            # Check if the loss improved within our patience.
+            track_loss = train_loss if test is None else test_loss
+            if track_loss < best_loss:
+                best_loss = track_loss
+                best_epoch = epoch
+                n_wait = 1
+                self.checkpoint.save(
+                    best_epoch,
+                    best_loss,
+                    model,
+                    optimizer,
+                    scheduler
+                )
+            elif n_wait < self.patience:
+                n_wait += 1
+            else:
+                self.checkpoint.load(model, optimizer, scheduler)
+                break
 
         # Did we exhaust the maximum number of epochs?
         else:

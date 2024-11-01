@@ -85,19 +85,13 @@ class TestLinearInverse(unittest.TestCase):
 
     def test_default_warmup(self):
         self.assertIsInstance(self.default.warmup, int)
-        self.assertEqual(1, self.default.warmup)
+        self.assertEqual(0, self.default.warmup)
 
     def test_default_has_power(self):
         self.assertTrue(hasattr(self.default, 'power'))
 
     def test_default_power(self):
         self.assertEqual(0.5, self.default.power)
-
-    def test_default_has_ramp(self):
-        self.assertTrue(hasattr(self.default, 'ramp'))
-
-    def test_default_ramp(self):
-        self.assertListEqual([1.0], self.default.ramp)
 
     def test_custom_warmup(self):
         self.assertIsInstance(self.custom.warmup, int)
@@ -106,19 +100,9 @@ class TestLinearInverse(unittest.TestCase):
     def test_custom_power(self):
         self.assertEqual(self.power, self.custom.power)
 
-    def test_custom_has_ramp(self):
-        self.assertTrue(hasattr(self.custom, 'ramp'))
-
-    def test_custom_ramp(self):
-        self.assertListEqual([0.2, 0.4, 0.6, 0.8, 1.0], self.custom.ramp)
-
-    def test_warmup_positive(self):
-        scheduler = LinearInverse(-3)
-        self.assertEqual(1, scheduler.warmup)
-
-    def test_warmup_at_least_one(self):
-        scheduler = LinearInverse(0)
-        self.assertEqual(1, scheduler.warmup)
+    def test_warmup_at_least_zero(self):
+        scheduler = LinearInverse(-1)
+        self.assertEqual(0, scheduler.warmup)
 
     def test_power_positive(self):
         scheduler = LinearInverse(power=-1.23)
@@ -138,12 +122,19 @@ class TestLinearInverse(unittest.TestCase):
     def test_ramp_up(self):
         for epoch in range(self.warmup):
             self.assertEqual(self.ramp[epoch], self.custom(epoch))
-        self.assertEqual(1.0, self.custom(self.warmup - 1))
+        self.assertEqual(1.0, self.custom(self.warmup))
 
     def test_scale_down(self):
-        for epoch in range(self.warmup, self.warmup + 10):
-            expected = (2 + (epoch - self.warmup)) ** -self.power
+        for epoch in range(self.warmup + 1, self.warmup + 11):
+            expected = (epoch - self.warmup) ** -self.power
             self.assertEqual(expected, self.custom(epoch))
+
+    def test_no_warmup(self):
+        scheduler = LinearInverse(0, self.power)
+        self.assertEqual(1.0, scheduler(0))
+        for epoch in range(1, 11):
+            expected = epoch ** -self.power
+            self.assertEqual(expected, scheduler(epoch))
 
     def test_repr(self):
         expected = 'LinearInverse(5, 0.7)'
@@ -167,19 +158,13 @@ class TestLinearExponential(unittest.TestCase):
 
     def test_default_warmup(self):
         self.assertIsInstance(self.default.warmup, int)
-        self.assertEqual(1, self.default.warmup)
+        self.assertEqual(0, self.default.warmup)
 
     def test_default_has_gamma(self):
         self.assertTrue(hasattr(self.default, 'gamma'))
 
     def test_default_gamma(self):
         self.assertEqual(0.95, self.default.gamma)
-
-    def test_default_has_ramp(self):
-        self.assertTrue(hasattr(self.default, 'ramp'))
-
-    def test_default_ramp(self):
-        self.assertListEqual([1.0], self.default.ramp)
 
     def test_custom_warmup(self):
         self.assertIsInstance(self.custom.warmup, int)
@@ -188,19 +173,9 @@ class TestLinearExponential(unittest.TestCase):
     def test_custom_gamma(self):
         self.assertEqual(self.gamma, self.custom.gamma)
 
-    def test_custom_has_ramp(self):
-        self.assertTrue(hasattr(self.custom, 'ramp'))
-
-    def test_custom_ramp(self):
-        self.assertListEqual([0.2, 0.4, 0.6, 0.8, 1.0], self.custom.ramp)
-
-    def test_warmup_positive(self):
+    def test_warmup_at_least_zero(self):
         scheduler = LinearExponential(-3)
-        self.assertEqual(1, scheduler.warmup)
-
-    def test_warmup_at_least_one(self):
-        scheduler = LinearExponential(0)
-        self.assertEqual(1, scheduler.warmup)
+        self.assertEqual(0, scheduler.warmup)
 
     def test_gamma_at_least_0(self):
         scheduler = LinearExponential(gamma=-0.123)
@@ -216,12 +191,19 @@ class TestLinearExponential(unittest.TestCase):
     def test_ramp_up(self):
         for epoch in range(self.warmup):
             self.assertEqual(self.ramp[epoch], self.custom(epoch))
-        self.assertEqual(1.0, self.custom(self.warmup - 1))
+        self.assertEqual(1.0, self.custom(self.warmup))
 
     def test_scale_down(self):
-        for epoch in range(self.warmup, self.warmup + 10):
-            expected = self.gamma ** (1 + epoch - self.warmup)
+        for epoch in range(self.warmup + 1, self.warmup + 10):
+            expected = self.gamma ** (epoch - self.warmup)
             self.assertEqual(expected, self.custom(epoch))
+
+    def test_no_warmup(self):
+        scheduler = LinearExponential(0, self.gamma)
+        self.assertEqual(1.0, scheduler(0))
+        for epoch in range(1, 11):
+            expected = self.gamma ** epoch
+            self.assertEqual(expected, scheduler(epoch))
 
     def test_repr(self):
         expected = 'LinearExponential(5, 0.7)'
