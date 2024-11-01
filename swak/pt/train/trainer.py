@@ -243,7 +243,6 @@ class Trainer(ArgRepr):
         # Initialize training cycle.
         optimizer = self.optimizer(model.parameters())
         scheduler = self.scheduler(optimizer)
-        scheduler_not_stepped_yet = True
         epoch, best_loss = self.checkpoint.load(model, optimizer, scheduler)
 
         # Initialize counting and accumulation variables.
@@ -264,17 +263,13 @@ class Trainer(ArgRepr):
                 data.set_postfix_str(f'loss={loss.item():6.4f}')
                 # Scale down gradients for multi-batch accumulation if required
                 (self.scale * loss).backward()
-                # Remember whether the scheduler has been stepped yet
-                scheduler_not_stepped_yet = True
-                # Step on accumulated gradients every step_freq batches
+                # Step after accumulating gradients for step_freq batches
                 if batch_index % self.step_freq == 0:
                     optimizer.step()
                     optimizer.zero_grad(set_to_none=True)
                     # During warmup, step the scheduler after each opti step
                     if scheduler.last_epoch < self.warmup:
                         scheduler.step()
-                        # Remember whether to step at the end of the epoch
-                        scheduler_not_stepped_yet = False
 
             # Evaluate model on training data ...
             n = 0
@@ -320,8 +315,8 @@ class Trainer(ArgRepr):
                 sample
             )
 
-            # Update the learning rate of the optimizer if still required
-            if scheduler_not_stepped_yet:
+            # After warmup, step the scheduler at the end of the epoch
+            if scheduler.last_epoch >= self.warmup:
                 scheduler.step()
 
             # Check if the loss improved within our patience.
