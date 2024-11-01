@@ -315,28 +315,28 @@ class Trainer(ArgRepr):
                 sample
             )
 
-            # After warmup, step the scheduler at the end of the epoch
+            # After warmup, step the scheduler at the end of the epoch ...
             if scheduler.last_epoch >= self.warmup:
                 scheduler.step()
 
-            # Check if the loss improved within our patience.
-            track_loss = train_loss if test is None else test_loss
-            if track_loss < best_loss:
-                best_loss = track_loss
-                best_epoch = epoch
-                n_wait = 1
-                self.checkpoint.save(
-                    best_epoch,
-                    best_loss,
-                    model,
-                    optimizer,
-                    scheduler
-                )
-            elif n_wait < self.patience:
-                n_wait += 1
-            else:
-                self.checkpoint.load(model, optimizer, scheduler)
-                break
+                # ... and check if the loss improved within our patience.
+                track_loss = train_loss if test is None else test_loss
+                if track_loss < best_loss:
+                    best_loss = track_loss
+                    best_epoch = epoch
+                    n_wait = 1
+                    self.checkpoint.save(
+                        best_epoch,
+                        best_loss,
+                        model,
+                        optimizer,
+                        scheduler
+                    )
+                elif n_wait < self.patience:
+                    n_wait += 1
+                else:
+                    self.checkpoint.load(model, optimizer, scheduler)
+                    break
 
         # Did we exhaust the maximum number of epochs?
         else:
