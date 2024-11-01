@@ -13,6 +13,7 @@ class IfExists(StrEnum):
     APPEND = 'append'
 
 
+# ToDo: Add pola-rs support and rename to Pandas2Gbq and Polars2Gbq!
 class DataFrame2Gbq(ArgRepr):
     """Partial of the ``to_gbq`` function in the``pandas_gbq`` package.
 

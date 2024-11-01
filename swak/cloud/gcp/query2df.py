@@ -4,6 +4,7 @@ from pandas import DataFrame
 from ...misc import ArgRepr
 
 
+# ToDo: Add pola-rs support and rename to GbqQuery2Pandas and GbqQuery2Polars!
 class GbqQuery2DataFrame(ArgRepr):
     """Partial of the ``read_gbq`` function in the ``pandas_gbq`` package.
 
