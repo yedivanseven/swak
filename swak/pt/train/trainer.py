@@ -1,4 +1,3 @@
-import math
 import torch as pt
 from tqdm import tqdm
 from ...misc import ArgRepr
@@ -237,8 +236,8 @@ class Trainer(ArgRepr):
         n = train.n if test is None else test.n
         max_n = n if self.max_n is None else min(self.max_n, n)
 
-        # How many batches do we have (plus/minus one)?
-        n_batches = math.ceil(train.n / self.batch_size)
+        # How many batches do we have?
+        n_batches = train.n_batches_of(self.batch_size, self.step_freq)
 
         # Initialize training cycle.
         optimizer = self.optimizer(model.parameters())
@@ -256,11 +255,14 @@ class Trainer(ArgRepr):
             model.train()
             model.zero_grad(set_to_none=True)
             # Get an iterator over batches for one epoch of training data
-            data = tqdm(train(self.batch_size), 'Batches', n_batches, False)
-            for batch_index, (features, target) in enumerate(data, 1):
+            data = train(self.batch_size, self.step_freq)
+            # Initialize a progress bar to monitor training in real time
+            progress = tqdm(data, 'Batches', n_batches, False)
+            # Loop over batches for one epoch of training data
+            for batch_index, (features, target) in enumerate(progress, 1):
                 loss = self.loss(*model(*features), target)
                 # Report loss to the tqdm progress bar for visual feedback
-                data.set_postfix_str(f'loss={loss.item():6.4f}')
+                progress.set_postfix_str(f'loss={loss.item():6.4f}')
                 # Scale down gradients for multi-batch accumulation if required
                 (self.scale * loss).backward()
                 # Step after accumulating gradients for step_freq batches

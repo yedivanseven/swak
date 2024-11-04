@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 from ..types import Batches
 
@@ -58,8 +59,65 @@ class TestDataBase(ABC):
 
 class TrainDataBase(TestDataBase):
 
+    def n_for(self, batch_size: int, step_freq: int = 1) -> int:
+        """Number of data points reduced to be suitably integer-divisible.
+
+        This is a helper method for users to implement the ``__call__`` method
+        in the case of `step_freq` > 1. Taking only the returned number of
+        data points guarantees that all batches have the same size and that
+        there will be no "left-over" batches at the end of the epoch.
+
+        Parameters
+        ----------
+        batch_size: int
+            The desired number of data points in one batch.
+        step_freq: int, optional
+            In case this number is > 1, the optimizer will accumulate gradients
+            for that many batches before taking a step. All batches should be
+            of the same size in this case and there shouldn't be any
+            "left-over" batches at the end of each epoch. Defaults to 1.
+
+        Returns
+        -------
+        int
+            Reduced number of data points that is guaranteed to be integer
+            divisible by the product of `batch_size` and `step_freq`.
+
+        """
+        if step_freq <= 1:
+            return self.n
+        super_batch_size = step_freq * batch_size
+        return super_batch_size * (self.n // super_batch_size)
+
+    def n_batches_of(self, batch_size: int, step_freq: int= 1) -> int:
+        """Number of batches reduced to be suitably integer-divisible.
+
+        This is a helper method for users to implement the ``__call__`` method
+        in the case of `step_freq` > 1. The returned number of batches
+        is guaranteed to be integer-divisible by `step_freq` so that no batches
+        are "left over" at the end of the epoch.
+
+        Parameters
+        ----------
+        batch_size: int
+            The desired number of data points in one batch.
+        step_freq: int, optional
+            In case this number is > 1, the optimizer will accumulate gradients
+            for that many batches before taking a step. All batches should be
+            of the same size in this case and there shouldn't be any
+            "left-over" batches at the end of each epoch. Defaults to 1.
+
+        Returns
+        -------
+        int
+            Reduced number of batches that is guaranteed to be integer
+            divisible by `step_freq`.
+
+        """
+        return math.ceil(self.n_for(batch_size, step_freq) / batch_size)
+
     @abstractmethod
-    def __call__(self, batch_size: int) -> Batches:
+    def __call__(self, batch_size: int, step_freq: int = 1) -> Batches:
         """Return an iterator over the mini-batches your model is trained on.
 
         Every time a training-data instance is called, it should re-shuffle
@@ -69,6 +127,11 @@ class TrainDataBase(TestDataBase):
         ----------
         batch_size: int
             The (maximum) number of data points in one batch.
+        step_freq: int, optional
+            In case this number is > 1, the optimizer will accumulate gradients
+            for that many batches before taking a step. All batches should be
+            of the same size in this case. and there shouldn't be any
+            "left-over" batches at the end of each epoch. Defaults to 1.
 
         Returns
         -------
