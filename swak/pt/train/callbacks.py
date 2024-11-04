@@ -140,8 +140,8 @@ class TrainPrinter(ArgRepr):
         if max_epochs_reached:
             self.printer(f'Maximum number of {epoch} epochs exhausted!')
         else:
-            msg = (f'Stopping after {epoch} epochs because, even after '
-                   f'{epoch - best_epoch} epochs, the loss did not drop '
-                   f'below the lowest value of {best_loss:7.5f} seen in epoch '
-                   f'{best_epoch}. Recovering checkpoint from that epoch.')
+            msg = (f'Stopping after {epoch} epochs because, even after waiting'
+                   f' for {epoch - best_epoch} more epochs, the loss did not '
+                   f'drop below the lowest value of {best_loss:7.5f} seen in '
+                   f'epoch {best_epoch}. Recovering that checkpoint.')
             self.printer(msg)
