@@ -125,8 +125,7 @@ class GatedBlock(Block):
         Size of the feature space. The input tensor is expected to be of that
         size in its last dimension and the output will again have this size in
         its last dimension.
-    gate: Module or function
-        gate: Module or function, optional
+    gate: Module or function, optional
         The activation function to be applied to half of the (linearly)
         projected input before multiplying with the other half. Must be
         a callable that accepts a tensor as sole argument, like a module from
@@ -300,9 +299,9 @@ class SkipConnection(Block):
         create a fresh, new instances with equal, but independent parameters.
         Defaults to ``Identity``, resulting in no normalization whatsoever.
     *args
-        Arguments used to initialize and instance of `norm_cls`.
+        Arguments used to initialize an instance of `norm_cls`.
     **kwargs
-        Keyword arguments used to initialize and instance of `norm_cls`.
+        Keyword arguments used to initialize an instance of `norm_cls`.
 
     """
 
