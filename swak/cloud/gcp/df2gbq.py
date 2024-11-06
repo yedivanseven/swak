@@ -17,7 +17,7 @@ class IfExists(StrEnum):
 
 # ToDo: Add pola-rs support and rename to Pandas2Gbq and Polars2Gbq!
 class DataFrame2Gbq(ArgRepr):
-    """Partial of the ``to_gbq`` function in the``pandas_gbq`` package.
+    """Partial of the ``to_gbq`` function in the ``pandas_gbq`` package.
 
     As such, it may not be suitable for uploading large amounts of data (see
     its `documentation <https://googleapis.dev/python/pandas-gbq/latest/>`__
