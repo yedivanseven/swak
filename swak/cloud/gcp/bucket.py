@@ -4,7 +4,7 @@ from google.cloud.storage import Client, Bucket
 from google.api_core.retry import Retry
 from ...misc import ArgRepr
 
-type StorageType = Literal['STANDARD', 'NEARLINE', 'COLDLINE', 'ARCHIVE']
+type LiteralStorage = Literal['STANDARD', 'NEARLINE', 'COLDLINE', 'ARCHIVE']
 
 
 class Storage(StrEnum):
@@ -69,7 +69,7 @@ class GcsBucket(ArgRepr):
             blob_expire_days: int | None = None,
             labels: dict[str, str] | None = None,
             user_project: str | None = None,
-            storage_class: StorageType | None = None,
+            storage_class: LiteralStorage | None = None,
             requester_pays: bool = False,
             **kwargs: Any
     ) -> None:

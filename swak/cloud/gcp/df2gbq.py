@@ -5,6 +5,8 @@ from pandas import DataFrame
 from .exceptions import GbqError
 from ...misc import ArgRepr
 
+type LiteralIfExists = Literal['fail', 'replace', 'append']
+
 
 class IfExists(StrEnum):
     """Specify what to do if the BigQuery table to write to already exists."""
@@ -60,7 +62,7 @@ class DataFrame2Gbq(ArgRepr):
             dataset: str,
             table: str = '',
             location: str = '',
-            if_exists: Literal['fail', 'replace', 'append'] = 'fail',
+            if_exists: LiteralIfExists = 'fail',
             chunksize: int | None = None,
             **kwargs: Any
     ) -> None:

@@ -3,7 +3,7 @@ from enum import StrEnum
 
 type Toml = dict[str, Any]
 type Yaml = dict[str, Any] | list[Any]
-type NotFoundLiteral = Literal[NotFound.IGNORE, NotFound.WARN, NotFound.RAISE]
+type LiteralNotFound = Literal['ignore', 'warn', 'raise']
 
 
 class NotFound(StrEnum):

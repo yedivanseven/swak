@@ -6,10 +6,9 @@ from pathlib import Path
 import yaml
 from yaml import Loader
 from ..misc import ArgRepr
-from .misc import NotFound, Toml, Yaml, NotFoundLiteral
+from .misc import NotFound, Toml, Yaml, LiteralNotFound
 
 
-# ToDo: Can we deal with path = None just like we deal with file not found?
 class TomlReader(ArgRepr):
     """Light wrapper around the python standard library's ``tomllib.load``.
 
@@ -41,7 +40,7 @@ class TomlReader(ArgRepr):
     def __init__(
             self,
             path: str = '',
-            not_found: NotFoundLiteral = NotFound.RAISE,
+            not_found: LiteralNotFound = NotFound.RAISE,
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
@@ -90,7 +89,6 @@ class TomlReader(ArgRepr):
         return toml
 
 
-# ToDo: Can we deal with path = None just like we deal with file not found?
 class YamlReader(ArgRepr):
     """Light wrapper around pyyaml's ``yaml.load`` function.
 
@@ -121,7 +119,7 @@ class YamlReader(ArgRepr):
     def __init__(
             self,
             path: str = '',
-            not_found: NotFoundLiteral = NotFound.RAISE,
+            not_found: LiteralNotFound = NotFound.RAISE,
             loader: type = Loader,
             **kwargs: Any
     ) -> None:

@@ -4,17 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.3] - 2024-11-06
 - Minor change to log message
 - Fixed typos in docstrings
 - Added unit test to TomlWriter
-- Added a torch Compile class
+- Added a PyTorch model Compile class
 
 ## [0.2.2] - 2024-11-04
 - Moved optimizer stepping frequency logic into data base classes
 
 ## [0.2.1] - 2024-11-01
-- Fixed checkpointing logic in in PyTorch model trainer
+- Fixed checkpointing logic in PyTorch model trainer
 
 ## [0.2.0] - 2024-11-01
 - Fixed stepping logic of learning rate scheduler in PyTorch model trainer

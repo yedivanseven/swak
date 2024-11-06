@@ -9,6 +9,7 @@ probability distribution.
 """
 
 from enum import StrEnum
+from typing import Literal
 import math
 import torch as pt
 import torch.nn as ptn
@@ -26,6 +27,8 @@ __all__ = [
     'StudentLoss',
     'NegativeBinomialLoss'
 ]
+
+type LiteralReduction = Literal['mean', 'sum', 'none']
 
 
 class Reduction(StrEnum):
@@ -70,7 +73,11 @@ class _BaseLoss(Module):
         'none': identity
     }
 
-    def __init__(self, reduction: str = 'mean', eps: float = 1e-6) -> None:
+    def __init__(
+            self,
+            reduction: LiteralReduction = 'mean',
+            eps: float = 1e-6
+    ) -> None:
         super().__init__()
         self.reduction = reduction.strip().lower()
         self.register_buffer('eps', pt.tensor(eps), False)
@@ -112,7 +119,11 @@ class RMSELoss(Module):
 
     """
 
-    def __init__(self, reduction: str = 'mean', eps: float = 1e-8) -> None:
+    def __init__(
+            self,
+            reduction: LiteralReduction = 'mean',
+            eps: float = 1e-8
+    ) -> None:
         super().__init__()
         self.reduction = reduction
         self.register_buffer('eps', pt.tensor(eps), False)
@@ -169,7 +180,11 @@ class TweedieLoss(_BaseLoss):
 
     """
 
-    def __init__(self, reduction: str = 'mean', eps: float = 1e-6) -> None:
+    def __init__(
+            self,
+            reduction: LiteralReduction = 'mean',
+            eps: float = 1e-6
+    ) -> None:
         super().__init__(reduction, eps)
 
     def forward(self, mu: Tensor, p: Tensor, y_true: Tensor) -> Tensor:
@@ -234,7 +249,11 @@ class BetaBernoulliLoss(_BaseLoss):
 
     """
 
-    def __init__(self, reduction: str = 'mean', eps: float = 1e-6) -> None:
+    def __init__(
+            self,
+            reduction: LiteralReduction = 'mean',
+            eps: float = 1e-6
+    ) -> None:
         super().__init__(reduction, eps)
 
     def forward(self, alpha: Tensor, beta: Tensor, y_true: Tensor) -> Tensor:
@@ -304,7 +323,11 @@ class GammaLoss(_BaseLoss):
 
     """
 
-    def __init__(self, reduction: str = 'mean', eps: float = 1e-6) -> None:
+    def __init__(
+            self,
+            reduction: LiteralReduction = 'mean',
+            eps: float = 1e-6
+    ) -> None:
         super().__init__(reduction, eps)
 
     def forward(self, mu: Tensor, sigma: Tensor, y_true: Tensor) -> Tensor:
@@ -369,7 +392,11 @@ class StudentLoss(_BaseLoss):
 
     """
 
-    def __init__(self, reduction: str = 'mean', eps: float = 1e-6) -> None:
+    def __init__(
+            self,
+            reduction: LiteralReduction = 'mean',
+            eps: float = 1e-6
+    ) -> None:
         super().__init__(reduction, eps)
         self.register_buffer('const', -0.5 * pt.tensor(math.pi).log(), False)
 
@@ -461,7 +488,11 @@ class NegativeBinomialLoss(_BaseLoss):
 
     """
 
-    def __init__(self, reduction: str = 'mean', eps: float = 1e-6) -> None:
+    def __init__(
+            self,
+            reduction: LiteralReduction = 'mean',
+            eps: float = 1e-6
+    ) -> None:
         super().__init__(reduction, eps)
 
 

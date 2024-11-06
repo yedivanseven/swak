@@ -5,9 +5,9 @@ from google.cloud.bigquery import Client, Dataset
 from google.cloud.exceptions import NotFound
 from google.api_core.retry import Retry
 
-type CollationType = Literal['', 'und:ci']
-type RoundingType = Literal['ROUND_HALF_AWAY_FROM_ZERO', 'ROUND_HALF_EVEN']
-type BillingType = Literal['PHYSICAL', 'LOGICAL']
+type LiteralCollation = Literal['', 'und:ci']
+type LiteralRounding = Literal['ROUND_HALF_AWAY_FROM_ZERO', 'ROUND_HALF_EVEN']
+type LiteralBilling = Literal['PHYSICAL', 'LOGICAL']
 
 
 class Collation(StrEnum):
@@ -113,10 +113,10 @@ class GbqDataset:
             labels: dict[str, str] | None = None,
             access: list[dict[str, str]] | None = None,
             case_sensitive: bool = True,
-            collation: CollationType | None = None,
-            rounding: RoundingType | None = None,
+            collation: LiteralCollation | None = None,
+            rounding: LiteralRounding | None = None,
             max_travel_time_hours: int = 168,
-            billing: BillingType | None = None,
+            billing: LiteralBilling | None = None,
             tags: dict[str, str] | None = None,
             **kwargs: Any
     ) -> None:
