@@ -8,3 +8,7 @@ class EmbeddingError(Exception):
 
 class TrainError(Exception):
     pass
+
+
+class CompileError(Exception):
+    pass

@@ -31,3 +31,4 @@ pt.set_default_device(device)
 pt.set_float32_matmul_precision('medium')
 
 # ToDo: Implement tools for packed & padded sequences
+# ToDo: Add sinusoidal positional encodings

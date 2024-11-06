@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Minor change to log message
 - Fixed typos in docstrings
+- Added unit test to TomlWriter
+- Added a torch Compile class
 
 ## [0.2.2] - 2024-11-04
 - Moved optimizer stepping frequency logic into data base classes

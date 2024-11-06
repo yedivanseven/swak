@@ -20,3 +20,9 @@ misc
 .. autoclass:: swak.pt.misc.NegativeBinomialFinalizer
    :members:
    :show-inheritance:
+
+
+.. autoclass:: swak.pt.misc.Compile
+   :members:
+   :special-members: __call__
+   :show-inheritance:

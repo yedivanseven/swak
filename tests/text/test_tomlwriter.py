@@ -88,6 +88,10 @@ class TestAttributes(unittest.TestCase):
     def test_mode(self):
         self.assertEqual('wb', self.write.mode)
 
+    def test_mode_kwarg_purged(self):
+        write = TomlWriter(mode='+w')
+        self.assertDictEqual({}, write.kwargs)
+
 
 class TestUsage(unittest.TestCase):
 
@@ -139,6 +143,14 @@ class TestUsage(unittest.TestCase):
         write = TomlWriter(self.path, overwrite=True, **self.kwargs)
         _ = write(self.toml)
         op.assert_called_once_with('wb', **self.kwargs)
+
+    @patch('pathlib.Path.mkdir')
+    @patch('pathlib.Path.open', new_callable=mock_open)
+    @patch('tomli_w.dump')
+    def test_open_called_with_mode_purged(self, _, op, __):
+        write = TomlWriter(mode='+w')
+        _ = write(self.toml)
+        op.assert_called_once_with('xb')
 
     @patch('pathlib.Path.mkdir')
     @patch('pathlib.Path.open', new_callable=mock_open)

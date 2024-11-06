@@ -9,6 +9,7 @@ from ..misc import ArgRepr
 from .misc import NotFound, Toml, Yaml, NotFoundLiteral
 
 
+# ToDo: Can we deal with path = None just like we deal with file not found?
 class TomlReader(ArgRepr):
     """Light wrapper around the python standard library's ``tomllib.load``.
 
@@ -89,6 +90,7 @@ class TomlReader(ArgRepr):
         return toml
 
 
+# ToDo: Can we deal with path = None just like we deal with file not found?
 class YamlReader(ArgRepr):
     """Light wrapper around pyyaml's ``yaml.load`` function.
 
