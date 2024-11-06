@@ -20,7 +20,7 @@ class Trainer(ArgRepr):
     loss: Module
         PyTorch module that accepts the output(s) of the model to train as
         first argument(s) and the target as last argument and that produces
-        the (scalar) loss to minimize.
+        the (scalar) loss to minimize, i.e., reduction must be "mean" or "sum".
     optimizer: Curry[Optimizer]
         A curry of a preconfigured PyTorch Optimizer (or some other custom
         construct) that returns a fully configured PyTorch Optimizer when
@@ -279,10 +279,13 @@ class Trainer(ArgRepr):
             model.eval()
             with pt.no_grad():
                 for features, target in train.sample(self.batch_size, max_n):
-                    n_new = target.shape[0]
                     loss = self.loss(*model(*features), target).item()
-                    train_loss += n_new * (loss - train_loss) / (n + n_new)
-                    n += n_new
+                    if self.loss.reduction == 'mean':
+                        n_new = target.shape[0]
+                        train_loss += n_new * (loss - train_loss) / (n + n_new)
+                        n += n_new
+                    else:
+                        train_loss += loss
 
             # ... and, if present, on test data.
             if test is None:
@@ -292,10 +295,13 @@ class Trainer(ArgRepr):
                 test_loss = 0.0
                 with pt.no_grad():
                     for features, target in test.sample(self.batch_size):
-                        n_new = target.shape[0]
                         loss = self.loss(*model(*features), target).item()
-                        test_loss += n_new * (loss - test_loss) / (n + n_new)
-                        n += n_new
+                        if self.loss.reduction == 'mean':
+                            n_new = target.shape[0]
+                            test_loss += n_new * (loss - test_loss)/(n + n_new)
+                            n += n_new
+                        else:
+                            test_loss += loss
 
             # Append epoch metrics to training history.
             current_lr = scheduler.get_last_lr()[0]
