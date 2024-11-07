@@ -35,8 +35,8 @@ class ValuesGetter[T](ArgRepr):
     Examples
     --------
     >>> get_values = ValuesGetter('name', 'age')
-    >>> get_values({'name': 'John', 'weight': 82, 'age': 32})
-    ['John', 32]
+    >>> get_values({'name': 'John', 'weight': 84, 'age': 42})
+    ['John', 42]
 
     """
 
