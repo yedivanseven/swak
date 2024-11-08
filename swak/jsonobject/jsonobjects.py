@@ -13,6 +13,7 @@ type Record = str | bytes | bytearray | Json | Series | JsonObject | None
 type Records = str | bytes | bytearray | DataFrame | Record | Iterable[Record]
 
 
+# ToDo: Add polar-rs support!
 class JsonObjects[T]:
     """List-like container for JSON-serializable dictionaries.
 

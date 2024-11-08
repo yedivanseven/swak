@@ -15,6 +15,7 @@ __all__ = [
 ]
 
 
+# ToDo: What happens if the directory does not exist?
 class StateSaver(ArgRepr):
     """Save the state of a model to file.
 
@@ -134,6 +135,7 @@ class StateLoader(ArgRepr):
         return model.to(self.map_location) if hasattr(model, 'to') else model
 
 
+# ToDo: What happens if the directory does not exist?
 class ModelSaver(ArgRepr):
     """Save an entire model to file.
 

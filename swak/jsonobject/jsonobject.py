@@ -175,6 +175,7 @@ class SchemaMeta(type):
         return defaults, errors
 
 
+# ToDo: Add polar-rs support!
 class JsonObject(metaclass=SchemaMeta):
     """Flexible Dataclass-like data structure with enforced type schema.
 

@@ -97,7 +97,6 @@ class TomlWriter(ArgRepr):
         return ()
 
 
-
 class YamlWriter(ArgRepr):
     """Partial of the ``dump`` function in the ``pyyaml`` package.
 

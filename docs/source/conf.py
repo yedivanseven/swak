@@ -11,7 +11,8 @@ version = '.'.join(release.split('.')[:2])
 
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode'
 ]
 
 autodoc_typehints = 'none'

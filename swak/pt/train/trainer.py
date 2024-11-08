@@ -70,8 +70,8 @@ class Trainer(ArgRepr):
         with train loss, test loss and learning rate.
         Defaults to ``TrainPrinter``.
 
-    Warnings
-    --------
+    Important
+    ---------
     optimizer
         Because the (partial) optimizer will simply be completed with
         ``model.parameters()``, parameter groups are not supported.

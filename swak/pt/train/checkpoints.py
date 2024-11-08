@@ -206,6 +206,7 @@ class InMemory(Checkpoint):
         return self._to_device(self.state)
 
 
+# ToDo: What happens if the directory does not exist?
 class OnDisk(Checkpoint):
     """Checkpoint the current state of training on disk.
 

@@ -134,7 +134,7 @@ class GcsDir2LocalDir(ArgRepr):
         return files
 
     def __files_from(self, local: str) -> list[str]:
-        """Return files from local directory if configured adn present."""
+        """Return files from local directory if configured and present."""
         path = Path(self.base_dir) / local
 
         if path.exists() and self.overwrite:
