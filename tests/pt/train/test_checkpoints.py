@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import patch, Mock
 from collections import OrderedDict
-from tempfile import NamedTemporaryFile
+from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 import torch as pt
 from swak.pt.train import Checkpoint, InMemory, OnDisk, State
 
@@ -253,9 +254,26 @@ class TestOnDisk(unittest.TestCase):
     def test_path(self):
         self.assertEqual(self.path, self.check.path)
 
-    def test_repr(self):
-        expected = f"OnDisk('{self.path}')"
-        self.assertEqual(expected, repr(self.check))
+    def test_path_stripped(self):
+        path = '  /path '
+        check = OnDisk(path)
+        self.assertEqual('/path', check.path)
+
+    def test_path_like(self):
+        check = OnDisk(Path(self.path))
+        self.assertEqual(self.path, check.path)
+
+    def test_has_default_create(self):
+        self.assertTrue(hasattr(self.check, 'create'))
+
+    def test_default_create(self):
+        self.assertIsInstance(self.check.create, bool)
+        self.assertFalse(self.check.create)
+
+    def test_custom_create(self):
+        check = OnDisk(self.path, True)
+        self.assertIsInstance(check.create, bool)
+        self.assertTrue(check.create)
 
     @patch('torch.save')
     def test_save_called_on_save(self, mock):
@@ -274,6 +292,30 @@ class TestOnDisk(unittest.TestCase):
     def test_load_called_on_load(self, mock):
         _ = self.check.load(self.model)
         mock.assert_called_once_with(self.path, weights_only=True)
+
+    def test_save_raises_default(self):
+        model = pt.nn.Linear(1, 1)
+        with TemporaryDirectory() as base:
+            file = base + '/path/to/checkpoint.pt'
+            check = OnDisk(file)
+            with self.assertRaises(RuntimeError):
+                check.save(1, 1.0, model)
+
+    def test_save_works_custom(self):
+        model = pt.nn.Linear(1, 1)
+        with TemporaryDirectory() as base:
+            file = base + '/path/to/checkpoint.pt'
+            check = OnDisk(file, create=True)
+            check.save(1, 1.0, model)
+
+    def test_default_repr(self):
+        expected = f"OnDisk('{self.path}', False)"
+        self.assertEqual(expected, repr(self.check))
+
+    def test_custom_repr(self):
+        check = OnDisk(self.path, True)
+        expected = f"OnDisk('{self.path}', True)"
+        self.assertEqual(expected, repr(check))
 
 
 if __name__ == '__main__':

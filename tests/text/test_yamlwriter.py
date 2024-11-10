@@ -1,6 +1,8 @@
 import pickle
 import unittest
 from unittest.mock import patch, mock_open
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from pathlib import Path
 from yaml import Dumper
 from swak.text import YamlWriter
 
@@ -8,7 +10,8 @@ from swak.text import YamlWriter
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path'
+        with NamedTemporaryFile() as file:
+            self.path = file.name
         self.write = YamlWriter(self.path)
 
     def test_has_path(self):
@@ -16,6 +19,11 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_path(self):
         self.assertEqual(self.path, self.write.path)
+
+    def test_path_like(self):
+        path = Path(self.path)
+        write = YamlWriter(path)
+        self.assertEqual(self.path, write.path)
 
     def test_path_stripped(self):
         write = YamlWriter(f'  {self.path} ')
@@ -146,6 +154,19 @@ class TestUsage(unittest.TestCase):
     def test_return_value(self, _, __, ___):
         actual = self.write(self.yaml)
         self.assertTupleEqual((), actual)
+
+    def test_write_raises_without_create(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/does/not/exist/test.yaml'
+            write = YamlWriter(path)
+            with self.assertRaises(FileNotFoundError):
+                _ = write(self.yaml)
+
+    def test_write_works_with_create(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/does/not/exist/test.yaml'
+            write = YamlWriter(path, create=True)
+            _ = write(self.yaml)
 
 
 class TestMisc(unittest.TestCase):

@@ -206,7 +206,6 @@ class InMemory(Checkpoint):
         return self._to_device(self.state)
 
 
-# ToDo: What happens if the directory does not exist?
 class OnDisk(Checkpoint):
     """Checkpoint the current state of training on disk.
 
@@ -214,15 +213,21 @@ class OnDisk(Checkpoint):
     ----------
     path: str
         Full path to and name of the file used to persist state.
+    create: bool, optional
+        What to do if the directory where the checkpoint should be saved does
+        not exist. Defaults to ``False``.
 
     """
 
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, create: bool = False) -> None:
         super().__init__()
-        self.path = str(Path(path.strip()).resolve())
+        self.path = str(Path(str(path).strip()).resolve())
+        self.create = create
+        if create:
+            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}('{self.path}')"
+        return f"{self.__class__.__name__}('{self.path}', {self.create})"
 
     def _save_state(self, state: State) -> None:
         """Save the combined state to file."""

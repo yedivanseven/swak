@@ -15,7 +15,6 @@ __all__ = [
 ]
 
 
-# ToDo: What happens if the directory does not exist?
 class StateSaver(ArgRepr):
     """Save the state of a model to file.
 
@@ -25,12 +24,18 @@ class StateSaver(ArgRepr):
         Path (including file name) to save a model's ``state_dict()`` to.
         May include any number of string placeholders (i.e., pairs of curly
         brackets) that will be interpolated when instances are called.
+    create: bool, optional
+        What to do if the directory where the state should be saved does
+        not exist. Defaults to ``False``.
 
     """
 
-    def __init__(self, path: str) -> None:
-        self.path = str(Path(path.strip()).resolve())
-        super().__init__(self.path)
+    def __init__(self, path: str, create: bool = False) -> None:
+        self.path = str(Path(str(path).strip()).resolve())
+        self.create = create
+        super().__init__(self.path, create)
+        if create:
+            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
 
     def __call__(self, model: Module, *parts: str) -> tuple[()]:
         """Save the state of a model, optimizer, or scheduler to file.
@@ -135,7 +140,6 @@ class StateLoader(ArgRepr):
         return model.to(self.map_location) if hasattr(model, 'to') else model
 
 
-# ToDo: What happens if the directory does not exist?
 class ModelSaver(ArgRepr):
     """Save an entire model to file.
 
@@ -145,12 +149,18 @@ class ModelSaver(ArgRepr):
         Path (including file name) to save the model to. May include any
         number of string placeholders (i.e., pairs of curly brackets) that will
         be interpolated when instances are called.
+    create: bool, optional
+        What to do if the directory where the model should be saved does
+        not exist. Defaults to ``False``.
 
     """
 
-    def __init__(self, path: str) -> None:
-        self.path = str(Path(path.strip()).resolve())
-        super().__init__(self.path)
+    def __init__(self, path: str, create: bool = False) -> None:
+        self.path = str(Path(str(path).strip()).resolve())
+        self.create = create
+        super().__init__(self.path, create)
+        if create:
+            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
 
     def __call__(self, model: Module, *parts: str) -> tuple[()]:
         """Save a model to file.

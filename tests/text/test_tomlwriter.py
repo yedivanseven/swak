@@ -1,6 +1,8 @@
 import pickle
 import unittest
 from unittest.mock import patch, mock_open
+from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from swak.text import TomlWriter
 
 
@@ -15,6 +17,10 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_path(self):
         self.assertEqual(self.path, self.write.path)
+
+    def test_path_like(self):
+        write = TomlWriter(Path(self.path))
+        self.assertEqual(self.path, write.path)
 
     def test_path_stripped(self):
         write = TomlWriter(f'  {self.path} ')
@@ -33,6 +39,14 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_create(self):
         self.assertIsInstance(self.write.create, bool)
         self.assertFalse(self.write.create)
+
+
+    def test_has_prune(self):
+        self.assertTrue(hasattr(self.write, 'prune'))
+
+    def test_prune(self):
+        self.assertIsInstance(self.write.prune, bool)
+        self.assertFalse(self.write.prune)
 
     def test_has_multiline_strings(self):
         self.assertTrue(hasattr(self.write, 'multiline_strings'))
@@ -64,7 +78,15 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.write = TomlWriter('/path', True, True, True, 2, encoding='utf-8')
+        self.write = TomlWriter(
+            '/path',
+            True,
+            True,
+            True,
+            True,
+            2,
+            encoding='utf-8'
+        )
 
     def test_overwrite(self):
         self.assertIsInstance(self.write.overwrite, bool)
@@ -73,6 +95,10 @@ class TestAttributes(unittest.TestCase):
     def test_create(self):
         self.assertIsInstance(self.write.create, bool)
         self.assertTrue(self.write.create)
+
+    def test_prune(self):
+        self.assertIsInstance(self.write.prune, bool)
+        self.assertTrue(self.write.prune)
 
     def test_multiline_strings(self):
         self.assertIsInstance(self.write.multiline_strings, bool)
@@ -96,7 +122,8 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/file.toml'
+        with NamedTemporaryFile() as file:
+            self.path = file.name
         self.kwargs = {'encoding': 'utf-8'}
         self.write = TomlWriter(self.path, **self.kwargs)
         self.toml = {'Hello': 'world!'}
@@ -168,21 +195,78 @@ class TestUsage(unittest.TestCase):
     @patch('pathlib.Path.mkdir')
     @patch('pathlib.Path.open', new_callable=mock_open)
     @patch('tomli_w.dump')
+    def test_dump_called_with_unpruned(self, dump, op, __):
+        write = TomlWriter(self.path)
+        toml = {
+            1: 'one',
+            2: None,
+            'three': {
+                4: 'four',
+                5: None}
+        }
+        expected = toml
+        file = op.return_value
+        _ = write(toml)
+        dump.assert_called_once_with(
+            expected,
+            file,
+            multiline_strings=False,
+            indent=4
+        )
+
+    @patch('pathlib.Path.mkdir')
+    @patch('pathlib.Path.open', new_callable=mock_open)
+    @patch('tomli_w.dump')
+    def test_dump_called_with_pruned(self, dump, op, __):
+        write = TomlWriter(self.path, prune=True)
+        toml = {
+            1: 'one',
+            2: None,
+            'three': {
+                4: 'four',
+                5: None}
+        }
+        expected = {'three': {}}
+        file = op.return_value
+        _ = write(toml)
+        dump.assert_called_once_with(
+            expected,
+            file,
+            multiline_strings=False,
+            indent=4
+        )
+
+    @patch('pathlib.Path.mkdir')
+    @patch('pathlib.Path.open', new_callable=mock_open)
+    @patch('tomli_w.dump')
     def test_return_value(self, _, __, ___):
         actual = self.write(self.toml)
         self.assertTupleEqual((), actual)
+
+    def test_write_raises_without_create(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/does/not/exist/test.yaml'
+            write = TomlWriter(path)
+            with self.assertRaises(FileNotFoundError):
+                _ = write(self.toml)
+
+    def test_write_works_with_create(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/does/not/exist/test.yaml'
+            write = TomlWriter(path, create=True)
+            _ = write(self.toml)
 
 
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         write = TomlWriter('/path')
-        expected = "TomlWriter('/path', False, False, False, 4)"
+        expected = "TomlWriter('/path', False, False, False, False, 4)"
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
-        write = TomlWriter('/path', answer=42)
-        expected = "TomlWriter('/path', False, False, False, 4, answer=42)"
+        write = TomlWriter('/path', True, prune=True, hello=42)
+        expected = "TomlWriter('/path', True, False, True, False, 4, hello=42)"
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

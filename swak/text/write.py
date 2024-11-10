@@ -22,6 +22,9 @@ class TomlWriter(ArgRepr):
     create: bool, optional
         What to do if the directory where the TOML file should be saved does
         not exist. Defaults to ``False``.
+    prune: bool, optional
+        Whether to silently drop non-string keys and ``None`` values from the
+        dictionary-like object to save as TOML. Defaults to ``False```.
     multiline_strings: bool, optional
         Whether to preserve newline bytes in multiline strings.
         Defaults to ``False``.
@@ -39,13 +42,15 @@ class TomlWriter(ArgRepr):
             path: str = '',
             overwrite: bool = False,
             create: bool = False,
+            prune: bool = False,
             multiline_strings: bool = False,
             indent: int = 4,
             **kwargs: Any
     ) -> None:
-        self.path = path.strip()
+        self.path = str(path).strip()
         self.overwrite = overwrite
         self.create = create
+        self.prune = prune
         self.multiline_strings = multiline_strings
         self.indent = indent
         if 'mode' in kwargs:
@@ -56,6 +61,7 @@ class TomlWriter(ArgRepr):
             self.path,
             overwrite,
             create,
+            prune,
             multiline_strings,
             indent,
             **self.kwargs
@@ -65,6 +71,37 @@ class TomlWriter(ArgRepr):
     def mode(self) -> str:
         """The mode to open the target file with."""
         return 'wb' if self.overwrite else 'xb'
+
+    @staticmethod
+    def __stop_recursion_for(obj: Any) -> bool:
+        """Criterion to stop the recursion into a dictionary-like object."""
+        try:
+            mismatch = len([*obj]) != len(set(obj.keys()))
+        except (AttributeError, TypeError):
+            return True
+        return mismatch or not hasattr(obj, '__getitem__')
+
+    def _pruned(self, toml: Toml) -> Toml:
+        """Recursively drop fields with ``None`` values and/or non-string keys.
+
+        Parameters
+        ----------
+        toml
+            The dictionary-like object to drop fields from.
+
+        Returns
+        -------
+        dict
+            Dictionary without non-string keys and ``None`` values.
+
+        """
+        if self.__stop_recursion_for(toml):
+            return toml
+        return {
+            key: self._pruned(toml[key])
+            for key in toml
+            if isinstance(key, str) and toml[key] is not None
+        }
 
     def __call__(self, toml: Toml, *parts: str) -> ():
         """Serialize a dictionary-like object and write it to TOML file.
@@ -89,7 +126,7 @@ class TomlWriter(ArgRepr):
             path.parent.mkdir(parents=True, exist_ok=True)
         with path.open(self.mode, **self.kwargs) as file:
             tomli_w.dump(
-                toml,
+                self._pruned(toml) if self.prune else toml,
                 file,
                 multiline_strings=self.multiline_strings,
                 indent=self.indent
@@ -129,7 +166,7 @@ class YamlWriter(ArgRepr):
             dumper: type = Dumper,
             **kwargs: Any
     ) -> None:
-        self.path = path.strip()
+        self.path = str(path).strip()
         self.overwrite = overwrite
         self.create = create
         self.dumper = dumper

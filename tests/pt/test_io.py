@@ -1,12 +1,15 @@
 import unittest
 from unittest.mock import patch, Mock
+from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from swak.pt.io import StateSaver, StateLoader, ModelSaver, ModelLoader
 
 
 class TestStateSaver(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/model.pt'
+        with NamedTemporaryFile() as file:
+            self.path = file.name
         self.save = StateSaver(self.path)
         self.model = Mock()
         self.model.state_dict = Mock(return_value=42)
@@ -18,13 +21,13 @@ class TestStateSaver(unittest.TestCase):
         self.assertEqual(self.path, self.save.path)
 
     def test_path_stripped(self):
-        save = StateSaver('  /path/model.pt ')
-        self.assertEqual(self.path, save.path)
+        save = StateSaver('  /path ')
+        self.assertEqual('/path', save.path)
 
-    def test_repr(self):
-        actual = repr(self.save)
-        expected = f"StateSaver('{self.path}')"
-        self.assertEqual(expected, actual)
+    def test_path_like(self):
+        path = Path(self.path)
+        save = StateSaver(path)
+        self.assertEqual(self.path, save.path)
 
     @patch('torch.save')
     def test_state_dict_called(self, _):
@@ -52,6 +55,29 @@ class TestStateSaver(unittest.TestCase):
         save = StateSaver('/hello_{}/foo_{}/model.pt{}')
         _ = save(self.model, 'world', 'bar', '  ')
         mock.assert_called_once_with(42, '/hello_world/foo_bar/model.pt')
+
+    def test_save_raises_default(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/to/model/state.pt'
+            save = StateSaver(path)
+            with self.assertRaises(RuntimeError):
+                save(self.model)
+
+    def test_save_works_custom(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/to/model/state.pt'
+            save = StateSaver(path, True)
+            save(self.model)
+
+    def test_default_repr(self):
+        actual = repr(self.save)
+        expected = f"StateSaver('{self.path}', False)"
+        self.assertEqual(expected, actual)
+
+    def test_custom_repr(self):
+        actual = repr(StateSaver(self.path, True))
+        expected = f"StateSaver('{self.path}', True)"
+        self.assertEqual(expected, actual)
 
 
 class TestStateLoader(unittest.TestCase):
@@ -112,17 +138,6 @@ class TestStateLoader(unittest.TestCase):
     def test_not_found_lower(self):
         load  = StateLoader(self.path, not_found='wArN')
         self.assertEqual('warn', load.not_found)
-
-    def test_default_repr(self):
-        actual = repr(self.load)
-        expected = f"StateLoader('{self.path}', None, True, 'raise')"
-        self.assertEqual(expected, actual)
-
-    def test_custom_repr(self):
-        load = StateLoader('/model.pt', 'cpu', False, 'warn')
-        actual = repr(load)
-        expected = "StateLoader('/model.pt', 'cpu', False, 'warn')"
-        self.assertEqual(expected, actual)
 
     def test_callable(self):
         self.assertTrue(callable(self.load))
@@ -243,11 +258,23 @@ class TestStateLoader(unittest.TestCase):
             weights_only=True
         )
 
+    def test_default_repr(self):
+        actual = repr(self.load)
+        expected = f"StateLoader('{self.path}', None, True, 'raise')"
+        self.assertEqual(expected, actual)
+
+    def test_custom_repr(self):
+        load = StateLoader('/model.pt', 'cpu', False, 'warn')
+        actual = repr(load)
+        expected = "StateLoader('/model.pt', 'cpu', False, 'warn')"
+        self.assertEqual(expected, actual)
+
 
 class TestModelSaver(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/model.pt'
+        with NamedTemporaryFile() as file:
+            self.path = file.name
         self.save = ModelSaver(self.path)
         self.model = Mock()
 
@@ -259,12 +286,12 @@ class TestModelSaver(unittest.TestCase):
 
     def test_path_stripped(self):
         save = ModelSaver('  /path/model.pt ')
-        self.assertEqual(self.path, save.path)
+        self.assertEqual('/path/model.pt', save.path)
 
-    def test_repr(self):
-        actual = repr(self.save)
-        expected = f"ModelSaver('{self.path}')"
-        self.assertEqual(expected, actual)
+    def test_path_like(self):
+        path = Path(self.path)
+        save = ModelSaver(path)
+        self.assertEqual(self.path, save.path)
 
     @patch('torch.save')
     def test_save_called(self, mock):
@@ -294,6 +321,29 @@ class TestModelSaver(unittest.TestCase):
             '/hello_world/foo_bar/model.pt'
         )
 
+    def test_save_raises_default(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/to/model.pt'
+            save = ModelSaver(path)
+            with self.assertRaises(RuntimeError):
+                save(self.model)
+
+    def test_save_works_custom(self):
+        with TemporaryDirectory() as folder:
+            path = folder + '/path/to/model.pt'
+            save = ModelSaver(path, True)
+            save('model')
+
+    def test_default_repr(self):
+        actual = repr(self.save)
+        expected = f"ModelSaver('{self.path}', False)"
+        self.assertEqual(expected, actual)
+
+    def test_custom_repr(self):
+        actual = repr(ModelSaver(self.path, True))
+        expected = f"ModelSaver('{self.path}', True)"
+        self.assertEqual(expected, actual)
+
 
 class TestModelLoader(unittest.TestCase):
 
@@ -320,17 +370,6 @@ class TestModelLoader(unittest.TestCase):
     def test_custom_map_location(self):
         load = ModelLoader(self.path, 'cpu')
         self.assertEqual('cpu', load.map_location)
-
-    def test_default_repr(self):
-        actual = repr(self.load)
-        expected = f"ModelLoader('{self.path}', None)"
-        self.assertEqual(expected, actual)
-
-    def test_custom_repr(self):
-        load = ModelLoader('/model.pt', 'cpu')
-        actual = repr(load)
-        expected = "ModelLoader('/model.pt', 'cpu')"
-        self.assertEqual(expected, actual)
 
     def test_callable(self):
         self.assertTrue(callable(self.load))
@@ -412,6 +451,17 @@ class TestModelLoader(unittest.TestCase):
             load.map_location,
             weights_only=False
         )
+
+    def test_default_repr(self):
+        actual = repr(self.load)
+        expected = f"ModelLoader('{self.path}', None)"
+        self.assertEqual(expected, actual)
+
+    def test_custom_repr(self):
+        load = ModelLoader('/model.pt', 'cpu')
+        actual = repr(load)
+        expected = "ModelLoader('/model.pt', 'cpu')"
+        self.assertEqual(expected, actual)
 
 
 if __name__ == '__main__':

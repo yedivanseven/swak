@@ -7,9 +7,7 @@ pipe of callable objects.
 """
 
 from .valuesgetter import ValuesGetter
-from .nonedropper import NoneDropper
 
 __all__ = [
-    'ValuesGetter',
-    'NoneDropper'
+    'ValuesGetter'
 ]
