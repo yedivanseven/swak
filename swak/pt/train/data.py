@@ -59,7 +59,12 @@ class TestDataBase(ABC):
 
 class TrainDataBase(TestDataBase):
 
-    def n_for(self, batch_size: int, step_freq: int = 1) -> int:
+    def adjust_n_for(
+            self,
+            batch_size: int,
+            step_freq: int = 1,
+            n: int | None = None
+    ) -> int:
         """Number of data points reduced to be suitably integer-divisible.
 
         This is a helper method for users to implement the ``__call__`` method
@@ -76,6 +81,10 @@ class TrainDataBase(TestDataBase):
             for that many batches before taking a step. All batches should be
             of the same size in this case and there shouldn't be any
             "left-over" batches at the end of each epoch. Defaults to 1.
+        n: int, optional
+            In rare cases, it might be useful to pass in the number of data
+            points to adjust rather than taking the number of data points
+            returned by ``self.n``, which is the default.
 
         Returns
         -------
@@ -84,12 +93,18 @@ class TrainDataBase(TestDataBase):
             divisible by the product of `batch_size` and `step_freq`.
 
         """
+        actual_n = self.n if n is None else n
         if step_freq <= 1:
-            return self.n
+            return actual_n
         super_batch_size = step_freq * batch_size
-        return super_batch_size * (self.n // super_batch_size)
+        return super_batch_size * (actual_n // super_batch_size)
 
-    def n_batches_of(self, batch_size: int, step_freq: int= 1) -> int:
+    def adjust_batches_for(
+            self,
+            batch_size: int,
+            step_freq: int= 1,
+            n: int | None = None
+    ) -> int:
         """Number of batches reduced to be suitably integer-divisible.
 
         This is a helper method for users to implement the ``__call__`` method
@@ -106,6 +121,10 @@ class TrainDataBase(TestDataBase):
             for that many batches before taking a step. All batches should be
             of the same size in this case and there shouldn't be any
             "left-over" batches at the end of each epoch. Defaults to 1.
+        n: int, optional
+            In rare cases, it might be useful to pass in the number of data
+            points to adjust rather than taking the number of data points
+            returned by ``self.n``, which is the default.
 
         Returns
         -------
@@ -114,7 +133,8 @@ class TrainDataBase(TestDataBase):
             divisible by `step_freq`.
 
         """
-        return math.ceil(self.n_for(batch_size, step_freq) / batch_size)
+        adjusted_n = self.adjust_n_for(batch_size, step_freq, n)
+        return math.ceil(adjusted_n / batch_size)
 
     @abstractmethod
     def __call__(
@@ -135,9 +155,9 @@ class TrainDataBase(TestDataBase):
             of the same size in this case. and there shouldn't be any
             "left-over" batches at the end of each epoch. Defaults to 1.
         epoch: int, optional
-            Could be passed in during the course of the training loop. Should
-            start with 1 in the first epoch and may be used in the user
-            implementation if needed. Defaults to 0.
+            In rare cases, it might be useful to know the current epoch when
+            deciding which batches to return. Should start with 1 in the first
+            epoch and, therefore, defaults to 0.
 
         Returns
         -------
