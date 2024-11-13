@@ -168,7 +168,7 @@ class LinearCosine(ArgRepr):
         scaled up to the one specified in the optimizer. Defaults to 0,
         resulting in the learning rate already at its maximum value for the
         first step and only decaying thereafter.
-    max_steps: int, optional
+    cooldown: int, optional
         After `warmup` steps, the learning rate is scaled down with a cosine
         function for this many steps. Defaults to 100, but must be at least 1.
 
@@ -184,11 +184,11 @@ class LinearCosine(ArgRepr):
     def __init__(
             self,
             warmup: int = 0,
-            max_steps: int = 100
+            cooldown: int = 100
     ) -> None:
-        super().__init__(warmup, max_steps)
+        super().__init__(warmup, cooldown)
         self.warmup = max(warmup, 0)
-        self.max_steps = max(1, max_steps)
+        self.cooldown = max(1, cooldown)
 
     def __call__(self, step: int) -> float:
         """Learning rate scaling factor depending on the step.
@@ -206,8 +206,8 @@ class LinearCosine(ArgRepr):
         """
         if step < self.warmup:
             return (step + 1) / self.warmup
-        if step < (self.warmup + self.max_steps):
-            arg = math.pi * (step - self.warmup) / self.max_steps
+        if step < (self.warmup + self.cooldown):
+            arg = math.pi * (step - self.warmup) / self.cooldown
             return 0.5 + 0.5 * math.cos(arg)
-        arg = math.pi * (self.max_steps - 1) / self.max_steps
+        arg = math.pi * (self.cooldown - 1) / self.cooldown
         return 0.5 + 0.5 * math.cos(arg)

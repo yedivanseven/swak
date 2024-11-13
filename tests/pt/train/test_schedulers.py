@@ -220,8 +220,8 @@ class TestLinearCosine(unittest.TestCase):
         self.default = LinearCosine()
         self.ramp = [0.2, 0.4, 0.6, 0.8, 1.0]
         self.warmup = len(self.ramp)
-        self.max_steps = 13
-        self.custom = LinearCosine(self.warmup, self.max_steps)
+        self.cooldown = 13
+        self.custom = LinearCosine(self.warmup, self.cooldown)
 
     def test_default_has_warmup(self):
         self.assertTrue(hasattr(self.default, 'warmup'))
@@ -230,26 +230,26 @@ class TestLinearCosine(unittest.TestCase):
         self.assertIsInstance(self.default.warmup, int)
         self.assertEqual(0, self.default.warmup)
 
-    def test_default_has_max_steps(self):
-        self.assertTrue(hasattr(self.default, 'max_steps'))
+    def test_default_has_cooldown(self):
+        self.assertTrue(hasattr(self.default, 'cooldown'))
 
-    def test_default_max_steps(self):
-        self.assertEqual(100, self.default.max_steps)
+    def test_default_cooldown(self):
+        self.assertEqual(100, self.default.cooldown)
 
     def test_custom_warmup(self):
         self.assertIsInstance(self.custom.warmup, int)
         self.assertEqual(self.warmup, self.custom.warmup)
 
     def test_custom_gamma(self):
-        self.assertEqual(self.max_steps, self.custom.max_steps)
+        self.assertEqual(self.cooldown, self.custom.cooldown)
 
     def test_warmup_at_least_zero(self):
         scheduler = LinearCosine(-3)
         self.assertEqual(0, scheduler.warmup)
 
-    def test_max_steps_at_least_1(self):
-        scheduler = LinearCosine(max_steps=-123)
-        self.assertEqual(1, scheduler.max_steps)
+    def test_cooldown_at_least_1(self):
+        scheduler = LinearCosine(cooldown=-123)
+        self.assertEqual(1, scheduler.cooldown)
 
     def test_callable(self):
         self.assertTrue(callable(self.default))
@@ -260,34 +260,34 @@ class TestLinearCosine(unittest.TestCase):
         self.assertEqual(1.0, self.custom(self.warmup))
 
     def test_scale_down(self):
-        for epoch in range(self.warmup + 1, self.warmup + self.max_steps):
-            arg = math.pi * (epoch - self.warmup) / self.max_steps
+        for epoch in range(self.warmup + 1, self.warmup + self.cooldown):
+            arg = math.pi * (epoch - self.warmup) / self.cooldown
             expected = 0.5 + 0.5 * math.cos(arg)
             self.assertEqual(expected, self.custom(epoch))
 
     def test_beyond_scale_down(self):
         for epoch in range(
-                self.warmup + self.max_steps,
-                self.warmup + self.max_steps + 20
+                self.warmup + self.cooldown,
+                self.warmup + self.cooldown + 20
         ):
-            arg = math.pi * (self.max_steps - 1) / self.max_steps
+            arg = math.pi * (self.cooldown - 1) / self.cooldown
             expected = 0.5 + 0.5 * math.cos(arg)
             self.assertEqual(expected, self.custom(epoch))
 
     def test_no_warmup(self):
-        scheduler = LinearCosine(0, self.max_steps)
+        scheduler = LinearCosine(0, self.cooldown)
         self.assertEqual(1.0, scheduler(0))
-        for epoch in range(1, self.max_steps):
-            arg = math.pi * epoch / self.max_steps
+        for epoch in range(1, self.cooldown):
+            arg = math.pi * epoch / self.cooldown
             expected = 0.5 + 0.5 * math.cos(arg)
             self.assertEqual(expected, scheduler(epoch))
 
-    def test_max_steps_1(self):
+    def test_cooldown_1(self):
         scheduler = LinearCosine(self.warmup, 1)
         for epoch in range(self.warmup, self.warmup + 1):
             self.assertEqual(1.0, scheduler(epoch))
 
-    def test_no_warmup_max_steps_1(self):
+    def test_no_warmup_cooldown_1(self):
         scheduler = LinearCosine(0, 1)
         for epoch in range(23):
             self.assertEqual(1.0, scheduler(epoch))
