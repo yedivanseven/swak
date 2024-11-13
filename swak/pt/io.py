@@ -4,7 +4,7 @@ import warnings
 import torch as pt
 from pathlib import Path
 from ..misc import ArgRepr
-from ..text import NotFound
+from ..text import NotFound, LiteralNotFound
 from .types import Module, Device
 
 __all__ = [
@@ -93,7 +93,7 @@ class StateLoader(ArgRepr):
             path: str,
             map_location: Device | str | None = None,
             merge: bool = True,
-            not_found: str = NotFound.RAISE
+            not_found: NotFound | LiteralNotFound = NotFound.RAISE
     ) -> None:
         self.path = str(Path(path.strip()).resolve())
         self.map_location = map_location

@@ -54,6 +54,12 @@ Schedulers
    :show-inheritance:
 
 
+.. autoclass:: swak.pt.train.LinearCosine
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 
 Base classes
 ------------

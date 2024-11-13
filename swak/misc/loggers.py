@@ -8,7 +8,6 @@ DEFAULT_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name})'
 PID_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name} | PID-{process})'
 
 
-# ToDo: Truncate log message via flag?
 class StdOutLogger(ArgRepr):
     """Wrapped logger to stdout with at least one formatted StreamHandler.
 

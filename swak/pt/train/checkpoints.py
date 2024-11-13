@@ -1,8 +1,10 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, TypedDict
 from collections import OrderedDict
 from pathlib import Path
 import torch as pt
+from ...text import NotFound, LiteralNotFound
 from ..types import Tensor, Module, Optimizer, LRScheduler
 
 __all__ = [
@@ -216,13 +218,23 @@ class OnDisk(Checkpoint):
     create: bool, optional
         What to do if the directory where the checkpoint should be saved does
         not exist. Defaults to ``False``.
+    not_found: str, optional
+        What to do if a checkpoint is loaded from the specified `path`
+        but none is there yet. One of "ignore", "warn", or "raise".
+        Defaults to "raise". Use the ``NotFound`` enum to avoid typos!
 
     """
 
-    def __init__(self, path: str, create: bool = False) -> None:
+    def __init__(
+            self,
+            path: str,
+            create: bool = False,
+            not_found: NotFound | LiteralNotFound = NotFound.WARN
+    ) -> None:
         super().__init__()
         self.path = str(Path(str(path).strip()).resolve())
         self.create = create
+        self.not_found = str(not_found).strip().lower()
         if create:
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -235,4 +247,16 @@ class OnDisk(Checkpoint):
 
     def _load_state(self) -> State:
         """Retrieve the combined state from file."""
+        try:
+            return pt.load(self.path, weights_only=True)
+        except (FileNotFoundError, EOFError) as error:
+            match self.not_found:
+                case NotFound.WARN:
+                    msg = 'Checkpoint {} not found!\nCreating an empty one.'
+                    warnings.warn(msg.format(self.path))
+                    self.reset_parameters()
+                case NotFound.IGNORE:
+                    self.reset_parameters()
+                case _:
+                    raise error
         return pt.load(self.path, weights_only=True)

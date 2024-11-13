@@ -168,7 +168,6 @@ class TestCheckpoint(unittest.TestCase):
         })
 
 
-
 class TestInMemory(unittest.TestCase):
 
     def setUp(self):
@@ -235,6 +234,15 @@ class TestInMemory(unittest.TestCase):
             self.check.load(model)
             self.assertEqual(4, mock.call_count)
             self.assertDictEqual({'device': 'cuda'}, mock.call_args[1])
+
+    def test_load_called_before_save(self):
+        model = pt.nn.Linear(1, 1)
+        optimizer = pt.optim.Adam(model.parameters())
+        scheduler = pt.optim.lr_scheduler.ConstantLR(optimizer)
+        epoch, loss = self.check.load(model, optimizer, scheduler)
+        self.assertIsInstance(epoch, int)
+        self.assertEqual(0, epoch)
+        self.assertEqual(float('inf'), loss)
 
 
 class TestOnDisk(unittest.TestCase):
@@ -307,6 +315,43 @@ class TestOnDisk(unittest.TestCase):
             file = base + '/path/to/checkpoint.pt'
             check = OnDisk(file, create=True)
             check.save(1, 1.0, model)
+
+    def test_load_called_before_save_raises(self):
+        model = pt.nn.Linear(1, 1)
+        optimizer = pt.optim.Adam(model.parameters())
+        scheduler = pt.optim.lr_scheduler.ConstantLR(optimizer)
+        with NamedTemporaryFile() as file:
+            check = OnDisk(file, not_found='raise')
+            with self.assertRaises(FileNotFoundError):
+                _ = check.load(model, optimizer, scheduler)
+        with NamedTemporaryFile() as file:
+            check = OnDisk(file.name, not_found='raise')
+            with self.assertRaises(EOFError):
+                _ = check.load(model, optimizer, scheduler)
+
+    def test_load_called_before_save_warns(self):
+        model = pt.nn.Linear(1, 1)
+        optimizer = pt.optim.Adam(model.parameters())
+        scheduler = pt.optim.lr_scheduler.ConstantLR(optimizer)
+        with NamedTemporaryFile() as file:
+            check = OnDisk(file.name, not_found='warn')
+            with self.assertWarns(UserWarning):
+                epoch, loss = check.load(model, optimizer, scheduler)
+        self.assertIsInstance(epoch, int)
+        self.assertEqual(0, epoch)
+        self.assertEqual(float('inf'), loss)
+
+    def test_load_called_before_save_works_silently(self):
+        model = pt.nn.Linear(1, 1)
+        optimizer = pt.optim.Adam(model.parameters())
+        scheduler = pt.optim.lr_scheduler.ConstantLR(optimizer)
+        with NamedTemporaryFile() as file:
+            check = OnDisk(file.name, not_found='ignore')
+            epoch, loss = check.load(model, optimizer, scheduler)
+        self.assertIsInstance(epoch, int)
+        self.assertEqual(0, epoch)
+        self.assertEqual(float('inf'), loss)
+
 
     def test_default_repr(self):
         expected = f"OnDisk('{self.path}', False)"

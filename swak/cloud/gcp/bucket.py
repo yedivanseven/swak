@@ -69,7 +69,7 @@ class GcsBucket(ArgRepr):
             blob_expire_days: int | None = None,
             labels: dict[str, str] | None = None,
             user_project: str | None = None,
-            storage_class: LiteralStorage | None = None,
+            storage_class: Storage | LiteralStorage | None = None,
             requester_pays: bool = False,
             **kwargs: Any
     ) -> None:

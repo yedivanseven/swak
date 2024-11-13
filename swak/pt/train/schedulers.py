@@ -1,3 +1,4 @@
+import math
 from typing import Any
 from torch.nn.modules.module import _IncompatibleKeys
 from ..types import Optimizer
@@ -6,7 +7,8 @@ from ...misc import ArgRepr
 __all__ = [
     'NoSchedule',
     'LinearInverse',
-    'LinearExponential'
+    'LinearExponential',
+    'LinearCosine'
 ]
 
 
@@ -148,3 +150,64 @@ class LinearExponential(ArgRepr):
         if step < self.warmup:
             return (step + 1) / self.warmup
         return self.gamma ** (step - self.warmup)
+
+
+class LinearCosine(ArgRepr):
+    """Scale up learning rate during warmup before decaying with cosine.
+
+    Instances of this class are not learning-rate schedulers by themselves!
+    They are intended to be passed as ``lr_lambda`` argument to PyTorch's
+    `LambdaLR <https://pytorch.org/docs/stable/generated/torch.optim.
+    lr_scheduler.LambdaLR.html#torch.optim.lr_scheduler.LambdaLR>`__
+    learning-rate scheduler.
+
+    Parameters
+    ----------
+    warmup: int, optional
+        Number of steps during which the learning rate will be linearly
+        scaled up to the one specified in the optimizer. Defaults to 0,
+        resulting in the learning rate already at its maximum value for the
+        first step and only decaying thereafter.
+    max_steps: int, optional
+        After `warmup` steps, the learning rate is scaled down with a cosine
+        function for this many steps. Defaults to 100, but must be at least 1.
+
+    Notes
+    -----
+    The learning rate will never actually reach 0. Rather, it stays at the last
+    value right before reaching 0. How small this value is, depends on the
+    choice for `max_steps`. For `max_steps` = 1, it will stay at 1.0, for
+    `max_steps` = 2, it will stay at 0.5, and so on.
+
+    """
+
+    def __init__(
+            self,
+            warmup: int = 0,
+            max_steps: int = 100
+    ) -> None:
+        super().__init__(warmup, max_steps)
+        self.warmup = max(warmup, 0)
+        self.max_steps = max(1, max_steps)
+
+    def __call__(self, step: int) -> float:
+        """Learning rate scaling factor depending on the step.
+
+        Parameters
+        ----------
+        step: int
+            Step to return the learning-rate scaling factor for.
+
+        Returns
+        -------
+        float
+            The learning-rate scaling factor
+
+        """
+        if step < self.warmup:
+            return (step + 1) / self.warmup
+        if step < (self.warmup + self.max_steps):
+            arg = math.pi * (step - self.warmup) / self.max_steps
+            return 0.5 + 0.5 * math.cos(arg)
+        arg = math.pi * (self.max_steps - 1) / self.max_steps
+        return 0.5 + 0.5 * math.cos(arg)

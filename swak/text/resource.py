@@ -1,7 +1,7 @@
 import pkgutil
 import warnings
 from ..misc import ArgRepr
-from .misc import NotFound
+from .misc import NotFound, LiteralNotFound
 
 
 class TextResourceLoader(ArgRepr):
@@ -33,7 +33,7 @@ class TextResourceLoader(ArgRepr):
             self,
             package: str,
             path: str = 'resources',
-            not_found: str = NotFound.RAISE,
+            not_found: NotFound | LiteralNotFound = NotFound.RAISE,
             encoding: str = 'utf-8'
     ) -> None:
         self.package = package.strip().strip(' /.')

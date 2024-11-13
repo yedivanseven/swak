@@ -40,7 +40,7 @@ class TomlReader(ArgRepr):
     def __init__(
             self,
             path: str = '',
-            not_found: LiteralNotFound = NotFound.RAISE,
+            not_found: NotFound | LiteralNotFound = NotFound.RAISE,
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
@@ -119,7 +119,7 @@ class YamlReader(ArgRepr):
     def __init__(
             self,
             path: str = '',
-            not_found: LiteralNotFound = NotFound.RAISE,
+            not_found: NotFound | LiteralNotFound = NotFound.RAISE,
             loader: type = Loader,
             **kwargs: Any
     ) -> None:

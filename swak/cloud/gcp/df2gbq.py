@@ -62,7 +62,7 @@ class DataFrame2Gbq(ArgRepr):
             dataset: str,
             table: str = '',
             location: str = '',
-            if_exists: LiteralIfExists = 'fail',
+            if_exists: IfExists | LiteralIfExists = 'fail',
             chunksize: int | None = None,
             **kwargs: Any
     ) -> None:

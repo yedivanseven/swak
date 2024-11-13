@@ -1,4 +1,5 @@
 import torch as pt
+from torch.optim import AdamW
 from tqdm import tqdm
 from ...misc import ArgRepr
 from ...funcflow import Curry
@@ -21,10 +22,11 @@ class Trainer(ArgRepr):
         PyTorch module that accepts the output(s) of the model to train as
         first argument(s) and the target as last argument and that produces
         the (scalar) loss to minimize, i.e., reduction must be "mean" or "sum".
-    optimizer: Curry[Optimizer]
+    optimizer: Curry[Optimizer], optional
         A curry of a preconfigured PyTorch Optimizer (or some other custom
         construct) that returns a fully configured PyTorch Optimizer when
-        called with the ``model.parameters()`` of the model to train.
+        called with the ``model.parameters()`` of the model to train. Defaults
+        to ``AdamW`` with its default parameters.
     batch_size: int, optional
         Size of the mini-batches to request from the training data.
         Defaults to 64.
@@ -98,7 +100,7 @@ class Trainer(ArgRepr):
     def __init__(
             self,
             loss: Module,
-            optimizer: Curry[Optimizer],
+            optimizer: Curry[Optimizer] = Curry[AdamW](AdamW),
             batch_size: int = 64,
             max_epochs: int = 100,
             scheduler: Curry[LRScheduler] = Curry[NoSchedule](NoSchedule),
@@ -232,13 +234,6 @@ class Trainer(ArgRepr):
         of tensors.
 
         """
-        # How many data points to take for computing train (and test) loss.
-        n = train.n if test is None else test.n
-        max_n = n if self.max_n is None else min(self.max_n, n)
-
-        # How many batches do we have?
-        n_batches = train.n_batches_of(self.batch_size, self.step_freq)
-
         # Initialize training cycle.
         optimizer = self.optimizer(model.parameters())
         scheduler = self.scheduler(optimizer)
@@ -254,24 +249,28 @@ class Trainer(ArgRepr):
             # Prepare the model for training
             model.train()
             model.zero_grad(set_to_none=True)
-            # Get an iterator over batches for one epoch of training data
-            data = train(self.batch_size, self.step_freq)
+            # Get an iterator over batches for one epoch of training data.
+            n_batches, batches = train(self.batch_size, self.step_freq, epoch)
             # Initialize a progress bar to monitor training in real time
-            progress = tqdm(data, 'Batches', n_batches, False)
+            progress = tqdm(batches, 'Batches', n_batches, False)
             # Loop over batches for one epoch of training data
             for batch_index, (features, target) in enumerate(progress, 1):
                 loss = self.loss(*model(*features), target)
-                # Report loss to the tqdm progress bar for visual feedback
+                # Report loss to the tqdm progress bar for visual feedback.
                 progress.set_postfix_str(f'loss={loss.item():6.4f}')
-                # Scale down gradients for multi-batch accumulation if required
+                # Scale gradients for multi-batch accumulation if required.
                 (self.scale * loss).backward()
-                # Step after accumulating gradients for step_freq batches
+                # Step after accumulating gradients for step_freq batches.
                 if batch_index % self.step_freq == 0:
                     optimizer.step()
                     optimizer.zero_grad(set_to_none=True)
-                    # During warmup, step the scheduler after each opti step
+                    # During warmup, step the scheduler after each opti step.
                     if scheduler.last_epoch < self.warmup:
                         scheduler.step()
+
+            # How many data points to take for computing train (and test) loss.
+            n = train.n if test is None else test.n
+            max_n = n if self.max_n is None else min(self.max_n, n)
 
             # Evaluate model on training data ...
             n = 0
@@ -323,28 +322,28 @@ class Trainer(ArgRepr):
                 sample
             )
 
-            # After warmup, step the scheduler at the end of the epoch ...
+            # After warmup, step the scheduler at the end of the epoch.
             if scheduler.last_epoch >= self.warmup:
                 scheduler.step()
 
-                # ... and check if the loss improved within our patience.
-                track_loss = train_loss if test is None else test_loss
-                if track_loss < best_loss:
-                    best_loss = track_loss
-                    best_epoch = epoch
-                    n_wait = 1
-                    self.checkpoint.save(
-                        best_epoch,
-                        best_loss,
-                        model,
-                        optimizer,
-                        scheduler
-                    )
-                elif n_wait < self.patience:
-                    n_wait += 1
-                else:
-                    self.checkpoint.load(model, optimizer, scheduler)
-                    break
+            # Check if the loss improved within our patience.
+            track_loss = train_loss if test is None else test_loss
+            if track_loss < best_loss:
+                best_loss = track_loss
+                best_epoch = epoch
+                n_wait = 1
+                self.checkpoint.save(
+                    best_epoch,
+                    best_loss,
+                    model,
+                    optimizer,
+                    scheduler
+                )
+            elif n_wait < self.patience:
+                n_wait += 1
+            else:
+                self.checkpoint.load(model, optimizer, scheduler)
+                break
 
         # Did we exhaust the maximum number of epochs?
         else:

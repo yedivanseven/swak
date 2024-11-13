@@ -117,11 +117,13 @@ class TrainDataBase(TestDataBase):
         return math.ceil(self.n_for(batch_size, step_freq) / batch_size)
 
     @abstractmethod
-    def __call__(self, batch_size: int, step_freq: int = 1) -> Batches:
+    def __call__(
+            self,
+            batch_size: int,
+            step_freq: int = 1,
+            epoch: int = 0
+    ) -> tuple[int | None, Batches]:
         """Return an iterator over the mini-batches your model is trained on.
-
-        Every time a training-data instance is called, it should re-shuffle
-        data points so as not to randomize their ordering.
 
         Parameters
         ----------
@@ -132,10 +134,17 @@ class TrainDataBase(TestDataBase):
             for that many batches before taking a step. All batches should be
             of the same size in this case. and there shouldn't be any
             "left-over" batches at the end of each epoch. Defaults to 1.
+        epoch: int, optional
+            Could be passed in during the course of the training loop. Should
+            start with 1 in the first epoch and may be used in the user
+            implementation if needed. Defaults to 0.
 
         Returns
         -------
-        Iterator
+        n_batches: int
+            Total number of batches the returned iterator will provide.
+            If unknown for some reason, also ``None`` can be returned.
+        batches: Iterator
             One element yielded by the iterator is a 2-tuple. The first element
             is again a tuple, containing the input tensor(s) to call your model
             with. The second element of the tuple is a single tensor with

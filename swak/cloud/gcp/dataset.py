@@ -113,10 +113,10 @@ class GbqDataset:
             labels: dict[str, str] | None = None,
             access: list[dict[str, str]] | None = None,
             case_sensitive: bool = True,
-            collation: LiteralCollation | None = None,
-            rounding: LiteralRounding | None = None,
+            collation: Collation | LiteralCollation | None = None,
+            rounding: Rounding | LiteralRounding | None = None,
             max_travel_time_hours: int = 168,
-            billing: LiteralBilling | None = None,
+            billing: Billing | LiteralBilling | None = None,
             tags: dict[str, str] | None = None,
             **kwargs: Any
     ) -> None:

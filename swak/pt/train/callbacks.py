@@ -90,7 +90,7 @@ class EpochPrinter(ArgRepr, EpochCallback):
             data: Batches
     ) -> None:
         """Assemble training-progress message and call the printer with it."""
-        msg = (f'Epoch: {epoch:>4} | learning rate: {learning_rate:7.5f} | '
+        msg = (f'Epoch: {epoch:>3} | learning rate: {learning_rate:7.5f} | '
                f'train loss: {train_loss:7.5f} | test loss: {test_loss:7.5f}')
         self.printer(msg)
 
