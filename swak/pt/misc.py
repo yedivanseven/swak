@@ -3,6 +3,7 @@
 from typing import Any, Self
 import torch as pt
 import torch.nn as ptn
+from ..misc import ArgRepr
 from .types import Tensor, Module, Tensors, Tensors2T
 from .exceptions import CompileError
 
@@ -11,7 +12,8 @@ __all__ = [
     'Identity',
     'Finalizer',
     'NegativeBinomialFinalizer',
-    'Compile'
+    'Compile',
+    'Cat'
 ]
 
 
@@ -387,3 +389,34 @@ class Compile:
             model.compile(**merged_kwargs)
             return model
         return pt.compile(model, **merged_kwargs)
+
+
+class Cat(ArgRepr):
+    """Simple partial of PyTorch's top-level `cat` function.
+
+    Parameters
+    ----------
+    dim: int, optional
+        The dimension along which to concatenate the tensors. Defaults to 0.
+
+    """
+
+    def __init__(self, dim: int = 0) -> None:
+        super().__init__(dim)
+        self.dim = dim
+
+    def __call__(self, tensors: Tensors | list[Tensor]) -> Tensor:
+        """Concatenate the given tensors along one of their dimensions.
+
+        Parameters
+        ----------
+        tensors: tuple or list of tensors
+            Tensors to concatenate along an existing dimension.
+
+        Returns
+        -------
+        Tensor
+            The concatenated tensors.
+
+        """
+        return pt.cat(tensors, dim=self.dim)

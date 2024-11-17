@@ -26,3 +26,9 @@ misc
    :members:
    :special-members: __call__
    :show-inheritance:
+
+
+.. autoclass:: swak.pt.misc.Cat
+   :members:
+   :special-members: __call__
+   :show-inheritance:
