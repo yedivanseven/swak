@@ -18,9 +18,16 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(hasattr(y, 'path'))
         self.assertEqual('/hello', y.path)
 
+    def test_path_cast(self):
+        y = YamlReader(123)
+        self.assertEqual('123', y.path)
+
+    def test_path_like(self):
+        y = YamlReader(Path('123'))
+        self.assertEqual('123', y.path)
+
     def test_path_stripped(self):
         y = YamlReader(' hello ')
-        self.assertTrue(hasattr(y, 'path'))
         self.assertEqual('hello', y.path)
 
     def test_default_not_found(self):
@@ -132,7 +139,7 @@ class TestUsage(unittest.TestCase):
 
     def test_read_yaml_split(self):
         y = YamlReader(self.dir + '/foo/')
-        actual = y('/bar.yml')
+        actual = y(' bar.yml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
     def test_read_yaml_call(self):
@@ -141,7 +148,7 @@ class TestUsage(unittest.TestCase):
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
     def test_read_yaml_call_only(self):
-        y = YamlReader('/')
+        y = YamlReader()
         actual = y(self.dir + '/foo/bar.yml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
@@ -152,7 +159,7 @@ class TestUsage(unittest.TestCase):
 
     def test_read_subdir_yaml_split_instantiation(self):
         y = YamlReader(self.dir + '/foo/hello ')
-        actual = y('/world.yml')
+        actual = y(' world.yml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_subdir_yaml_split_call(self):
@@ -166,7 +173,7 @@ class TestUsage(unittest.TestCase):
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_subdir_yaml_call_only(self):
-        y = YamlReader('/')
+        y = YamlReader()
         actual = y(self.dir + '/foo/hello/world.yml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
@@ -175,9 +182,14 @@ class TestUsage(unittest.TestCase):
         actual = y('foo/empty.yml')
         self.assertDictEqual({}, actual)
 
+    def test_path_like(self):
+        y = YamlReader(self.dir)
+        actual = y(Path('foo/bar.yml/'))
+        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
+
     def test_path_stripped(self):
         y = YamlReader(self.dir)
-        actual = y('/ foo/bar.yml/ ')
+        actual = y(' foo/bar.yml/ ')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
     def test_default_raises_file_not_found(self):

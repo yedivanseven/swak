@@ -20,22 +20,21 @@ class StateSaver(ArgRepr):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         Path (including file name) to save a model's ``state_dict()`` to.
         May include any number of string placeholders (i.e., pairs of curly
         brackets) that will be interpolated when instances are called.
+        Defaults to the current working directory of the python interpreter.
     create: bool, optional
         What to do if the directory where the state should be saved does
         not exist. Defaults to ``False``.
 
     """
 
-    def __init__(self, path: str, create: bool = False) -> None:
-        self.path = str(Path(str(path).strip()).resolve())
+    def __init__(self, path: str = '', create: bool = False) -> None:
+        self.path = str(path).strip()
         self.create = create
         super().__init__(self.path, create)
-        if create:
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
 
     def __call__(self, model: Module, *parts: str) -> tuple[()]:
         """Save the state of a model, optimizer, or scheduler to file.
@@ -55,7 +54,10 @@ class StateSaver(ArgRepr):
             An empty tuple.
 
         """
-        file = self.path.format(*parts).strip()
+        path = Path(self.path.format(*parts).strip())
+        file = str(path.resolve())
+        if self.create:
+            path.parent.mkdir(parents=True, exist_ok=True)
         pt.save(model.state_dict(), file)
         return ()
 
@@ -65,10 +67,11 @@ class StateLoader(ArgRepr):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         Path (including file name) to the  model's ``state_dict()`` on disk.
         May include any number of string placeholders (i.e., pairs of curly
         brackets) that will be interpolated when instances are called.
+        Defaults to the current working directory of the python interpreter.
     map_location: str or Device, optional
         The device to load the state onto. Defaults to ``None`` which loads
         to the PyTorch device(s) that were saved with the model.
@@ -90,12 +93,12 @@ class StateLoader(ArgRepr):
 
     def __init__(
             self,
-            path: str,
+            path: str = '',
             map_location: Device | str | None = None,
             merge: bool = True,
             not_found: NotFound | LiteralNotFound = NotFound.RAISE
     ) -> None:
-        self.path = str(Path(path.strip()).resolve())
+        self.path = str(path).strip()
         self.map_location = map_location
         self.merge = merge
         self.not_found = not_found.strip().lower()
@@ -119,7 +122,8 @@ class StateLoader(ArgRepr):
             The `model` with its state restored.
 
         """
-        file = self.path.format(*parts).strip()
+        path = Path(self.path.format(*parts).strip())
+        file = str(path.resolve())
         try:
             loaded = pt.load(file, self.map_location, weights_only=True)
             we_should_merge = self.merge
@@ -145,22 +149,21 @@ class ModelSaver(ArgRepr):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         Path (including file name) to save the model to. May include any
         number of string placeholders (i.e., pairs of curly brackets) that will
-        be interpolated when instances are called.
+        be interpolated when instances are called. Defaults to the current
+        working directory of the python interpreter.
     create: bool, optional
         What to do if the directory where the model should be saved does
         not exist. Defaults to ``False``.
 
     """
 
-    def __init__(self, path: str, create: bool = False) -> None:
-        self.path = str(Path(str(path).strip()).resolve())
+    def __init__(self, path: str = '', create: bool = False) -> None:
+        self.path = str(path).strip()
         self.create = create
         super().__init__(self.path, create)
-        if create:
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
 
     def __call__(self, model: Module, *parts: str) -> tuple[()]:
         """Save a model to file.
@@ -180,7 +183,10 @@ class ModelSaver(ArgRepr):
             An empty tuple.
 
         """
-        file = self.path.format(*parts).strip()
+        path = Path(self.path.format(*parts).strip())
+        if self.create:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        file = str(path.resolve())
         pt.save(model, file)
         return ()
 
@@ -191,10 +197,9 @@ class ModelLoader(ArgRepr):
     Parameters
     ----------
     path: str, optional
-        Full or partial path to the file to load. Will be interpreted as a
-        directory and prepended as such if the `path` is completed when
-        calling instances. Defaults to the current working directory of
-        the python interpreter.
+        Full or partial path to the model to load. If not fully specified here,
+        it can be completed on calling the instance. Defaults to the current
+        working directory of the python interpreter.
     map_location: str or device, optional
         The device to load the modelo onto. Defaults to ``None`` which loads
         to the PyTorch default device.
@@ -206,7 +211,7 @@ class ModelLoader(ArgRepr):
             path: str = '',
             map_location: Device | str | None = None,
     ) -> None:
-        self.path = str(Path(path.strip()).resolve())
+        self.path = str(path).strip()
         self.map_location = map_location
         super().__init__(self.path, self.map_location)
 
@@ -216,9 +221,10 @@ class ModelLoader(ArgRepr):
         Parameters
         ----------
         path: str, optional
-            Path (including file name) relative to the `path` specified at
-            instantiation. Defaults to an empty string, which results in an
-            unchanged `path` on concatenation.
+            Path (including file name) to the model file to load. If it starts
+            with a backslash, it will be interpreted as absolute, if not, as
+            relative to the `path` specified at instantiation. Defaults to an
+            empty string, which results in an unchanged `path`.
 
         Returns
         -------
@@ -226,6 +232,6 @@ class ModelLoader(ArgRepr):
             The loaded model.
 
         """
-        path = '/' + path.strip(' /') if path.strip(' /') else ''
-        obj = pt.load(self.path + path, self.map_location, weights_only=False)
+        path = str((Path(self.path) / str(path).strip()).resolve())
+        obj = pt.load(path, self.map_location, weights_only=False)
         return obj.to(self.map_location) if hasattr(obj, 'to') else obj

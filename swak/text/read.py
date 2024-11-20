@@ -16,9 +16,9 @@ class TomlReader(ArgRepr):
     ----------
     path: str, optional
         Directory under which the TOML file is located or full path to the
-        TOML file. If not fully specified here, the path must be completed on
-        calling the instance. Defaults to the current working directory of the
-        python interpreter.
+        TOML file. If not fully specified here, the path can be completed or
+        changed on calling the instance. Defaults to the current working
+        directory of the python interpreter.
     not_found: str, optional
         What to do if the specified TOML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -44,7 +44,7 @@ class TomlReader(ArgRepr):
             parse_float: Callable[[str], float] = float,
             **kwargs: Any
     ) -> None:
-        self.path = path.strip()
+        self.path = str(path).strip()
         self.not_found = not_found.strip().lower()
         self.parse_float = parse_float
         if 'mode' in kwargs:
@@ -62,9 +62,10 @@ class TomlReader(ArgRepr):
         Parameters
         ----------
         path: str
-            Path (including file name) relative to the `path` specified at
-            instantiation. Defaults to an empty string, which results in an
-            unchanged `path` on concatenation.
+            Path (including file name) to the TOML file to read. If it starts
+            with a backslash, it will be interpreted as absolute, if not, as
+            relative to the `path` specified at instantiation. Defaults to an
+            empty string, which results in an unchanged `path`.
 
         Returns
         -------
@@ -72,7 +73,7 @@ class TomlReader(ArgRepr):
             The parsed contents of the TOML file.
 
         """
-        path = Path(self.path) / path.strip().strip(' /')
+        path = Path(self.path) / str(path).strip()
         try:
             with path.open('rb', **self.kwargs) as file:
                 toml = tomllib.load(file, parse_float=self.parse_float)
@@ -96,7 +97,7 @@ class YamlReader(ArgRepr):
     ----------
     path: str, optional
         Directory under which the YAML file is located or full path to the
-        YAML file. If not fully specified here, the path must be completed on
+        YAML file. If not fully specified here, the path can be completed on
         calling the instance. Defaults to the current working directory of the
         python interpreter.
     not_found: str, optional
@@ -123,7 +124,7 @@ class YamlReader(ArgRepr):
             loader: type = Loader,
             **kwargs: Any
     ) -> None:
-        self.path = path.strip()
+        self.path = str(path).strip()
         self.not_found = not_found.strip().lower()
         self.loader = loader
         if 'mode' in kwargs:
@@ -140,10 +141,11 @@ class YamlReader(ArgRepr):
 
         Parameters
         ----------
-        path: str
-            Path (including file name) relative to the `path` specified at
-            instantiation. Defaults to an empty string, which results in an
-            unchanged `path` on concatenation.
+        path: str, optional
+            Path (including file name) to the YAML file to read. If it starts
+            with a backslash, it will be interpreted as absolute, if not, as
+            relative to the `path` specified at instantiation. Defaults to an
+            empty string, which results in an unchanged `path`.
 
         Returns
         -------
@@ -151,7 +153,7 @@ class YamlReader(ArgRepr):
             The parsed contents of the YAML file.
 
         """
-        path = Path(self.path) / path.strip().strip(' /')
+        path = Path(self.path) / str(path).strip()
         try:
             with path.open('rb', **self.kwargs) as file:
                 yml = yaml.load(file, self.loader)

@@ -21,9 +21,16 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(hasattr(t, 'path'))
         self.assertEqual('/hello', t.path)
 
+    def test_path_cast(self):
+        t = TomlReader(123)
+        self.assertEqual('123', t.path)
+
+    def test_path_like(self):
+        t = TomlReader(Path('123'))
+        self.assertEqual('123', t.path)
+
     def test_path_stripped(self):
         t = TomlReader(' hello  ')
-        self.assertTrue(hasattr(t, 'path'))
         self.assertEqual('hello', t.path)
 
     def test_default_not_found(self):
@@ -139,7 +146,7 @@ class TestUsage(unittest.TestCase):
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
     def test_read_toml_call_only(self):
-        t = TomlReader('/')
+        t = TomlReader()
         actual = t(self.dir + '/foo/bar.toml')
         self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
@@ -150,7 +157,7 @@ class TestUsage(unittest.TestCase):
 
     def test_read_subdir_toml_split_instantiation(self):
         t = TomlReader(self.dir + '/foo/hello/')
-        actual = t('/world.toml')
+        actual = t('world.toml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_subdir_toml_split_call(self):
@@ -164,7 +171,7 @@ class TestUsage(unittest.TestCase):
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
     def test_read_subdir_toml_call_only(self):
-        t = TomlReader('/')
+        t = TomlReader()
         actual = t(self.dir + '/foo/hello/world.toml')
         self.assertDictEqual({'world': {'answer': 42}}, actual)
 
@@ -172,6 +179,11 @@ class TestUsage(unittest.TestCase):
         t = TomlReader(self.dir)
         actual = t('foo/empty.toml')
         self.assertDictEqual({}, actual)
+
+    def test_path_like(self):
+        t = TomlReader(self.dir)
+        actual = t(Path('foo/bar.toml/'))
+        self.assertDictEqual({'bar': {'hello': 'world'}}, actual)
 
     def test_path_stripped(self):
         t = TomlReader(self.dir)

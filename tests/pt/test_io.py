@@ -20,6 +20,10 @@ class TestStateSaver(unittest.TestCase):
     def test_path(self):
         self.assertEqual(self.path, self.save.path)
 
+    def test_path_cast(self):
+        save = StateSaver(123)
+        self.assertEqual('123', save.path)
+
     def test_path_stripped(self):
         save = StateSaver('  /path ')
         self.assertEqual('/path', save.path)
@@ -95,6 +99,14 @@ class TestStateLoader(unittest.TestCase):
 
     def test_path(self):
         self.assertEqual(self.path, self.load.path)
+
+    def test_path_cast(self):
+        load = StateLoader(123)
+        self.assertEqual('123', load.path)
+
+    def test_path_like(self):
+        load = StateLoader(Path('/path/model.pt'))
+        self.assertEqual(self.path, load.path)
 
     def test_path_stripped(self):
         load = StateLoader('  /path/model.pt ')
@@ -284,6 +296,10 @@ class TestModelSaver(unittest.TestCase):
     def test_path(self):
         self.assertEqual(self.path, self.save.path)
 
+    def test_path_cast(self):
+        save = ModelSaver(123)
+        self.assertEqual('123', save.path)
+
     def test_path_stripped(self):
         save = ModelSaver('  /path/model.pt ')
         self.assertEqual('/path/model.pt', save.path)
@@ -357,6 +373,14 @@ class TestModelLoader(unittest.TestCase):
     def test_path(self):
         self.assertEqual(self.path, self.load.path)
 
+    def test_path_cast(self):
+        load = ModelLoader(123)
+        self.assertEqual('123', load.path)
+
+    def test_path_like(self):
+        load = ModelLoader(Path('/path/model.pt'))
+        self.assertEqual(self.path, load.path)
+
     def test_path_stripped(self):
         load = StateLoader('  /path/model.pt ')
         self.assertEqual(self.path, load.path)
@@ -423,6 +447,16 @@ class TestModelLoader(unittest.TestCase):
         self.assertIs(actual, model)
 
     @patch('torch.load', return_value={'foo': 42})
+    def test_path_overrides_empty(self, mock):
+        load = ModelLoader()
+        _ = load(self.path)
+        mock.assert_called_once_with(
+            self.path,
+            load.map_location,
+            weights_only=False
+        )
+
+    @patch('torch.load', return_value={'foo': 42})
     def test_path_append_file(self, mock):
         load = ModelLoader('/path')
         _ = load('model.pt')
@@ -434,8 +468,8 @@ class TestModelLoader(unittest.TestCase):
 
     @patch('torch.load', return_value={'foo': 42})
     def test_path_append_dir(self, mock):
-        load = ModelLoader('/path')
-        _ = load('/model.pt')
+        load = ModelLoader('/')
+        _ = load('path/model.pt')
         mock.assert_called_once_with(
             self.path,
             load.map_location,
@@ -445,7 +479,17 @@ class TestModelLoader(unittest.TestCase):
     @patch('torch.load', return_value={'foo': 42})
     def test_path_append_strips(self, mock):
         load = ModelLoader('/path')
-        _ = load(' /model.pt  /')
+        _ = load(' model.pt  ')
+        mock.assert_called_once_with(
+            self.path,
+            load.map_location,
+            weights_only=False
+        )
+
+    @patch('torch.load', return_value={'foo': 42})
+    def test_root_path_replaces(self, mock):
+        load = ModelLoader('/tmp')
+        _ = load(self.path)
         mock.assert_called_once_with(
             self.path,
             load.map_location,

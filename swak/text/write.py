@@ -15,7 +15,8 @@ class TomlWriter(ArgRepr):
     path: str, optional
         Path (including file name) to save the TOML file to. May include any
         number of string placeholders (i.e., pairs of curly brackets) that will
-        be interpolated when instances are called.
+        be interpolated when instances are called. Defaults to the current
+        working directory of the python interpreter.
     overwrite: bool, optional
         What to do if the TOML file to write already exists.
         Defaults to ``False``.
@@ -142,7 +143,8 @@ class YamlWriter(ArgRepr):
     path: str, optional
         Path (including file name) to save the YAML file to. May include any
         number of string placeholders (i.e., pairs of curly brackets) that will
-        be interpolated when instances are called.
+        be interpolated when instances are called. Defaults to the current
+        working directory of the python interpreter.
     overwrite: bool, optional
         What to do if the YAML file to write already exists.
         Defaults to ``False``.
