@@ -71,7 +71,7 @@ class EpochPrinter(ArgRepr, EpochCallback):
     Parameters
     ----------
     printer: callable, optional
-        Will be called with the assembled message. Default to the python
+        Will be called with the assembled message. Defaults to the python
         builtin ``print`` function, but could also be a logging command.
 
     """
@@ -104,7 +104,7 @@ class TrainPrinter(ArgRepr):
     Parameters
     ----------
     printer: callable, optional
-        Will be called with the assembled message. Default to the python
+        Will be called with the assembled message. Defaults to the python
         builtin ``print`` function, but could also be a logging command.
 
     """

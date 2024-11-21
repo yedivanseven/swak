@@ -1,5 +1,6 @@
 import torch as pt
 from torch.optim import AdamW
+from torch.nn.utils import clip_grad_norm_
 from tqdm import tqdm
 from ...misc import ArgRepr
 from ...funcflow import Curry
@@ -57,6 +58,9 @@ class Trainer(ArgRepr):
     step_freq: int, optional
         For how many batches to accumulate gradients before taking an
         optimization step. Defaults to 1, which corresponds to no accumulation.
+    clip_grad: float, optional
+        Clip gradients such that their overall norm is capped by the given
+        value. Defaults to 1.0
     checkpoint: Checkpoint, optional
         Whenever the train (or test) loss after an epoch is smaller than the
         loss after the last, a new snapshot of the model state is saved by
@@ -108,6 +112,7 @@ class Trainer(ArgRepr):
             patience: int | None = None,
             max_n: int | None = None,
             step_freq: int = 1,
+            clip_grad: float = 1.0,
             checkpoint: Checkpoint = InMemory(),
             epoch_cb: EpochCallback = EpochPrinter(),
             train_cb: TrainCallback = TrainPrinter()
@@ -121,6 +126,7 @@ class Trainer(ArgRepr):
         self.patience = max_epochs if patience is None else patience
         self.max_n = max_n
         self.step_freq = step_freq
+        self.clip_grad = clip_grad
         self.checkpoint = checkpoint
         self.epoch_cb = epoch_cb
         self.train_cb = train_cb
@@ -251,15 +257,17 @@ class Trainer(ArgRepr):
             model.zero_grad(set_to_none=True)
             # Get an iterator over batches for one epoch of training data.
             n_batches, batches = train(self.batch_size, self.step_freq, epoch)
-            # Initialize a progress bar to monitor training in real time
+            # Initialize a progress bar to monitor training in real time.
             progress = tqdm(batches, 'Batches', n_batches, False)
             # Loop over batches for one epoch of training data
             for batch_index, (features, target) in enumerate(progress, 1):
                 loss = self.loss(*model(*features), target)
-                # Report loss to the tqdm progress bar for visual feedback.
-                progress.set_postfix_str(f'loss={loss.item():6.4f}')
                 # Scale gradients for multi-batch accumulation if required.
                 (self.scale * loss).backward()
+                # Clip gradients if greater than specified maximum norm.
+                norm = clip_grad_norm_(model.parameters(), self.clip_grad)
+                # Report loss and norm to the tqdm progress bar for feedback.
+                progress.set_postfix(loss=f'{loss:4.2f}', grad=f'{norm:4.2f}')
                 # Step after accumulating gradients for step_freq batches.
                 if batch_index % self.step_freq == 0:
                     optimizer.step()
