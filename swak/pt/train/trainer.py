@@ -267,7 +267,8 @@ class Trainer(ArgRepr):
                 # Clip gradients if greater than specified maximum norm.
                 norm = clip_grad_norm_(model.parameters(), self.clip_grad)
                 # Report loss and norm to the tqdm progress bar for feedback.
-                progress.set_postfix(loss=f'{loss:4.2f}', grad=f'{norm:4.2f}')
+                grad = 'CLIP' if norm > self.clip_grad else f'{norm:4.2f}'
+                progress.set_postfix(loss=f'{loss:4.2f}', grad=grad)
                 # Step after accumulating gradients for step_freq batches.
                 if batch_index % self.step_freq == 0:
                     optimizer.step()

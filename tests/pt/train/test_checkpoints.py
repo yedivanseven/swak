@@ -352,7 +352,6 @@ class TestOnDisk(unittest.TestCase):
         self.assertEqual(0, epoch)
         self.assertEqual(float('inf'), loss)
 
-
     def test_default_repr(self):
         expected = f"OnDisk('{self.path}', False)"
         self.assertEqual(expected, repr(self.check))

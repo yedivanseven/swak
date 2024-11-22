@@ -243,6 +243,8 @@ class OnDisk(Checkpoint):
 
     def _save_state(self, state: State) -> None:
         """Save the combined state to file."""
+        if self.create:
+            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         pt.save(state, self.path)
 
     def _load_state(self) -> State:
