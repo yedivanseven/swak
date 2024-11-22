@@ -33,8 +33,6 @@ class Block(Module, ABC):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__()
-        self.args = args
-        self.kwargs = kwargs
 
     @abstractmethod
     def new(self) -> Self:
