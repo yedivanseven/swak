@@ -40,7 +40,6 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.write.create, bool)
         self.assertFalse(self.write.create)
 
-
     def test_has_prune(self):
         self.assertTrue(hasattr(self.write, 'prune'))
 

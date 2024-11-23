@@ -104,7 +104,7 @@ class TomlWriter(ArgRepr):
             if isinstance(key, str) and toml[key] is not None
         }
 
-    def __call__(self, toml: Toml, *parts: str) -> ():
+    def __call__(self, toml: Toml, *parts: str) -> tuple[()]:
         """Serialize a dictionary-like object and write it to TOML file.
 
         Parameters
@@ -186,7 +186,7 @@ class YamlWriter(ArgRepr):
         """The mode to open the target file with."""
         return 'wt' if self.overwrite else 'xt'
 
-    def __call__(self, yml: Yaml, *parts: str) -> ():
+    def __call__(self, yml: Yaml, *parts: str) -> tuple[()]:
         """Serialize the given object and write it to YAML file.
 
         Parameters

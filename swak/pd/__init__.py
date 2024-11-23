@@ -7,6 +7,7 @@ pipe of callable objects.
 """
 
 from .read import ParquetReader
+from .write import ParquetWriter
 from .frame import (
     AsType,
     ColumnSelector,
@@ -17,6 +18,7 @@ from .frame import (
 
 __all__ = [
     'ParquetReader',
+    'ParquetWriter',
     'AsType',
     'ColumnSelector',
     'ColumnsSelector',
