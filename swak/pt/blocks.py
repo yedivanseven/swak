@@ -31,17 +31,17 @@ class Block(Module, ABC):
 
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *_: Any, **__: Any) -> None:
         super().__init__()
-
-    @abstractmethod
-    def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
-        ...
 
     @abstractmethod
     def reset_parameters(self) -> None:
         """Subclasses implement in-place reset of all internal parameters."""
+        ...
+
+    @abstractmethod
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
         ...
 
 

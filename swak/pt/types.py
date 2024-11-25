@@ -18,7 +18,6 @@ type Drop = Dropout | AlphaDropout
 type Batch = tuple[tuple[Any, ...], Tensor]
 type Batches = Iterator[Batch]
 
-
 __all__ = [
     'DataFrame',
     'Tensor',
