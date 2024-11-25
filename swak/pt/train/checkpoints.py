@@ -235,8 +235,6 @@ class OnDisk(Checkpoint):
         self.path = str(Path(str(path).strip()).resolve())
         self.create = create
         self.not_found = str(not_found).strip().lower()
-        if create:
-            Path(self.path).parent.mkdir(parents=True, exist_ok=True)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self.path}', {self.create})"
