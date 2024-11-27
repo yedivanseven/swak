@@ -41,6 +41,12 @@ losses
    :members:
    :show-inheritance:
 
+
 .. autoclass:: swak.pt.losses.NegativeBinomialLoss
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.losses.XEntropyLoss
    :members:
    :show-inheritance:

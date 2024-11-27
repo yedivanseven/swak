@@ -8,6 +8,7 @@ probability distribution.
 
 """
 
+from typing import Self
 from enum import StrEnum
 from typing import Literal
 import math
@@ -25,7 +26,8 @@ __all__ = [
     'BetaBernoulliLoss',
     'GammaLoss',
     'StudentLoss',
-    'NegativeBinomialLoss'
+    'NegativeBinomialLoss',
+    'XEntropyLoss'
 ]
 
 type LiteralReduction = Literal['mean', 'sum', 'none']
@@ -79,7 +81,7 @@ class _BaseLoss(Module):
             eps: float = 1e-6
     ) -> None:
         super().__init__()
-        self.reduction = reduction.strip().lower()
+        self.reduction = str(reduction).strip().lower()
         self.register_buffer('eps', pt.tensor(eps), False)
         try:
             self._reduce = self.__reductions[self.reduction]
@@ -532,3 +534,95 @@ class NegativeBinomialLoss(_BaseLoss):
             pts.gammaln(ratio)
         )
         return self._reduce(negll)
+
+
+class XEntropyLoss(ptn.CrossEntropyLoss):
+    """Subclass of PyTorch's ``CrossEntropyLoss``  with added functionality.
+
+    When in training mode (toggled by calling the module ``train`` method
+    without argument or with ``True``), the `label_smoothing` is applied
+    according to value provided at instantiation. When in evaluation mode,
+    however, the `label-smoothing` is set to 0.0 to report reproducible
+    and unbiased values for test- or validation loss and (log-)perplexity.
+
+    Parameters
+    ----------
+    weight: Tensor, optional
+        A manual rescaling weight given to each class. If given, has to be a
+        1D-tensor of a size equal to the number of classes and a floating point
+        dtype. Defaults to ``None``.
+    ignore_index: int, optional
+        Specifies a target value that is ignored and does not contribute to
+        the input gradient. When `reduction` is "mean"", the loss is averaged
+        only over non-ignored targets. Only applicable when the target contains
+        class indices. Defaults to -100.
+    reduction: str, optional
+        Specifies the reduction to apply to the output: "none", "mean", or
+        "sum". Defaults to "mean", which means the weighted mean in case a
+        valid `weight` was provided. Use the ``Reduction`` enum to avoid typos.
+    label_smoothing: float, optional
+         Specifies the amount of smoothing when computing the loss. Must lie
+         in the interval [0.0, 1.0] where 0.0 means no smoothing. The targets
+         become a mixture of the original ground truth and a uniform
+         distribution as described in `Rethinking the Inception Architecture
+         for Computer Vision <https://arxiv.org/abs/1512.00567>`__.
+         Default to 0.0
+
+    Note
+    ----
+    For more information on this loss, please refer to the full PyTorch
+    `documentation <https://pytorch.org/docs/stable/generated/torch.nn.
+    CrossEntropyLoss.html#crossentropyloss>`__.
+
+    See Also
+    --------
+    Reduction
+
+    """
+
+    def __init__(
+            self,
+            weight: Tensor | None = None,
+            ignore_index: int = -100,
+            reduction: Reduction | LiteralReduction = 'mean',
+            label_smoothing: float = 0.0
+    ) -> None:
+        super().__init__(
+            weight=weight,
+            ignore_index=ignore_index,
+            reduction=str(reduction).strip().lower(),
+            label_smoothing=label_smoothing
+        )
+        self.__cached_label_smoothing = self.label_smoothing
+
+    def train(self, mode: bool = True) -> Self:
+        """Toggle training mode: `label-smoothing` as given at instantiation.
+
+        Parameters
+        ----------
+        mode: bool, optional
+            Whether to switch training mode on (``True``) or off (``False``).
+            Defaults to ``True``.
+
+        Returns
+        -------
+        XEntropyLoss
+            Itself in evaluation mode.
+
+        """
+        self.label_smoothing = self.__cached_label_smoothing if mode else 0.0
+        return super().train(mode)
+
+    def eval(self) -> Self:
+        """Toggle evaluation mode by setting `label-smoothing` to 0.0
+
+        Calling ``eval`` is Equivalent to calling the method ``train(False)``.
+
+        Returns
+        -------
+        XEntropyLoss
+            Itself in evaluation mode.
+
+        """
+        self.label_smoothing = 0.0
+        return super().eval()
