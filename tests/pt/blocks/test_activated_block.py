@@ -24,6 +24,12 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ELU)
 
+    def test_has_drop(self):
+        self.assertTrue(hasattr(self.block, 'drop'))
+
+    def test_drop(self):
+        self.assertIsInstance(self.block.drop, ptn.Dropout)
+
     def test_has_hidden_factor(self):
         self.assertTrue(hasattr(self.block, 'hidden_factor'))
 
@@ -77,6 +83,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(new, ActivatedBlock)
         self.assertEqual(self.block.mod_dim, new.mod_dim)
         self.assertIs(self.block.activate, new.activate)
+        self.assertIs(self.block.drop, new.drop)
         self.assertEqual(self.block.hidden_factor, new.hidden_factor)
         self.assertDictEqual(self.block.kwargs, new.kwargs)
 
@@ -84,10 +91,19 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.block = ActivatedBlock(4, ptn.ReLU(), 2, bias=False)
+        self.block = ActivatedBlock(
+            4,
+            ptn.ReLU(),
+            ptn.AlphaDropout(0.1),
+            2,
+            bias=False
+        )
 
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ReLU)
+
+    def test_drop(self):
+        self.assertIsInstance(self.block.drop, ptn.AlphaDropout)
 
     def test_hidden_factor(self):
         self.assertIsInstance(self.block.hidden_factor, int)
@@ -170,6 +186,15 @@ class TestUsage(unittest.TestCase):
         expected = pt.ones(16) * 4
         pt.testing.assert_close(actual, expected)
 
+    def test_drop_called(self):
+        inp = pt.ones(4)
+        with patch.object(self.block.drop, 'forward') as mock:
+            mock.return_value=pt.ones(16)
+            _ = self.block(inp)
+            mock.assert_called_once()
+            actual = mock.call_args[0][0]
+            expected = pt.ones(16) * 4
+            pt.testing.assert_close(actual, expected)
 
 if __name__ == '__main__':
     unittest.main()

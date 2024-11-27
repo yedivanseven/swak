@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Removed old parent directory creation logic for checkpoint file
+- Added dropout option to activated block
+- Toggle loss between train and eval in PyTorch training loop
 
 ## [0.3.0] - 2024-11-23
 - Explicitly display "CLIP" in progress bar when gradient norm is clipped

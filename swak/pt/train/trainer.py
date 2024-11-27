@@ -200,7 +200,7 @@ class Trainer(ArgRepr):
         try:
             model.reset_parameters()
         except AttributeError as error:
-            msg = 'Models must have a "reset_parameters()" method!"'
+            msg = 'Models must have a working "reset_parameters()" method!"'
             raise TrainError(msg) from error
         return self.resume(model, train, test)
 
@@ -253,6 +253,7 @@ class Trainer(ArgRepr):
         # Loop over epochs.
         for epoch in range(epoch + 1, self.max_epochs + 1):
             # Prepare the model for training
+            self.loss.train()
             model.train()
             model.zero_grad(set_to_none=True)
             # Get an iterator over batches for one epoch of training data.
@@ -284,12 +285,13 @@ class Trainer(ArgRepr):
             # Evaluate model on training data ...
             n = 0
             train_loss = 0.0
+            self.loss.eval()
             model.eval()
             with pt.no_grad():
                 for features, target in train.sample(self.batch_size, max_n):
                     loss = self.loss(*model(*features), target).item()
                     if self.loss.reduction == 'mean':
-                        n_new = target.shape[0]
+                        n_new = target.size(0)
                         train_loss += n_new * (loss - train_loss) / (n + n_new)
                         n += n_new
                     else:
@@ -305,7 +307,7 @@ class Trainer(ArgRepr):
                     for features, target in test.sample(self.batch_size):
                         loss = self.loss(*model(*features), target).item()
                         if self.loss.reduction == 'mean':
-                            n_new = target.shape[0]
+                            n_new = target.size(0)
                             test_loss += n_new * (loss - test_loss)/(n + n_new)
                             n += n_new
                         else:

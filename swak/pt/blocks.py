@@ -60,6 +60,10 @@ class ActivatedBlock(Block):
         argument, like a module from ``torch.nn`` or a function from
         ``torch.nn.functional``, depending on whether it needs to be further
         parameterized or not. Defaults to ``ELU()``.
+    drop: Module, optional
+        Dropout to be applied after activation. Typically an instance of
+        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
+        resulting in no dropout being applied.
     hidden_factor: int, optional
         The size of the hidden layer is this integer factor times `mod_dim`.
         Defaults to 4.
@@ -72,12 +76,14 @@ class ActivatedBlock(Block):
             self,
             mod_dim: int,
             activate: Module | Functional = ptn.ELU(),
+            drop: Drop = ptn.Dropout(0.0),
             hidden_factor: int = 4,
             **kwargs: Any
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
         self.activate = activate
+        self.drop = drop
         self.hidden_factor = hidden_factor
         self.kwargs = kwargs
         self.widen = ptn.Linear(mod_dim, hidden_factor * mod_dim, **kwargs)
@@ -97,7 +103,7 @@ class ActivatedBlock(Block):
             Same dimensions and sizes as the input tensor.
 
         """
-        return self.shrink(self.activate(self.widen(inp)))
+        return self.shrink(self.drop(self.activate(self.widen(inp))))
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the linear projections."""
@@ -109,6 +115,7 @@ class ActivatedBlock(Block):
         return self.__class__(
             self.mod_dim,
             self.activate,
+            self.drop,
             self.hidden_factor,
             **self.kwargs
         )
