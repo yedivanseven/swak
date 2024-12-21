@@ -1,3 +1,4 @@
+import math
 import torch as pt
 from torch.optim import AdamW
 from torch.nn.utils import clip_grad_norm_
@@ -259,7 +260,7 @@ class Trainer(ArgRepr):
             # Get an iterator over batches for one epoch of training data.
             n_batches, batches = train(self.batch_size, self.step_freq, epoch)
             # Initialize a progress bar to monitor training in real time.
-            progress = tqdm(batches, 'Batches', n_batches, False)
+            progress = tqdm(batches, 'Train', n_batches, False)
             # Loop over batches for one epoch of training data
             for batch_index, (features, target) in enumerate(progress, 1):
                 loss = self.loss(*model(*features), target)
@@ -281,6 +282,7 @@ class Trainer(ArgRepr):
             # How many data points to take for computing train (and test) loss.
             n = train.n if test is None else test.n
             max_n = n if self.max_n is None else min(self.max_n, n)
+            n_batches = math.ceil(max_n / self.batch_size)
 
             # Evaluate model on training data ...
             n = 0
@@ -288,7 +290,9 @@ class Trainer(ArgRepr):
             self.loss.eval()
             model.eval()
             with pt.no_grad():
-                for features, target in train.sample(self.batch_size, max_n):
+                batches = train.sample(self.batch_size, max_n)
+                progress = tqdm(batches, 'Eval (train)', n_batches, False)
+                for features, target in progress:
                     loss = self.loss(*model(*features), target).item()
                     if self.loss.reduction == 'mean':
                         n_new = target.size(0)
@@ -304,7 +308,9 @@ class Trainer(ArgRepr):
                 n = 0
                 test_loss = 0.0
                 with pt.no_grad():
-                    for features, target in test.sample(self.batch_size):
+                    batches = test.sample(self.batch_size)
+                    progress = tqdm(batches, 'Eval (test)', n_batches, False)
+                    for features, target in progress:
                         loss = self.loss(*model(*features), target).item()
                         if self.loss.reduction == 'mean':
                             n_new = target.size(0)
