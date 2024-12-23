@@ -12,3 +12,15 @@ class TrainError(Exception):
 
 class CompileError(Exception):
     pass
+
+
+class ShapeError(Exception):
+    pass
+
+
+class DeviceError(Exception):
+    pass
+
+
+class DTypeError(Exception):
+    pass

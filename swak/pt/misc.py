@@ -1,11 +1,13 @@
 """Convenient classes (and functions) that do not fit any other category."""
 
-from typing import Any, Self
+from typing import Any, Self, overload
+from collections.abc import Iterator, Iterable
+from functools import cached_property, singledispatchmethod
 import torch as pt
 import torch.nn as ptn
 from ..misc import ArgRepr
-from .types import Tensor, Module, Tensors, Tensors2T
-from .exceptions import CompileError
+from .types import Tensor, Module, Tensors, Tensors2T, Dtype, Device
+from .exceptions import CompileError, ShapeError
 
 __all__ = [
     'identity',
@@ -13,7 +15,8 @@ __all__ = [
     'Finalizer',
     'NegativeBinomialFinalizer',
     'Compile',
-    'Cat'
+    'Cat',
+    'LazyCatDim0'
 ]
 
 
@@ -420,3 +423,182 @@ class Cat(ArgRepr):
 
         """
         return pt.cat(tensors, dim=self.dim)
+
+
+# ToDo: Implement in-place methods that make sense
+# ToDo: Add unit tests
+# ToDo: Add to documentation
+class LazyCatDim0:
+    """Lazily concatenate a sequence of tensors along their first dimension.
+
+    Concatenating a large number of even small tensors (or a small number of
+    large tensors) causes a memory spike because, temporarily, two copies of
+    all tensors are needed. Sometimes, this simply cannot be avoided.
+    However, when only small parts of the full concatenation of all tensors are
+    needed at any given time, the present class provides an alternative.
+    Constituent tensors are kept as is and concatenation is only performed when
+    slices or element(s) along the first dimension are requested. The requested
+    elements are selected from the constituents first and concatenated and,
+    thus, copied only then. Slicing and element selection of further dimensions
+    is delayed until selection and concatenation along the first dimension is
+    completed.
+
+    Parameters
+    ----------
+    tensors: iterable
+        The iterable of tensors to cache, all of which must have the same
+        number of dimensions and the exact same sizes in all dimensions but
+        the first.
+
+    Raises
+    ------
+    ShapeError
+        If any tensor is a scalar, that is, has zero dimensions, or if the
+        shape after the first dimension is not the same across all tensors.
+        Also, if there are no tensors to wrap.
+    DeviceError
+        If tensors are spread over multiple devices.
+    DTypeError
+        If tensors have multiple dtypes.
+
+    Notes
+    -----
+    As many tensor methods as possible are implemented on this wrapper class
+    (operating on each of the wrapped tensors individually) but, as the whole
+    point is to avoid copying the cached data in its entirety, only in-place
+    operations are permitted.
+
+    """
+
+    def __init__(self, tensors: Iterable[Tensor]) -> None:
+        self.tensors = self._valid(tuple(tensors))
+
+    @staticmethod
+    def _valid(tensors: Tensors) -> Tensors:
+        """Run a few validations on the homogeneity of the wrapped tensors."""
+        if not tensors:
+            msg = 'Expected a non-empty iterable of tensors!'
+            raise ShapeError(msg)
+        if any(tensor.dim() == 0 for tensor in tensors):
+            msg = 'Scalar tensors can not be concatenated!'
+            raise ShapeError(msg)
+        _, *shape = tensors[0].shape
+        if any(list(tensor.shape[1:]) != shape for tensor in tensors[1:]):
+            msg = 'All tensors must be of shape {} after the first dimension!'
+            raise ShapeError(msg.format(shape))
+        if any(tensor.device != tensors[0].device for tensor in tensors[1:]):
+            msg = 'All tensors must be on the same device!'
+            raise ShapeError(msg)
+        if any(tensor.dtype is not tensors[0].dtype for tensor in tensors[1:]):
+            msg = 'All tensors must have the same dtype!'
+            raise ShapeError(msg)
+        return tensors
+
+    @cached_property
+    def lookup(self) -> tuple[tuple[int, int], ...]:
+        """A lazily computed and cached lookup table for indices."""
+        return tuple(
+            (i, j)
+            for i, tensor in enumerate(self.tensors)
+            for j in range(tensor.size(0))
+        )
+
+    def __repr__(self) -> str:
+        cls = self.__class__.__name__
+        return f'{cls}(n={len(self)})'
+
+    def __len__(self) -> int:
+        return len(self.lookup)
+
+    def __bool__(self) -> bool:
+        return len(self) > 0
+
+    def __iter__(self) -> Iterator[Tensor]:
+        return iter(self.tensors[idx][elem] for idx, elem in self.lookup)
+
+    def __contains__(self, elem: Any) -> bool:
+        return any(elem in tensor for tensor in self.tensors)
+
+    def __reversed__(self) -> Self:
+        return self.__class__(t.flipud() for t in reversed(self.tensors))
+
+    @singledispatchmethod
+    def __getitem__(self, index: int) -> Tensor:
+        idx, elem = self.lookup[index]
+        return self.tensors[idx][elem]
+
+    @__getitem__.register
+    def _(self, index: slice) -> Tensor:
+        return pt.cat([
+            self.tensors[idx][elem:elem + 1]
+            for idx, elem
+            in self.lookup[index]
+        ])
+
+    @__getitem__.register
+    def _(self, index: list) -> Tensor:
+        return pt.cat([
+            self.tensors[idx][elem:elem + 1]
+            for idx, elem
+            in (self.lookup[idx] for idx in index)
+        ])
+
+    @__getitem__.register
+    def _(self, index: tuple) -> Tensor:
+        idx, *indices = index
+        return self[idx][*indices]
+
+    @property
+    def dtype(self) -> Dtype:
+        """The common dtype of all cached tensors."""
+        return self.tensors[0].dtype
+
+    @property
+    def device(self) -> Device:
+        """The common device of all cached tensors."""
+        return self.tensors[0].device
+
+    @cached_property
+    def shape(self) -> pt.Size:
+        """The shape of the full concatenation of the wrapped tensors."""
+        _, *shape = self.tensors[0].shape
+        return pt.Size([len(self), *shape])
+
+    @overload
+    def size(self, dim: int) -> int:
+        ...
+
+    @overload
+    def size(self, dim: None) -> pt.Size:
+        ...
+
+    def size(self, dim = None):
+        """The size of the full concatenation of the wrapped tensors.
+
+        Parameters
+        ----------
+        dim: int, optional
+            The dimension for which to return the size. Defaults to ``None``.
+            If not given the `shape` of the full concatenation of all cached
+            tensors is returned.
+
+        Returns
+        -------
+        int
+            If the size along a certain dimension was requested.
+        Size
+            A PyTorch ``Size`` object specifying the `shape` of the full
+            concatenation of all cached tensors.
+
+        """
+        return self.shape[dim] if dim is not None else self.shape
+
+    def to(self, *args: Any) -> Self:
+        """Returns a new instance of self, wrapping transformed tensors.
+
+        See the PyTorch `documentation <https://pytorch.org/docs/stable/
+        generated/torch.Tensor.to.html#torch-tensor-to>`_ for possible call
+        signatures.
+
+        """
+        return self.__class__(tensor.to(*args) for tensor in self.tensors)
