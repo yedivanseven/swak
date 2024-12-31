@@ -47,7 +47,7 @@ class NoSchedule(ArgRepr):
         return [self.optimizer.defaults['lr']]
 
     def state_dict(self) -> dict[str, Any]:
-        """Because there is no state return an empty, ordered dictionary."""
+        """Because there is no state, return an empty dictionary."""
         return {}
 
     def load_state_dict(self, *_: Any, **__: Any) -> _IncompatibleKeys:

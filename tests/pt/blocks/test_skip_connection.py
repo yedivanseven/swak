@@ -23,6 +23,13 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_drop(self):
         self.assertIsInstance(self.skip.drop, ptn.Dropout)
 
+    def test_has_norm_first(self):
+        self.assertTrue(hasattr(self.skip, 'norm_first'))
+
+    def test_norm_first(self):
+        self.assertIsInstance(self.skip.norm_first, bool)
+        self.assertTrue(self.skip.norm_first)
+
     def test_has_norm_cls(self):
         self.assertTrue(hasattr(self.skip, 'norm_cls'))
 
@@ -87,6 +94,7 @@ class TestAttributes(unittest.TestCase):
         self.skip = SkipConnection(
             Identity(),
             ptn.AlphaDropout(),
+            False,
             ptn.BatchNorm1d,
             4,
             affine=False
@@ -94,6 +102,9 @@ class TestAttributes(unittest.TestCase):
 
     def test_drop(self):
         self.assertIsInstance(self.skip.drop, ptn.AlphaDropout)
+
+    def test_norm_first(self):
+        self.assertFalse(self.skip.norm_first)
 
     def test_norm_cls(self):
         self.assertIs(self.skip.norm_cls, ptn.BatchNorm1d)
@@ -112,31 +123,36 @@ class TestAttributes(unittest.TestCase):
 
 class TestUsage(unittest.TestCase):
 
-    def test_block_called(self):
-        block = Mock(return_value=pt.ones(4))
-        block.new = Mock(return_value=block)
-        skip = SkipConnection(block)
-        expected = pt.ones(4)
-        _ = skip(expected)
-        block.assert_called_once_with(expected)
-
-    def test_drop_called(self):
-        drop = Mock(return_value=pt.ones(4))
-        skip = SkipConnection(Identity(), drop)
-        expected = pt.ones(4)
-        _ = skip(expected)
-        drop.assert_called_once_with(expected)
-
-    def test_norm_called(self):
-        drop = Mock(return_value=2*pt.ones(4))
-        norm = Mock()
+    def test_norm_first(self):
+        inp = pt.ones(4)
+        norm_out = pt.ones(4) * 2.0
+        block_out = pt.ones(4) * 3.0
+        drop_out = pt.ones (4) * 4.0
+        norm = Mock(return_value=norm_out)
         norm_cls = Mock(return_value=norm)
-        skip = SkipConnection(Identity(), drop, norm_cls=norm_cls)
-        _ = skip(pt.ones(4))
-        norm.assert_called_once()
-        actual = norm.call_args[0][0]
-        expected = pt.ones(4) * 1.5
-        pt.testing.assert_close(actual, expected)
+        block = Mock(return_value=block_out)
+        drop = Mock(return_value=drop_out)
+        skip = SkipConnection(block, drop, True, norm_cls)
+        actual = skip(inp)
+        norm.assert_called_once_with(inp)
+        block.assert_called_once_with(norm_out)
+        drop.assert_called_once_with(block_out)
+        pt.testing.assert_close(actual, pt.ones(4) * 2.5)
+
+    def test_norm_after(self):
+        inp = pt.ones(4)
+        norm_out = pt.ones(4) * 2.0
+        block_out = pt.ones(4) * 3.0
+        drop_out = pt.ones(4) * 4.0
+        norm = Mock(return_value=norm_out)
+        norm_cls = Mock(return_value=norm)
+        block = Mock(return_value=block_out)
+        drop = Mock(return_value=drop_out)
+        skip = SkipConnection(block, drop, False, norm_cls)
+        actual = skip(inp)
+        block.assert_called_once_with(inp)
+        drop.assert_called_once_with(block_out)
+        pt.testing.assert_close(actual, norm_out)
 
 
 if __name__ == '__main__':

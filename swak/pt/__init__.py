@@ -28,7 +28,10 @@ __all__ = [
 device = pt.device('cuda') if pt.cuda.is_available() else pt.device('cpu')
 dtype = pt.bfloat16 if pt.cuda.is_available() else pt.float32
 pt.set_default_device(device)
-pt.set_float32_matmul_precision('medium')
+if pt.cuda.is_available():
+    pt.set_float32_matmul_precision('high')
+else:
+    pt.set_float32_matmul_precision('medium')
 
 # ToDo: Implement tools for packed & padded sequences
-# ToDo: Add sinusoidal positional encodings
+# ToDo: Add positional encodings and, potentially, x-former classes

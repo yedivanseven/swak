@@ -110,6 +110,7 @@ class Trainer(ArgRepr):
             max_epochs: int = 100,
             scheduler: Curry[LRScheduler] = Curry[NoSchedule](NoSchedule),
             warmup: int = 0,
+            batch_step: bool = False,
             patience: int | None = None,
             max_n: int | None = None,
             step_freq: int = 1,
@@ -124,6 +125,7 @@ class Trainer(ArgRepr):
         self.max_epochs = max_epochs
         self.scheduler = scheduler
         self.warmup = warmup
+        self.batch_step = batch_step
         self.patience = max_epochs if patience is None else patience
         self.max_n = max_n
         self.step_freq = step_freq
@@ -275,8 +277,8 @@ class Trainer(ArgRepr):
                 if batch_index % self.step_freq == 0:
                     optimizer.step()
                     optimizer.zero_grad(set_to_none=True)
-                    # During warmup, step the scheduler after each opti step.
-                    if scheduler.last_epoch < self.warmup:
+                    # Step the scheduler during warmup and maybe also afterward
+                    if scheduler.last_epoch < self.warmup or self.batch_step:
                         scheduler.step()
 
             # How many data points to take for computing train (and test) loss.
@@ -289,11 +291,12 @@ class Trainer(ArgRepr):
             train_loss = 0.0
             self.loss.eval()
             model.eval()
-            with pt.no_grad():
+            with pt.inference_mode():
                 batches = train.sample(self.batch_size, max_n)
                 progress = tqdm(batches, 'Eval (train)', n_batches, False)
                 for features, target in progress:
                     loss = self.loss(*model(*features), target).item()
+                    progress.set_postfix(loss=f'{loss:4.2f}')
                     if self.loss.reduction == 'mean':
                         n_new = target.size(0)
                         train_loss += n_new * (loss - train_loss) / (n + n_new)
@@ -307,11 +310,12 @@ class Trainer(ArgRepr):
             else:
                 n = 0
                 test_loss = 0.0
-                with pt.no_grad():
+                with pt.inference_mode():
                     batches = test.sample(self.batch_size)
                     progress = tqdm(batches, 'Eval (test)', n_batches, False)
                     for features, target in progress:
                         loss = self.loss(*model(*features), target).item()
+                        progress.set_postfix(loss=f'{loss:4.2f}')
                         if self.loss.reduction == 'mean':
                             n_new = target.size(0)
                             test_loss += n_new * (loss - test_loss)/(n + n_new)
@@ -339,8 +343,8 @@ class Trainer(ArgRepr):
                 sample
             )
 
-            # After warmup, step the scheduler at the end of the epoch.
-            if scheduler.last_epoch >= self.warmup:
+            # After warmup, step the scheduler each epoch if not set otherwise.
+            if scheduler.last_epoch >= self.warmup and not self.batch_step:
                 scheduler.step()
 
             # Check if the loss improved within our patience.

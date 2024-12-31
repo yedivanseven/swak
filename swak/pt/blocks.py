@@ -298,6 +298,11 @@ class SkipConnection(Block):
         Dropout to be applied to the output of `block` before adding it to
         its input. Typically an instance of ``Dropout`` or ``AlphaDropout``.
         Defaults to ``Dropout(p=0.0)``, resulting in no dropout being applied.
+    norm_first, bool, optional
+        If ``True``, normalize the inputs before passing them through the block
+        and adding the outputs to the raw inputs. If ``False``, pass inputs
+        through the block first and normalize the sum of the inputs and outputs
+        afterward. Defaults to ``True``.
     norm_cls: type, optional
         The class of the norm to be applied after adding input to output, e.g.,
         ``LayerNorm`` or ``BatchNorm1d``. Again, this is needed to easily
@@ -314,6 +319,7 @@ class SkipConnection(Block):
             self,
             block: Block,
             drop: Drop = ptn.Dropout(0.0),
+            norm_first: bool = True,
             norm_cls: type[Module] = Identity,
             *args,
             **kwargs
@@ -321,6 +327,7 @@ class SkipConnection(Block):
         super().__init__()
         self.block = block
         self.drop = drop
+        self.norm_first = norm_first
         self.norm_cls: type[Module] = norm_cls
         self.args = args
         self.kwargs = kwargs
@@ -340,6 +347,8 @@ class SkipConnection(Block):
             Same dimensions and sizes as the input tensor.
 
         """
+        if self.norm_first:
+            return 0.5 * (inp + self.drop(self.block(self.norm(inp))))
         return self.norm(0.5 * (inp + self.drop(self.block(inp))))
 
     def reset_parameters(self) -> None:
@@ -352,6 +361,7 @@ class SkipConnection(Block):
         return self.__class__(
             self.block.new(),
             self.drop,
+            self.norm_first,
             self.norm_cls,
             *self.args,
             **self.kwargs
@@ -368,13 +378,22 @@ class Repeat(Block):
     n_layers: int, optional
         How often to repeat the `skip`. Defaults to 2.
 
+    Notes
+    -----
+    If the skip-connections uses `norm_first`=``True``, the final output of
+    the last repetition will also be normalized (with a fresh instance of the
+    exact same norm type used by the skip-connection).
+
     """
 
     def __init__(self, skip: SkipConnection, n_layers: int = 2) -> None:
         super().__init__()
         self.skip = skip
         self.n_layers = n_layers
-        self.sequence = ptn.Sequential(*[skip.new() for _ in self.layers])
+        self.blocks = ptn.Sequential(*[skip.new() for _ in self.layers])
+        self.norm = skip.norm_cls(
+            *skip.args, **skip.kwargs
+        ) if skip.norm_first else Identity()
 
     @property
     def layers(self) -> range:
@@ -395,12 +414,13 @@ class Repeat(Block):
             Same dimensions and sizes as the input tensor.
 
         """
-        return self.sequence(inp)
+        return self.norm(self.blocks(inp))
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of all blocks."""
-        for block in self.sequence:
+        for block in self.blocks:
             block.reset_parameters()
+        self.norm.reset_parameters()
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters."""

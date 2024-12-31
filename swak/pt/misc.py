@@ -425,7 +425,6 @@ class Cat(ArgRepr):
         return pt.cat(tensors, dim=self.dim)
 
 
-# ToDo: Implement in-place methods that make sense
 # ToDo: Add unit tests
 # ToDo: Add to documentation
 class LazyCatDim0:
@@ -437,9 +436,9 @@ class LazyCatDim0:
     However, when only small parts of the full concatenation of all tensors are
     needed at any given time, the present class provides an alternative.
     Constituent tensors are kept as is and concatenation is only performed when
-    slices or element(s) along the first dimension are requested. The requested
-    elements are selected from the constituents first and concatenated and,
-    thus, copied only then. Slicing and element selection of further dimensions
+    slices or element(s) along the first dimension are requested. These are
+    selected from the constituents first and only then concatenated (and,
+    thus, copied). Slicing and element selection of further dimensions
     is delayed until selection and concatenation along the first dimension is
     completed.
 
@@ -461,17 +460,10 @@ class LazyCatDim0:
     DTypeError
         If tensors have multiple dtypes.
 
-    Notes
-    -----
-    As many tensor methods as possible are implemented on this wrapper class
-    (operating on each of the wrapped tensors individually) but, as the whole
-    point is to avoid copying the cached data in its entirety, only in-place
-    operations are permitted.
-
     """
 
     def __init__(self, tensors: Iterable[Tensor]) -> None:
-        self.tensors = self._valid(tuple(tensors))
+        self.__tensors = self._valid(tuple(tensors))
 
     @staticmethod
     def _valid(tensors: Tensors) -> Tensors:
@@ -499,46 +491,43 @@ class LazyCatDim0:
         """A lazily computed and cached lookup table for indices."""
         return tuple(
             (i, j)
-            for i, tensor in enumerate(self.tensors)
+            for i, tensor in enumerate(self.__tensors)
             for j in range(tensor.size(0))
         )
 
     def __repr__(self) -> str:
         cls = self.__class__.__name__
-        return f'{cls}(n={len(self)})'
+        return f'{cls}(n={len(self.lookup)})'
 
     def __len__(self) -> int:
         return len(self.lookup)
 
     def __bool__(self) -> bool:
-        return len(self) > 0
+        return len(self.lookup) > 0
 
     def __iter__(self) -> Iterator[Tensor]:
-        return iter(self.tensors[idx][elem] for idx, elem in self.lookup)
+        return iter(self.__tensors[idx][elem] for idx, elem in self.lookup)
 
     def __contains__(self, elem: Any) -> bool:
-        return any(elem in tensor for tensor in self.tensors)
-
-    def __reversed__(self) -> Self:
-        return self.__class__(t.flipud() for t in reversed(self.tensors))
+        return any(elem in tensor for tensor in self.__tensors)
 
     @singledispatchmethod
     def __getitem__(self, index: int) -> Tensor:
         idx, elem = self.lookup[index]
-        return self.tensors[idx][elem]
+        return self.__tensors[idx][elem]
 
     @__getitem__.register
     def _(self, index: slice) -> Tensor:
         return pt.cat([
-            self.tensors[idx][elem:elem + 1]
+            self.__tensors[idx][elem:elem + 1]
             for idx, elem
-            in self.lookup[index]
-        ])
+            in self.lookup[index.start:index.stop]
+        ])[::index.step]
 
     @__getitem__.register
     def _(self, index: list) -> Tensor:
         return pt.cat([
-            self.tensors[idx][elem:elem + 1]
+            self.__tensors[idx][elem:elem + 1]
             for idx, elem
             in (self.lookup[idx] for idx in index)
         ])
@@ -551,17 +540,17 @@ class LazyCatDim0:
     @property
     def dtype(self) -> Dtype:
         """The common dtype of all cached tensors."""
-        return self.tensors[0].dtype
+        return self.__tensors[0].dtype
 
     @property
     def device(self) -> Device:
         """The common device of all cached tensors."""
-        return self.tensors[0].device
+        return self.__tensors[0].device
 
     @cached_property
     def shape(self) -> pt.Size:
         """The shape of the full concatenation of the wrapped tensors."""
-        _, *shape = self.tensors[0].shape
+        _, *shape = self.__tensors[0].shape
         return pt.Size([len(self), *shape])
 
     @overload
@@ -601,4 +590,4 @@ class LazyCatDim0:
         signatures.
 
         """
-        return self.__class__(tensor.to(*args) for tensor in self.tensors)
+        return self.__class__(tensor.to(*args) for tensor in self.__tensors)
