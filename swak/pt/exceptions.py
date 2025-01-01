@@ -14,6 +14,10 @@ class CompileError(Exception):
     pass
 
 
+class ValidationErrors(ExceptionGroup):
+    pass
+
+
 class ShapeError(Exception):
     pass
 

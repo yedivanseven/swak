@@ -1,13 +1,20 @@
 """Convenient classes (and functions) that do not fit any other category."""
 
 from typing import Any, Self, overload
-from collections.abc import Iterator, Iterable
+from collections.abc import Iterable
 from functools import cached_property, singledispatchmethod
+from itertools import chain
 import torch as pt
 import torch.nn as ptn
 from ..misc import ArgRepr
 from .types import Tensor, Module, Tensors, Tensors2T, Dtype, Device
-from .exceptions import CompileError, ShapeError
+from .exceptions import (
+    CompileError,
+    ShapeError,
+    DeviceError,
+    DTypeError,
+    ValidationErrors
+)
 
 __all__ = [
     'identity',
@@ -425,16 +432,15 @@ class Cat(ArgRepr):
         return pt.cat(tensors, dim=self.dim)
 
 
-# ToDo: Add unit tests
-# ToDo: Add to documentation
 class LazyCatDim0:
     """Lazily concatenate a sequence of tensors along their first dimension.
 
     Concatenating a large number of even small tensors (or a small number of
     large tensors) causes a memory spike because, temporarily, two copies of
     all tensors are needed. Sometimes, this simply cannot be avoided.
-    However, when only small parts of the full concatenation of all tensors are
-    needed at any given time, the present class provides an alternative.
+    However, when only a small part of the full concatenation of all tensors is
+    needed at any given time, e.g., when chopping off micro-batches of training
+    data to feed to a model, the present class provides an alternative:
     Constituent tensors are kept as is and concatenation is only performed when
     slices or element(s) along the first dimension are requested. These are
     selected from the constituents first and only then concatenated (and,
@@ -471,19 +477,22 @@ class LazyCatDim0:
         if not tensors:
             msg = 'Expected a non-empty iterable of tensors!'
             raise ShapeError(msg)
+        errors = []
         if any(tensor.dim() == 0 for tensor in tensors):
             msg = 'Scalar tensors can not be concatenated!'
-            raise ShapeError(msg)
+            errors.append(ShapeError(msg))
         _, *shape = tensors[0].shape
         if any(list(tensor.shape[1:]) != shape for tensor in tensors[1:]):
             msg = 'All tensors must be of shape {} after the first dimension!'
-            raise ShapeError(msg.format(shape))
+            errors.append(ShapeError(msg.format(shape)))
         if any(tensor.device != tensors[0].device for tensor in tensors[1:]):
             msg = 'All tensors must be on the same device!'
-            raise ShapeError(msg)
+            errors.append(DeviceError(msg))
         if any(tensor.dtype is not tensors[0].dtype for tensor in tensors[1:]):
             msg = 'All tensors must have the same dtype!'
-            raise ShapeError(msg)
+            errors.append(DTypeError(msg))
+        if errors:
+            raise ValidationErrors('Validation failed', errors)
         return tensors
 
     @cached_property
@@ -502,17 +511,14 @@ class LazyCatDim0:
     def __len__(self) -> int:
         return len(self.lookup)
 
-    def __bool__(self) -> bool:
-        return len(self.lookup) > 0
-
-    def __iter__(self) -> Iterator[Tensor]:
-        return iter(self.__tensors[idx][elem] for idx, elem in self.lookup)
+    def __iter__(self) -> chain[Tensor]:
+        return chain.from_iterable(self.__tensors)
 
     def __contains__(self, elem: Any) -> bool:
         return any(elem in tensor for tensor in self.__tensors)
 
     @singledispatchmethod
-    def __getitem__(self, index: int) -> Tensor:
+    def __getitem__(self, index) -> Tensor:
         idx, elem = self.lookup[index]
         return self.__tensors[idx][elem]
 
@@ -534,8 +540,15 @@ class LazyCatDim0:
 
     @__getitem__.register
     def _(self, index: tuple) -> Tensor:
+        if not index:
+            return self[:]
         idx, *indices = index
-        return self[idx][*indices]
+        match idx:
+            case slice():
+                return self[idx][:, *indices]
+            case int():
+                return self[idx][*indices]
+
 
     @property
     def dtype(self) -> Dtype:
@@ -558,7 +571,7 @@ class LazyCatDim0:
         ...
 
     @overload
-    def size(self, dim: None) -> pt.Size:
+    def size(self, dim: None = None) -> pt.Size:
         ...
 
     def size(self, dim = None):
@@ -587,7 +600,8 @@ class LazyCatDim0:
 
         See the PyTorch `documentation <https://pytorch.org/docs/stable/
         generated/torch.Tensor.to.html#torch-tensor-to>`_ for possible call
-        signatures.
+        signatures, but keep in mind that all listed operations will create
+        a copy of the wrapped tensors after all.
 
         """
         return self.__class__(tensor.to(*args) for tensor in self.__tensors)
