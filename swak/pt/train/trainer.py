@@ -45,6 +45,9 @@ class Trainer(ArgRepr):
         will only be stepped at the end of each epoch. Defaults to 0, which
         results in no warmup and the learning-rate `scheduler` being stepped
         at the end of the first epoch for the first time.
+    batch_step: bool, optional
+        Whether to step the learning-rate `scheduler` after each batch or after
+        each epoch once the `warmup` period is over. Default to ``False``.
     patience: int, optional
         If patience is not ``None`` and smaller than `max_epochs`, early
         stopping is active. A snapshot of the model's state is taken after
