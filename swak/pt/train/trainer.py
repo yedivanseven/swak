@@ -297,12 +297,14 @@ class Trainer(ArgRepr):
             train_loss = 0.0
             self.loss.eval()
             model.eval()
+            ema = None
             with pt.inference_mode():
                 batches = train.sample(self.batch_size, max_n)
                 progress = tqdm(batches, 'Eval (train)', n_batches, False)
                 for features, target in progress:
                     loss = self.loss(*model(*features), target).item()
-                    progress.set_postfix(loss=f'{loss:4.2f}')
+                    ema = loss if ema is None else 0.5 * (loss + ema)
+                    progress.set_postfix(loss=f'{ema:4.2f}')
                     if self.loss.reduction == 'mean':
                         n_new = target.size(0)
                         train_loss += n_new * (loss - train_loss) / (n + n_new)
@@ -316,12 +318,14 @@ class Trainer(ArgRepr):
             else:
                 n = 0
                 test_loss = 0.0
+                ema = None
                 with pt.inference_mode():
                     batches = test.sample(self.batch_size)
                     progress = tqdm(batches, 'Eval (test)', n_batches, False)
                     for features, target in progress:
                         loss = self.loss(*model(*features), target).item()
-                        progress.set_postfix(loss=f'{loss:4.2f}')
+                        ema = loss if ema is None else 0.5 * (loss + ema)
+                        progress.set_postfix(loss=f'{ema:4.2f}')
                         if self.loss.reduction == 'mean':
                             n_new = target.size(0)
                             test_loss += n_new * (loss - test_loss)/(n + n_new)
