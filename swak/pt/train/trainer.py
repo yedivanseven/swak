@@ -255,6 +255,7 @@ class Trainer(ArgRepr):
         best_epoch = epoch
         n_wait = 1
         max_epochs_reached = False
+        ema = None  # Exponential moving average of per-batch training loss
 
         # Loop over epochs.
         for epoch in range(epoch + 1, self.max_epochs + 1):
@@ -275,7 +276,9 @@ class Trainer(ArgRepr):
                 norm = clip_grad_norm_(model.parameters(), self.clip_grad)
                 # Report loss and norm to the tqdm progress bar for feedback.
                 grad = 'CLIP' if norm > self.clip_grad else f'{norm:4.2f}'
-                progress.set_postfix(loss=f'{loss:4.2f}', grad=grad)
+                # Exponentially smoothen the reported per-batch loss
+                ema = loss.item() if ema is None else 0.5 * (loss.item() + ema)
+                progress.set_postfix(loss=f'{ema:4.2f}', grad=grad)
                 # Step after accumulating gradients for step_freq batches.
                 if batch_index % self.step_freq == 0:
                     optimizer.step()

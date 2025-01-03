@@ -380,7 +380,7 @@ class Repeat(Block):
 
     Notes
     -----
-    If the skip-connections uses `norm_first`=``True``, the final output of
+    If the skip-connection sets `norm_first` to ``True``, the final output of
     the last repetition will also be normalized (with a fresh instance of the
     exact same norm type used by the skip-connection).
 
