@@ -35,6 +35,9 @@ class ActivatedEmbedder(Module):
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
         self.activate = activate
         self.inp_dim = inp_dim
         self.kwargs = kwargs
@@ -64,6 +67,9 @@ class ActivatedEmbedder(Module):
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.embed.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
 
     def new(
             self,

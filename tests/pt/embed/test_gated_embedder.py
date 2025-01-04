@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 import torch as pt
-from torch.nn import Sigmoid, Linear, GELU
+from torch.nn import Sigmoid, Linear, GELU, PReLU
 from swak.pt.misc import identity
 from swak.pt.embed import GatedEmbedder
 
@@ -55,9 +55,23 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.embed.reset_parameters))
 
     @patch('torch.nn.Linear.reset_parameters')
+    def test_reset_parameters_called_on_instantiation(self, linear):
+        gate = PReLU()
+        with patch('torch.nn.PReLU.reset_parameters') as mock:
+            _ = GatedEmbedder(4, gate)
+            self.assertEqual(1, mock.call_count)
+            self.assertEqual(1, linear.call_count)
+
+    @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
         self.embed.reset_parameters()
         mock.assert_called_once_with()
+
+    def test_reset_parameters_called_on_gate(self):
+        embed = GatedEmbedder(4, PReLU())
+        with patch('torch.nn.PReLU.reset_parameters') as gate:
+            embed.reset_parameters()
+            self.assertEqual(1, gate.call_count)
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))

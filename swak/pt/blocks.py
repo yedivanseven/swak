@@ -16,7 +16,10 @@ from .misc import Identity
 __all__ = [
     'Block',
     'ActivatedBlock',
+    'ActivatedHiddenBlock',
     'GatedBlock',
+    'GatedHiddenBlock',
+    'ActivatedGatedBlock',
     'GatedResidualBlock',
     'SkipConnection',
     'Repeat'
@@ -46,6 +49,73 @@ class Block(Module, ABC):
 
 
 class ActivatedBlock(Block):
+    """A single, non-linearly activated layer.
+
+    Parameters
+    ----------
+    mod_dim: int
+        Size of the feature space. The input tensor is expected to be of that
+        size in its last dimension and the output will again have this size in
+        its last dimension.
+    activate: Module or function, optional
+        The activation function to be applied after the affine transformation.
+        Must be a callable that accepts a tensor as sole argument, like a
+        module from ``torch.nn`` or a function from ``torch.nn.functional``,
+        depending on whether it needs to be further parameterized or not.
+        Defaults to ``ELU()``.
+    **kwargs
+        Additional keyword arguments to pass through to the linear layers.
+
+    """
+
+    def __init__(
+            self,
+            mod_dim: int,
+            activate: Module | Functional = ptn.ELU(),
+            **kwargs: Any
+    ) -> None:
+        super().__init__()
+        self.mod_dim = mod_dim
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
+        self.activate = activate
+        self.kwargs = kwargs
+        self.project = ptn.Linear(mod_dim, mod_dim, **kwargs)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a single, non-linearly activated layer.
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        return self.activate(self.project(inp))
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of the linear projections."""
+        self.project.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.mod_dim,
+            self.activate,
+            **self.kwargs
+        )
+
+
+class ActivatedHiddenBlock(Block):
     """A single, non-linearly activated hidden layer of configurable size.
 
     Parameters
@@ -82,6 +152,9 @@ class ActivatedBlock(Block):
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
         self.activate = activate
         self.drop = drop
         self.hidden_factor = hidden_factor
@@ -106,9 +179,12 @@ class ActivatedBlock(Block):
         return self.shrink(self.drop(self.activate(self.widen(inp))))
 
     def reset_parameters(self) -> None:
-        """Re-initialize the internal parameters of the linear projections."""
+        """Re-initialize the internal parameters of the block."""
         self.widen.reset_parameters()
         self.shrink.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters."""
@@ -150,6 +226,9 @@ class GatedBlock(Block):
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
+        # Although few, some activation functions have learnable parameters
+        if hasattr(gate, 'reset_parameters'):
+            gate.reset_parameters()
         self.gate = gate
         self.kwargs = kwargs
         self.widen = ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
@@ -172,15 +251,203 @@ class GatedBlock(Block):
         return wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
 
     def reset_parameters(self) -> None:
-        """Re-initialize the internal parameters of the linear projection."""
+        """Re-initialize the internal parameters of the block."""
         self.widen.reset_parameters()
-
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.gate, 'reset_parameters'):
+            self.gate.reset_parameters()
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters."""
         return self.__class__(
             self.mod_dim,
             self.gate,
+            **self.kwargs
+        )
+
+
+class GatedHiddenBlock(Block):
+    """A configurable, gated linear unit (GLU) with single hidden layer.
+
+    Parameters
+    ----------
+    mod_dim: int
+        Size of the feature space. The input tensor is expected to be of that
+        size in its last dimension and the output will again have this size in
+        its last dimension.
+    gate: Module or function, optional
+        The activation function to be applied to half of the (linearly)
+        projected input before multiplying with the other half. Must be
+        a callable that accepts a tensor as sole argument, like a module from
+        ``torch.nn`` or a function from ``torch.nn.functional``, depending
+        on whether it needs to be further parameterized or not.
+        Defaults to a sigmoid.
+    drop: Module, optional
+        Dropout to be applied after gating. Typically an instance of
+        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
+        resulting in no dropout being applied.
+    hidden_factor: int, optional
+        The size of the hidden layer *before* reducing by two through gating
+        is this integer factor times `mod_dim`. Defaults to 4.
+    **kwargs
+        Additional keyword arguments to pass through to the linear layers.
+
+    """
+
+    def __init__(
+            self,
+            mod_dim: int,
+            gate: Module | Functional = ptn.Sigmoid(),
+            drop: Drop = ptn.Dropout(0.0),
+            hidden_factor: int = 4,
+            **kwargs: Any
+    ) -> None:
+        super().__init__()
+        self.mod_dim = mod_dim
+        # Although few, some activation functions have learnable parameters
+        if hasattr(gate, 'reset_parameters'):
+            gate.reset_parameters()
+        self.gate = gate
+        self.drop = drop
+        self.hidden_factor = hidden_factor
+        self.kwargs = kwargs
+        self.widen = ptn.Linear(mod_dim, self.dim * 2, **kwargs)
+        self.shrink = ptn.Linear(self.dim, mod_dim, **kwargs)
+
+    @property
+    def dim(self) -> int:
+        """The hidden dimension after gating."""
+        return (self.hidden_factor * self.mod_dim) // 2
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a gated linear unit (GLU) with a hidden layer.
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        widened = self.widen(inp)
+        gated = widened[..., :self.dim] * self.gate(widened[..., self.dim:])
+        return self.shrink(self.drop(gated))
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of the block."""
+        self.widen.reset_parameters()
+        self.shrink.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.gate, 'reset_parameters'):
+            self.gate.reset_parameters()
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.mod_dim,
+            self.gate,
+            self.drop,
+            self.hidden_factor,
+            **self.kwargs
+        )
+
+
+class ActivatedGatedBlock(Block):
+    """An activated, hidden layer, followed by a gated linear unit (GLU).
+
+    Parameters
+    ----------
+    mod_dim: int
+        Size of the feature space. The input tensor is expected to be of that
+        size in its last dimension and the output will again have this size in
+        its last dimension.
+    activate: Module or function, optional
+        The activation function to be applied after (linear) projection, but
+        prior to gating. Must be a callable that accepts a tensor as sole
+        argument, like a module from ``torch.nn`` or a function from
+        `torch.nn.functional``, depending on whether it needs to be further
+        parameterized or not. Defaults to an ``ELU`` activation.
+    gate: Module or function, optional
+        The activation function to be applied to half of the (non-linearly)
+        projected input before multiplying with the other half. Must be
+        a callable that accepts a tensor as sole argument, like a module from
+        ``torch.nn`` or a function from ``torch.nn.functional``, depending
+        on whether it needs to be further parameterized or not.
+        Defaults to a sigmoid.
+    drop: Module, optional
+        Dropout to be applied before gating. Typically an instance of
+        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
+        resulting in no dropout being applied.
+    hidden_factor: int, optional
+        The size of the hidden layer is this integer factor times `mod_dim`.
+        Defaults to 4.
+    **kwargs
+        Additional keyword arguments to pass through to the linear layers.
+
+    """
+
+    def __init__(
+            self,
+            mod_dim: int,
+            activate: Module | Functional = ptn.ELU(),
+            gate: Module | Functional = ptn.Sigmoid(),
+            drop: Drop = ptn.Dropout(0.0),
+            hidden_factor: int = 4,
+            **kwargs: Any
+    ) -> None:
+        super().__init__()
+        self.mod_dim = mod_dim
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
+        if hasattr(gate, 'reset_parameters'):
+            gate.reset_parameters()
+        self.activate = activate
+        self.gate = gate
+        self.drop = drop
+        self.hidden_factor = hidden_factor
+        self.kwargs = kwargs
+        self.widen = ptn.Linear(mod_dim, hidden_factor * mod_dim, **kwargs)
+        self.shrink = ptn.Linear(hidden_factor * mod_dim, 2*mod_dim, **kwargs)
+
+    def forward(self, inp: Tensor) -> Tensor:
+        """Forward pass through a activated, hidden layer followed by a GLU.
+
+        Parameters
+        ----------
+        inp: Tensor
+            The size of the last dimension is expected to be ``mod_dim``.
+
+        Returns
+        -------
+        Tensor
+            Same dimensions and sizes as the input tensor.
+
+        """
+        slim = self.shrink(self.drop(self.activate(self.widen(inp))))
+        return slim[..., :self.mod_dim] * self.gate(slim[..., self.mod_dim:])
+
+    def reset_parameters(self) -> None:
+        """Re-initialize the internal parameters of the block."""
+        self.widen.reset_parameters()
+        self.shrink.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
+        if hasattr(self.gate, 'reset_parameters'):
+            self.gate.reset_parameters()
+
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        return self.__class__(
+            self.mod_dim,
+            self.activate,
+            self.gate,
+            self.drop,
             **self.kwargs
         )
 
@@ -243,6 +510,11 @@ class GatedResidualBlock(Block):
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
+        if hasattr(gate, 'reset_parameters'):
+            gate.reset_parameters()
         self.activate = activate
         self.gate = gate
         self.drop = drop
@@ -270,9 +542,14 @@ class GatedResidualBlock(Block):
         return 0.5 * (projected + gated)
 
     def reset_parameters(self) -> None:
-        """Re-initialize the internal parameters of the linear projections."""
+        """Re-initialize the internal parameters of the block."""
         self.project.reset_parameters()
         self.widen.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
+        if hasattr(self.gate, 'reset_parameters'):
+            self.gate.reset_parameters()
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters."""

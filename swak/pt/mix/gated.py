@@ -41,6 +41,9 @@ class GatedConcatMixer(Module):
         super().__init__()
         self.mod_dim = mod_dim
         self.n_features = n_features
+        # Although few, some activation functions have learnable parameters
+        if hasattr(gate, 'reset_parameters'):
+            gate.reset_parameters()
         self.gate = gate
         self.kwargs = kwargs
         self.mix = ptn.Linear(n_features * mod_dim, 2 * mod_dim, **kwargs)
@@ -70,6 +73,9 @@ class GatedConcatMixer(Module):
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.mix.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.gate, 'reset_parameters'):
+            self.gate.reset_parameters()
 
     def new(
             self,

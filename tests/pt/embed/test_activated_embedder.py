@@ -55,9 +55,23 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.embed.reset_parameters))
 
     @patch('torch.nn.Linear.reset_parameters')
+    def test_reset_parameters_called_on_instantiation(self, linear):
+        activate = ptn.PReLU()
+        with patch('torch.nn.PReLU.reset_parameters') as mock:
+            _ = ActivatedEmbedder(4, activate)
+            self.assertEqual(1, mock.call_count)
+            self.assertEqual(1, linear.call_count)
+
+    @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
         self.embed.reset_parameters()
         mock.assert_called_once_with()
+
+    def test_reset_parameters_called_on_activation(self):
+        embed = ActivatedEmbedder(4, ptn.PReLU())
+        with patch('torch.nn.PReLU.reset_parameters') as activate:
+            embed.reset_parameters()
+            self.assertEqual(1, activate.call_count)
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))

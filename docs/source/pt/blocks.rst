@@ -14,7 +14,22 @@ blocks
    :show-inheritance:
 
 
+.. autoclass:: swak.pt.blocks.ActivatedHiddenBlock
+   :members:
+   :show-inheritance:
+
+
 .. autoclass:: swak.pt.blocks.GatedBlock
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.blocks.GatedHiddenBlock
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.blocks.ActivatedGatedBlock
    :members:
    :show-inheritance:
 

@@ -44,6 +44,9 @@ class GatedSumMixer(Module):
         super().__init__()
         self.mod_dim = mod_dim
         self.n_features = n_features
+        # Although few, some activation functions have learnable parameters
+        if hasattr(gate, 'reset_parameters'):
+            gate.reset_parameters()
         self.gate = gate
         self.kwargs = kwargs
         self.coeffs = ptn.Linear(
@@ -99,6 +102,9 @@ class GatedSumMixer(Module):
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.coeffs.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.gate, 'reset_parameters'):
+            self.gate.reset_parameters()
 
     def new(
             self,

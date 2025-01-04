@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 import torch as pt
-from torch.nn import Linear
+from torch.nn import Linear, PReLU
 from swak.pt.misc import identity
 from swak.pt.mix import ActivatedConcatMixer
 
@@ -57,9 +57,23 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.mix.reset_parameters))
 
     @patch('torch.nn.Linear.reset_parameters')
+    def test_reset_parameters_called_on_instantiation(self, linear):
+        activate = PReLU()
+        with patch('torch.nn.PReLU.reset_parameters') as mock:
+            _ = ActivatedConcatMixer(4, 3, activate)
+            self.assertEqual(1, mock.call_count)
+            self.assertEqual(1, linear.call_count)
+
+    @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
         self.mix.reset_parameters()
         mock.assert_called_once_with()
+
+    def test_reset_parameters_called_on_activate(self):
+        mix = ActivatedConcatMixer(4, 3, PReLU())
+        with patch('torch.nn.PReLU.reset_parameters') as activate:
+            mix.reset_parameters()
+            self.assertEqual(1, activate.call_count)
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.mix, 'new'))

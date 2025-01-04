@@ -42,6 +42,9 @@ class ActivatedConcatMixer(Module):
         self.mod_dim = mod_dim
         self.n_features = n_features
         self.activate = activate
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
         self.kwargs = kwargs
         self.mix = ptn.Linear(n_features * mod_dim, mod_dim, **kwargs)
 
@@ -69,6 +72,9 @@ class ActivatedConcatMixer(Module):
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.mix.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
 
     def new(
             self,

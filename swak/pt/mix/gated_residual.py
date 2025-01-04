@@ -65,6 +65,11 @@ class GatedResidualConcatMixer(Module):
         super().__init__()
         self.mod_dim = mod_dim
         self.n_features = n_features
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
+        if hasattr(gate, 'reset_parameters'):
+            gate.reset_parameters()
         self.activate = activate
         self.gate = gate
         self.drop = drop
@@ -100,6 +105,11 @@ class GatedResidualConcatMixer(Module):
         """Re-initialize all internal parameters."""
         self.project.reset_parameters()
         self.widen.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
+        if hasattr(self.gate, 'reset_parameters'):
+            self.gate.reset_parameters()
 
     def new(
             self,

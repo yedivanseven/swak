@@ -45,6 +45,9 @@ class ActivatedSumMixer(Module):
         self.mod_dim = mod_dim
         self.n_features = n_features
         self.activate = activate
+        # Although few, some activation functions have learnable parameters
+        if hasattr(activate, 'reset_parameters'):
+            activate.reset_parameters()
         self.kwargs = kwargs
         self.coeffs = ptn.Linear(n_features * mod_dim, n_features, **kwargs)
         self.norm = ptn.Softmax(dim=-1)
@@ -94,6 +97,9 @@ class ActivatedSumMixer(Module):
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.coeffs.reset_parameters()
+        # Although few, some activation functions have learnable parameters
+        if hasattr(self.activate, 'reset_parameters'):
+            self.activate.reset_parameters()
 
     def new(
             self,

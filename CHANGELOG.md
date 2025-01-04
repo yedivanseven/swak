@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Exponential smoothing per-batch loss also for validation errors
+- Reset learnable parameters of activation functions
+- Added more neural-network building blocks
 
 ## [0.3.4] - 2025-01-03
 - Exponential smoothing per-batch loss for reporting in training progress
