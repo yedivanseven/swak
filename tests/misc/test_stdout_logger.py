@@ -3,10 +3,6 @@ from logging import Logger
 from swak.misc import StdOutLogger, DEFAULT_FMT, PID_FMT
 
 
-def f(*_):
-    return 'msg'
-
-
 class TestDefaultAttributes(unittest.TestCase):
 
     def test_instantiation(self):
@@ -17,9 +13,12 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(logger, 'name'))
 
     def test_name(self):
-        obj = object()
-        logger = StdOutLogger(obj)
-        self.assertIs(logger.name, obj)
+        logger = StdOutLogger('name')
+        self.assertEqual('name', logger.name)
+
+    def test_name_stripped(self):
+        logger = StdOutLogger('  name ')
+        self.assertEqual('name', logger.name)
 
     def test_has_level(self):
         logger = StdOutLogger('default')

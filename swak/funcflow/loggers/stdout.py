@@ -5,12 +5,10 @@ from collections.abc import Callable
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
 from ...misc import ArgRepr
+from .formats import DEFAULT_FMT
 
 P = ParamSpec('P')
 type Message = str | Callable[P, str]
-
-DEFAULT_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name})'
-PID_FMT = '{asctime:<23s} [{levelname:<8s}] {message} ({name} | PID-{process})'
 
 
 class PassThroughStdOut(ArgRepr):
@@ -43,10 +41,10 @@ class PassThroughStdOut(ArgRepr):
             level: int = logging.DEBUG,
             fmt: str = DEFAULT_FMT
     ) -> None:
-        super().__init__(name, level, fmt)
-        self.name = name
+        self.name = name.strip()
         self.level = level
         self.fmt = fmt
+        super().__init__(self.name, level, fmt)
 
     class Log:
         """Return type of the logging methods.

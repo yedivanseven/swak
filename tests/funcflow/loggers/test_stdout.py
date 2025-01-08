@@ -19,9 +19,12 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(logger, 'name'))
 
     def test_name(self):
-        obj = object()
-        logger = PassThroughStdOut(obj)
-        self.assertIs(logger.name, obj)
+        logger = PassThroughStdOut('default')
+        self.assertEqual('default', logger.name)
+
+    def test_name_stripped(self):
+        logger = PassThroughStdOut('  name ')
+        self.assertEqual('name', logger.name)
 
     def test_has_level(self):
         logger = PassThroughStdOut('default')
@@ -80,9 +83,8 @@ class TestCustomAttributes(unittest.TestCase):
         self.assertTrue(hasattr(logger, 'fmt'))
 
     def test_fmt(self):
-        obj = object()
-        logger = PassThroughStdOut('default', 20, obj)
-        self.assertIs(logger.fmt, obj)
+        logger = PassThroughStdOut('default', 20, 'format')
+        self.assertEqual('format', logger.fmt)
 
 
 class TestMethods(unittest.TestCase):

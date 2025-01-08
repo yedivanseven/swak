@@ -7,7 +7,8 @@ them to customize the logged message.
 
 """
 
-from .stdout import PassThroughStdOut, DEFAULT_FMT, PID_FMT
+from .formats import DEFAULT_FMT, PID_FMT
+from .stdout import PassThroughStdOut
 
 __all__ = [
     'PassThroughStdOut',
