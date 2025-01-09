@@ -54,10 +54,7 @@ class TomlWriter(ArgRepr):
         self.prune = prune
         self.multiline_strings = multiline_strings
         self.indent = indent
-        if 'mode' in kwargs:
-            self.kwargs = (kwargs.pop('mode'), kwargs)[1]
-        else:
-            self.kwargs = kwargs
+        self.kwargs = (kwargs.pop('mode', ''), kwargs)[1]
         super().__init__(
             self.path,
             overwrite,

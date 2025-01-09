@@ -47,10 +47,7 @@ class TomlReader(ArgRepr):
         self.path = str(path).strip()
         self.not_found = not_found.strip().lower()
         self.parse_float = parse_float
-        if 'mode' in kwargs:
-            self.kwargs = (kwargs.pop('mode'), kwargs)[1]
-        else:
-            self.kwargs = kwargs
+        self.kwargs = (kwargs.pop('mode', ''), kwargs)[1]
         super().__init__(self.path, self.not_found, parse_float, **self.kwargs)
 
     def __call__(self, path: str = '') -> Toml:
@@ -127,10 +124,7 @@ class YamlReader(ArgRepr):
         self.path = str(path).strip()
         self.not_found = not_found.strip().lower()
         self.loader = loader
-        if 'mode' in kwargs:
-            self.kwargs = (kwargs.pop('mode'), kwargs)[1]
-        else:
-            self.kwargs = kwargs
+        self.kwargs = (kwargs.pop('mode', ''), kwargs)[1]
         super().__init__(self.path, self.not_found, loader, **self.kwargs)
 
     def __call__(self, path: str = '') -> Yaml:
