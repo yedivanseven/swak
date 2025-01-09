@@ -61,6 +61,13 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(4, self.block.shrink.out_features)
         self.assertIsInstance(self.block.shrink.bias, pt.Tensor)
 
+    def test_has_dim(self):
+        self.assertTrue(hasattr(self.block, 'dim'))
+
+    def test_dim(self):
+        self.assertIsInstance(self.block.dim, int)
+        self.assertEqual(8, self.block.dim)
+
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.block, 'reset_parameters'))
 
