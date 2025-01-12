@@ -169,12 +169,12 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         partial = Partial(f, 'foo', answer=42)
-        _ = pickle.dumps(partial)
+        _ = pickle.loads(pickle.dumps(partial))
 
-    def test_pickle_raises_lambda(self):
+    def test_pickle_raises_with_lambda(self):
         partial = Partial(lambda x: x, 'foo', answer=42)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(partial)
+            _ = pickle.loads(pickle.dumps(partial))
 
     def test_lambda_repr(self):
         partial = Partial(lambda x: x, 'foo', answer=42)

@@ -417,12 +417,12 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         pipe = Pipe(f, Cls, Call())
-        _ = pickle.dumps(pipe)
+        _ = pickle.loads(pickle.dumps(pipe))
 
-    def test_pickle_raises_with_lambdas(self):
+    def test_pickle_raises_with_lambda(self):
         pipe = Pipe(f, Cls, Call(), lambda x: x)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(pipe)
+            _ = pickle.loads(pickle.dumps(pipe))
 
     def test_flat(self):
         pipe = Pipe(

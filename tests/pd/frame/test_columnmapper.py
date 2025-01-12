@@ -165,12 +165,12 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works_with_function(self):
         transform = ColumnMapper(1, pow2)
-        _ = pickle.dumps(transform)
+        _ = pickle.loads(pickle.dumps(transform))
 
     def test_pickle_raises_with_lambda(self):
         transform = ColumnMapper(1, lambda x: x**2)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(transform)
+            _ = pickle.loads(pickle.dumps(transform))
 
 
 if __name__ == '__main__':

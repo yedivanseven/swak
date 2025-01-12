@@ -60,7 +60,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         select = ColumnSelector(1)
-        _ = pickle.dumps(select)
+        _ = pickle.loads(pickle.dumps(select))
 
 
 if __name__ == '__main__':

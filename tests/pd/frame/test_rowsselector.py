@@ -70,12 +70,12 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works_with_function(self):
         select = RowsSelector(rows)
-        _ = pickle.dumps(select)
+        _ = pickle.loads(pickle.dumps(select))
 
     def test_pickle_raises_with_lambda(self):
         select = RowsSelector(lambda df: df[0] > 2)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(select)
+            _ = pickle.loads(pickle.dumps(select))
 
 
 if __name__ == '__main__':

@@ -307,7 +307,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         download = GcsParquet2DataFrame('project', 'bucket')
-        _ = pickle.dumps(download)
+        _ = pickle.loads(pickle.dumps(download))
 
 
 if __name__ == '__main__':

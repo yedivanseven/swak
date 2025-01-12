@@ -475,24 +475,24 @@ class TestMisc(unittest.TestCase):
         m = ThreadMap(plus_2)
         _ = pickle.dumps(m)
 
-    def test_default_pickle_raises_lambda(self):
+    def test_default_pickle_raises_with_lambda(self):
         m = ThreadMap(lambda x: x + 2)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(m)
+            _ = pickle.loads(pickle.dumps(m))
 
     def test_wrapper_pickle_works(self):
         m = ThreadMap(plus_2, tuple)
-        _ = pickle.dumps(m)
+        _ = pickle.loads(pickle.dumps(m))
 
     def test_wrapper_pickle_raises_lambda(self):
         m = ThreadMap(plus_2, lambda x: tuple(x))
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(m)
+            _ = pickle.loads(pickle.dumps(m))
 
-    def test_pickle_raises_lambda(self):
+    def test_pickle_raises_with_lambda(self):
         m = ThreadMap(lambda x: x + 2, lambda x: tuple(x))
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(m)
+            _ = pickle.loads(pickle.dumps(m))
 
     def test_default_lambda_repr(self):
         m = ThreadMap(lambda x: x > 3)

@@ -370,12 +370,12 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         test = self.Test(f)
-        _ = pickle.dumps(test)
+        _ = pickle.loads(pickle.dumps(test))
 
-    def test_pickle_raised_lambda(self):
+    def test_pickle_raises_with_lambda(self):
         test = self.Test(lambda x: x + 1)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(test)
+            _ = pickle.loads(pickle.dumps(test))
 
 
 if __name__ == '__main__':

@@ -226,7 +226,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         y = YamlReader()
-        _ = pickle.dumps(y)
+        _ = pickle.loads(pickle.dumps(y))
 
 
 if __name__ == '__main__':
