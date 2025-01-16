@@ -207,7 +207,7 @@ class LinearCosine(ArgRepr):
         if step < self.warmup:
             return (step + 1) / self.warmup
         if step < (self.warmup + self.cooldown):
-            arg = math.pi * (step - self.warmup) / self.cooldown
-            return 0.5 + 0.5 * math.cos(arg)
-        arg = math.pi * (self.cooldown - 1) / self.cooldown
-        return 0.5 + 0.5 * math.cos(arg)
+            angle = math.pi * (step - self.warmup) / self.cooldown
+            return 0.5 + 0.5 * math.cos(angle)
+        angle = math.pi * (self.cooldown - 1) / self.cooldown
+        return 0.5 + 0.5 * math.cos(angle)
