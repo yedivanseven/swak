@@ -15,6 +15,7 @@ from .data import TestDataBase, TrainDataBase
 __all__ = ['Trainer']
 
 
+# ToDo: Add step callback every x steps.
 class Trainer(ArgRepr):
     """Train and, optionally, evaluate a model with early stopping.
 
