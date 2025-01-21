@@ -16,6 +16,8 @@ __all__ = ['Trainer']
 
 
 # ToDo: Add step callback every x steps.
+# ToDo: Flag to switch of progress bar
+# ToDo: Does this even work, when loss reduction is none? How about sum?
 class Trainer(ArgRepr):
     """Train and, optionally, evaluate a model with early stopping.
 
