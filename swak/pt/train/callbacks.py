@@ -5,14 +5,14 @@ from ...misc import ArgRepr
 from ..types import Module, Batches
 
 __all__ = [
+    'StepCallback',
+    'StepPrinter',
     'EpochCallback',
     'EpochPrinter',
-    'TrainCallback',
     'History',
+    'TrainCallback',
     'TrainPrinter'
 ]
-
-type TrainCallback = Callable[[int, int, float, bool, History], None]
 
 
 class History(TypedDict):
@@ -20,6 +20,24 @@ class History(TypedDict):
     train_loss: list[float]  #: List of losses evaluated on train data.
     test_loss: list[float | None]  #: List of losses evaluated on test data.
     lr: list[float]  #: List of learning rates.
+
+
+class StepCallback(ABC):
+    """Base class to inherit from when implementing custom step callbacks."""
+
+    @abstractmethod
+    def __call__(self, train_loss: float, learning_rate: float) -> None:
+        """Called after processing a batch to print, log, or save information.
+
+        Parameters
+        ----------
+        train_loss: float
+            The training loss on the current batch.
+        learning_rate: float
+            The learning rate used in the current optimization step.
+
+        """
+        ...
 
 
 class EpochCallback(ABC):
@@ -65,6 +83,67 @@ class EpochCallback(ABC):
         ...
 
 
+class TrainCallback(ABC):
+    """Base class to inherit from when implementing custom train callbacks."""
+
+    @abstractmethod
+    def __call__(
+            self,
+            epoch: int,
+            best_epoch: int,
+            best_loss: float,
+            max_epochs_reached: bool,
+            history: History
+    ) -> None:
+        """Called after training has finished to print, log, or save a summary.
+
+        Parameters
+        ----------
+        epoch: int
+            The last epoch in the training loop.
+        best_epoch: int
+            The epoch with the lowest loss encountered.
+        best_loss: float
+            The lowest loss encountered.
+        max_epochs_reached: bool
+            Whether the maximum number of epochs was exhausted or not.
+        history: History
+            Dictionary with lists of train losses, test losses, and learning
+            rates.
+
+        """
+        ...
+
+
+class StepPrinter(ArgRepr, StepCallback):
+    """Step callback assembling a one-liner on per-batch training progress.
+
+    Parameters
+    ----------
+    printer: callable, optional
+        Will be called with the assembled message. Defaults to the python
+        builtin ``print`` function, but could also be a logging command.
+    sep: str, optional
+        The items concatenated into a on-line message will be separated by
+        this string. Default to " ".
+
+    """
+
+    def __init__(
+            self,
+            printer: Callable[[str], Any] = print,
+            sep: str = ' '
+    ) -> None:
+        super().__init__(printer, sep)
+        self.printer = printer
+        self.sep = sep
+
+    def __call__(self, train_loss: float, learning_rate: float) -> None:
+        """Assemble one-liner with loss and lr and call the printer with it."""
+        msg = self.sep.join([f'{train_loss:7.5f}', f'{learning_rate:7.5f}'])
+        self.printer(msg)
+
+
 class EpochPrinter(ArgRepr, EpochCallback):
     """Epoch callback assembling an informative message on training progress.
 
@@ -98,7 +177,7 @@ class EpochPrinter(ArgRepr, EpochCallback):
         """Does nothing because there is nothing to close."""
 
 
-class TrainPrinter(ArgRepr):
+class TrainPrinter(ArgRepr, TrainCallback):
     """Train callback assembling an informative message when training ends.
 
     Parameters
@@ -120,7 +199,7 @@ class TrainPrinter(ArgRepr):
             max_epochs_reached: bool,
             history: History
     ) -> None:
-        """Assemble and print a summary of model training.
+        """Assemble a summary of model training and call the printer with it.
 
         Parameters
         ----------

@@ -13,9 +13,12 @@ from .trainer import Trainer
 from .checkpoints import Checkpoint, InMemory, OnDisk, State
 from .schedulers import LinearInverse, LinearExponential, LinearCosine
 from .callbacks import (
+    StepPrinter,
     EpochPrinter,
     TrainPrinter,
+    StepCallback,
     EpochCallback,
+    TrainCallback,
     History
 )
 
@@ -23,12 +26,15 @@ __all__ = [
     'Trainer',
     'InMemory',
     'OnDisk',
+    'StepPrinter',
     'EpochPrinter',
     'TrainPrinter',
     'TrainDataBase',
     'TestDataBase',
     'Checkpoint',
+    'StepCallback',
     'EpochCallback',
+    'TrainCallback',
     'State',
     'History',
     'LinearInverse',

@@ -153,7 +153,7 @@ class ArgRepr(ReprName):
         """Representation for any object."""
         if isinstance(obj, IndentRepr):
             head = repr(obj).splitlines()[0]
-            head = head[:-1] if head.endswith(':') else head
+            head = head.removesuffix(':')
             suffix = f'[{len(repr(obj).splitlines()) - 1}]'
             return head + suffix
         return super()._repr(obj)

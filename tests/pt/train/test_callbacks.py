@@ -1,6 +1,67 @@
 import unittest
 from unittest.mock import Mock
-from swak.pt.train import EpochPrinter, TrainPrinter
+from swak.pt.train import StepPrinter, EpochPrinter, TrainPrinter
+
+
+class TestStepPrinter(unittest.TestCase):
+
+    def setUp(self):
+        self.print = StepPrinter()
+
+    def test_has_printer(self):
+        self.assertTrue(hasattr(self.print, 'printer'))
+
+    def test_default_printer(self):
+        self.assertIs(self.print.printer, print)
+
+    def test_custom_printer(self):
+        printer = object()
+        step_cb = StepPrinter(printer)
+        self.assertIs(step_cb.printer, printer)
+
+    def test_has_sep(self):
+        self.assertTrue(hasattr(self.print, 'sep'))
+
+    def test_default_sep(self):
+        self.assertEqual(' ', self.print.sep)
+
+    def test_custom_sep(self):
+        step_cb = StepPrinter(sep=',')
+        self.assertEqual(',', step_cb.sep)
+
+    def test_default_repr(self):
+        expected = "StepPrinter(print, ' ')"
+        self.assertEqual(expected, repr(self.print))
+
+    def test_custom_repr(self):
+
+        def f(_):
+            pass
+
+        step_cb = StepPrinter(f, ', ')
+        exp = "StepPrinter(TestStepPrinter.test_custom_repr.<locals>.f, ', ')"
+        self.assertEqual(exp, repr(step_cb))
+
+    def test_callable(self):
+        self.assertTrue(callable(self.print))
+
+    def test_print_called_with_default_sep(self):
+        mock = Mock()
+        step_cb = StepPrinter(mock)
+        step_cb(0.2, 0.01)
+        mock.assert_called_once()
+        expected = '0.20000 0.01000'
+        actual = mock.call_args[0][0]
+        self.assertEqual(expected, actual)
+
+    def test_print_called_with_custom_sep(self):
+        mock = Mock()
+        step_cb = StepPrinter(mock, ';')
+        step_cb(0.2, 0.01)
+        mock.assert_called_once()
+        expected = '0.20000;0.01000'
+        actual = mock.call_args[0][0]
+        self.assertEqual(expected, actual)
 
 
 class TestEpochPrinter(unittest.TestCase):
@@ -30,7 +91,7 @@ class TestEpochPrinter(unittest.TestCase):
 
     def test_default_repr(self):
         expected = 'EpochPrinter(print)'
-        self.assertEqual(repr(self.print), expected)
+        self.assertEqual(expected, repr(self.print))
 
     def test_custom_repr(self):
 
@@ -39,7 +100,7 @@ class TestEpochPrinter(unittest.TestCase):
 
         epoch_cb = EpochPrinter(f)
         expected = 'EpochPrinter(TestEpochPrinter.test_custom_repr.<locals>.f)'
-        self.assertEqual(repr(epoch_cb), expected)
+        self.assertEqual(expected, repr(epoch_cb))
 
     def test_callable(self):
         self.assertTrue(callable(self.print))
@@ -119,7 +180,6 @@ class TestTrainPrinter(unittest.TestCase):
         mock.assert_called_once()
         actual = mock.call_args[0][0]
         self.assertIsInstance(actual, str)
-
 
 
 if __name__ == '__main__':

@@ -4,10 +4,16 @@ from torch.optim import AdamW
 from torch.nn.utils import clip_grad_norm_
 from tqdm import tqdm
 from ...misc import ArgRepr
-from ...funcflow import Curry
+from ...funcflow import Curry, unit
 from ..types import Module, Optimizer, LRScheduler
 from ..exceptions import TrainError
-from .callbacks import EpochCallback, EpochPrinter, TrainCallback, TrainPrinter
+from .callbacks import (
+    StepCallback,
+    EpochCallback,
+    EpochPrinter,
+    TrainCallback,
+    TrainPrinter
+)
 from .checkpoints import Checkpoint, InMemory
 from .schedulers import NoSchedule
 from .data import TestDataBase, TrainDataBase
@@ -15,9 +21,6 @@ from .data import TestDataBase, TrainDataBase
 __all__ = ['Trainer']
 
 
-# ToDo: Add step callback every x steps.
-# ToDo: Flag to switch of progress bar
-# ToDo: Does this even work, when loss reduction is none? How about sum?
 class Trainer(ArgRepr):
     """Train and, optionally, evaluate a model with early stopping.
 
@@ -73,11 +76,21 @@ class Trainer(ArgRepr):
         loss after the last, a new snapshot of the model state is saved by
         calling the `save` method of the `checkpoint` instance. Defaults to
         ``InMemory``.
+    show_progress: bool, optional
+        Whether to provide visual feedback to the console while training an
+        epoch in the form of a progress bar. Defaults to ``True``
+    step_cb: StepCallback, optional
+        Will be called every `cb_freq` batches with the train loss of the last
+        batch and the current learning rate. Defaults to ``unit``, which does
+        nothing.
+    cb_freq: int, optional
+        Number of batches to skip before calling `step_cb` again.
+        Defaults to 1.
     epoch_cb: EpochCallback, optional
-        Callback called after each epoch with epoch, train_loss, test_loss,
+        Will be called after each epoch with epoch, train loss, test loss,
         and current learning rate. Defaults to ``EpochPrinter``.
     train_cb: TrainCallback, optional
-        Callback called after training finished with last epoch, epoch with the
+        Will be called after training finished with last epoch, epoch with the
         best loss, the best loss itself, whether `max_epochs` was exhausted,
         and with the training history in the form of a dictionary of lists
         with train loss, test loss and learning rate.
@@ -122,10 +135,13 @@ class Trainer(ArgRepr):
             step_freq: int = 1,
             clip_grad: float = 1.0,
             checkpoint: Checkpoint = InMemory(),
+            show_progress: bool = True,
+            step_cb: StepCallback = unit,
+            cb_freq: int = 1,
             epoch_cb: EpochCallback = EpochPrinter(),
             train_cb: TrainCallback = TrainPrinter()
     ) -> None:
-        self.loss = loss
+        self.loss = self.__sane(loss)
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.max_epochs = max_epochs
@@ -136,7 +152,10 @@ class Trainer(ArgRepr):
         self.max_n = max_n
         self.step_freq = step_freq
         self.clip_grad = clip_grad
+        self.show_progress = show_progress
         self.checkpoint = checkpoint
+        self.step_cb = step_cb
+        self.cb_freq = cb_freq
         self.epoch_cb = epoch_cb
         self.train_cb = train_cb
         super().__init__(
@@ -153,6 +172,18 @@ class Trainer(ArgRepr):
             train_cb
         )
         self.history = {'train_loss': [], 'test_loss': [], 'lr': []}
+
+    @staticmethod
+    def __sane(loss: Module) -> Module:
+        """Check that the "reduction" of the loss is not "none"."""
+        cls = loss.__class__.__name__
+        if not hasattr(loss, 'reduction'):
+            msg = f'Loss {cls} must have an attribute "reduction"!'
+            raise TypeError(msg)
+        if loss.reduction == 'none':
+            msg = f'The "reduction" of the {cls} cannot be "none"!'
+            raise ValueError(msg)
+        return loss
 
     @property
     def scale(self) -> float:
@@ -269,7 +300,13 @@ class Trainer(ArgRepr):
             # Get an iterator over batches for one epoch of training data.
             n_batches, batches = train(self.batch_size, self.step_freq, epoch)
             # Initialize a progress bar to monitor training in real time.
-            progress = tqdm(batches, 'Train', n_batches, False)
+            progress = tqdm(
+                batches,
+                desc='Train',
+                total=n_batches,
+                leave=False,
+                disable=not self.show_progress
+            )
             # Loop over batches for one epoch of training data
             for batch_index, (features, target) in enumerate(progress, 1):
                 loss = self.loss(*model(*features), target)
@@ -289,6 +326,9 @@ class Trainer(ArgRepr):
                     # Step the scheduler during warmup and maybe also afterward
                     if scheduler.last_epoch < self.warmup or self.batch_step:
                         scheduler.step()
+                # Call the step callback with current loss and learning rate
+                if batch_index % self.cb_freq == 0:
+                    self.step_cb(ema, scheduler.get_last_lr()[0])
 
             # How many data points to take for computing train (and test) loss.
             n = train.n if test is None else test.n
@@ -297,13 +337,19 @@ class Trainer(ArgRepr):
 
             # Evaluate model on training data ...
             n = 0
+            ema = None
             train_loss = 0.0
             self.loss.eval()
             model.eval()
-            ema = None
             with pt.inference_mode():
                 batches = train.sample(self.batch_size, max_n)
-                progress = tqdm(batches, 'Eval (train)', n_batches, False)
+                progress = tqdm(
+                    batches,
+                    desc='Eval (train)',
+                    total=n_batches,
+                    leave=False,
+                    disable=not self.show_progress
+                )
                 for features, target in progress:
                     loss = self.loss(*model(*features), target).item()
                     ema = loss if ema is None else 0.5 * (loss + ema)
@@ -320,11 +366,17 @@ class Trainer(ArgRepr):
                 test_loss = float('nan')
             else:
                 n = 0
-                test_loss = 0.0
                 ema = None
+                test_loss = 0.0
                 with pt.inference_mode():
                     batches = test.sample(self.batch_size)
-                    progress = tqdm(batches, 'Eval (test)', n_batches, False)
+                    progress = tqdm(
+                        batches,
+                        desc='Eval (test)',
+                        total=n_batches,
+                        leave=False,
+                        disable=not self.show_progress
+                    )
                     for features, target in progress:
                         loss = self.loss(*model(*features), target).item()
                         ema = loss if ema is None else 0.5 * (loss + ema)
