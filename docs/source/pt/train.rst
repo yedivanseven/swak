@@ -21,6 +21,12 @@ train
    :inherited-members:
 
 
+.. autoclass:: swak.pt.train.StepPrinter
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.pt.train.EpochPrinter
    :members:
    :special-members: __call__
@@ -76,7 +82,19 @@ Base classes
    :show-inheritance:
 
 
+.. autoclass:: swak.pt.train.StepCallback
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.pt.train.EpochCallback
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.train.TrainCallback
    :members:
    :special-members: __call__
    :show-inheritance:

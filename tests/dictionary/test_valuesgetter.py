@@ -302,14 +302,14 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         getter = ValuesGetter(2, 3)
-        _ = pickle.dumps(getter)
+        _ = pickle.loads(pickle.dumps(getter))
 
     def test_pickle_raised_lambda(self):
         values_from = ValuesGetter(2, 3, wrapper=lambda x: list(x))
         actual = values_from(self.d)
         self.assertListEqual([self.d[2], self.d[3]], actual)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(values_from)
+            _ = pickle.loads(pickle.dumps(values_from))
 
     def test_default_representation(self):
         get = ValuesGetter(1, '2', 3, '4', 5)

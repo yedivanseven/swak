@@ -151,7 +151,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         reader = ParquetReader()
-        _ = pickle.dumps(reader)
+        _ = pickle.loads(pickle.dumps(reader))
 
 
 if __name__ == '__main__':

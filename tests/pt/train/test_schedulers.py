@@ -142,7 +142,7 @@ class TestLinearInverse(unittest.TestCase):
         self.assertEqual(expected, repr(self.custom))
 
     def test_pickle_works(self):
-        _ = pickle.dumps(self.custom)
+        _ = pickle.loads(pickle.dumps(self.custom))
 
 
 class TestLinearExponential(unittest.TestCase):
@@ -211,7 +211,7 @@ class TestLinearExponential(unittest.TestCase):
         self.assertEqual(expected, repr(self.custom))
 
     def test_pickle_works(self):
-        _ = pickle.dumps(self.custom)
+        _ = pickle.loads(pickle.dumps(self.custom))
 
 
 class TestLinearCosine(unittest.TestCase):
@@ -297,7 +297,7 @@ class TestLinearCosine(unittest.TestCase):
         self.assertEqual(expected, repr(self.custom))
 
     def test_pickle_works(self):
-        _ = pickle.dumps(self.custom)
+        _ = pickle.loads(pickle.dumps(self.custom))
 
 
 if __name__ == '__main__':

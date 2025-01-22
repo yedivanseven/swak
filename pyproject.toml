@@ -60,7 +60,7 @@ line-length = 79
 quote-style = "single"
 
 [tool.ruff.lint]
-ignore = ["PLR"]
+ignore = ["PLR", "A005"]
 select = [
     "A",
     "F",

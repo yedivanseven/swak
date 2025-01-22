@@ -270,7 +270,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         write = TomlWriter('/path')
-        _ = pickle.dumps(write)
+        _ = pickle.loads(pickle.dumps(write))
 
 
 if __name__ == '__main__':

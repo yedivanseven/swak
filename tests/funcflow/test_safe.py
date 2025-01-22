@@ -189,21 +189,21 @@ class TestMisc(unittest.TestCase):
 
     def test_default_pickle_works(self):
         s = Safe(f)
-        _ = pickle.dumps(s)
+        _ = pickle.loads(pickle.dumps(s))
 
-    def test_default_pickle_raises_lambda(self):
+    def test_default_pickle_raises_with_lambda(self):
         s = Safe(lambda x, y: x + y)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(s)
+            _ = pickle.loads(pickle.dumps(s))
 
     def test_pickle_works(self):
         s = Safe(f, ZeroDivisionError, StopIteration)
-        _ = pickle.dumps(s)
+        _ = pickle.loads(pickle.dumps(s))
 
-    def test_pickle_raises_lambda(self):
+    def test_pickle_raises_with_lambda(self):
         s = Safe(lambda x, y: x + y, ZeroDivisionError, StopIteration)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(s)
+            _ = pickle.loads(pickle.dumps(s))
 
     def test_default_lambda_repr(self):
         s = Safe(lambda x, y: x + y)

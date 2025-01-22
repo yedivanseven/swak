@@ -224,7 +224,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         t = TomlReader()
-        _ = pickle.dumps(t)
+        _ = pickle.loads(pickle.dumps(t))
 
 
 if __name__ == '__main__':

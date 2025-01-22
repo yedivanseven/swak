@@ -349,7 +349,7 @@ class TestMisc(unittest.TestCase):
             dataset='dataset',
             location='location'
         )
-        _ = pickle.dumps(create)
+        _ = pickle.loads(pickle.dumps(create))
 
 
 if __name__ == '__main__':

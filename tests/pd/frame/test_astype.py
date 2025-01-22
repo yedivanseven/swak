@@ -164,7 +164,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         convert = AsType(float, copy=False)
-        _ = pickle.dumps(convert)
+        _ = pickle.loads(pickle.dumps(convert))
 
 
 if __name__ == '__main__':

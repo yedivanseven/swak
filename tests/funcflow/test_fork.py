@@ -457,12 +457,12 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         fork = Fork(f, Cls, Call())
-        _ = pickle.dumps(fork)
+        _ = pickle.loads(pickle.dumps(fork))
 
-    def test_pickle_raises_with_lambdas(self):
+    def test_pickle_raises_with_lambda(self):
         fork = Fork(f, Cls, Call(), lambda x: x)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(fork)
+            _ = pickle.loads(pickle.dumps(fork))
 
     def test_type_annotation(self):
         _ = Fork[[int, bool, str], float](f, Cls)

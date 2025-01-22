@@ -169,12 +169,12 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_works(self):
         curry = Curry(f, 'foo', answer=42)
-        _ = pickle.dumps(curry)
+        _ = pickle.loads(pickle.dumps(curry))
 
-    def test_pickle_raises_lambda(self):
+    def test_pickle_raises_with_lambda(self):
         curry = Curry(lambda x: x, 'foo', answer=42)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(curry)
+            _ = pickle.loads(pickle.dumps(curry))
 
     def test_lambda_repr(self):
         curry = Curry(lambda x: x, 'foo', answer=42)

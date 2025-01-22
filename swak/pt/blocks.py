@@ -26,6 +26,8 @@ __all__ = [
 ]
 
 
+# ToDo: Move Block to types!
+# ToDo: Rethink resetting parameters in "new"
 class Block(Module, ABC):
     """Abstract base class for stackable/repeatable neural-network components.
 
