@@ -1,83 +1,112 @@
+import pickle
 import unittest
 from logging import Logger
-from swak.misc import StdOutLogger, DEFAULT_FMT, PID_FMT
+from swak.misc import StdLogger, DEFAULT_FMT, PID_FMT
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def test_instantiation(self):
-        _ = StdOutLogger('default')
+        _ = StdLogger('default')
 
     def test_has_name(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertTrue(hasattr(logger, 'name'))
 
     def test_name(self):
-        logger = StdOutLogger('name')
+        logger = StdLogger('name')
         self.assertEqual('name', logger.name)
 
     def test_name_stripped(self):
-        logger = StdOutLogger('  name ')
+        logger = StdLogger('  name ')
         self.assertEqual('name', logger.name)
 
     def test_has_level(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertTrue(hasattr(logger, 'level'))
 
     def test_level_type(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertIsInstance(logger.level, int)
 
     def test_level_value(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertEqual(10, logger.level)
 
     def test_has_fmt(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertTrue(hasattr(logger, 'fmt'))
 
     def test_fmt_type(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertIsInstance(logger.fmt, str)
 
     def test_fmt_value(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertEqual(DEFAULT_FMT, logger.fmt)
 
+    def test_has_stream(self):
+        logger = StdLogger('default')
+        self.assertTrue(hasattr(logger, 'stream'))
+
+    def test_stream(self):
+        logger = StdLogger('default')
+        self.assertEqual('stdout', logger.stream)
+
     def test_has_logger(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertTrue(hasattr(logger, 'logger'))
 
     def test_logger_type(self):
-        logger = StdOutLogger('default')
+        logger = StdLogger('default')
         self.assertIsInstance(logger.logger, Logger)
 
 
 class TestCustomAttributes(unittest.TestCase):
 
     def test_has_level(self):
-        logger = StdOutLogger('default', 20)
+        logger = StdLogger('default', 20)
         self.assertTrue(hasattr(logger, 'level'))
 
     def test_level(self):
         obj = object()
-        logger = StdOutLogger('default', obj)
+        logger = StdLogger('default', obj)
         self.assertIs(logger.level, obj)
 
     def test_has_fmt(self):
-        logger = StdOutLogger('default', 20, 'format')
+        logger = StdLogger('default', 20, 'format')
         self.assertTrue(hasattr(logger, 'fmt'))
 
     def test_fmt(self):
         obj = object()
-        logger = StdOutLogger('default', 20, obj)
+        logger = StdLogger('default', 20, obj)
         self.assertIs(logger.fmt, obj)
+
+    def test_stream(self):
+        logger = StdLogger('default', 20, stream='stderr')
+        self.assertEqual('stderr', logger.stream)
+
+    def test_stream_stripped(self):
+        logger = StdLogger('default', 20, stream='  stderr ')
+        self.assertEqual('stderr', logger.stream)
+
+    def test_stream_lowercased(self):
+        logger = StdLogger('default', 20, stream='StdErr')
+        self.assertEqual('stderr', logger.stream)
+
+    def test_wrong_stream_type_raises(self):
+        with self.assertRaises(TypeError):
+            _ = StdLogger('default', 20, stream=1)
+
+    def test_wrong_stream_name_raises(self):
+        with self.assertRaises(ValueError):
+            _ = StdLogger('default', 20, stream='hello world')
 
 
 class TestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.logger = StdOutLogger('default')
+        self.logger = StdLogger('default')
 
     def test_has_log(self):
         self.assertTrue(hasattr(self.logger, 'log'))
@@ -119,7 +148,7 @@ class TestMethods(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.logger = StdOutLogger('default')
+        self.logger = StdLogger('default')
 
     def test_log_returns_empty_tuple(self):
         with self.assertLogs('default', 10):
@@ -155,7 +184,7 @@ class TestUsage(unittest.TestCase):
 class TestLogLevel(unittest.TestCase):
 
     def setUp(self):
-        self.logger = StdOutLogger('default', 30, PID_FMT)
+        self.logger = StdLogger('default', 30, PID_FMT)
 
     def test_debug_does_not_log(self):
         with self.assertNoLogs('default', 10):
@@ -181,14 +210,18 @@ class TestLogLevel(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
-        logger = StdOutLogger('default')
-        excepted = f"StdOutLogger('default', 10, '{DEFAULT_FMT}')"
+        logger = StdLogger('default')
+        excepted = f"StdLogger('default', 10, '{DEFAULT_FMT}', 'stdout')"
         self.assertEqual(excepted, repr(logger))
 
     def test_custom_repr(self):
-        logger = StdOutLogger('default', 30, PID_FMT)
-        excepted = f"StdOutLogger('default', 30, '{PID_FMT}')"
+        logger = StdLogger('default', 30, PID_FMT, 'stderr')
+        excepted = f"StdLogger('default', 30, '{PID_FMT}', 'stderr')"
         self.assertEqual(excepted, repr(logger))
+
+    def test_pickle_works(self):
+        logger = StdLogger('default', 30, PID_FMT, 'stderr')
+        _ = pickle.loads(pickle.dumps(logger))
 
 
 if __name__ == '__main__':

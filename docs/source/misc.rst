@@ -4,7 +4,12 @@ misc
 .. automodule:: swak.misc
 
 
-.. autoclass:: swak.misc.StdOutLogger
+.. autoclass:: swak.misc.StdLogger
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.misc.FileLogger
    :members:
    :show-inheritance:
 
