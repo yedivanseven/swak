@@ -2,7 +2,7 @@ import unittest
 import pickle
 from unittest.mock import Mock
 from logging import Logger
-from swak.funcflow.loggers import PassThroughStdOut, DEFAULT_FMT, PID_FMT
+from swak.funcflow.loggers import PassThroughStdLogger, DEFAULT_FMT, PID_FMT
 
 
 def f(*_):
@@ -12,85 +12,113 @@ def f(*_):
 class TestDefaultAttributes(unittest.TestCase):
 
     def test_instantiation(self):
-        _ = PassThroughStdOut('default')
+        _ = PassThroughStdLogger('default')
 
     def test_has_name(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertTrue(hasattr(logger, 'name'))
 
     def test_name(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertEqual('default', logger.name)
 
     def test_name_stripped(self):
-        logger = PassThroughStdOut('  name ')
+        logger = PassThroughStdLogger('  name ')
         self.assertEqual('name', logger.name)
 
     def test_has_level(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertTrue(hasattr(logger, 'level'))
 
     def test_level_type(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertIsInstance(logger.level, int)
 
     def test_level_value(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertEqual(10, logger.level)
 
     def test_has_fmt(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertTrue(hasattr(logger, 'fmt'))
 
     def test_fmt_type(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertIsInstance(logger.fmt, str)
 
     def test_fmt_value(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertEqual(DEFAULT_FMT, logger.fmt)
 
+    def test_has_stream(self):
+        logger = PassThroughStdLogger('default')
+        self.assertTrue(hasattr(logger, 'stream'))
+
+    def test_stream(self):
+        logger = PassThroughStdLogger('default')
+        self.assertEqual('stdout', logger.stream)
+
     def test_has_logger(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertTrue(hasattr(logger, 'logger'))
 
     def test_logger_type(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertIsInstance(logger.logger, Logger)
 
     def test_has_log(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertTrue(hasattr(logger, 'Log'))
 
     def test_log_type(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         self.assertIsInstance(logger.Log, type)
 
 
 class TestCustomAttributes(unittest.TestCase):
 
     def test_has_level(self):
-        logger = PassThroughStdOut('default', 20)
+        logger = PassThroughStdLogger('default', 20)
         self.assertTrue(hasattr(logger, 'level'))
 
     def test_level(self):
         obj = object()
-        logger = PassThroughStdOut('default', obj)
+        logger = PassThroughStdLogger('default', obj)
         self.assertIs(logger.level, obj)
 
     def test_has_fmt(self):
-        logger = PassThroughStdOut('default', 20, 'format')
+        logger = PassThroughStdLogger('default', 20, 'format')
         self.assertTrue(hasattr(logger, 'fmt'))
 
     def test_fmt(self):
-        logger = PassThroughStdOut('default', 20, 'format')
+        logger = PassThroughStdLogger('default', 20, 'format')
         self.assertEqual('format', logger.fmt)
+
+    def test_stream(self):
+        logger = PassThroughStdLogger('default', 20, stream='stderr')
+        self.assertEqual('stderr', logger.stream)
+
+    def test_stream_stripped(self):
+        logger = PassThroughStdLogger('default', 20, stream='  stderr ')
+        self.assertEqual('stderr', logger.stream)
+
+    def test_stream_lowercased(self):
+        logger = PassThroughStdLogger('default', 20, stream='StdErr')
+        self.assertEqual('stderr', logger.stream)
+
+    def test_wrong_stream_type_raises(self):
+        with self.assertRaises(TypeError):
+            _ = PassThroughStdLogger('default', 20, stream=1)
+
+    def test_wrong_stream_name_raises(self):
+        with self.assertRaises(ValueError):
+            _ = PassThroughStdLogger('default', 20, stream='hello world')
 
 
 class TestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.logger = PassThroughStdOut('default')
+        self.logger = PassThroughStdLogger('default')
 
     def test_has_debug(self):
         self.assertTrue(hasattr(self.logger, 'debug'))
@@ -126,27 +154,27 @@ class TestMethods(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.logger = PassThroughStdOut('default')
+        self.logger = PassThroughStdLogger('default')
 
     def test_debug_returns_log(self):
         call = self.logger.debug('msg')
-        self.assertIsInstance(call, PassThroughStdOut.Log)
+        self.assertIsInstance(call, PassThroughStdLogger.Log)
 
     def test_info_returns_log(self):
         call = self.logger.info('msg')
-        self.assertIsInstance(call, PassThroughStdOut.Log)
+        self.assertIsInstance(call, PassThroughStdLogger.Log)
 
     def test_warning_returns_log(self):
         call = self.logger.warning('msg')
-        self.assertIsInstance(call, PassThroughStdOut.Log)
+        self.assertIsInstance(call, PassThroughStdLogger.Log)
 
     def test_error_returns_log(self):
         call = self.logger.error('msg')
-        self.assertIsInstance(call, PassThroughStdOut.Log)
+        self.assertIsInstance(call, PassThroughStdLogger.Log)
 
     def test_critical_returns_log(self):
         call = self.logger.critical('msg')
-        self.assertIsInstance(call, PassThroughStdOut.Log)
+        self.assertIsInstance(call, PassThroughStdLogger.Log)
 
     def test_log_callable(self):
         log = self.logger.debug('msg')
@@ -210,7 +238,7 @@ class TestUsage(unittest.TestCase):
 class TestLogLevel(unittest.TestCase):
 
     def setUp(self):
-        self.logger = PassThroughStdOut('default', 30, PID_FMT)
+        self.logger = PassThroughStdLogger('default', 30, PID_FMT)
 
     def test_debug_does_not_log(self):
         with self.assertNoLogs('default', 10):
@@ -236,49 +264,51 @@ class TestLogLevel(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
-        logger = PassThroughStdOut('default')
-        excepted = f"PassThroughStdOut('default', 10, '{DEFAULT_FMT}')"
+        logger = PassThroughStdLogger('default')
+        excepted = (f"PassThroughStdLogger('default', "
+                    f"10, '{DEFAULT_FMT}', 'stdout')")
         self.assertEqual(excepted, repr(logger))
 
     def test_custom_repr(self):
-        logger = PassThroughStdOut('default', 30, PID_FMT)
-        excepted = f"PassThroughStdOut('default', 30, '{PID_FMT}')"
+        logger = PassThroughStdLogger('default', 30, PID_FMT, 'stderr')
+        excepted = (f"PassThroughStdLogger('default', "
+                    f"30, '{PID_FMT}', 'stderr')")
         self.assertEqual(excepted, repr(logger))
 
     def test_wrapper_pickle_works(self):
-        logger = PassThroughStdOut('default')
-        _ = pickle.dumps(logger)
+        logger = PassThroughStdLogger('default')
+        _ = pickle.loads(pickle.dumps(logger))
 
     def test_string_pickle_works_before(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         log = logger.debug('msg')
-        _ = pickle.dumps(logger)
-        _ = pickle.dumps(log)
+        _ = pickle.loads(pickle.dumps(logger))
+        _ = pickle.loads(pickle.dumps(log))
 
     def test_string_pickle_works_after(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         log = logger.debug('msg')
         with self.assertLogs('default', 10):
             _ = log()
-        _ = pickle.dumps(logger)
-        _ = pickle.dumps(log)
+        _ = pickle.loads(pickle.dumps(logger))
+        _ = pickle.loads(pickle.dumps(log))
 
     def test_call_pickle_works_before(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         log = logger.debug(f)
-        _ = pickle.dumps(logger)
-        _ = pickle.dumps(log)
+        _ = pickle.loads(pickle.dumps(logger))
+        _ = pickle.loads(pickle.dumps(log))
 
     def test_call_pickle_works_after(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         log = logger.debug(f)
         with self.assertLogs('default', 10):
             _ = log()
-        _ = pickle.dumps(logger)
-        _ = pickle.dumps(log)
+        _ = pickle.loads(pickle.dumps(logger))
+        _ = pickle.loads(pickle.dumps(log))
 
     def test_lambda_pickle_raises(self):
-        logger = PassThroughStdOut('default')
+        logger = PassThroughStdLogger('default')
         log = logger.debug(lambda *_: 'msg')
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(log)

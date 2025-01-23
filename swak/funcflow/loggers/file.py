@@ -1,9 +1,9 @@
-import sys
 import logging
 from typing import ParamSpec
 from collections.abc import Callable
 from functools import cached_property
-from logging import Logger, Formatter, StreamHandler, Handler
+from pathlib import Path
+from logging import Logger, Formatter, FileHandler, Handler
 from ...misc import ArgRepr
 from .formats import DEFAULT_FMT
 
@@ -11,40 +11,75 @@ P = ParamSpec('P')
 type Message = str | Callable[P, str]
 
 
-class PassThroughStdOut(ArgRepr):
-    """Pass-through Logger to stdout with at least one formatted StreamHandler.
-
-    The instantiation of the actual, underlying Logger is delayed until it is
-    first needed to facilitate usage in multiprocessing scenarios.
+class PassThroughFileLogger(ArgRepr):
+    """Pass-through Logger to file with at least one formatted FileHandler.
 
     Parameters
     ----------
     name: str
         Name of the Logger. Typically set to ``__name__``.
+    file: str
+        Name of the file to log to, including file extension.
     level: int, optional
         Minimum logging level. Defaults to 10 (= DEBUG).
     fmt: str, optional
         Format string for the log messages in ``str.format()`` format.
+    mode: str, optional
+        Mode to open the file. Defaults to 'a'.
+    encoding: str, optional
+        Encoding to use when opening the file. Defaults to 'utf-8'.
+    delay: bool, optional
+        Whether to delay opening the file until it is first written to.
+        Defaults to ``True``.
 
-    Warnings
-    --------
-    To avoid creating and adding a new Handler every time the same Logger is
-    requested, one of its existing StreamHandlers will be modified if there
-    are any. A new one will be created and added only if there aren't.
-    By consequence, requesting the same Logger multiple times with a different
-    `level` and/or a different `fmt` will change that Logger globally.
+    Raises
+    ------
+    FileExistsError
+        If a different Logger already has a FileHandler to the very same file.
+        Because the instantiation of the actual Logger is delayed until it is
+        first needed (to facilitate usage in multiprocessing scenarios),
+        raising the exception is also delayed.
 
     """
     def __init__(
             self,
             name: str,
+            file: str,
             level: int = logging.DEBUG,
-            fmt: str = DEFAULT_FMT
+            fmt: str = DEFAULT_FMT,
+            mode: str = 'a',
+            encoding: str = 'utf-8',
+            delay: bool = True,
     ) -> None:
         self.name = name.strip()
+        self.file = str(Path(file.strip()).resolve())
         self.level = level
         self.fmt = fmt
-        super().__init__(self.name, level, fmt)
+        self.mode = mode.strip()
+        self.encoding = encoding.strip()
+        self.delay = delay
+        super().__init__(
+            self.name,
+            self.file,
+            self.mode,
+            level,
+            fmt,
+            self.encoding,
+            self.delay
+        )
+
+    @staticmethod
+    def __valid(stream: str) -> str:
+        """Ensure that the provided stream is one the permitted options."""
+        if not isinstance(stream, str):
+            cls = type(stream).__name__
+            msg = f'stream must be a string, not {cls}!'
+            raise TypeError(msg)
+        stream = stream.strip().lower()
+        if stream not in ('stdout', 'stderr'):
+            msg = f'stream must be "stdout" or "stderr", not "{stream}"!'
+            raise ValueError(msg)
+        return stream
 
     class Log:
         """Return type of the logging methods.
@@ -55,17 +90,17 @@ class PassThroughStdOut(ArgRepr):
 
         See Also
         --------
-        PassThroughStdOut.debug
-        PassThroughStdOut.info
-        PassThroughStdOut.warning
-        PassThroughStdOut.error
-        PassThroughStdOut.critical
+        PassThroughFileLogger.debug
+        PassThroughFileLogger.info
+        PassThroughFileLogger.warning
+        PassThroughFileLogger.error
+        PassThroughFileLogger.critical
 
         """
 
         def __init__(
                 self,
-                parent: 'PassThroughStdOut',
+                parent: 'PassThroughFileLogger',
                 level: int,
                 msg: Message
         ) -> None:
@@ -186,35 +221,41 @@ class PassThroughStdOut(ArgRepr):
 
     @cached_property
     def logger(self) -> Logger:
-        """The specified Logger with one StreamHandler configured to specs."""
+        """The specified Logger with one FileHandler configured to specs."""
         # Get logger with the given name
         logger = logging.getLogger(self.name)
+        # No two FileHandlers should handle the same file
+        if self.handler_exists:
+            msg = f'A different logger already handles file "{self.file}"!'
+            raise FileExistsError(msg)
         # Adjust the logger level so that messages from the handler get through
         logger.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
-        # Get StreamHandlers to stdout
-        handlers = self.__filtered(logger.handlers)
-        # Get the first matching handler if there is one or make a new one
-        handler = handlers[0] if handlers else StreamHandler(sys.stdout)
-        # Configure that handler according to specs
-        configured = self.__configure(handler)
-        # If the now configured handler was newly created, add it to the logger
-        if not handlers:
-            logger.addHandler(configured)
+        # Create a new file handler according to specs, ...
+        handler = FileHandler(self.file, self.mode, self.encoding, self.delay)
+        # ... configure it, add it to the logger ...
+        logger.addHandler(self.__configured(handler))
+        # ... and return the logger.
         return logger
 
-    def __filtered(self, handlers: list[Handler]) -> tuple[StreamHandler, ...]:
-        """Filter the Logger's Handlers according to the filter criterion."""
-        return tuple(filter(self.__is_stdout_streamhandler, handlers))
+    @property
+    def handler_exists(self) -> bool:
+        """Does a Logger with a Handler of the specified file already exist?"""
+        root = logging.getLogger()
+        candidates = [root] + list(root.manager.loggerDict.values())
+        loggers = filter(lambda obj: isinstance(obj, Logger), candidates)
+        return any(
+            any(self.__handles_file(handler) for handler in logger.handlers)
+            for logger in loggers
+        )
 
-    @staticmethod
-    def __is_stdout_streamhandler(handler: Handler) -> bool:
-        """Filter criterion for the Logger's Handlers."""
-        if isinstance(handler, StreamHandler):
-            return handler.stream is sys.stdout
+    def __handles_file(self, handler: Handler) -> bool:
+        """Is the Handler a FileHandler to the requested file?"""
+        if isinstance(handler, FileHandler):
+            return handler.baseFilename == self.file
         return False
 
-    def __configure(self, handler: StreamHandler) -> StreamHandler:
-        """Configure the selected StreamHandler to stdout."""
+    def __configured(self, handler: FileHandler) -> FileHandler:
+        """Configure the selected FileHandler."""
         # Set the level of the handler
         handler.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
         # Set the configured formatter

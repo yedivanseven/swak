@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from functools import cached_property
-from logging import Logger, Formatter, FileHandler, Handler, getLogger
+from logging import Logger, Formatter, FileHandler, Handler
 from ..repr import ArgRepr
 from .formats import DEFAULT_FMT
 
@@ -34,15 +34,6 @@ class FileLogger(ArgRepr):
         Because the instantiation of the actual Logger is delayed until it is
         first needed (to facilitate usage in multiprocessing scenarios),
         raising the exception is also delayed.
-
-    Warnings
-    --------
-    To avoid creating and adding a new Handler to the same file every time
-    the same Logger is requested, one of its existing FileHandlers (to the
-    specified file) will be modified if there are any. A new one will be
-    created and added only if there aren't. By consequence, requesting the
-    same Logger multiple times with a different `level` and/or a different
-    `fmt`, `mode`, or `encoding` might change that Logger globally.
 
     """
     def __init__(
@@ -192,7 +183,7 @@ class FileLogger(ArgRepr):
     @property
     def handler_exists(self) -> bool:
         """Does a Logger with a Handler of the specified file already exist?"""
-        root = getLogger()
+        root = logging.getLogger()
         candidates = [root] + list(root.manager.loggerDict.values())
         loggers = filter(lambda obj: isinstance(obj, Logger), candidates)
         return any(
