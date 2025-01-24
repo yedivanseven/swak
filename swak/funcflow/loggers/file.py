@@ -12,12 +12,10 @@ type Message = str | Callable[P, str]
 
 
 class PassThroughFileLogger(ArgRepr):
-    """Pass-through Logger to file with at least one formatted FileHandler.
+    """Pass-through Logger to file with a formatted FileHandler.
 
     Parameters
     ----------
-    name: str
-        Name of the Logger. Typically set to ``__name__``.
     file: str
         Name of the file to log to, including file extension.
     level: int, optional
@@ -25,9 +23,9 @@ class PassThroughFileLogger(ArgRepr):
     fmt: str, optional
         Format string for the log messages in ``str.format()`` format.
     mode: str, optional
-        Mode to open the file. Defaults to 'a'.
+        Mode to open the file. Defaults to "a".
     encoding: str, optional
-        Encoding to use when opening the file. Defaults to 'utf-8'.
+        Encoding to use when opening the file. Defaults to "utf-8".
     delay: bool, optional
         Whether to delay opening the file until it is first written to.
         Defaults to ``True``.
@@ -40,10 +38,13 @@ class PassThroughFileLogger(ArgRepr):
         first needed (to facilitate usage in multiprocessing scenarios),
         raising the exception is also delayed.
 
+    Note
+    ----
+    The `mode` and the `encoding` can not be changed on an existing log file.
+
     """
     def __init__(
             self,
-            name: str,
             file: str,
             level: int = logging.DEBUG,
             fmt: str = DEFAULT_FMT,
@@ -51,7 +52,6 @@ class PassThroughFileLogger(ArgRepr):
             encoding: str = 'utf-8',
             delay: bool = True,
     ) -> None:
-        self.name = name.strip()
         self.file = str(Path(file.strip()).resolve())
         self.level = level
         self.fmt = fmt
@@ -59,7 +59,6 @@ class PassThroughFileLogger(ArgRepr):
         self.encoding = encoding.strip()
         self.delay = delay
         super().__init__(
-            self.name,
             self.file,
             self.mode,
             level,
@@ -67,19 +66,6 @@ class PassThroughFileLogger(ArgRepr):
             self.encoding,
             self.delay
         )
-
-    @staticmethod
-    def __valid(stream: str) -> str:
-        """Ensure that the provided stream is one the permitted options."""
-        if not isinstance(stream, str):
-            cls = type(stream).__name__
-            msg = f'stream must be a string, not {cls}!'
-            raise TypeError(msg)
-        stream = stream.strip().lower()
-        if stream not in ('stdout', 'stderr'):
-            msg = f'stream must be "stdout" or "stderr", not "{stream}"!'
-            raise ValueError(msg)
-        return stream
 
     class Log:
         """Return type of the logging methods.
@@ -221,21 +207,43 @@ class PassThroughFileLogger(ArgRepr):
 
     @cached_property
     def logger(self) -> Logger:
-        """The specified Logger with one FileHandler configured to specs."""
-        # Get logger with the given name
-        logger = logging.getLogger(self.name)
-        # No two FileHandlers should handle the same file
+        """The requested Logger with one FileHandler configured to specs."""
+        # Check if some other Logger already has a Handler onto the same file.
         if self.handler_exists:
             msg = f'A different logger already handles file "{self.file}"!'
             raise FileExistsError(msg)
-        # Adjust the logger level so that messages from the handler get through
+        # Get Logger with the given name.
+        logger = logging.getLogger(self.name)
+        # Adjust its log level so that messages from the Handler get through.
         logger.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
-        # Create a new file handler according to specs, ...
-        handler = FileHandler(self.file, self.mode, self.encoding, self.delay)
-        # ... configure it, add it to the logger ...
-        logger.addHandler(self.__configured(handler))
+        # Get all Handlers to the requested file. There should be at most 1!
+        handlers = tuple(filter(self.__handles_file, logger.handlers))
+        # If there are any, ...
+        if handlers:
+            # ... get the first one, ...
+            hdl = handlers[0]
+            # ... set its delay attribute, and, ...
+            hdl.delay = self.delay
+            # ... if the file does not yet exist, ...
+            if not Path(self.name).exists():
+                # ... also mode and encoding.
+                hdl.mode = self.mode
+                hdl.encoding = self.encoding
+        # If there aren't any handlers yet, make a new one.
+        else:
+            hdl = FileHandler(self.file, self.mode, self.encoding, self.delay)
+        # Configure the FileHandler to specs.
+        configured = self.__configured(hdl)
+        # If it was a new one, add it to the logger ...
+        if not handlers:
+            logger.addHandler(configured)
         # ... and return the logger.
         return logger
+
+    @property
+    def name(self) -> str:
+        """The name given to the Logger based on the provided file name."""
+        return self.file.replace('.', '_')
 
     @property
     def handler_exists(self) -> bool:
@@ -246,6 +254,7 @@ class PassThroughFileLogger(ArgRepr):
         return any(
             any(self.__handles_file(handler) for handler in logger.handlers)
             for logger in loggers
+            if logger.name != self.name
         )
 
     def __handles_file(self, handler: Handler) -> bool:

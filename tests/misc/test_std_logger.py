@@ -1,6 +1,8 @@
+import sys
+import uuid
 import pickle
 import unittest
-from logging import Logger
+from logging import Logger, StreamHandler
 from swak.misc import StdLogger, DEFAULT_FMT, PID_FMT
 
 
@@ -58,8 +60,58 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(logger, 'logger'))
 
     def test_logger_type(self):
-        logger = StdLogger('default')
-        self.assertIsInstance(logger.logger, Logger)
+        logger = StdLogger('default').logger
+        self.assertIsInstance(logger, Logger)
+
+    def test_logger_level(self):
+        logger = StdLogger('default').logger
+        self.assertEqual(10, logger.level)
+
+    def test_logger_has_handlers(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        self.assertTrue(logger.handlers)
+        self.assertEqual(1, len(logger.handlers))
+
+    def test_handler_is_stream(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertIsInstance(handler, StreamHandler)
+
+    def test_handler_stream_is_stdout(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertIs(handler.stream, sys.stdout)
+
+    def test_handler_level(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertEqual(10, handler.level)
+
+    def test_new_logger_same_handler(self):
+        name = str(uuid.uuid4())
+        logger_1 = StdLogger(name).logger
+        handler_1 = logger_1.handlers[0]
+        logger_2 = StdLogger(name).logger
+        handler_2 = logger_2.handlers[0]
+        self.assertIs(handler_1, handler_2)
+        self.assertEqual(1, len(logger_1.handlers))
+        self.assertEqual(1, len(logger_2.handlers))
+
+    def test_has_formatter(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertTrue(hasattr(handler, 'formatter'))
+
+    def test_format_set(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertEqual(DEFAULT_FMT, handler.formatter._fmt)
 
 
 class TestCustomAttributes(unittest.TestCase):
@@ -101,6 +153,29 @@ class TestCustomAttributes(unittest.TestCase):
     def test_wrong_stream_name_raises(self):
         with self.assertRaises(ValueError):
             _ = StdLogger('default', 20, stream='hello world')
+
+    def test_same_logger_new_level(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        _ = StdLogger(name, 20).logger
+        self.assertEqual(20, logger.level)
+        self.assertEqual(20, logger.handlers[0].level)
+
+    def test_same_logger_new_format(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        _ = StdLogger(name, fmt=PID_FMT).logger
+        handler = logger.handlers[0]
+        self.assertEqual(PID_FMT, handler.formatter._fmt)
+
+    def test_new_stream_new_handler(self):
+        name = str(uuid.uuid4())
+        logger = StdLogger(name).logger
+        self.assertEqual(1, len(logger.handlers))
+        _ = StdLogger(name, stream='stderr').logger
+        self.assertEqual(2, len(logger.handlers))
+        self.assertIs(logger.handlers[0].stream, sys.stdout)
+        self.assertIs(logger.handlers[1].stream, sys.stderr)
 
 
 class TestMethods(unittest.TestCase):

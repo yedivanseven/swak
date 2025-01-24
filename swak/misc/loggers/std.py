@@ -170,21 +170,20 @@ class StdLogger(ArgRepr):
 
     @cached_property
     def logger(self) -> Logger:
-        """The specified Logger with one StreamHandler configured to specs."""
-        # Get logger with the given name
+        """The requested Logger with one StreamHandler configured to specs."""
+        # Get Logger with the given name.
         logger = logging.getLogger(self.name)
-        # Adjust the logger level so that messages from the handler get through
+        # Adjust its log level so that messages from the Handler get through.
         logger.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
-        # Get all StreamHandlers to the requested stream
-        handlers = self.__filtered(logger.handlers)
-        # If there are any, (re)configure the first one and return the logger
-        if handlers:
-            self.__configured(handlers[0])
-            return logger
-        # If not, make a new one, ...
-        handler = StreamHandler(getattr(sys, self.stream))
-        # ... configure it, add it to the logger ...
-        logger.addHandler(self.__configured(handler))
+        # Get all StreamHandlers to the requested stream.
+        hdls = self.__filtered(logger.handlers)
+        # If there are any, get the first one. If not, make a new one ...
+        hdl = hdls[0] if hdls else StreamHandler(getattr(sys, self.stream))
+        # ... and configure it to specs.
+        configured = self.__configured(hdl)
+        # If it was a new one, add it to the logger ...
+        if not hdls:
+            logger.addHandler(configured)
         # ... and return the logger.
         return logger
 
