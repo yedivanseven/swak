@@ -1,12 +1,12 @@
 from typing import Self
 import torch as pt
-from ..types import Tensor, Module
+from ..types import Tensor, Resettable
 from ..exceptions import EmbeddingError
 from .numerical import NumericalEmbedder
 from .categorical import CategoricalEmbedder
 
 
-class FeatureEmbedder(Module):
+class FeatureEmbedder(Resettable):
     """Jointly embed numerical and categorical features into stacked vectors.
 
     Given a float tensor where both, numerical and categorical features

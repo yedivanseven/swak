@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Any, Self
 from collections.abc import Callable, Iterator
+from abc import ABC, abstractmethod
 from pandas import DataFrame
 from torch import Tensor, dtype, device
 from torch.nn import Module, Dropout, AlphaDropout
@@ -34,5 +35,41 @@ __all__ = [
     'Optimizer',
     'LRScheduler',
     'Batch',
-    'Batches'
+    'Batches',
+    'Resettable',
+    'Block'
 ]
+
+
+class Resettable(Module, ABC):
+    """Abstract base class for Modules with a "reset_parameters" method."""
+
+    def __init__(self, *_: Any, **__: Any) -> None:
+        super().__init__()
+
+    @abstractmethod
+    def reset_parameters(self) -> None:
+        """Subclasses implement in-place reset of all internal parameters."""
+        ...
+
+
+class Block(Module, ABC):
+    """Abstract base class for stackable/repeatable neural-network components.
+
+    The input and output tensors of such components must have the same
+    dimensions and sizes!
+
+    """
+
+    def __init__(self, *_: Any, **__: Any) -> None:
+        super().__init__()
+
+    @abstractmethod
+    def reset_parameters(self) -> None:
+        """Subclasses implement in-place reset of all internal parameters."""
+        ...
+
+    @abstractmethod
+    def new(self) -> Self:
+        """Return a fresh, new instance with exactly the same parameters."""
+        ...

@@ -1,10 +1,10 @@
 from typing import Self
 import torch as pt
 import torch.nn as ptn
-from ...types import Tensor, Module
+from ...types import Tensor, Resettable
 
 
-class VariableSumMixer(Module):
+class VariableSumMixer(Resettable):
     """Combine stacked feature vectors through a learnable linear combination.
 
     Specifically, a single, global set of linear-combination coefficients is

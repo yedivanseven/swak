@@ -7,7 +7,16 @@ from itertools import chain
 import torch as pt
 import torch.nn as ptn
 from ..misc import ArgRepr
-from .types import Tensor, Module, Tensors, Tensors2T, Dtype, Device
+from .types import (
+    Tensor,
+    Module,
+    Tensors,
+    Tensors2T,
+    Dtype,
+    Device,
+    Block,
+    Resettable
+)
 from .exceptions import (
     CompileError,
     ShapeError,
@@ -46,8 +55,7 @@ def identity(tensor: Tensor, **_: Any) -> Tensor:
     return tensor
 
 
-# ToDo: MAke Identity a Block!
-class Identity(Module):
+class Identity(Block):
     """PyTorch module that passes a tensor right through, doing nothing.
 
     This is a placeholder for instances where a default module is required.
@@ -93,7 +101,7 @@ class Identity(Module):
         return self.__class__()
 
 
-class Finalizer(Module):
+class Finalizer(Resettable):
     """Extract one or more numbers from the final layer of a neural network.
 
     Instances of this class serve as a convenient final layer in any neural
@@ -203,7 +211,7 @@ class Finalizer(Module):
         )
 
 
-class NegativeBinomialFinalizer(Module):
+class NegativeBinomialFinalizer(Resettable):
     """Consistent mean and standard deviation for over-dispersed counts.
 
     When regressing potentially over-dispersed counts data, you might want to

@@ -1,10 +1,10 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional
+from ..types import Tensor, Module, Functional, Resettable
 from ..misc import identity
 
 
-class ActivatedConcatMixer(Module):
+class ActivatedConcatMixer(Resettable):
     """Combined stacked feature vectors through a single dense layer.
 
     Multiple feature vectors stacked in a single tensor are concatenated into a

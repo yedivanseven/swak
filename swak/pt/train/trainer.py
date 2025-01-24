@@ -4,15 +4,16 @@ from torch.optim import AdamW
 from torch.nn.utils import clip_grad_norm_
 from tqdm import tqdm
 from ...misc import ArgRepr
-from ...funcflow import Curry, unit
-from ..types import Module, Optimizer, LRScheduler
+from ...funcflow import Curry
+from ..types import Module, Optimizer, LRScheduler, Resettable
 from ..exceptions import TrainError
 from .callbacks import (
     StepCallback,
     EpochCallback,
     EpochPrinter,
     TrainCallback,
-    TrainPrinter
+    TrainPrinter,
+    dummy_cb
 )
 from .checkpoints import Checkpoint, InMemory
 from .schedulers import NoSchedule
@@ -136,7 +137,7 @@ class Trainer(ArgRepr):
             clip_grad: float = 1.0,
             checkpoint: Checkpoint = InMemory(),
             show_progress: bool = True,
-            step_cb: StepCallback = unit,
+            step_cb: StepCallback = dummy_cb,
             cb_freq: int = 1,
             epoch_cb: EpochCallback = EpochPrinter(),
             train_cb: TrainCallback = TrainPrinter()
@@ -192,7 +193,7 @@ class Trainer(ArgRepr):
 
     def train(
             self,
-            model: Module,
+            model: Resettable,
             train: TrainDataBase,
             test: TestDataBase | None = None
     ) -> Module:
@@ -200,8 +201,8 @@ class Trainer(ArgRepr):
 
         Parameters
         ----------
-        model: Module
-            PyTorch model to train. Must have a ``reset_parameters()`` method
+        model: Resettable
+            PyTorch Module to train. Must have a ``reset_parameters()`` method
             that can be called without any parameters to re-initialize all
             trainable model parameters and buffers.
         train: TrainDataBase
@@ -246,7 +247,7 @@ class Trainer(ArgRepr):
 
     def resume(
             self,
-            model: Module,
+            model: Resettable,
             train: TrainDataBase,
             test: TestDataBase | None = None
     ) -> Module:
@@ -255,7 +256,7 @@ class Trainer(ArgRepr):
         Parameters
         ----------
         model: Module
-            PyTorch model to train.
+            PyTorch Module to train.
         train: TrainDataBase
             Training data.
         test: TestDataBase, optional
@@ -436,6 +437,7 @@ class Trainer(ArgRepr):
             max_epochs_reached = True
 
         # Call callbacks on finished training.
+        self.step_cb.close()
         self.epoch_cb.close()
         self.train_cb(
             epoch,

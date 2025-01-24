@@ -1,9 +1,9 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional
+from ..types import Tensor, Module, Functional, Resettable
 
 
-class GatedConcatMixer(Module):
+class GatedConcatMixer(Resettable):
     """Combined stacked feature vectors through a Gated Linear Unit (GLU).
 
     Features are concatenated into a single, wide vector and projected into a

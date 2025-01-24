@@ -1,9 +1,9 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional
+from ..types import Tensor, Module, Resettable, Functional
 
 
-class GatedEmbedder(Module):
+class GatedEmbedder(Resettable):
     """Flexible Gated Linear Unit (GLU) for embedding a numerical feature.
 
     Parameters

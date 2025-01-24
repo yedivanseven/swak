@@ -2,7 +2,7 @@ from typing import Any, Self
 from functools import cached_property
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Module
+from ..types import Tensor, Resettable
 from .activated import ActivatedEmbedder
 from .gated import GatedEmbedder
 from .gated_residual import GatedResidualEmbedder
@@ -10,7 +10,7 @@ from .gated_residual import GatedResidualEmbedder
 type EmbCls = type[ActivatedEmbedder | GatedEmbedder | GatedResidualEmbedder]
 
 
-class NumericalEmbedder(Module):
+class NumericalEmbedder(Resettable):
     """Transform (scalar) numerical features into embedding vectors.
 
     Parameters

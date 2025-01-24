@@ -1,10 +1,10 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional
+from ..types import Tensor, Module, Functional, Resettable
 from ..misc import identity
 
 
-class ActivatedEmbedder(Module):
+class ActivatedEmbedder(Resettable):
     """Simple linear projection of an individual feature into embedding space.
 
     Parameters

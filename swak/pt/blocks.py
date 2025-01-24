@@ -8,13 +8,11 @@ residual (or skip) connections between them.
 """
 
 from typing import Any, Self
-from abc import ABC, abstractmethod
 import torch.nn as ptn
-from .types import Module, Tensor, Functional, Drop
+from .types import Module, Tensor, Functional, Drop, Block
 from .misc import Identity
 
 __all__ = [
-    'Block',
     'ActivatedBlock',
     'ActivatedHiddenBlock',
     'GatedBlock',
@@ -26,30 +24,7 @@ __all__ = [
 ]
 
 
-# ToDo: Move Block to types!
 # ToDo: Rethink resetting parameters in "new"
-class Block(Module, ABC):
-    """Abstract base class for stackable/repeatable neural-network components.
-
-    The input and output tensors of such components must have the same
-    dimensions and sizes!
-
-    """
-
-    def __init__(self, *_: Any, **__: Any) -> None:
-        super().__init__()
-
-    @abstractmethod
-    def reset_parameters(self) -> None:
-        """Subclasses implement in-place reset of all internal parameters."""
-        ...
-
-    @abstractmethod
-    def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
-        ...
-
-
 class ActivatedBlock(Block):
     """A single, non-linearly activated layer.
 

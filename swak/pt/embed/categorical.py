@@ -3,10 +3,10 @@ from collections.abc import Iterable
 from functools import cached_property
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Module
+from ..types import Tensor, Resettable
 
 
-class CategoricalEmbedder(Module):
+class CategoricalEmbedder(Resettable):
     """Embed one or more categorical features as numerical vectors.
 
     Parameters

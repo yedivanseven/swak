@@ -1,9 +1,9 @@
 from typing import Self
 import torch as pt
-from ...types import Tensor, Module
+from ...types import Tensor, Resettable
 
 
-class ConstantSumMixer(Module):
+class ConstantSumMixer(Resettable):
     """Combine stacked feature vectors by simply adding them.
 
     The sum is then "normed" through dividing by the number of features.

@@ -1,9 +1,9 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional, Drop
+from ..types import Tensor, Module, Functional, Drop, Resettable
 
 
-class GatedResidualEmbedder(Module):
+class GatedResidualEmbedder(Resettable):
     """Gated Residual Network (GRN) for embedding numerical features.
 
     Parameters

@@ -1,9 +1,9 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional, Drop
+from ..types import Tensor, Module, Functional, Drop, Resettable
 
 
-class GatedResidualConcatMixer(Module):
+class GatedResidualConcatMixer(Resettable):
     """Combined stacked feature vectors through a Gated Residual Network (GRN).
 
     Parameters

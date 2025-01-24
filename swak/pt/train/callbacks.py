@@ -11,7 +11,8 @@ __all__ = [
     'EpochPrinter',
     'History',
     'TrainCallback',
-    'TrainPrinter'
+    'TrainPrinter',
+    'dummy_cb'
 ]
 
 
@@ -37,6 +38,11 @@ class StepCallback(ABC):
             The learning rate used in the current optimization step.
 
         """
+        ...
+
+    @abstractmethod
+    def close(self) -> None:
+        """Called at the end of training to be compatible with TensorBoard."""
         ...
 
 
@@ -115,6 +121,22 @@ class TrainCallback(ABC):
         ...
 
 
+class DummyCb(StepCallback, EpochCallback):
+    """Dummy StepCallback if none is needed."""
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}()'
+
+    def __call__(self, *_: Any, **__: Any) -> None:
+        """Does absolutely nothing."""
+
+    def close(self) -> None:
+        """Does not do anything either."""
+
+
+dummy_cb = DummyCb()
+
+
 class StepPrinter(ArgRepr, StepCallback):
     """Step callback assembling a one-liner on per-batch training progress.
 
@@ -142,6 +164,9 @@ class StepPrinter(ArgRepr, StepCallback):
         """Assemble one-liner with loss and lr and call the printer with it."""
         msg = self.sep.join([f'{train_loss:7.5f}', f'{learning_rate:7.5f}'])
         self.printer(msg)
+
+    def close(self) -> None:
+        """Does nothing because there is nothing to close."""
 
 
 class EpochPrinter(ArgRepr, EpochCallback):

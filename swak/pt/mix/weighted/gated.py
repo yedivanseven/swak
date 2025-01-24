@@ -1,9 +1,9 @@
 from typing import Any, Self
 import torch.nn as ptn
-from ...types import Tensor, Module, Functional
+from ...types import Tensor, Module, Functional, Resettable
 
 
-class GatedSumMixer(Module):
+class GatedSumMixer(Resettable):
     """Combine stacked feature vectors by a per-instance linear combination.
 
     The per-instance coefficients sum to 1 for each data point and can thus be
