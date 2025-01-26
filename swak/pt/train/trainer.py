@@ -153,8 +153,8 @@ class Trainer(ArgRepr):
         self.max_n = max_n
         self.step_freq = step_freq
         self.clip_grad = clip_grad
-        self.show_progress = show_progress
         self.checkpoint = checkpoint
+        self.show_progress = show_progress
         self.step_cb = step_cb
         self.cb_freq = cb_freq
         self.epoch_cb = epoch_cb
