@@ -3,6 +3,10 @@ misc
 
 .. automodule:: swak.misc
 
+.. autoattribute:: swak.misc.DEFAULT_FMT
+.. autoattribute:: swak.misc.SHORT_FMT
+.. autoattribute:: swak.misc.PID_FMT
+.. autoattribute:: swak.misc.RAW_FMT
 
 .. autoclass:: swak.misc.StdLogger
    :members:

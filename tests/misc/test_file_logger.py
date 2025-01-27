@@ -2,7 +2,7 @@ import pickle
 import unittest
 from tempfile import NamedTemporaryFile
 from logging import Logger, getLogger, FileHandler
-from swak.misc import FileLogger, DEFAULT_FMT, PID_FMT, RAW_FMT
+from swak.misc import FileLogger, PID_FMT, RAW_FMT, SHORT_FMT
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_fmt_value(self):
         with NamedTemporaryFile() as file:
             logger = FileLogger(file.name)
-            self.assertEqual(DEFAULT_FMT, logger.fmt)
+            self.assertEqual(SHORT_FMT, logger.fmt)
 
     def test_has_mode(self):
         with NamedTemporaryFile() as file:
@@ -203,7 +203,7 @@ class TestDefaultAttributes(unittest.TestCase):
         with NamedTemporaryFile() as file:
             logger = FileLogger(file.name).logger
             handler = logger.handlers[0]
-            self.assertEqual(DEFAULT_FMT, handler.formatter._fmt)
+            self.assertEqual(SHORT_FMT, handler.formatter._fmt)
 
     def test_new_logger_same_handler(self):
         with NamedTemporaryFile() as file:
@@ -470,7 +470,7 @@ class TestMisc(unittest.TestCase):
         with NamedTemporaryFile() as file:
             logger = FileLogger(file.name)
             excepted = (f"FileLogger('{file.name}', 'a', 10,"
-                        f" '{DEFAULT_FMT}', 'utf-8', True)")
+                        f" '{SHORT_FMT}', 'utf-8', True)")
             self.assertEqual(excepted, repr(logger))
 
     def test_custom_repr(self):

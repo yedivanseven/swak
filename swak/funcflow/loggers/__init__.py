@@ -7,7 +7,7 @@ them to customize the logged message.
 
 """
 
-from .formats import DEFAULT_FMT, PID_FMT, RAW_FMT
+from .formats import DEFAULT_FMT, PID_FMT, RAW_FMT, SHORT_FMT
 from .std import PassThroughStdLogger
 from .file import PassThroughFileLogger
 
@@ -15,6 +15,7 @@ __all__ = [
     'PassThroughStdLogger',
     'PassThroughFileLogger',
     'DEFAULT_FMT',
+    'SHORT_FMT',
     'PID_FMT',
     'RAW_FMT'
 ]

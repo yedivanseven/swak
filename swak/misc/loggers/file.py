@@ -3,7 +3,7 @@ from pathlib import Path
 from functools import cached_property
 from logging import Logger, Formatter, FileHandler, Handler
 from ..repr import ArgRepr
-from .formats import DEFAULT_FMT
+from .formats import SHORT_FMT
 
 
 class FileLogger(ArgRepr):
@@ -12,11 +12,12 @@ class FileLogger(ArgRepr):
     Parameters
     ----------
     file: str
-        Name of the file to log to, including file extension.
+        Full path to the file to log to, including file extension.
     level: int, optional
         Minimum logging level. Defaults to 10 (= DEBUG).
     fmt: str, optional
         Format string for the log messages in ``str.format()`` format.
+        Defaults to "{asctime:<23s} [{levelname:<8s}] {message}".
     mode: str, optional
         Mode to open the file. Defaults to "a".
     encoding: str, optional
@@ -42,7 +43,7 @@ class FileLogger(ArgRepr):
             self,
             file: str,
             level: int = logging.DEBUG,
-            fmt: str = DEFAULT_FMT,
+            fmt: str = SHORT_FMT,
             mode: str = 'a',
             encoding: str = 'utf-8',
             delay: bool = True,

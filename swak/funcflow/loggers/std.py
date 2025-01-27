@@ -22,6 +22,7 @@ class PassThroughStdLogger(ArgRepr):
         Minimum logging level. Defaults to 10 (= DEBUG).
     fmt: str, optional
         Format string for the log messages in ``str.format()`` format.
+        Defaults to "{asctime:<23s} [{levelname:<8s}] {message} ({name})".
     stream: str, optional
         Must be one of "stdout" or "stderr". Defaults to "stdout".
 
