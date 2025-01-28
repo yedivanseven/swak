@@ -1,4 +1,5 @@
 from typing import TypedDict, Any
+from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from ...misc import ArgRepr
@@ -11,8 +12,7 @@ __all__ = [
     'EpochPrinter',
     'History',
     'TrainCallback',
-    'TrainPrinter',
-    'dummy_cb'
+    'TrainPrinter'
 ]
 
 
@@ -121,22 +121,6 @@ class TrainCallback(ABC):
         ...
 
 
-class DummyCb(StepCallback, EpochCallback):
-    """Dummy StepCallback if none is needed."""
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}()'
-
-    def __call__(self, *_: Any, **__: Any) -> None:
-        """Does absolutely nothing."""
-
-    def close(self) -> None:
-        """Does not do anything either."""
-
-
-dummy_cb = DummyCb()
-
-
 class StepPrinter(ArgRepr, StepCallback):
     """Step callback assembling a one-liner on per-batch training progress.
 
@@ -159,6 +143,9 @@ class StepPrinter(ArgRepr, StepCallback):
         super().__init__(printer, sep)
         self.printer = printer
         self.sep = sep
+
+    def __iter__(self) -> Iterator['StepPrinter']:
+        return iter([self])
 
     def __call__(self, train_loss: float, learning_rate: float) -> None:
         """Assemble one-liner with loss and lr and call the printer with it."""
@@ -183,6 +170,9 @@ class EpochPrinter(ArgRepr, EpochCallback):
     def __init__(self, printer: Callable[[str], Any] = print) -> None:
         super().__init__(printer)
         self.printer = printer
+
+    def __iter__(self) -> Iterator['EpochPrinter']:
+        return iter([self])
 
     def __call__(
             self,
@@ -215,6 +205,9 @@ class TrainPrinter(ArgRepr, TrainCallback):
     def __init__(self, printer: Callable[[str], Any] = print) -> None:
         super().__init__(printer)
         self.printer = printer
+
+    def __iter__(self) -> Iterator['TrainPrinter']:
+        return iter([self])
 
     def __call__(
             self,

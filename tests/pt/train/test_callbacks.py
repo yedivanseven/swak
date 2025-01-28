@@ -63,6 +63,11 @@ class TestStepPrinter(unittest.TestCase):
         actual = mock.call_args[0][0]
         self.assertEqual(expected, actual)
 
+    def test_iterable(self):
+        printers = list(self.print)
+        self.assertEqual(1, len(printers))
+        self.assertIs(printers[0], self.print)
+
 
 class TestEpochPrinter(unittest.TestCase):
 
@@ -119,6 +124,11 @@ class TestEpochPrinter(unittest.TestCase):
         mock.assert_called_once()
         actual = mock.call_args[0][0]
         self.assertIsInstance(actual, str)
+
+    def test_iterable(self):
+        printers = list(self.print)
+        self.assertEqual(1, len(printers))
+        self.assertIs(printers[0], self.print)
 
 
 class TestTrainPrinter(unittest.TestCase):
@@ -180,6 +190,11 @@ class TestTrainPrinter(unittest.TestCase):
         mock.assert_called_once()
         actual = mock.call_args[0][0]
         self.assertIsInstance(actual, str)
+
+    def test_iterable(self):
+        printers = list(self.print)
+        self.assertEqual(1, len(printers))
+        self.assertIs(printers[0], self.print)
 
 
 if __name__ == '__main__':

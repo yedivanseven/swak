@@ -1,6 +1,7 @@
 import pickle
 import unittest
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from pathlib import Path
 from logging import Logger, getLogger, FileHandler
 from swak.misc import FileLogger, PID_FMT, RAW_FMT, SHORT_FMT
 
@@ -429,6 +430,14 @@ class TestUsage(unittest.TestCase):
             actual = logger.critical('msg')
             self.assertTupleEqual((), actual)
             self.assertEqual(b'msg\n', file.read())
+
+    def test_directory_created(self):
+        with TemporaryDirectory() as path:
+            file = path + '/subdir/file.log'
+            logger = FileLogger(file, fmt=RAW_FMT)
+            _ = logger.info('msg')
+            with Path(file).open() as file:
+                self.assertEqual('msg\n', file.read())
 
 
 class TestLogLevel(unittest.TestCase):

@@ -4,8 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.8] - 2025-01-28
 - Added a shorter log format
+- Parent directory of log files will now be created if it does not exist
+- PyTorch model training loop can now call multiple callbacks
 
 ## [0.3.7] - 2025-01-24
 - Renamed StdOutLogger to StdLogger and added option to log to stderr

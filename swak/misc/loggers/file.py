@@ -12,7 +12,8 @@ class FileLogger(ArgRepr):
     Parameters
     ----------
     file: str
-        Full path to the file to log to, including file extension.
+        Full path to the file to log to, including file extension. If the
+        parent directory does not exist, an attempt will be made to create it.
     level: int, optional
         Minimum logging level. Defaults to 10 (= DEBUG).
     fmt: str, optional
@@ -186,8 +187,9 @@ class FileLogger(ArgRepr):
                 # ... also mode and encoding.
                 hdl.mode = self.mode
                 hdl.encoding = self.encoding
-        # If there aren't any handlers yet, make a new one.
+        # If there aren't any handlers yet, make a new one and create directory
         else:
+            Path(self.file).parent.mkdir(parents=True, exist_ok=True)
             hdl = FileHandler(self.file, self.mode, self.encoding, self.delay)
         # Configure the FileHandler to specs.
         configured = self.__configured(hdl)

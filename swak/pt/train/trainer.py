@@ -1,4 +1,5 @@
 import math
+from collections.abc import Iterable
 import torch as pt
 from torch.optim import AdamW
 from torch.nn.utils import clip_grad_norm_
@@ -12,8 +13,7 @@ from .callbacks import (
     EpochCallback,
     EpochPrinter,
     TrainCallback,
-    TrainPrinter,
-    dummy_cb
+    TrainPrinter
 )
 from .checkpoints import Checkpoint, InMemory
 from .schedulers import NoSchedule
@@ -80,22 +80,23 @@ class Trainer(ArgRepr):
     show_progress: bool, optional
         Whether to provide visual feedback to the console while training an
         epoch in the form of a progress bar. Defaults to ``True``
-    step_cb: StepCallback, optional
-        Will be called every `cb_freq` batches with the train loss of the last
-        batch and the current learning rate. Defaults to ``unit``, which does
-        nothing.
+    step_cbs: iterable of StepCallback, optional
+        All per-step callbacks will be called every `cb_freq` batches with the
+        train loss of the last batch and the current learning rate. Defaults
+        to an empty tuple, which does nothing.
     cb_freq: int, optional
         Number of batches to skip before calling `step_cb` again.
         Defaults to 1.
-    epoch_cb: EpochCallback, optional
-        Will be called after each epoch with epoch, train loss, test loss,
-        and current learning rate. Defaults to ``EpochPrinter``.
-    train_cb: TrainCallback, optional
-        Will be called after training finished with last epoch, epoch with the
-        best loss, the best loss itself, whether `max_epochs` was exhausted,
-        and with the training history in the form of a dictionary of lists
-        with train loss, test loss and learning rate.
-        Defaults to ``TrainPrinter``.
+    epoch_cbs: iterable of EpochCallback, optional
+        All epoch callbacks will be called after each epoch with epoch, train
+        loss, test loss, and current learning rate. Defaults to a single
+        ``EpochPrinter``.
+    train_cbs: iterable of TrainCallback, optional
+        All train callbacks will be called after training finished with last
+        epoch, epoch with the best loss, the best loss itself, whether
+        `max_epochs` was exhausted, and with the training history in the form
+        of a dictionary of lists with train loss, test loss and learning rate.
+        Defaults to a single ``TrainPrinter``.
 
     Important
     ---------
@@ -137,10 +138,10 @@ class Trainer(ArgRepr):
             clip_grad: float = 1.0,
             checkpoint: Checkpoint = InMemory(),
             show_progress: bool = True,
-            step_cb: StepCallback = dummy_cb,
+            step_cbs: Iterable[StepCallback] = (),
             cb_freq: int = 1,
-            epoch_cb: EpochCallback = EpochPrinter(),
-            train_cb: TrainCallback = TrainPrinter()
+            epoch_cbs: Iterable[EpochCallback] = EpochPrinter(),
+            train_cbs: Iterable[TrainCallback] = TrainPrinter()
     ) -> None:
         self.loss = self.__sane(loss)
         self.optimizer = optimizer
@@ -155,10 +156,10 @@ class Trainer(ArgRepr):
         self.clip_grad = clip_grad
         self.checkpoint = checkpoint
         self.show_progress = show_progress
-        self.step_cb = step_cb
+        self.step_cbs = step_cbs
         self.cb_freq = cb_freq
-        self.epoch_cb = epoch_cb
-        self.train_cb = train_cb
+        self.epoch_cbs = epoch_cbs
+        self.train_cbs = train_cbs
         super().__init__(
             loss,
             optimizer,
@@ -166,11 +167,17 @@ class Trainer(ArgRepr):
             max_epochs,
             scheduler,
             warmup,
+            batch_step,
             patience,
             max_n,
+            step_freq,
+            clip_grad,
             checkpoint,
-            epoch_cb,
-            train_cb
+            show_progress,
+            step_cbs,
+            cb_freq,
+            epoch_cbs,
+            train_cbs
         )
         self.history = {'train_loss': [], 'test_loss': [], 'lr': []}
 
@@ -329,7 +336,8 @@ class Trainer(ArgRepr):
                         scheduler.step()
                 # Call the step callback with current loss and learning rate
                 if batch_index % self.cb_freq == 0:
-                    self.step_cb(ema, scheduler.get_last_lr()[0])
+                    for step_cb in self.step_cbs:
+                        step_cb(ema, scheduler.get_last_lr()[0])
 
             # How many data points to take for computing train (and test) loss.
             n = train.n if test is None else test.n
@@ -400,14 +408,15 @@ class Trainer(ArgRepr):
                 sample = train.sample(self.batch_size, max_n)
             else:
                 sample = test.sample(self.batch_size)
-            self.epoch_cb(
-                epoch,
-                train_loss,
-                test_loss,
-                current_lr,
-                model,
-                sample
-            )
+            for epoch_cb in self.epoch_cbs:
+                epoch_cb(
+                    epoch,
+                    train_loss,
+                    test_loss,
+                    current_lr,
+                    model,
+                    sample
+                )
 
             # After warmup, step the scheduler each epoch if not set otherwise.
             if scheduler.last_epoch >= self.warmup and not self.batch_step:
@@ -437,15 +446,18 @@ class Trainer(ArgRepr):
             max_epochs_reached = True
 
         # Call callbacks on finished training.
-        self.step_cb.close()
-        self.epoch_cb.close()
-        self.train_cb(
-            epoch,
-            best_epoch,
-            best_loss,
-            max_epochs_reached,
-            self.history
-        )
+        for step_cb in self.step_cbs:
+            step_cb.close()
+        for epoch_cb in self.epoch_cbs:
+            epoch_cb.close()
+        for train_cb in self.train_cbs:
+            train_cb(
+                epoch,
+                best_epoch,
+                best_loss,
+                max_epochs_reached,
+                self.history
+            )
 
         # Finally, return the trained model.
         return model

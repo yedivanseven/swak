@@ -1,7 +1,8 @@
 import pickle
 import unittest
 from unittest.mock import Mock
-from tempfile import NamedTemporaryFile
+from pathlib import Path
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from logging import Logger, getLogger, FileHandler
 from swak.funcflow.loggers import PassThroughFileLogger, SHORT_FMT, RAW_FMT
 
@@ -506,6 +507,14 @@ class TestUsage(unittest.TestCase):
             self.assertTupleEqual((obj_1, obj_2), out)
             mock.assert_called_once_with(obj_1, obj_2)
             self.assertEqual(b'msg\n', file.read())
+
+    def test_directory_created(self):
+        with TemporaryDirectory() as path:
+            file = path + '/subdir/file.log'
+            logger = PassThroughFileLogger(file, fmt=RAW_FMT)
+            _ = logger.info('msg')()
+            with Path(file).open() as file:
+                self.assertEqual('msg\n', file.read())
 
 
 class TestLogLevel(unittest.TestCase):
