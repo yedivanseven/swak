@@ -130,7 +130,7 @@ class StepPrinter(ArgRepr, StepCallback):
         Will be called with the assembled message. Defaults to the python
         builtin ``print`` function, but could also be a logging command.
     sep: str, optional
-        The items concatenated into a on-line message will be separated by
+        The items concatenated into a one-line message will be separated by
         this string. Default to " ".
 
     """
