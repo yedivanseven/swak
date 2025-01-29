@@ -4,11 +4,6 @@ blocks
 .. automodule:: swak.pt.blocks
 
 
-.. autoclass:: swak.pt.blocks.Block
-   :members:
-   :show-inheritance:
-
-
 .. autoclass:: swak.pt.blocks.ActivatedBlock
    :members:
    :show-inheritance:
@@ -45,5 +40,17 @@ blocks
 
 
 .. autoclass:: swak.pt.blocks.Repeat
+   :members:
+   :show-inheritance:
+
+
+Base classes
+------------
+
+.. autoclass:: swak.pt.types.Resettable
+   :members:
+   :show-inheritance:
+
+.. autoclass:: swak.pt.types.Block
    :members:
    :show-inheritance:
