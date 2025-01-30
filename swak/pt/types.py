@@ -53,21 +53,13 @@ class Resettable(Module, ABC):
         ...
 
 
-class Block(Module, ABC):
+class Block(Resettable):
     """Abstract base class for stackable/repeatable neural-network components.
 
     The input and output tensors of such components must have the same
     dimensions and sizes!
 
     """
-
-    def __init__(self, *_: Any, **__: Any) -> None:
-        super().__init__()
-
-    @abstractmethod
-    def reset_parameters(self) -> None:
-        """Subclasses implement in-place reset of all internal parameters."""
-        ...
 
     @abstractmethod
     def new(self) -> Self:
