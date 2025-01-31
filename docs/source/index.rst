@@ -49,7 +49,7 @@ Installation
 
   ``pipenv sync --categories=cpu``
 
-  for a CPU only installation of PyTorch and
+  for a CPU-only installation of PyTorch and
 
   ``pipenv sync --categories=cuda``
 

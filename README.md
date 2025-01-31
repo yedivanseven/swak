@@ -48,7 +48,7 @@ If you are using `pipenv` for dependency management, you can also have a look at
   ```shell
   pipenv sync --categories=cpu
   ```
-  for a CPU only installation of PyTorch and
+  for a CPU-only installation of PyTorch and
   ```shell
   pipenv sync --categories=cuda
   ```
