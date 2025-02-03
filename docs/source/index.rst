@@ -25,39 +25,47 @@ applications. In abstracting away boiler-plate code, it thus saves time and effo
 
 Installation
 ------------
-- Create a new virtual environment running at least `python 3.12`.
-- The easiest way of installing `swak` is from the python package index
-  `PyPI <https://pypi.org/project/swak/>`__, where it is hosted. Simply type
+- Create a new virtual environment running at least ``python 3.12``.
+- The easiest way of installing :py:mod:`swak` is from the python package index
+  `PyPI <https://pypi.org/project/swak/>`_, where it is hosted. Simply type
 
-  ``pip install swak``
+  .. code-block:: bash
+
+     pip install swak
 
   or treat it like any other python package in your dependency management.
 - If you need support for interacting with the Google Cloud Project,
   in particular Google BigQuery and Google Cloud Storage, install
   *extra* dependencies with:
 
-  ``pip install swak[cloud]``
+  .. code-block:: bash
 
-- In order to use the subpackage `swak.pt`, you need to have `PyTorch <https://pytorch.org/>`__ installed.
+     pip install swak[cloud]
+
+- In order to use the subpackage :py:mod:`swak.pt`, you need to have `PyTorch <https://pytorch.org/>`_ installed.
   Because there is no way of knowing whether you want to run it on CPU only or also on GPU and, if so,
   which version of CUDA (or ROC) you have installed on your machine and how, it is not an explicit
-  dependency of `swak`. You will have to install it yourself, *e.g.*, following
-  `these instructions <https://pytorch.org/get-started/locally/>`__.
+  dependency of :py:mod:`swak`. You will have to install it yourself, *e.g.*, following
+  `these instructions <https://pytorch.org/get-started/locally/>`_.
   If you are using `pipenv` for dependency management, you can also have a look at the
-  `Pipfile <https://github.com/yedivanseven/swak/blob/main/Pipfile>`__ in the root of the `swak`
-  `repository <https://github.com/yedivanseven/swak>`__ and taylor it to your needs. Personally, I go
+  `Pipfile <https://github.com/yedivanseven/swak/blob/main/Pipfile>`_ in the root of the
+  `swak repository <https://github.com/yedivanseven/swak>`_ and taylor it to your needs. Personally, I go
 
-  ``pipenv sync --categories=cpu``
+  .. code-block:: bash
+
+     pipenv sync --categories=cpu
 
   for a CPU-only installation of PyTorch and
 
-  ``pipenv sync --categories=cuda``
+  .. code-block:: bash
+
+     pipenv sync --categories=cuda
 
   if I want GPU support.
 
 Usage
 -----
-Try making a new repository using the `swak-template <https://github.com/yedivanseven/swak-template>`__
+Try making a new repository using the `swak-template <https://github.com/yedivanseven/swak-template>`_
 as a, well, template.
 
 
