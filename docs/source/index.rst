@@ -26,7 +26,7 @@ applications. In abstracting away boiler-plate code, it thus saves time and effo
 Installation
 ------------
 - Create a new virtual environment running at least ``python 3.12``.
-- The easiest way of installing :py:mod:`swak` is from the python package index
+- The easiest way of installing :mod:`swak` is from the python package index
   `PyPI <https://pypi.org/project/swak/>`_, where it is hosted. Simply type
 
   .. code-block:: bash
@@ -42,10 +42,10 @@ Installation
 
      pip install swak[cloud]
 
-- In order to use the subpackage :py:mod:`swak.pt`, you need to have `PyTorch <https://pytorch.org/>`_ installed.
+- In order to use the subpackage :mod:`swak.pt`, you need to have `PyTorch <https://pytorch.org/>`_ installed.
   Because there is no way of knowing whether you want to run it on CPU only or also on GPU and, if so,
   which version of CUDA (or ROC) you have installed on your machine and how, it is not an explicit
-  dependency of :py:mod:`swak`. You will have to install it yourself, *e.g.*, following
+  dependency of :mod:`swak`. You will have to install it yourself, *e.g.*, following
   `these instructions <https://pytorch.org/get-started/locally/>`_.
   If you are using `pipenv` for dependency management, you can also have a look at the
   `Pipfile <https://github.com/yedivanseven/swak/blob/main/Pipfile>`_ in the root of the
