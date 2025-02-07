@@ -162,3 +162,5 @@ class YamlReader(ArgRepr):
                 case _:
                     raise error
         return yml or {}
+
+# ToDo: Add (gzip) JSON reader

@@ -1,6 +1,7 @@
 from ...misc import ArgRepr
 
 
+# ToDo: Add strip only
 class Lower(ArgRepr):
     """Lowercase strings, optionally stripping characters left and/or right.
 

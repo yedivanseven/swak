@@ -207,3 +207,5 @@ class YamlWriter(ArgRepr):
         with path.open(self.mode) as file:
             yaml.dump(yml, file, **self.kwargs)
         return ()
+
+# ToDo: Add (gzip) JSON writer
