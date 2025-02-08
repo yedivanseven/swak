@@ -106,7 +106,7 @@ class LinearInverse(ArgRepr):
 
 
 class LinearExponential(ArgRepr):
-    """Scale up learning rate during warmup before decaying with inverse power.
+    """Scale up learning rate during warmup before decaying exponentially.
 
     Instances of this class are not learning-rate schedulers by themselves!
     They are intended to be passed as ``lr_lambda`` argument to PyTorch's
