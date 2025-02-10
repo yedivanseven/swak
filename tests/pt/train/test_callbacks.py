@@ -23,14 +23,14 @@ class TestStepPrinter(unittest.TestCase):
         self.assertTrue(hasattr(self.print, 'sep'))
 
     def test_default_sep(self):
-        self.assertEqual(' ', self.print.sep)
+        self.assertEqual(',', self.print.sep)
 
     def test_custom_sep(self):
         step_cb = StepPrinter(sep=',')
         self.assertEqual(',', step_cb.sep)
 
     def test_default_repr(self):
-        expected = "StepPrinter(print, ' ')"
+        expected = "StepPrinter(print, ',')"
         self.assertEqual(expected, repr(self.print))
 
     def test_custom_repr(self):
@@ -48,18 +48,18 @@ class TestStepPrinter(unittest.TestCase):
     def test_print_called_with_default_sep(self):
         mock = Mock()
         step_cb = StepPrinter(mock)
-        step_cb(0.2, 0.01)
+        step_cb(0.2, 0.01, 0.3)
         mock.assert_called_once()
-        expected = '0.20000 0.01000'
+        expected = '0.20000,0.01000,0.30000'
         actual = mock.call_args[0][0]
         self.assertEqual(expected, actual)
 
     def test_print_called_with_custom_sep(self):
         mock = Mock()
         step_cb = StepPrinter(mock, ';')
-        step_cb(0.2, 0.01)
+        step_cb(0.2, 0.01, 0.3)
         mock.assert_called_once()
-        expected = '0.20000;0.01000'
+        expected = '0.20000;0.01000;0.30000'
         actual = mock.call_args[0][0]
         self.assertEqual(expected, actual)
 

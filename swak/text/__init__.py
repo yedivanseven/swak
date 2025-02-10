@@ -8,9 +8,9 @@ preconfigured pipe of callable objects to yield the desired result.
 
 from .resource import TextResourceLoader
 from .interpolate import TemplateRenderer, FormFiller
-from .read import TomlReader, YamlReader
+from .read import TomlReader, YamlReader, JsonReader
 from .parse import YamlParser
-from .write import TomlWriter, YamlWriter
+from .write import TomlWriter, YamlWriter, JsonWriter
 from .misc import NotFound, LiteralNotFound
 
 __all__ = [
@@ -21,7 +21,9 @@ __all__ = [
     'LiteralNotFound',
     'TomlReader',
     'YamlReader',
+    'JsonReader',
     'YamlParser',
     'TomlWriter',
-    'YamlWriter'
+    'YamlWriter',
+    'JsonWriter'
 ]

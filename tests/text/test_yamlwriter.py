@@ -3,7 +3,6 @@ import unittest
 from unittest.mock import patch, mock_open
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from pathlib import Path
-from yaml import Dumper
 from swak.text import YamlWriter
 
 
@@ -43,12 +42,6 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.write.create, bool)
         self.assertFalse(self.write.create)
 
-    def test_has_dumper(self):
-        self.assertTrue(hasattr(self.write, 'dumper'))
-
-    def test_dumper(self):
-        self.assertIs(self.write.dumper, Dumper)
-
     def test_has_kwargs(self):
         self.assertTrue(hasattr(self.write, 'kwargs'))
 
@@ -65,7 +58,7 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.write = YamlWriter('/dir', True, True, 'dumper', encoding='utf-8')
+        self.write = YamlWriter('/dir', True, True, encoding='utf-8')
 
     def test_overwrite(self):
         self.assertIsInstance(self.write.overwrite, bool)
@@ -74,9 +67,6 @@ class TestAttributes(unittest.TestCase):
     def test_create(self):
         self.assertIsInstance(self.write.create, bool)
         self.assertTrue(self.write.create)
-
-    def test_dumper(self):
-        self.assertEqual(self.write.dumper, 'dumper')
 
     def test_kwargs(self):
         self.assertDictEqual({'encoding': 'utf-8'}, self.write.kwargs)
@@ -173,12 +163,12 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         write = YamlWriter('/path')
-        expected = "YamlWriter('/path', False, False, Dumper)"
+        expected = "YamlWriter('/path', False, False)"
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = YamlWriter('/path', answer=42)
-        expected = "YamlWriter('/path', False, False, Dumper, answer=42)"
+        expected = "YamlWriter('/path', False, False, answer=42)"
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

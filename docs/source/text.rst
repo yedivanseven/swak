@@ -22,6 +22,17 @@ text
    :show-inheritance:
 
 
+.. autoclass:: swak.text.read.JsonReader
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+.. autoclass:: swak.text.read.JsonWriter
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.text.read.TomlReader
    :members:
    :special-members: __call__

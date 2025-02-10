@@ -27,7 +27,12 @@ class StepCallback(ABC):
     """Base class to inherit from when implementing custom step callbacks."""
 
     @abstractmethod
-    def __call__(self, train_loss: float, learning_rate: float) -> None:
+    def __call__(
+            self,
+            train_loss: float,
+            learning_rate: float,
+            gradient_norm: float
+    ) -> None:
         """Called after processing a batch to print, log, or save information.
 
         Parameters
@@ -36,6 +41,8 @@ class StepCallback(ABC):
             The training loss on the current batch.
         learning_rate: float
             The learning rate used in the current optimization step.
+        gradient_norm: float
+            Norm of the current gradients.
 
         """
         ...
@@ -138,7 +145,7 @@ class StepPrinter(ArgRepr, StepCallback):
     def __init__(
             self,
             printer: Callable[[str], Any] = print,
-            sep: str = ' '
+            sep: str = ','
     ) -> None:
         super().__init__(printer, sep)
         self.printer = printer
@@ -147,9 +154,18 @@ class StepPrinter(ArgRepr, StepCallback):
     def __iter__(self) -> Iterator['StepPrinter']:
         return iter([self])
 
-    def __call__(self, train_loss: float, learning_rate: float) -> None:
-        """Assemble one-liner with loss and lr and call the printer with it."""
-        msg = self.sep.join([f'{train_loss:7.5f}', f'{learning_rate:7.5f}'])
+    def __call__(
+            self,
+            train_loss: float,
+            learning_rate: float,
+            gradient_norm: float
+    ) -> None:
+        """Assemble one-liner with loss, lr, and norm, and call the printer."""
+        msg = self.sep.join([
+            f'{train_loss:7.5f}',
+            f'{learning_rate:7.5f}',
+            f'{gradient_norm:7.5f}'
+        ])
         self.printer(msg)
 
     def close(self) -> None:

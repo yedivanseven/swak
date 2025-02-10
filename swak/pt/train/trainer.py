@@ -337,7 +337,7 @@ class Trainer(ArgRepr):
                 # Call the step callback with current loss and learning rate
                 if batch_index % self.cb_freq == 0:
                     for step_cb in self.step_cbs:
-                        step_cb(ema, scheduler.get_last_lr()[0])
+                        step_cb(ema, scheduler.get_last_lr()[0], norm.item())
 
             # How many data points to take for computing train (and test) loss.
             n = train.n if test is None else test.n
