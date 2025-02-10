@@ -145,7 +145,7 @@ class StepPrinter(ArgRepr, StepCallback):
     def __init__(
             self,
             printer: Callable[[str], Any] = print,
-            sep: str = ','
+            sep: str = ', '
     ) -> None:
         super().__init__(printer, sep)
         self.printer = printer
