@@ -11,13 +11,16 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.12", "3.13" ]
     steps:
-      - uses: actions/checkout@v4
-        name: Checkout repository
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-        name: Set up python
+          python-version: ${{ matrix.python-version }}
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
       - name: Install ruff
@@ -28,13 +31,16 @@ jobs:
   test:
     name: Unittest
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.12", "3.13" ]
     steps:
-      - uses: actions/checkout@v4
-        name: Checkout repository
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-        name: Set up python
+          python-version: ${{ matrix.python-version }}
       - name: Install pipenv
         run: pip install --upgrade pipenv --user
       - name: Sync PyTorch CPU
