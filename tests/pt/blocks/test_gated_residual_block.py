@@ -106,12 +106,16 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.block = GatedResidualBlock(
-            4,
+            2.6,
             ptn.ReLU(),
             ptn.GELU(),
             ptn.AlphaDropout(),
             bias=False
         )
+
+    def test_mod_dim(self):
+        self.assertIsInstance(self.block.mod_dim, int)
+        self.assertEqual(3, self.block.mod_dim)
 
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ReLU)
@@ -127,6 +131,8 @@ class TestAttributes(unittest.TestCase):
 
     def test_widen(self):
         self.assertIsNone(self.block.widen.bias)
+        self.assertEqual(3, self.block.widen.in_features)
+        self.assertEqual(6, self.block.widen.out_features)
 
 
 class TestUsage(unittest.TestCase):

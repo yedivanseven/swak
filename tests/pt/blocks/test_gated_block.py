@@ -81,7 +81,11 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.block = GatedBlock(4, ptn.ReLU(), bias=False)
+        self.block = GatedBlock(2.8, ptn.ReLU(), bias=False)
+
+    def test_mod_dim(self):
+        self.assertIsInstance(self.block.mod_dim, int)
+        self.assertEqual(3, self.block.mod_dim)
 
     def test_gate(self):
         self.assertIsInstance(self.block.gate, ptn.ReLU)
@@ -91,6 +95,9 @@ class TestAttributes(unittest.TestCase):
 
     def test_widen(self):
         self.assertIsNone(self.block.widen.bias)
+        self.assertEqual(3, self.block.widen.in_features)
+        self.assertEqual(6, self.block.widen.out_features)
+
 
 
 class TestUsage(unittest.TestCase):

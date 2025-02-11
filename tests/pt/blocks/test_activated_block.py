@@ -82,10 +82,14 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.block = ActivatedBlock(
-            4,
+            2.8,
             ptn.ReLU(),
             bias=False
         )
+
+    def test_mod_dim(self):
+        self.assertIsInstance(self.block.mod_dim, int)
+        self.assertEqual(3, self.block.mod_dim)
 
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ReLU)
@@ -95,6 +99,8 @@ class TestAttributes(unittest.TestCase):
 
     def test_project(self):
         self.assertIsNone(self.block.project.bias)
+        self.assertEqual(3, self.block.project.in_features)
+        self.assertEqual(3, self.block.project.out_features)
 
 
 class TestUsage(unittest.TestCase):

@@ -52,13 +52,13 @@ class ActivatedBlock(Block):
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.mod_dim = round(mod_dim)
         # Although few, some activation functions have learnable parameters
         if hasattr(activate, 'reset_parameters'):
             activate.reset_parameters()
         self.activate = activate
         self.kwargs = kwargs
-        self.project = ptn.Linear(mod_dim, mod_dim, **kwargs)
+        self.project = ptn.Linear(self.mod_dim, self.mod_dim, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single, non-linearly activated layer.
@@ -128,16 +128,24 @@ class ActivatedHiddenBlock(Block):
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.mod_dim = round(mod_dim)
         # Although few, some activation functions have learnable parameters
         if hasattr(activate, 'reset_parameters'):
             activate.reset_parameters()
         self.activate = activate
         self.drop = drop
-        self.hidden_factor = hidden_factor
+        self.hidden_factor = round(hidden_factor)
         self.kwargs = kwargs
-        self.widen = ptn.Linear(mod_dim, hidden_factor * mod_dim, **kwargs)
-        self.shrink = ptn.Linear(hidden_factor * mod_dim, mod_dim, **kwargs)
+        self.widen = ptn.Linear(
+            in_features=self.mod_dim,
+            out_features=round(hidden_factor * mod_dim),
+            **kwargs
+        )
+        self.shrink = ptn.Linear(
+            in_features=round(hidden_factor * mod_dim),
+            out_features=self.mod_dim,
+            **kwargs
+        )
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single, non-linearly activated hidden layer.
@@ -202,13 +210,13 @@ class GatedBlock(Block):
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.mod_dim = round(mod_dim)
         # Although few, some activation functions have learnable parameters
         if hasattr(gate, 'reset_parameters'):
             gate.reset_parameters()
         self.gate = gate
         self.kwargs = kwargs
-        self.widen = ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
+        self.widen = ptn.Linear(self.mod_dim, 2 * self.mod_dim, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single gated linear unit (GLU).
@@ -280,16 +288,16 @@ class GatedHiddenBlock(Block):
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.mod_dim = round(mod_dim)
         # Although few, some activation functions have learnable parameters
         if hasattr(gate, 'reset_parameters'):
             gate.reset_parameters()
         self.gate = gate
         self.drop = drop
-        self.hidden_factor = hidden_factor
+        self.hidden_factor = round(hidden_factor)
         self.kwargs = kwargs
-        self.widen = ptn.Linear(mod_dim, self.dim * 2, **kwargs)
-        self.shrink = ptn.Linear(self.dim, mod_dim, **kwargs)
+        self.widen = ptn.Linear(self.mod_dim, self.dim * 2, **kwargs)
+        self.shrink = ptn.Linear(self.dim, self.mod_dim, **kwargs)
 
     @property
     def dim(self) -> int:
@@ -377,7 +385,7 @@ class ActivatedGatedBlock(Block):
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.mod_dim = round(mod_dim)
         # Although few, some activation functions have learnable parameters
         if hasattr(activate, 'reset_parameters'):
             activate.reset_parameters()
@@ -386,10 +394,18 @@ class ActivatedGatedBlock(Block):
         self.activate = activate
         self.gate = gate
         self.drop = drop
-        self.hidden_factor = hidden_factor
+        self.hidden_factor = round(hidden_factor)
         self.kwargs = kwargs
-        self.widen = ptn.Linear(mod_dim, hidden_factor * mod_dim, **kwargs)
-        self.shrink = ptn.Linear(hidden_factor * mod_dim, 2*mod_dim, **kwargs)
+        self.widen = ptn.Linear(
+            in_features=self.mod_dim,
+            out_features=round(hidden_factor * mod_dim),
+            **kwargs
+        )
+        self.shrink = ptn.Linear(
+            in_features=round(hidden_factor * mod_dim),
+            out_features=2 * self.mod_dim,
+            **kwargs
+        )
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a activated, hidden layer followed by a GLU.
@@ -486,7 +502,7 @@ class GatedResidualBlock(Block):
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.mod_dim = round(mod_dim)
         # Although few, some activation functions have learnable parameters
         if hasattr(activate, 'reset_parameters'):
             activate.reset_parameters()
@@ -496,8 +512,8 @@ class GatedResidualBlock(Block):
         self.gate = gate
         self.drop = drop
         self.kwargs = kwargs
-        self.project = ptn.Linear(mod_dim, mod_dim, **kwargs)
-        self.widen = ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
+        self.project = ptn.Linear(self.mod_dim, self.mod_dim, **kwargs)
+        self.widen = ptn.Linear(self.mod_dim, 2 * self.mod_dim, **kwargs)
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single gated residual network (GRN).

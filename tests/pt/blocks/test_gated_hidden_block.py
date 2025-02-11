@@ -113,12 +113,16 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.block = GatedHiddenBlock(
-            4,
+            2.6,
             ptn.ReLU(),
             ptn.AlphaDropout(0.1),
-            3,
+            2.1,
             bias=False
         )
+
+    def test_mod_dim(self):
+        self.assertIsInstance(self.block.mod_dim, int)
+        self.assertEqual(3, self.block.mod_dim)
 
     def test_activate(self):
         self.assertIsInstance(self.block.gate, ptn.ReLU)
@@ -128,19 +132,23 @@ class TestAttributes(unittest.TestCase):
 
     def test_hidden_factor(self):
         self.assertIsInstance(self.block.hidden_factor, int)
-        self.assertEqual(3, self.block.hidden_factor)
+        self.assertEqual(2, self.block.hidden_factor)
 
     def test_kwargs(self):
         self.assertDictEqual({'bias': False}, self.block.kwargs)
 
     def test_widen(self):
         self.assertIsNone(self.block.widen.bias)
+        self.assertEqual(3, self.block.widen.in_features)
+        self.assertEqual(6, self.block.widen.out_features)
 
     def test_shrink(self):
         self.assertIsNone(self.block.shrink.bias)
+        self.assertEqual(3, self.block.shrink.in_features)
+        self.assertEqual(3, self.block.shrink.out_features)
 
     def test_dim(self):
-        self.assertEqual(6, self.block.dim)
+        self.assertEqual(3, self.block.dim)
 
 
 class TestUsage(unittest.TestCase):

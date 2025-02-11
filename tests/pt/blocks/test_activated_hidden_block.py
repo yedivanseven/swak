@@ -106,12 +106,16 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.block = ActivatedHiddenBlock(
-            4,
+            2.6,
             ptn.ReLU(),
             ptn.AlphaDropout(0.1),
-            2,
+            2.1,
             bias=False
         )
+
+    def test_mod_dim(self):
+        self.assertIsInstance(self.block.mod_dim, int)
+        self.assertEqual(3, self.block.mod_dim)
 
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ReLU)
@@ -128,9 +132,13 @@ class TestAttributes(unittest.TestCase):
 
     def test_widen(self):
         self.assertIsNone(self.block.widen.bias)
+        self.assertEqual(3, self.block.widen.in_features)
+        self.assertEqual(5, self.block.widen.out_features)
 
     def test_shrink(self):
         self.assertIsNone(self.block.shrink.bias)
+        self.assertEqual(5, self.block.shrink.in_features)
+        self.assertEqual(3, self.block.shrink.out_features)
 
 
 class TestUsage(unittest.TestCase):
