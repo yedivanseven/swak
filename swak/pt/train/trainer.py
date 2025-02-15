@@ -247,9 +247,10 @@ class Trainer(ArgRepr):
         self.history = {'train_loss': [], 'test_loss': [], 'lr': []}
         try:
             model.reset_parameters()
-        except AttributeError as error:
+        except Exception as error:
             msg = 'Models must have a working "reset_parameters()" method!"'
             raise TrainError(msg) from error
+        model.zero_grad(set_to_none=True)
         return self.resume(model, train, test)
 
     def resume(
@@ -299,12 +300,10 @@ class Trainer(ArgRepr):
         max_epochs_reached = False
         ema = None  # Exponential moving average of per-batch training loss
 
+        model.train()
+        self.loss.train()
         # Loop over epochs.
         for epoch in range(epoch + 1, self.max_epochs + 1):
-            # Prepare the model for training
-            self.loss.train()
-            model.train()
-            model.zero_grad(set_to_none=True)
             # Get an iterator over batches for one epoch of training data.
             n_batches, batches = train(self.batch_size, self.step_freq, epoch)
             # Initialize a progress bar to monitor training in real time.
@@ -348,8 +347,8 @@ class Trainer(ArgRepr):
             n = 0
             ema = None
             train_loss = 0.0
-            self.loss.eval()
             model.eval()
+            self.loss.eval()
             with pt.inference_mode():
                 batches = train.sample(self.batch_size, max_n)
                 progress = tqdm(
