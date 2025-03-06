@@ -1,7 +1,9 @@
 from typing import Any
 from collections.abc import Hashable, Iterable, Callable
+from functools import singledispatchmethod
 from numpy import dtype, ndarray
 from pandas.core.dtypes.base import ExtensionDtype
+from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
 from pandas import DataFrame, Series
 from ..misc.repr import ReprName
 from ..misc import ArgRepr
@@ -61,10 +63,11 @@ class AsType(ReprName):
 
 
 class ColumnSelector(ArgRepr):
-    """Select a single column of a pandas dataframe as a pandas series.
+    """Select a single column of a (grouped) pandas dataframe as a series.
 
-    This is simply a partial for calling a dataframe's ``__getitem__``
-    method with a single argument (using the square-brackets accessor).
+    This is simply a partial for calling a (grouped) dataframe's
+    ``__getitem__`` method with a single argument (using the square-brackets
+    accessor).
 
     Parameters
     ----------
@@ -77,21 +80,26 @@ class ColumnSelector(ArgRepr):
         self.col = self.__valid(col)
         super().__init__(col)
 
+    @singledispatchmethod
     def __call__(self, df: DataFrame) -> Series:
-        """
+        """Select a single column of a (grouped) pandas dataframe as series.
 
         Parameters
         ----------
-        df: DataFrame
-            Pandas dataframe to select column from.
+        df: DataFrame or DataFrameGroupBy
+            Pandas dataframe or grouped dataframe to select column from.
 
         Returns
         -------
-        Series
-            The selected dataframe column.
+        Series or SeriesGroupBy
+            The selected column from the (grouped) dataframe.
 
         """
         return df[self.col]
+
+    @__call__.register
+    def _(self, grouped_df: DataFrameGroupBy) -> SeriesGroupBy:
+        return grouped_df[self.col]
 
     @staticmethod
     def __valid(col: Hashable) -> Hashable:
@@ -100,10 +108,11 @@ class ColumnSelector(ArgRepr):
 
 
 class ColumnsSelector(ArgRepr):
-    """Select one or more columns of a pandas dataframe as dataframe.
+    """Select one or more columns of a (grouped) pandas dataframe as dataframe.
 
-    This is simply a partial for calling a dataframe's ``__getitem__``
-    method with a list of arguments (using the square-brackets accessor).
+    This is simply a partial for calling a (grouped) dataframe's
+    ``__getitem__``  method with a list of arguments (using the square-brackets
+    accessor).
 
     Parameters
     ----------
@@ -123,21 +132,26 @@ class ColumnsSelector(ArgRepr):
         self.cols: tuple[Hashable, ...] = col + self.__valid(cols)
         super().__init__(*self.cols)
 
-    def __call__(self, df: DataFrame) -> DataFrame:
-        """Select the specified column(s) from a pandas DataFrame.
+    @singledispatchmethod
+    def __call__(self, df: DataFrame | DataFrameGroupBy) -> DataFrame:
+        """Select the specified column(s) from a (grouped) pandas dataframe.
 
         Parameters
         ----------
-        df: DataFrame
-            Pandas dataframe to select column(s) from.
+        df: DataFrame or DataFrameGroupBy
+            Pandas dataframe or grouped dataframe to select column(s) from.
 
         Returns
         -------
-        DataFrame
-            The selected dataframe column(s).
+        DataFrame or DataFrameGroupBy
+            The selected column(s) of the (grouped) dataframe.
 
         """
         return df[list(self.cols)]
+
+    @__call__.register
+    def _(self, grouped_df: DataFrameGroupBy) -> DataFrameGroupBy:
+        return grouped_df[list(self.cols)]
 
     @staticmethod
     def __valid(cols: Hashable | Iterable[Hashable]) -> tuple[Hashable, ...]:
@@ -246,3 +260,43 @@ class RowsSelector(ArgRepr):
 
         """
         return df[self.condition]
+
+
+class FrameGroupBy(ArgRepr):
+    """Simple partial of a pandas dataframe's ``groupby`` method.
+
+    Parameters
+    ----------
+    *args
+        Arguments to pass on to the ``groupby`` method call.
+    **kwargs
+        Keyword arguments to pass on to the ``groupby`` method call.
+
+    Note
+    ----
+    For a full list of (keyword) arguments and their description, see the
+    pandas `documentation <https://pandas.pydata.org/pandas-docs/stable/
+    reference/api/pandas.DataFrame.groupby.html>`_.
+
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, df: DataFrame) -> DataFrameGroupBy:
+        """Call the dataframe's ``groupby`` method with the cached (kw)args.
+
+        Parameters
+        ----------
+        df: DataFrame
+            Pandas dataframe to group.
+
+        Returns
+        -------
+        DataFrameGroupBy
+            The grouped dataframe.
+
+        """
+        return df.groupby(*self.args, **self.kwargs)
