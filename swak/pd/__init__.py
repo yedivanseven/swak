@@ -8,12 +8,14 @@ pipe of callable objects.
 
 from .read import ParquetReader
 from .write import ParquetWriter
+from .groupby import FrameGroupByAgg
 from .frame import (
     AsType,
     ColumnSelector,
     ColumnsSelector,
     ColumnMapper,
-    RowsSelector
+    RowsSelector,
+    FrameGroupBy
 )
 
 __all__ = [
@@ -23,7 +25,9 @@ __all__ = [
     'ColumnSelector',
     'ColumnsSelector',
     'ColumnMapper',
-    'RowsSelector'
+    'RowsSelector',
+    'FrameGroupBy',
+    'FrameGroupByAgg'
 ]
 
 # ToDo: Replicate for pola-rs in separate "po" subpackage!

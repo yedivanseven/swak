@@ -2,6 +2,7 @@ import pickle
 import unittest
 from unittest.mock import MagicMock
 import pandas as pd
+from pandas.core.groupby import DataFrameGroupBy
 from swak.pd import ColumnsSelector
 
 
@@ -90,15 +91,30 @@ class TestAttributeUsage(unittest.TestCase):
         selection = select(self.df)
         self.assertIsInstance(selection, pd.DataFrame)
 
+    def test_return_type_groupby_empty(self):
+        select = ColumnsSelector()
+        selection = select(self.df.groupby([0]))
+        self.assertIsInstance(selection, DataFrameGroupBy)
+
     def test_return_type_one_column(self):
         select = ColumnsSelector(0)
         selection = select(self.df)
         self.assertIsInstance(selection, pd.DataFrame)
 
+    def test_return_type_groupby_one_column(self):
+        select = ColumnsSelector(1)
+        selection = select(self.df.groupby([0]))
+        self.assertIsInstance(selection, DataFrameGroupBy)
+
     def test_return_type_two_columns(self):
         select = ColumnsSelector(0, 1)
         selection = select(self.df)
         self.assertIsInstance(selection, pd.DataFrame)
+
+    def test_return_type_groupby_two_columns(self):
+        select = ColumnsSelector(0, 1)
+        selection = select(self.df.groupby([0]))
+        self.assertIsInstance(selection, DataFrameGroupBy)
 
     def test_return_value_empty(self):
         select = ColumnsSelector()

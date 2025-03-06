@@ -27,7 +27,7 @@ text
    :special-members: __call__
    :show-inheritance:
 
-.. autoclass:: swak.text.read.JsonWriter
+.. autoclass:: swak.text.write.JsonWriter
    :members:
    :special-members: __call__
    :show-inheritance:

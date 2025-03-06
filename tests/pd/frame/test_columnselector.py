@@ -2,6 +2,7 @@ import pickle
 import unittest
 from unittest.mock import MagicMock
 import pandas as pd
+from pandas.core.groupby import SeriesGroupBy
 from swak.pd import ColumnSelector
 
 
@@ -36,6 +37,11 @@ class TestAttributeUsage(unittest.TestCase):
         select = ColumnSelector(1)
         column = select(self.df)
         pd.testing.assert_series_equal(self.df[1], column)
+
+    def test_groupby_return_type(self):
+        select = ColumnSelector(1)
+        column = select(self.df.groupby([0]))
+        self.assertIsInstance(column, SeriesGroupBy)
 
     def test_empty(self):
         select = ColumnSelector(1)
