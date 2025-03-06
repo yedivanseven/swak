@@ -10,7 +10,6 @@ class TestAttributeUsage(unittest.TestCase):
     def setUp(self) -> None:
         self.mock = Mock()
         self.df = pd.DataFrame([[1, 5], [2, 6], [3, 7], [4, 8]])
-        self.empty = pd.DataFrame(columns=[0, 1])
 
     def test_has_args(self):
         agg = FrameGroupByAgg()
