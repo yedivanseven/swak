@@ -16,7 +16,8 @@ from .frame import (
     ColumnMapper,
     RowsSelector,
     FrameGroupBy,
-    Join
+    Join,
+    Assign
 )
 
 __all__ = [
@@ -29,7 +30,8 @@ __all__ = [
     'RowsSelector',
     'FrameGroupBy',
     'FrameGroupByAgg',
-    'Join'
+    'Join',
+    'Assign'
 ]
 
 # ToDo: Replicate for pola-rs in separate "po" subpackage!
