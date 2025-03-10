@@ -29,6 +29,7 @@ build = "*"
 google-cloud-storage = "*"
 google-cloud-bigquery = "*"
 pandas-gbq = "*"
+boto3 = "*"
 
 [cpu]
 torch = {version="*", index="cpu"}
