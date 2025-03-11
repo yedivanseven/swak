@@ -7,8 +7,8 @@ import gzip
 import json
 import yaml
 from yaml import Loader
-from ..misc import ArgRepr
-from .misc import NotFound, Toml, Yaml, LiteralNotFound
+from ..misc import ArgRepr, NotFound, LiteralNotFound
+from .misc import Toml, Yaml
 
 
 class TomlReader(ArgRepr):
@@ -35,7 +35,7 @@ class TomlReader(ArgRepr):
 
     See Also
     --------
-    NotFound
+    ~swak.misc.NotFound
 
     """
 
@@ -112,7 +112,7 @@ class YamlReader(ArgRepr):
 
     See Also
     --------
-    NotFound
+    ~swak.misc.NotFound
 
     """
 
@@ -193,7 +193,7 @@ class JsonReader(ArgRepr):
 
     See Also
     --------
-    NotFound
+    ~swak.misc.NotFound
 
     """
 

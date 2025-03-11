@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
-from swak.text import TextResourceLoader, NotFound
+from swak.misc import NotFound
+from swak.text import TextResourceLoader
 
 
 class TestDefaultAttributes(unittest.TestCase):
