@@ -60,16 +60,3 @@ text
    :members:
    :special-members: __call__
    :show-inheritance:
-
-
-.. autoclass:: swak.text.misc.NotFound
-   :show-inheritance:
-
-   .. autoattribute:: IGNORE
-      :annotation: = ignore
-
-   .. autoattribute:: WARN
-      :annotation: = warn
-
-   .. autoattribute:: RAISE
-      :annotation: = raise

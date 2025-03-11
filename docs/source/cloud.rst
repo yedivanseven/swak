@@ -9,3 +9,4 @@ cloud
    :caption: Subpackages
 
    gcp
+   aws

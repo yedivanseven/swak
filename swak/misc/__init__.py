@@ -1,6 +1,7 @@
 """Collection of convenience classes that do not fit any other category."""
 
 from .repr import ArgRepr, IndentRepr
+from .enums import NotFound, LiteralNotFound, Bears, LiteralBears
 from .loggers import (
     StdLogger,
     FileLogger,
@@ -13,6 +14,10 @@ from .loggers import (
 __all__ = [
     'ArgRepr',
     'IndentRepr',
+    'NotFound',
+    'LiteralNotFound',
+    'Bears',
+    'LiteralBears',
     'StdLogger',
     'FileLogger',
     'DEFAULT_FMT',

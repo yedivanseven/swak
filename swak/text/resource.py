@@ -1,7 +1,6 @@
 import pkgutil
 import warnings
-from ..misc import ArgRepr
-from .misc import NotFound, LiteralNotFound
+from ..misc import ArgRepr, NotFound, LiteralNotFound
 
 
 class TextResourceLoader(ArgRepr):
@@ -25,7 +24,7 @@ class TextResourceLoader(ArgRepr):
 
     See Also
     --------
-    NotFound
+    ~swak.misc.NotFound
 
     """
 

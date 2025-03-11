@@ -3,8 +3,7 @@
 import warnings
 import torch as pt
 from pathlib import Path
-from ..misc import ArgRepr
-from ..text import NotFound, LiteralNotFound
+from ..misc import ArgRepr, NotFound, LiteralNotFound
 from .types import Module, Device
 
 __all__ = [
@@ -87,7 +86,7 @@ class StateLoader(ArgRepr):
 
     See Also
     --------
-    NotFound
+    ~swak.misc.NotFound
 
     """
 

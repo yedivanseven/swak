@@ -12,6 +12,7 @@ requires-python = ">=3.12"
 dependencies = [
   "pandas>=2.2",
   "pyarrow>=17.0",
+  "polars>=1.24",
   "pyyaml>=6.0",
   "tomli-w>=1.1",
   "tqdm>=4.6"
@@ -41,9 +42,10 @@ Changelog = "https://github.com/yedivanseven/swak/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 cloud = [
-  "google-cloud-bigquery>=3.25",
-  "google-cloud-storage>=2.18",
-  "pandas-gbq>=0.23"
+    "google-cloud-bigquery>=3.25",
+    "google-cloud-storage>=2.18",
+    "pandas-gbq>=0.23",
+    "boto3>=1.37.9"
 ]
 
 [tool.setuptools.packages]

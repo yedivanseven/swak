@@ -2,7 +2,8 @@ import pickle
 import unittest
 from unittest.mock import patch, Mock, mock_open
 from pathlib import Path
-from swak.text import JsonReader, NotFound
+from swak.misc import NotFound
+from swak.text import JsonReader
 from json import JSONDecodeError
 
 

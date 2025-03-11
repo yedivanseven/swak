@@ -4,7 +4,7 @@ from typing import Any, TypedDict
 from collections import OrderedDict
 from pathlib import Path
 import torch as pt
-from ...text import NotFound, LiteralNotFound
+from ...misc import NotFound, LiteralNotFound
 from ..types import Tensor, Module, Optimizer, LRScheduler
 
 __all__ = [
@@ -222,6 +222,10 @@ class OnDisk(Checkpoint):
         What to do if a checkpoint is loaded from the specified `path`
         but none is there yet. One of "ignore", "warn", or "raise".
         Defaults to "raise". Use the ``NotFound`` enum to avoid typos!
+
+    See Also
+    --------
+    ~swak.misc.NotFound
 
     """
 
