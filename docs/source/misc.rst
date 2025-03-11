@@ -1,5 +1,5 @@
 misc
-=====
+====
 
 .. automodule:: swak.misc
 
@@ -34,6 +34,10 @@ misc
    :show-inheritance:
 
 
+
+Enums
+-----
+
 .. autoclass:: swak.misc.NotFound
    :show-inheritance:
 
@@ -45,3 +49,13 @@ misc
 
    .. autoattribute:: RAISE
       :annotation: = raise
+
+
+.. autoclass:: swak.misc.Bears
+   :show-inheritance:
+
+   .. autoattribute:: PANDAS
+      :annotation: = pandas
+
+   .. autoattribute:: POLARS
+      :annotation: = polars

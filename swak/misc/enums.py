@@ -2,6 +2,7 @@ from enum import StrEnum
 from typing import Literal
 
 type LiteralNotFound = Literal['ignore', 'warn', 'raise']
+type LiteralBears = Literal['pandas', 'polars']
 
 
 class NotFound(StrEnum):
@@ -9,3 +10,9 @@ class NotFound(StrEnum):
     IGNORE = 'ignore'
     WARN = 'warn'
     RAISE = 'raise'
+
+
+class Bears(StrEnum):
+    """Enum to choose pandas versus polars."""
+    PANDAS = 'pandas'
+    POLARS = 'polars'

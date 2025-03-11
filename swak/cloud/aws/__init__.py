@@ -4,10 +4,12 @@ Specifically, data scientists tend to interact heavily with S3 object storage.
 
 """
 
-from .df2s3 import DataFrameS3Parquet
+from .s3 import S3
+from .df2s3 import DataFrame2S3Parquet
 from .s32df import S3Parquet2DataFrame
 
 __all__ = [
-    'DataFrameS3Parquet',
+    'S3',
+    'DataFrame2S3Parquet',
     'S3Parquet2DataFrame'
 ]

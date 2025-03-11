@@ -1,109 +1,102 @@
 from typing import Any
 from io import BytesIO
-from functools import cached_property
-from pandas import DataFrame
-from swak.misc import ArgRepr
-from botocore.client import BaseClient
-from botocore.config import Config
 from boto3.s3.transfer import TransferConfig
-import boto3
+from pandas import DataFrame as PandasFrame
+from polars import DataFrame as PolarsFrame
+from ...misc import ArgRepr
+from .s3 import S3
+
+type Frame = PandasFrame | PolarsFrame
 
 
-class DataFrameS3Parquet(ArgRepr):
+class DataFrame2S3Parquet(ArgRepr):
+    """Upload a pandas or polars dataframe to an S3 bucket.
+
+    Parameters
+    ----------
+    s3: S3
+        An instance of a wrapped S3 client.
+    bucket: str
+        The name of the bucket to upload to.
+    prefix: str, optional
+        The prefix of the parquet file to upload the dataframe to. May include
+        any number of string placeholders (i.e., pairs of curly brackets) that
+        will be interpolated when instances are called.
+        Defaults to an empty string.
+    extra_kws: dict, optional
+        Passed on as ``ExtraArgs`` to the `upload_fileobj <meth_>`__ method of
+        the client. See the `docs <doc_>`__ for all options.
+    upload_kws: dict, optional
+        Passed on as ``Config`` to the `upload_fileobj <meth_>`__ method of
+        the client. See the `docs <doc_>`__ for all options.
+    **kwargs
+        Additional keyword arguments are passed on to the ``to_parquet`` method
+        of the dataframe.
+
+
+    .. _meth: https://boto3.amazonaws.com/v1/documentation/api/latest/reference
+             /services/s3/client/upload_fileobj.html
+    .. _doc: https://boto3.amazonaws.com/v1/documentation/api/latest/
+            reference/customizations/s3.html#boto3.s3.transfer.TransferConfig
+
+    See Also
+    --------
+    S3
+
+    """
 
     def __init__(
             self,
+            s3: S3,
             bucket: str,
             prefix: str = '',
-            region_name: str | None = None,
-            api_version: str | None = None,
-            use_ssl: bool = True,
-            verify: bool | str = True,
-            endpoint_url: str | None = None,
-            aws_account_id: str | None = None,
-            aws_access_key_id: str | None = None,
-            aws_secret_access_key: str | None = None,
-            aws_session_token: str  | None = None,
-            config: dict[str, Any] | None = None,
             extra_kws: dict[str, Any] | None = None,
             upload_kws: dict[str, Any] | None = None,
             **kwargs: Any
     ) -> None:
+        self.s3 = s3
         self.bucket = self.__strip(bucket)
         self.prefix = self.__strip(prefix)
-        self.region_name = self.__strip(region_name)
-        self.api_version = self.__strip(api_version)
-        self.use_ssl = use_ssl
-        self.verify = verify.strip() if isinstance(verify, str) else verify
-        self.endpoint_url = self.__strip(endpoint_url)
-        self.__aws_account_id = self.__strip(aws_account_id)
-        self.__aws_access_key_id = self.__strip(aws_access_key_id)
-        self.__aws_secret_access_key = self.__strip(aws_secret_access_key)
-        self.__aws_session_token = self.__strip(aws_session_token)
-        self.config = {} if config is None else config
         self.extra_kws = {} if extra_kws is None else extra_kws
         self.upload_kws = {} if upload_kws is None else upload_kws
         self.kwargs = kwargs
         super().__init__(
+            self.s3,
             self.bucket,
             self.prefix,
-            self.region_name,
-            self.api_version,
-            self.use_ssl,
-            self.verify,
-            self.endpoint_url,
-            aws_account_id=self.aws_account_id,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            aws_session_token=self.aws_session_token,
-            config=self.config,
-            extra_kws=self.extra_kws,
-            upload_kws=self.upload_kws,
+            extra_kws=extra_kws,
+            upload_kws=upload_kws,
             **self.kwargs
         )
 
     @staticmethod
     def __strip(attr: str | None) -> str:
-        return attr if attr is None else attr.strip()
+        """Strip leading and trailing whitespaces from string arguments."""
+        return attr if attr is None else attr.strip(' /')
 
-    @property
-    def aws_account_id(self) -> str:
-        return None if self.__aws_account_id is None else '****'
+    def __call__(self, df: Frame, *parts: str) -> tuple[()]:
+        """Write a pandas or polars dataframe to S3 object storage.
 
-    @property
-    def aws_access_key_id(self) -> str:
-        return None if self.__aws_access_key_id is None else '****'
+        Parameters
+        ----------
+        df: DataFrame
+            The pandas or polars dataframe to upload.
+        *parts: str
+            Fragments that will be interpolated into the `prefix` given at
+            instantiation. Obviously, there must be at least as many as there
+            are placeholders in the `prefix`.
 
-    @property
-    def aws_secret_access_key(self) -> str:
-        return None if self.__aws_secret_access_key is None else '****'
+        Returns
+        -------
+        tuple
+            An empty tuple.
 
-    @property
-    def aws_session_token(self) -> str:
-        return None if self.__aws_session_token is None else '****'
-
-    @cached_property
-    def client(self) -> BaseClient:
-        return boto3.client(
-            service_name='s3',
-            region_name=self.region_name,
-            api_version=self.api_version,
-            use_ssl=self.use_ssl,
-            verify=self.verify,
-            endpoint_url=self.endpoint_url,
-            aws_account_id=self.__aws_account_id,
-            aws_access_key_id=self.__aws_access_key_id,
-            aws_secret_access_key=self.__aws_secret_access_key,
-            aws_session_token=self.__aws_session_token,
-            config=Config(**self.config)
-        )
-
-    def __call__(self, df: DataFrame, *parts: str) -> tuple[()]:
+        """
         key = self.prefix.format(*parts).strip()
         with BytesIO() as buffer:
             df.to_parquet(buffer, **self.kwargs)
             buffer.seek(0)
-            self.client.upload_fileobj(
+            self.s3.client.upload_fileobj(
                 Fileobj=buffer,
                 Bucket=self.bucket,
                 Key=key,

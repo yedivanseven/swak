@@ -1,109 +1,109 @@
 from typing import Any
 from io import BytesIO
-from functools import cached_property
-from pandas import DataFrame
-from swak.misc import ArgRepr
-from botocore.client import BaseClient
-from botocore.config import Config
+from collections.abc import Callable
 import pandas as pd
-import boto3
+import polars as pl
+from ...misc import ArgRepr, Bears, LiteralBears
+from .s3 import S3
 
 
-class S3Parquet2DataFrame(ArgRepr):
+class S3Parquet2DataFrame[T](ArgRepr):
+    """Download a single parquet file from S3 object storage.
+
+    Type-annotate classes on instantiation with either a pandas or a polars
+    dataframe so that static type checkers can infer the return type of
+    the callable instances!
+
+    Parameters
+    ----------
+    s3: S3
+        An instance of a wrapped S3 client.
+    bucket: str
+        The name of the bucket to upload to.
+    prefix: str, optional
+        The prefix of the parquet file to download. Since it (or part of it)
+        can also be provided later, when the callable instance is called, it
+        is optional here. Defaults to an empty string.
+    bear: str, optional
+        Type of dataframe to return. Can be one of "pandas" or "polars". Use
+        the ``Bears`` enum to avoid typos. Defaults to "pandas".
+    get_kws: dict, optional
+        Keyword arguments (in addition to `Bucket` and `Key`) to pass to the
+        `get_object <https://boto3.amazonaws.com/v1/documentation/api/latest/
+        reference/services/s3/client/get_object.html>`_ method of the client.
+        Defaults to ``None``.
+    **kwargs
+        Additional keyword arguments are passed on to the top-level
+        ``read_parquet`` function of either pandas or polars.
+
+    See Also
+    --------
+    S3
+    ~swak.misc.Bears
+
+    """
 
     def __init__(
             self,
+            s3: S3,
             bucket: str,
             prefix: str = '',
-            region_name: str | None = None,
-            api_version: str | None = None,
-            use_ssl: bool = True,
-            verify: bool | str = True,
-            endpoint_url: str | None = None,
-            aws_account_id: str | None = None,
-            aws_access_key_id: str | None = None,
-            aws_secret_access_key: str | None = None,
-            aws_session_token: str  | None = None,
-            config: dict[str, Any] | None = None,
+            bear: str | Bears | LiteralBears = Bears.PANDAS,
             get_kws: dict[str, Any] | None = None,
             **kwargs: Any
     ) -> None:
+        self.s3 = s3
         self.bucket = self.__strip(bucket)
         self.prefix = self.__strip(prefix)
-        self.region_name = self.__strip(region_name)
-        self.api_version = self.__strip(api_version)
-        self.use_ssl = use_ssl
-        self.verify = verify.strip() if isinstance(verify, str) else verify
-        self.endpoint_url = self.__strip(endpoint_url)
-        self.__aws_account_id = self.__strip(aws_account_id)
-        self.__aws_access_key_id = self.__strip(aws_access_key_id)
-        self.__aws_secret_access_key = self.__strip(aws_secret_access_key)
-        self.__aws_session_token = self.__strip(aws_session_token)
-        self.config = {} if config is None else config
+        self.bear = bear.strip().lower()
         self.get_kws = {} if get_kws is None else get_kws
         self.kwargs = kwargs
         super().__init__(
+            self.s3,
             self.bucket,
             self.prefix,
-            self.region_name,
-            self.api_version,
-            self.use_ssl,
-            self.verify,
-            self.endpoint_url,
-            aws_account_id=self.aws_account_id,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            aws_session_token=self.aws_session_token,
-            config=self.config,
-            get_kws=self.get_kws,
+            self.bear,
+            get_kws=get_kws,
             **self.kwargs
         )
 
     @staticmethod
     def __strip(attr: str | None) -> str:
-        return attr if attr is None else attr.strip()
+        """Strip leading and trailing whitespaces from string arguments."""
+        return attr if attr is None else attr.strip(' /')
 
     @property
-    def aws_account_id(self) -> str:
-        return None if self.__aws_account_id is None else '****'
+    def read_parquet(self) -> Callable[[BytesIO, ...], T]:
+        """Top-level ``read_parquet`` function of either pandas or polars."""
+        return {
+            Bears.PANDAS: pd.read_parquet,
+            Bears.POLARS: pl.read_parquet
+        }[self.bear]
 
-    @property
-    def aws_access_key_id(self) -> str:
-        return None if self.__aws_access_key_id is None else '****'
+    def __call__(self, path: str = '') -> T:
+        """Download a single parquet file from S3 object storage.
 
-    @property
-    def aws_secret_access_key(self) -> str:
-        return None if self.__aws_secret_access_key is None else '****'
+        Parameters
+        ----------
+        path:
+            The path to the parquet file to load. If given here, it will
+            be appended to the `prefix` given at instantiation time.
+            Defaults to an empty string.
 
-    @property
-    def aws_session_token(self) -> str:
-        return None if self.__aws_session_token is None else '****'
+        Returns
+        -------
+        DataFrame
+            A pandas or polars dataframe, depending on `bear`.
 
-    @cached_property
-    def client(self) -> BaseClient:
-        return boto3.client(
-            service_name='s3',
-            region_name=self.region_name,
-            api_version=self.api_version,
-            use_ssl=self.use_ssl,
-            verify=self.verify,
-            endpoint_url=self.endpoint_url,
-            aws_account_id=self.__aws_account_id,
-            aws_access_key_id=self.__aws_access_key_id,
-            aws_secret_access_key=self.__aws_secret_access_key,
-            aws_session_token=self.__aws_session_token,
-            config=Config(**self.config)
-        )
-
-    def __call__(self, path: str = '') -> DataFrame:
-        stripped = path.strip().lstrip('/')
+        """
+        stripped = path.strip(' /')
         prepended = '/' + stripped if stripped else stripped
         key = self.prefix + prepended
-        response = self.client.get_object(
+        response = self.s3.client.get_object(
             Key=key,
             Bucket=self.bucket,
             **self.get_kws
         )
         with BytesIO(response.get('Body').read()) as buffer:
-            df = pd.read_parquet(buffer, **self.kwargs)
+            df = self.read_parquet(buffer, **self.kwargs)
         return df
