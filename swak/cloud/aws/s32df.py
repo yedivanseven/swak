@@ -1,6 +1,8 @@
 from typing import Any
 from io import BytesIO
 from collections.abc import Callable
+from functools import cached_property
+from botocore.client import BaseClient
 import pandas as pd
 import polars as pl
 from ...misc import ArgRepr, Bears, LiteralBears
@@ -72,6 +74,11 @@ class S3Parquet2DataFrame[T](ArgRepr):
         """Strip leading and trailing whitespaces from string arguments."""
         return attr if attr is None else attr.strip(' /')
 
+    @cached_property
+    def client(self) -> BaseClient:
+        """A cached instance of a fully configured S3 client."""
+        return self.s3.client
+
     @property
     def read_parquet(self) -> Callable[[BytesIO, ...], T]:
         """Top-level ``read_parquet`` function of either pandas or polars."""
@@ -99,7 +106,7 @@ class S3Parquet2DataFrame[T](ArgRepr):
         stripped = path.strip(' /')
         prepended = '/' + stripped if stripped else stripped
         key = self.prefix + prepended
-        response = self.s3.client.get_object(
+        response = self.client.get_object(
             Key=key,
             Bucket=self.bucket,
             **self.get_kws

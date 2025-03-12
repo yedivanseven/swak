@@ -48,6 +48,17 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_kwargs(self):
         self.assertDictEqual({}, self.upload.kwargs)
 
+    def test_has_client(self):
+        upload = DataFrame2S3Parquet(Mock(), self.bucket)
+        self.assertTrue(hasattr(upload, 'client'))
+
+    def test_client(self):
+        s3 = Mock()
+        client = Mock()
+        s3.client = client
+        upload = DataFrame2S3Parquet(s3, self.bucket)
+        self.assertIs(upload.client, client)
+
 
 class TestAttributes(unittest.TestCase):
 

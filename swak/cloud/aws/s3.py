@@ -1,5 +1,4 @@
 from typing import Any
-from functools import cached_property
 import boto3
 from botocore.client import BaseClient
 from botocore.config import Config
@@ -10,7 +9,7 @@ class S3(ArgRepr):
     """Wraps an S3 client for delayed instantiation and config encapsulation.
 
     For more convenient function chaining in functional compositions, instances
-    are also callable and simply return the cached client.
+    are also callable and simply return a new client when called.
 
     Parameters
     ----------
@@ -111,9 +110,9 @@ class S3(ArgRepr):
         """Obfuscated string representation of the AWS session token."""
         return None if self.__aws_session_token is None else '****'
 
-    @cached_property
+    @property
     def client(self) -> BaseClient:
-        """S3 client to be created when first needed and cached thereafter."""
+        """A fresh, new  S3 client."""
         return boto3.client(
             service_name='s3',
             region_name=self.region_name,
@@ -129,5 +128,5 @@ class S3(ArgRepr):
         )
 
     def __call__(self, *_: Any, **__: Any) -> BaseClient:
-        """Return the cached S3 client, ignoring any (keyword) arguments."""
+        """Return a fresh, new S3 client, ignoring any (keyword) arguments."""
         return self.client
