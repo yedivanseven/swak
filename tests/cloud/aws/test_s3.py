@@ -194,25 +194,13 @@ class TestUsage(unittest.TestCase):
 
     @patch('boto3.client')
     @patch('swak.cloud.aws.s3.Config')
-    def test_client_cached_when_requested(self, config, client):
+    def test_new_clients_when_requested_again(self, config, client):
         config.return_value = 'config'
         _ = self.s3.client
         _ = self.s3.client
         _ = self.s3.client
-        client.assert_called_once_with(
-            service_name='s3',
-            region_name=self.region_name,
-            api_version=self.api_version,
-            use_ssl=self.use_ssl,
-            verify=self.verify,
-            endpoint_url=self.endpoint_url,
-            aws_account_id=self.aws_account_id,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            aws_session_token=self.aws_session_token,
-            config='config'
-        )
-        config.assert_called_once_with(**self.kwargs)
+        self.assertEqual(3, client.call_count)
+        self.assertEqual(3, config.call_count)
 
     @patch('boto3.client')
     @patch('swak.cloud.aws.s3.Config')
@@ -236,25 +224,13 @@ class TestUsage(unittest.TestCase):
 
     @patch('boto3.client')
     @patch('swak.cloud.aws.s3.Config')
-    def test_client_cached_when_called(self, config, client):
+    def test_new_clients_when_called_again(self, config, client):
         config.return_value = 'config'
         _ = self.s3()
         _ = self.s3()
         _ = self.s3()
-        client.assert_called_once_with(
-            service_name='s3',
-            region_name=self.region_name,
-            api_version=self.api_version,
-            use_ssl=self.use_ssl,
-            verify=self.verify,
-            endpoint_url=self.endpoint_url,
-            aws_account_id=self.aws_account_id,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            aws_session_token=self.aws_session_token,
-            config='config'
-        )
-        config.assert_called_once_with(**self.kwargs)
+        self.assertEqual(3, client.call_count)
+        self.assertEqual(3, config.call_count)
 
 
 class TestMisc(unittest.TestCase):

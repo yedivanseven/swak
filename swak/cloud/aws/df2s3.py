@@ -1,5 +1,7 @@
 from typing import Any
 from io import BytesIO
+from functools import cached_property
+from botocore.client import BaseClient
 from boto3.s3.transfer import TransferConfig
 from pandas import DataFrame as PandasFrame
 from polars import DataFrame as PolarsFrame
@@ -74,6 +76,11 @@ class DataFrame2S3Parquet(ArgRepr):
         """Strip leading and trailing whitespaces from string arguments."""
         return attr if attr is None else attr.strip(' /')
 
+    @cached_property
+    def client(self) -> BaseClient:
+        """A cached instance of a fully configured S3 client."""
+        return self.s3.client
+
     def __call__(self, df: Frame, *parts: str) -> tuple[()]:
         """Write a pandas or polars dataframe to S3 object storage.
 
@@ -96,7 +103,7 @@ class DataFrame2S3Parquet(ArgRepr):
         with BytesIO() as buffer:
             df.to_parquet(buffer, **self.kwargs)
             buffer.seek(0)
-            self.s3.client.upload_fileobj(
+            self.client.upload_fileobj(
                 Fileobj=buffer,
                 Bucket=self.bucket,
                 Key=key,

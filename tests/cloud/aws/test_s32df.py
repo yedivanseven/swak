@@ -1,6 +1,8 @@
 import unittest
 import pickle
 from unittest.mock import patch, Mock
+import pandas as pd
+import polars as pl
 from swak.cloud.aws import S3Parquet2DataFrame
 
 
@@ -47,6 +49,23 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_kwargs(self):
         self.assertDictEqual({}, self.download.kwargs)
 
+    def test_has_client(self):
+        download = S3Parquet2DataFrame(Mock(), self.bucket)
+        self.assertTrue(hasattr(download, 'client'))
+
+    def test_client(self):
+        s3 = Mock()
+        client = Mock()
+        s3.client = client
+        download = S3Parquet2DataFrame(s3, self.bucket)
+        self.assertIs(download.client, client)
+
+    def test_has_read_parquet(self):
+        self.assertTrue(hasattr(self.download, 'read_parquet'))
+
+    def test_read_parquet(self):
+        self.assertIs(self.download.read_parquet, pd.read_parquet)
+
 
 class TestAttributes(unittest.TestCase):
 
@@ -80,6 +99,9 @@ class TestAttributes(unittest.TestCase):
 
     def test_kwargs(self):
         self.assertEqual(self.kwargs, self.download.kwargs)
+
+    def test_read_parquet(self):
+        self.assertIs(self.download.read_parquet, pl.read_parquet)
 
     def test_repr(self):
         expected = ("S3Parquet2DataFrame('s3', 'bucket', 'prefix',"
