@@ -10,7 +10,7 @@ from ..misc import ArgRepr
 
 type Type = str | type | dtype | ExtensionDtype
 type Types = dict[Hashable, Type]
-type Mask = list[bool] | Series | ndarray
+type Mask = list[bool] | Series | ndarray[bool]
 type Condition = Callable[[DataFrame], Mask]
 type Transform = dict[Hashable, Any] | Series | Callable[[Any], Any]
 type Others = Series | DataFrame | list[Series | DataFrame]
