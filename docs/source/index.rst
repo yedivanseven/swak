@@ -80,6 +80,7 @@ as a, well, template.
    cli
    jsonobject
    pd
+   pl
    cloud
    pt
    misc
