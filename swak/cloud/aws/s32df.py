@@ -55,8 +55,8 @@ class S3Parquet2DataFrame[T](ArgRepr):
             **kwargs: Any
     ) -> None:
         self.s3 = s3
-        self.bucket = self.__strip(bucket)
-        self.prefix = self.__strip(prefix)
+        self.bucket = bucket.strip(' /')
+        self.prefix = prefix.strip().lstrip('/')
         self.bear = bear.strip().lower()
         self.get_kws = {} if get_kws is None else get_kws
         self.kwargs = kwargs
@@ -68,11 +68,6 @@ class S3Parquet2DataFrame[T](ArgRepr):
             get_kws=get_kws,
             **self.kwargs
         )
-
-    @staticmethod
-    def __strip(attr: str | None) -> str:
-        """Strip leading and trailing whitespaces from string arguments."""
-        return attr if attr is None else attr.strip(' /')
 
     @cached_property
     def client(self) -> BaseClient:

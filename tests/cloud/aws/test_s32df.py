@@ -89,7 +89,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.bucket.strip(' /'), self.download.bucket)
 
     def test_prefix_stripped(self):
-        self.assertEqual(self.prefix.strip(' /'), self.download.prefix)
+        self.assertEqual(self.prefix.strip().lstrip('/'), self.download.prefix)
 
     def test_bear_stripped(self):
         self.assertEqual(self.bear.strip().lower(), self.download.bear)
@@ -104,7 +104,7 @@ class TestAttributes(unittest.TestCase):
         self.assertIs(self.download.read_parquet, pl.read_parquet)
 
     def test_repr(self):
-        expected = ("S3Parquet2DataFrame('s3', 'bucket', 'prefix',"
+        expected = ("S3Parquet2DataFrame('s3', 'bucket', 'prefix /',"
                     " 'polars', get_kws={'one': 1}, two=2)")
         self.assertEqual(expected, repr(self.download))
 
