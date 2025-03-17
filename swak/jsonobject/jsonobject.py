@@ -79,7 +79,7 @@ class SchemaMeta(type):
         # The schema is in the class __annotations__
         ancestral_schema = mcs.__ancestral(cls, '__annotations__')
         # Extract (string) keys from additional keyword arguments
-        kwarg_schema = {key: str for key in kwargs}
+        kwarg_schema = dict.fromkeys(kwargs, str)
         # Class body fields overwrite keyword fields overwrite inherited fields
         schema = ancestral_schema | kwarg_schema | cls.__annotations__
         # Validate the schema just assembled

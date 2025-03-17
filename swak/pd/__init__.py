@@ -25,7 +25,10 @@ from .frame import (
     Assign,
     Drop,
     DropNA,
-    SortValues
+    SortValues,
+    SetIndex,
+    ResetIndex,
+    Rename
 )
 
 __all__ = [
@@ -41,6 +44,9 @@ __all__ = [
     'Drop',
     'DropNA',
     'SortValues',
+    'SetIndex',
+    'ResetIndex',
+    'Rename',
     'FrameGroupBy',
     'FrameGroupByAgg',
     'RollingGroupBy',

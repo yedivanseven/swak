@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Added pandas dataframe SortValues, Drop, and DropNA partials
+- Added pandas dataframe SortValues, Drop, DropNA, SetIndex, ResetIndex, and Rename partials
 - Added pandas group-by RollingGroupBy, RollingGroupByAgg, and RollingGroupByApply partials
 - Added first batch of polars dataframe partials
 - Added polars GroupByAgg partial

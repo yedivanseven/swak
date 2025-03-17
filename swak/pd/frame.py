@@ -1,9 +1,9 @@
 from typing import Literal, Any, overload
-from collections.abc import Hashable, Callable, Sequence
+from collections.abc import Hashable, Callable, Sequence, Iterator, Mapping
 from numpy import dtype, ndarray
 from pandas.core.dtypes.base import ExtensionDtype
 from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, Index
 from ..misc.repr import ReprName
 from ..misc import ArgRepr
 
@@ -13,6 +13,9 @@ type Mask = list[bool] | Series | ndarray[bool]
 type Condition = Callable[[DataFrame], Mask]
 type Transform = dict[Hashable, Any] | Series | Callable[[Any], Any]
 type Others = Series | DataFrame | list[Series | DataFrame]
+type Key = Hashable | ndarray[Hashable] | Series | Index | Iterator[Hashable]
+type Keys = list[Key]
+type Renamer = Mapping[Any, Hashable] | Callable[[Any], Hashable]
 
 
 class AsType(ReprName):
@@ -506,8 +509,8 @@ class DropNA(ArgRepr):
     subset: hashable or sequence, optional
         Labels along other axis to consider, e.g. if you are dropping rows
         these would be a list of columns to include. Defaults to ``None``.
-    ignore_index: bool
-        Defaults to ``False``. If True, the resulting axis will be labeled
+    ignore_index: bool, optional
+        Defaults to ``False``. If ``True``, the resulting axis will be labeled
         0, 1, …, n - 1.
 
     """
@@ -607,3 +610,212 @@ class SortValues(ArgRepr):
 
         """
         return df.sort_values(self.by, inplace=False, **self.kwargs)
+
+
+class SetIndex(ArgRepr):
+    """Simple partial of a pandas dataframe's ``set_index`` method.
+
+    Parameters
+    ----------
+    keys: Hashable or array-like
+        This parameter can be either a single column key, a single array of
+        the same length as the calling DataFrame, or a list containing an
+        arbitrary combination of column keys and arrays.
+    drop : bool, optional
+        Delete columns to be used as the new index. Defaults to ``True``.
+    append : bool, optional
+        Whether to append columns to existing index. Defaults to ``False``
+    verify_integrity : bool, optional
+        Whether to check the new index for duplicates. Defaults to ``False``.
+        Setting to ``True`` will impact the performance of this method.
+
+    """
+
+    def __init__(
+            self,
+            keys: Key | Keys,
+            drop: bool = True,
+            append: bool = False,
+            verify_integrity: bool = False
+    ) -> None:
+        self.keys = keys
+        self.drop = drop
+        self.append = append
+        self.verify_integrity = verify_integrity
+        super().__init__(
+            keys,
+            drop=drop,
+            append=append,
+            verify_integrity=verify_integrity
+        )
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Set the index of a pandas dataframe.
+
+        Parameters
+        ----------
+        df: DataFrame
+            The dataframe to set the index of.
+
+        Returns
+        -------
+        DataFrame
+            The Dataframe with a new index set.
+
+        """
+        return df.set_index(
+            self.keys,
+            drop=self.drop,
+            append=self.append,
+            inplace=False,
+            verify_integrity=self.verify_integrity
+        )
+
+
+class ResetIndex(ArgRepr):
+    """Simple partial of a pandas dataframe's ``reset_index`` method.
+
+    Parameters
+    ----------
+    level: int, str, tuple, or list, optional
+        Only remove the given levels from the index. Defaults to ``None``,
+        which removes all levels.
+    drop: bool, optional
+        Do not try to insert index into dataframe columns. This resets
+        the index to the default integer index. Default to ``False``.
+    col_level: int or str, optional
+        If the columns have multiple levels, determines which level the
+        labels are inserted into. Default to 0.
+    col_fill: Hashable, optional
+        If the columns have multiple levels, determines how the other
+        levels are named. Defaults to an empty string.
+    allow_duplicates : bool, optional
+        Allow duplicate column labels to be created. Defaults to ``False``
+    names : Hashable or Sequence, optional
+        Using the given string, rename the dataframe column which contains the
+        index data. If the dataframe has a multiindex, this has to be a list or
+        tuple with length equal to the number of levels. Defaults to ``None``.
+
+    """
+
+    def __init__(
+            self,
+            level: Hashable | Sequence[Hashable] | None = None,
+            drop: bool = False,
+            col_level: Hashable = 0,
+            col_fill: Hashable = '',
+            allow_duplicates: bool = False,
+            names: Hashable | Sequence[Hashable] | None = None,
+    ) -> None:
+        self.level = level
+        self.drop = drop
+        self.col_level = col_level
+        self.col_fill = col_fill
+        self.allow_duplicates = allow_duplicates
+        self.names = names
+        super().__init__(
+            level,
+            drop=drop,
+            col_level=col_level,
+            col_fill=col_fill,
+            allow_duplicates=allow_duplicates,
+            names=names
+        )
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Reset the index of a pandas dataframe.
+
+        Parameters
+        ----------
+        df: DataFrame
+            The dataframe to reset the index of.
+
+        Returns
+        -------
+        DataFrame
+            The dataframe with its index reset.
+
+        """
+        return df.reset_index(
+            self.level,
+            drop=self.drop,
+            inplace=False,
+            col_level=self.col_level,
+            col_fill=self.col_fill,
+            allow_duplicates=self.allow_duplicates,
+            names=self.names,
+        )
+
+
+class Rename(ArgRepr):
+    """Simple partial of a pandas dataframe's ``rename`` mathod.
+
+    Parameters
+    ----------
+    mapper : dict-like or function
+        Dict-like or function transformations to apply to that axis' values.
+    index : dict-like or function
+        Alternative to specifying `mapper` with `axis` = 0.
+    columns : dict-like or function
+        Alternative to specifying `mapper` with `axis` = 1.
+    axis : 1 or "columns", 0 or "index", optional
+        Axis to target with `mapper`. Defaults to 1.
+    level : Hashable, optional
+        In case of a MultiIndex, only rename labels in the specified level.
+        Defaults to ``None``
+    errors : "ignore" or "raise", optional
+        If "raise", raise a ``KeyError`` when a dict-like `mapper`, `index`,
+        or `columns` contains labels that are not present in the index
+        being transformed. If "ignore", existing keys will be renamed and
+        extra keys will be ignored. Defaults to "ignore".
+
+    """
+
+    def __init__(
+            self,
+            mapper: Renamer | None = None,
+            index: Renamer | None = None,
+            columns: Renamer | None = None,
+            axis: int | Literal['index', 'columns', 'rows'] = 1,
+            level: Hashable | None = None,
+            errors: Literal['ignore', 'raise'] = 'ignore'
+    ) -> None:
+        self.mapper = mapper
+        self.index = index
+        self.columns = columns
+        self.axis = axis
+        self.level = level
+        self.errors = errors
+        super().__init__(
+            mapper,
+            index=self.index,
+            columns=self.columns,
+            axis=self.axis,
+            level=self.level,
+            errors=self.errors
+        )
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Rename a pandas dataframe's columns or rows.
+
+        Parameters
+        ----------
+        df: DataFrame
+            The dataframe to rename columns or rows of.
+
+        Returns
+        -------
+        DataFrame
+            The dfataframe wiuth renamed columns or rows.
+
+
+        """
+        return df.rename(
+            self.mapper,
+            index=self.index,
+            columns=self.columns,
+            axis=self.axis,
+            level=self.level,
+            inplace=False,
+            errors=self.errors
+        )

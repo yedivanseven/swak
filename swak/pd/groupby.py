@@ -108,7 +108,7 @@ class RollingGroupByAgg(ArgRepr):
 
     """
 
-    def __init__(self, func: Funcs, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, func: Func | Funcs, *args: Any, **kwargs: Any) -> None:
         super().__init__(func, *args, **kwargs)
         self.func = func
         self.args = args
