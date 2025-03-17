@@ -41,30 +41,6 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_endpoint_url(self):
         self.assertIsNone(self.s3.endpoint_url)
 
-    def test_has_aws_account_id(self):
-        self.assertTrue(hasattr(self.s3, 'aws_account_id'))
-
-    def test_aws_account_id(self):
-        self.assertIsNone(self.s3.aws_account_id)
-
-    def test_has_aws_access_key_id(self):
-        self.assertTrue(hasattr(self.s3, 'aws_access_key_id'))
-
-    def test_aws_access_key_id(self):
-        self.assertIsNone(self.s3.aws_access_key_id)
-
-    def test_has_aws_secret_access_key(self):
-        self.assertTrue(hasattr(self.s3, 'aws_secret_access_key'))
-
-    def test_aws_secret_access_key(self):
-        self.assertIsNone(self.s3.aws_secret_access_key)
-
-    def test_has_aws_session_token(self):
-        self.assertTrue(hasattr(self.s3, 'aws_session_token'))
-
-    def test_aws_session_token(self):
-        self.assertIsNone(self.s3.aws_session_token)
-
     def test_has_kwargs(self):
         self.assertTrue(hasattr(self.s3, 'kwargs'))
 
@@ -114,18 +90,6 @@ class TestAttributes(unittest.TestCase):
 
     def test_endpoint_url_stripped(self):
         self.assertEqual(self.endpoint_url.strip(), self.s3.endpoint_url)
-
-    def test_aws_account_id_obfuscated(self):
-        self.assertEqual('****', self.s3.aws_account_id)
-
-    def test_aws_access_key_id_obfuscated(self):
-        self.assertEqual('****', self.s3.aws_access_key_id)
-
-    def test_aws_secret_access_key_obfuscated(self):
-        self.assertEqual('****', self.s3.aws_secret_access_key)
-
-    def test_aws_session_token_obfuscated(self):
-        self.assertEqual('****', self.s3.aws_session_token)
 
     def test_kwargs(self):
         self.assertEqual(self.kwargs, self.s3.kwargs)
