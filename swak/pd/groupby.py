@@ -20,8 +20,8 @@ class FrameGroupByAgg(ArgRepr):
     **kwargs
         Keyword arguments to pass on to the ``groupby`` method call.
 
-    Notes
-    -----
+    Note
+    ----
     See the pandas `agg docs <https://pandas.pydata.org/pandas-docs/
     stable/reference/api/pandas.core.groupby.DataFrameGroupBy.agg.html>`_ for
     a full list of (keyword) arguments and an extensive description of
