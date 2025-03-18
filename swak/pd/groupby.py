@@ -10,6 +10,7 @@ type Func = Callable[[Series], float] | str
 type Funcs = list[Func] | dict[str, Func] | dict[str, list[Func]]
 
 
+# ToDo: Make Agg, Apply, and Rolling polymorph. Put into frame!
 class FrameGroupByAgg(ArgRepr):
     """Simple partial for calling a grouped dataframe's ``agg`` method.
 
