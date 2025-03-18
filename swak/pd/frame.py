@@ -2,6 +2,7 @@ from typing import Literal, Any, overload
 from collections.abc import Hashable, Callable, Sequence, Iterator, Mapping
 from numpy import dtype, ndarray
 from pandas.core.dtypes.base import ExtensionDtype
+from pandas.core.window import Rolling, Window, RollingGroupby
 from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
 from pandas import DataFrame, Series, Index, Grouper
 from ..misc.repr import ReprName
@@ -25,16 +26,18 @@ type GroupKey = (
     | Series
 )
 type GroupKeys = list[GroupKey]
+type Func = Callable[[Series], float] | str
+type Funcs = list[Func] | dict[str, Func] | dict[str, list[Func]]
 
 
 class AsType(ReprName):
-    """Partial of the ``pandas.DataFrame.astype`` method.
+    """Partial of a pandas dataframe or series ``astype`` method.
 
     Parameters
     ----------
     types: type or dict
         Single type or dictionary of column names and types, specifying type
-        conversion of entire DataFrame or specific columns, respectively
+        conversion of entire dataframe or specific columns, respectively
     **kwargs
         Keyword arguments are passed on to the ``astype`` method call after
         the `types` argument.
@@ -56,19 +59,26 @@ class AsType(ReprName):
         signature = ', '.join(filter(None, [args, kwargs]))
         return f'{self.__class__.__name__}({signature})'
 
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
     def __call__(self, df: DataFrame) -> DataFrame:
-        """Cast entire dataframe or columns thereof to specified types
+        ...
+
+    def __call__(self, df):
+        """Cast dataframe (columns) or series to specified types.
 
         Parameters
         ----------
-        df: DataFrame
-            Pandas dataframe to type-cast.
+        df: DataFrame or Series
+            Pandas dataframe tor series o type-cast.
 
         Returns
         -------
-        DataFrame
-            Pandas dataframe cast to new type or with columns cast to
-            new types.
+        DataFrame or Series
+            Pandas dataframe (columns) or series cast to new type(s).
 
         """
         return df.astype(self.types, **self.kwargs)
@@ -254,8 +264,8 @@ class RowsSelector(ArgRepr):
     Parameters
     ----------
     condition: callable or array-like
-        A callable that accepts a dataframe and produces a 1-D, boolean array-
-        like structure of the same length
+        A callable that accepts a dataframe and produces a 1-D, boolean
+        array-like structure of the same length
 
     """
 
@@ -280,8 +290,8 @@ class RowsSelector(ArgRepr):
         return df[self.condition]
 
 
-class FrameGroupBy(ArgRepr):
-    """Simple partial of a pandas dataframe's ``groupby`` method.
+class GroupBy(ArgRepr):
+    """Simple partial of a pandas dataframe and series ``groupby`` method.
 
     Parameters
     ----------
@@ -341,18 +351,26 @@ class FrameGroupBy(ArgRepr):
         self.observed = observed
         self.dropna = dropna
 
+    @overload
+    def __call__(self, df: Series) -> SeriesGroupBy:
+        ...
+
+    @overload
     def __call__(self, df: DataFrame) -> DataFrameGroupBy:
-        """Call the dataframe's ``groupby`` method with the cached (kw)args.
+        ...
+
+    def __call__(self, df):
+        """Call a dataframe or series  ``groupby`` method.
 
         Parameters
         ----------
-        df: DataFrame
-            Pandas dataframe to group.
+        df: DataFrame or Series
+            Pandas dataframe or series to group.
 
         Returns
         -------
-        DataFrameGroupBy
-            The grouped dataframe.
+        DataFrameGroupBy or SeriesGroupBy
+            The grouped dataframe or series.
 
         """
         return df.groupby(
@@ -452,7 +470,7 @@ class Assign(ArgRepr):
 
 
 class Drop(ArgRepr):
-    """A simple partial of a dataframe's or series' ``drop`` method.
+    """A simple partial of a pandas dataframe or series' ``drop`` method.
 
     Parameters
     ----------
@@ -549,7 +567,7 @@ class Drop(ArgRepr):
 
 
 class DropNA(ArgRepr):
-    """A simple partial of a dataframe's or series' ``dropna`` method.
+    """A simple partial of a pandas dataframe or series' ``dropna`` method.
 
     Parameters
     ----------
@@ -875,3 +893,130 @@ class Rename(ArgRepr):
             inplace=False,
             errors=self.errors
         )
+
+
+class Agg(ArgRepr):
+    """Simple partial for calling a pandas object's ``agg`` method.
+
+    Parameters
+    ----------
+    func: callable, str, list, or dict
+        Function(s) to use for aggregating the data. If a function, must work
+        when passed a Series. Also acceptable are a function name, a list of
+        function names and a dictionary with columns names as keys and
+        functions, function names, or lists thereof as values.
+    *args
+        Positional arguments to pass on to the ``agg`` or `func` call.
+    **kwargs
+        Keyword arguments to pass on to the ``agg`` or `func` call.
+
+    Note
+    ----
+    See the pandas `agg docs <https://pandas.pydata.org/pandas-docs/
+    stable/reference/api/pandas.core.groupby.DataFrameGroupBy.agg.html>`_ for
+    a full list of (keyword) arguments and an extensive description of
+    usage and configuration.
+
+    """
+
+    def __init__(self, func: Func | Funcs, *args: Any, **kwargs: Any) -> None:
+        super().__init__(func, *args, **kwargs)
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    @overload
+    def __call__(self, df: DataFrame) -> Series | DataFrame:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrameGroupBy) -> DataFrame:
+        ...
+
+    @overload
+    def __call__(self, df: Series) -> Any:
+        ...
+
+    @overload
+    def __call__(self, df: SeriesGroupBy) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: Rolling) -> Series | DataFrame:
+        ...
+
+    @overload
+    def __call__(self, df: RollingGroupby) -> Series | DataFrame:
+        ...
+
+    def __call__(self, df):
+        """Call a pandas objectÄs ``agg`` method with the cached (kw)args.
+
+        Parameters
+        ----------
+        df: Series, DataFrame, Rolling or their GroupBy companions
+            The pandas object to aggregate.
+
+        Returns
+        -------
+        scalar, Series, or DataFrame
+            The aggregation of the pandas object.
+
+        """
+        return df.agg(self.func, *self.args, **self.kwargs)
+
+
+class RollingWindow(ArgRepr):
+    """Simple partial of for calling a pandas object's ``rolling`` method.
+
+    Parameters
+    ----------
+    *args
+        Arguments to pass on to the ``rolling`` method call.
+    **kwargs
+        Keyword arguments to pass on to the ``rolling`` method call.
+
+    Notes
+    -----
+    See the pandas `rolling docs <https://pandas.pydata.org/docs/dev/reference
+    /api/pandas.core.groupby.DataFrameGroupBy.rolling.html>`_ for a full list
+    of (keyword) arguments and an extensive description of usage.
+
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.args = args
+        self.kwargs = kwargs
+
+    @overload
+    def __call__(self, df: Series) -> Rolling | Window:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> Rolling | Window:
+        ...
+
+    @overload
+    def __call__(self, df: SeriesGroupBy) -> RollingGroupby:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrameGroupBy) -> RollingGroupby:
+        ...
+
+    def __call__(self, df):
+        """Call a pandas object`s ``rolling`` method with the cached (kw)args.
+
+        Parameters
+        ----------
+        df: Series, DataFrame, or their GroupBy companions
+            The pandas object to call ``rolling`` on.
+
+        Returns
+        -------
+        Window, Rolling, or RollingGroupBy
+            Depending on the input type.
+
+        """
+        return df.rolling(*self.args, **self.kwargs)
