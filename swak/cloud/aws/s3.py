@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, overload
 import boto3
 from botocore.client import BaseClient
 from botocore.config import Config
@@ -67,10 +67,10 @@ class S3(ArgRepr):
         self.use_ssl = use_ssl
         self.verify = verify.strip() if isinstance(verify, str) else verify
         self.endpoint_url = self.__strip(endpoint_url)
-        self.__aws_account_id = self.__strip(aws_account_id)
-        self.__aws_access_key_id = self.__strip(aws_access_key_id)
-        self.__aws_secret_access_key = self.__strip(aws_secret_access_key)
-        self.__aws_session_token = self.__strip(aws_session_token)
+        self.__aws_account_id = aws_account_id
+        self.__aws_access_key_id = aws_access_key_id
+        self.__aws_secret_access_key = aws_secret_access_key
+        self.__aws_session_token = aws_session_token
         self.kwargs = kwargs
         super().__init__(
             self.region_name,
@@ -78,37 +78,42 @@ class S3(ArgRepr):
             self.use_ssl,
             self.verify,
             self.endpoint_url,
-            aws_account_id=self.aws_account_id,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            aws_session_token=self.aws_session_token,
+            aws_account_id=self.__obfuscate(aws_account_id),
+            aws_access_key_id=self.__obfuscate(aws_access_key_id),
+            aws_secret_access_key=self.__obfuscate(aws_secret_access_key),
+            aws_session_token=self.__obfuscate(aws_session_token),
             **self.kwargs
         )
 
     @staticmethod
-    def __strip(attr: str | None) -> str:
+    @overload
+    def __strip(attr: None) -> None:
+        ...
+
+    @staticmethod
+    @overload
+    def __strip(attr: str) -> str:
+        ...
+
+    @staticmethod
+    def __strip(attr):
         """Strip leading and trailing whitespaces from string arguments."""
         return attr if attr is None else attr.strip()
 
-    @property
-    def aws_account_id(self) -> str:
-        """Obfuscated string representation of the AWS account ID."""
-        return None if self.__aws_account_id is None else '****'
+    @staticmethod
+    @overload
+    def __obfuscate(attr: None) -> None:
+        ...
 
-    @property
-    def aws_access_key_id(self) -> str:
-        """Obfuscated string representation of the AWS access key ID."""
-        return None if self.__aws_access_key_id is None else '****'
+    @staticmethod
+    @overload
+    def __obfuscate(attr: str) -> str:
+        ...
 
-    @property
-    def aws_secret_access_key(self) -> str:
-        """Obfuscated string representation of the secret AWS access key."""
-        return None if self.__aws_secret_access_key is None else '****'
-
-    @property
-    def aws_session_token(self) -> str:
-        """Obfuscated string representation of the AWS session token."""
-        return None if self.__aws_session_token is None else '****'
+    @staticmethod
+    def __obfuscate(attr):
+        """Return mock string if secrets are not None."""
+        return attr if attr is None else '****'
 
     @property
     def client(self) -> BaseClient:

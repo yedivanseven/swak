@@ -1,19 +1,30 @@
-from typing import Any
-from collections.abc import Hashable, Iterable, Callable
-from functools import singledispatchmethod
+from typing import Literal, Any, overload
+from collections.abc import Hashable, Callable, Sequence, Iterator, Mapping
 from numpy import dtype, ndarray
 from pandas.core.dtypes.base import ExtensionDtype
 from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
-from pandas import DataFrame, Series
+from pandas import DataFrame, Series, Index, Grouper
 from ..misc.repr import ReprName
 from ..misc import ArgRepr
 
 type Type = str | type | dtype | ExtensionDtype
 type Types = dict[Hashable, Type]
-type Mask = list[bool] | Series | ndarray
+type Mask = list[bool] | Series | ndarray[bool]
 type Condition = Callable[[DataFrame], Mask]
 type Transform = dict[Hashable, Any] | Series | Callable[[Any], Any]
 type Others = Series | DataFrame | list[Series | DataFrame]
+type Key = Hashable | ndarray[Hashable] | Series | Index | Iterator[Hashable]
+type Keys = list[Key]
+type Renamer = Mapping[Hashable, Hashable] | Callable[[Hashable], Hashable]
+type GroupKey = (
+    str
+    | Callable[[Hashable], Hashable]
+    | Grouper
+    | Mapping[Hashable, Hashable]
+    | ndarray[Hashable]
+    | Series
+)
+type GroupKeys = list[GroupKey]
 
 
 class AsType(ReprName):
@@ -81,8 +92,15 @@ class ColumnSelector(ArgRepr):
         self.col = self.__valid(col)
         super().__init__(col)
 
-    @singledispatchmethod
+    @overload
     def __call__(self, df: DataFrame) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrameGroupBy) -> SeriesGroupBy:
+        ...
+
+    def __call__(self, df):
         """Select a single column of a (grouped) pandas dataframe as series.
 
         Parameters
@@ -97,10 +115,6 @@ class ColumnSelector(ArgRepr):
 
         """
         return df[self.col]
-
-    @__call__.register
-    def _(self, grouped_df: DataFrameGroupBy) -> SeriesGroupBy:
-        return grouped_df[self.col]
 
     @staticmethod
     def __valid(col: Hashable) -> Hashable:
@@ -118,7 +132,7 @@ class ColumnsSelector(ArgRepr):
     Parameters
     ----------
     col: Hashable, optional
-        Column name or iterable thereof. Defaults to an empty tuple.
+        Column name or sequence thereof. Defaults to an empty tuple.
     *cols: Hashable
         Additional columns names.
 
@@ -126,15 +140,22 @@ class ColumnsSelector(ArgRepr):
 
     def __init__(
             self,
-            col: Hashable | Iterable[Hashable] = (),
+            col: Hashable | Sequence[Hashable] = (),
             *cols: Hashable
     ) -> None:
         col = self.__valid(col)
         self.cols: tuple[Hashable, ...] = col + self.__valid(cols)
         super().__init__(*self.cols)
 
-    @singledispatchmethod
-    def __call__(self, df: DataFrame | DataFrameGroupBy) -> DataFrame:
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrameGroupBy) -> DataFrameGroupBy:
+        ...
+
+    def __call__(self, df):
         """Select the specified column(s) from a (grouped) pandas dataframe.
 
         Parameters
@@ -150,13 +171,9 @@ class ColumnsSelector(ArgRepr):
         """
         return df[list(self.cols)]
 
-    @__call__.register
-    def _(self, grouped_df: DataFrameGroupBy) -> DataFrameGroupBy:
-        return grouped_df[list(self.cols)]
-
     @staticmethod
-    def __valid(cols: Hashable | Iterable[Hashable]) -> tuple[Hashable, ...]:
-        """Ensure that the columns are indeed an iterable of hashables."""
+    def __valid(cols: Hashable | Sequence[Hashable]) -> tuple[Hashable, ...]:
+        """Ensure that the columns are indeed a sequence of hashables."""
         if isinstance(cols, str):
             return cols,
         try:
@@ -183,9 +200,9 @@ class ColumnMapper(ArgRepr):
     tgt_col: Hashable, optional
         Dataframe column to store the series resulting from the
         transformation. Defaults to `src_col`, thus overwriting it in place.
-    **kwargs
-        Keyword arguments are passed on to the call of the Series'
-        ``map`` method.
+    na_action: str, optional
+        Can take the value "ignore" or ``None``, defaulting to the latter.
+        Will be passed to the series ``map`` method along with `transform`.
 
     """
 
@@ -194,14 +211,14 @@ class ColumnMapper(ArgRepr):
             src_col: Hashable,
             transform: Transform,
             tgt_col: Hashable | None = None,
-            **kwargs: Any
+            na_action: Literal['ignore'] | None = None
     ) -> None:
         self.src_col = src_col
         self.tgt_col = src_col if tgt_col is None else tgt_col
         self.transform = transform
-        self.kwargs = kwargs
+        self.na_action = na_action
         name = transform if callable(transform) else type(transform)
-        super().__init__(src_col, name, tgt_col, **kwargs)
+        super().__init__(src_col, name, tgt_col, na_action=na_action)
 
     def __call__(self, df: DataFrame) -> DataFrame:
         """Called the ``map`` method on a specified column of a DataFrame.
@@ -222,7 +239,7 @@ class ColumnMapper(ArgRepr):
 
 
         """
-        df[self.tgt_col] = df[self.src_col].map(self.transform, **self.kwargs)
+        df[self.tgt_col] = df[self.src_col].map(self.transform, self.na_action)
         return df
 
 
@@ -268,23 +285,61 @@ class FrameGroupBy(ArgRepr):
 
     Parameters
     ----------
-    *args
-        Arguments to pass on to the ``groupby`` method call.
-    **kwargs
-        Keyword arguments to pass on to the ``groupby`` method call.
+    by: str, callable, series, array, dict, or list
+        Column name, function (to be called on each column name), list or numpy
+        array of the same length as the columns, a dict or series providing a
+        label -> group name mapping, or a list of the above.
+    level: hashable or sequence, optional
+        If the axis is a multi-index (hierarchical), group by a particular
+        level or levels. Do not specify both `by` and `level`.
+        Defaults to ``None``.
+    as_index: bool, optional
+        Whether to return group labels as index. Defaults to ``True``.
+    sort: bool, optional
+        Whether to sort group keys. Defaults to ``True``.
+    group_keys: bool, optional
+        Defaults to ``True``
+    observed: bool, optional
+        Whether to show only observed values for categorical groupers.
+        Defaults to ``False``.
+    dropna: bool, optional
+        Whether to treat NA values in group keys as groups.
+        Defaults to ``True``.
 
     Note
     ----
-    For a full list of (keyword) arguments and their description, see the
+    For a more extensive description of all (keyword) arguments, see the
     pandas `documentation <https://pandas.pydata.org/pandas-docs/stable/
     reference/api/pandas.DataFrame.groupby.html>`_.
 
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(
+            self,
+            by: GroupKey | GroupKeys | None = None,
+            level: Hashable | Sequence[Hashable] | None = None,
+            as_index: bool = True,
+            sort: bool = True,
+            group_keys: bool = True,
+            observed: bool = False,
+            dropna: bool = True,
+    ) -> None:
+        super().__init__(
+            by,
+            level,
+            as_index=as_index,
+            sort=sort,
+            group_keys=group_keys,
+            observed=observed,
+            dropna=dropna
+        )
+        self.by = by
+        self.level = level
+        self.as_index = as_index
+        self.sort = sort
+        self.group_keys = group_keys
+        self.observed = observed
+        self.dropna = dropna
 
     def __call__(self, df: DataFrame) -> DataFrameGroupBy:
         """Call the dataframe's ``groupby`` method with the cached (kw)args.
@@ -300,7 +355,16 @@ class FrameGroupBy(ArgRepr):
             The grouped dataframe.
 
         """
-        return df.groupby(*self.args, **self.kwargs)
+        return df.groupby(
+            self.by,
+            0,
+            self.level,
+            self.as_index,
+            self.sort,
+            self.group_keys,
+            self.observed,
+            self.dropna
+        )
 
 
 class Join(ArgRepr):
@@ -385,3 +449,429 @@ class Assign(ArgRepr):
 
         """
         return df.assign(**self.cols)
+
+
+class Drop(ArgRepr):
+    """A simple partial of a dataframe's or series' ``drop`` method.
+
+    Parameters
+    ----------
+    labels: hashable or sequence, optional
+        Index or column labels to drop. Defaults to ``None``.
+    axis: 1 or "columns", 0 or "index"
+        Whether to drop labels from the columns (1 or "columns") or
+        index (0 or "index"). Defaults to 1
+    index: hashable or sequence, optional
+        Single label or list-like. Defaults to ``None``.  Alternative to
+        specifying axis (labels, axis=0 is equivalent to index=labels).
+    columns: hashable or sequence, optional
+        Single label or list-like. Defaults to ``None``. Alternative to
+        specifying axis (labels, axis=1 is equivalent to columns=labels).
+    level: hashable, optional.
+        Integer or level name. Defaults to ``None``. For MultiIndex, level
+        from which the labels will be removed.
+    errors: "raise" or "ignore"
+        Defaults to "raise". If "ignore", suppress error and drop only
+        existing labels.
+
+    """
+
+    def __init__(
+            self,
+            label: Hashable | Sequence[Hashable] | None = None,
+            *labels: Hashable,
+            axis: int | Literal['index', 'columns', 'rows'] = 1,
+            index: Hashable | Sequence[Hashable] | None = None,
+            columns: Hashable | Sequence[Hashable] | None = None,
+            level: Hashable | None = None,
+            errors: Literal['ignore', 'raise'] = 'raise'
+    ) -> None:
+        self.labels = (self.__valid(label) + self.__valid(labels)) or None
+        self.axis = axis
+        self.index = index
+        self.columns = columns
+        self.level = level
+        self.errors = errors
+        super().__init__(
+            self.labels,
+            axis= axis,
+            index=index,
+            columns=columns,
+            level=level,
+            errors=errors
+        )
+
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
+    def __call__(self, df):
+        """Drop rows or columns from a pandas series or dataframe.
+
+        Parameters
+        ----------
+        df: Series or DataFrame
+            The object to drop rows or columns from.
+
+        Returns
+        -------
+        Series or DataFrame
+            The object with rows or columns dropped.
+
+        """
+        return df.drop(
+            self.labels,
+            axis=self.axis,
+            index=self.index,
+            columns=self.columns,
+            level=self.level,
+            inplace=False,
+            errors=self.errors,
+        )
+
+    @staticmethod
+    def __valid(labels: Hashable | Sequence[Hashable]) -> list[Hashable]:
+        """Ensure that the labels are indeed a sequence of hashables."""
+        if labels is None:
+            return []
+        if isinstance(labels, str):
+            return [labels]
+        try:
+            _ = [hash(label) for label in labels]
+        except TypeError:
+            _ = hash(labels)
+            return [labels]
+        return list(labels)
+
+
+class DropNA(ArgRepr):
+    """A simple partial of a dataframe's or series' ``dropna`` method.
+
+    Parameters
+    ----------
+    axis: 0 or "index", 1 or "columns"
+        Determine if rows or columns which contain missing values are removed.
+        Defaults to 0.
+    how: "any" or "all"
+        Determine if row or column is removed from DataFrame, when we have at
+        least one NA or all NA. Defaults to "any".
+    thresh: int, optional
+        Require that many non-NA values. Cannot be combined with how.
+        Defaults to ``None``.
+    subset: hashable or sequence, optional
+        Labels along other axis to consider, e.g. if you are dropping rows
+        these would be a list of columns to include. Defaults to ``None``.
+    ignore_index: bool, optional
+        Defaults to ``False``. If ``True``, the resulting axis will be labeled
+        0, 1, …, n - 1.
+
+    """
+
+    def __init__(
+            self,
+            axis: int | Literal['index', 'columns', 'rows'] = 0,
+            how: Literal['any', 'all'] | None = None,
+            thresh: int | None = None,
+            subset: Hashable | Sequence[Hashable] | None = None,
+            ignore_index: bool = False
+    ) -> None:
+        self.axis = axis
+        self.how = how
+        self.thresh = thresh
+        self.subset = subset
+        self.ignore_index = ignore_index
+        super().__init__(
+            axis=self.axis,
+            how=self.how,
+            thresh=self.thresh,
+            subset=self.subset,
+            ignore_index=self.ignore_index
+        )
+
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
+    def __call__(self, df):
+        """Drop rows or columns with NAs from a pandas series or dataframe.
+
+        Parameters
+        ----------
+        df: Series or DataFrame
+            The object to drop rows or columns with NAs from.
+
+        Returns
+        -------
+        Series or DataFrame
+            The object with rows or columns with NAs dropped.
+
+        """
+        return df.dropna(
+            axis=self.axis,
+            **({'how': self.how} if self.how else {'thresh': self.thresh}),
+            subset=self.subset,
+            inplace=False,
+            ignore_index=self.ignore_index
+        )
+
+
+class SortValues(ArgRepr):
+    """Partial of the pandas dataframe ``sort_values`` method.
+
+    Parameters
+    ----------
+    by: hashable or sequence
+        Name or list of names to sort by.
+    **kwargs
+        Additional keyword arguments will be forwarded to the method call with
+        the exception of "inplace", which will be set to ``False``.
+
+    Note
+    ----
+    For a full list of keyword arguments and their description, see the
+    pandas `sort_values documentation <https://pandas.pydata.org/pandas-docs/
+    stable/reference/api/pandas.DataFrame.sort_values.html>`_.
+
+    """
+
+    def __init__(
+            self,
+            by: Hashable | Sequence[Hashable],
+            **kwargs: Any
+    ) -> None:
+        super().__init__(by, **kwargs)
+        self.by = by
+        self.kwargs = (kwargs.pop('inplace', ''), kwargs)[1]
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Sort a pandas dataframe by column(s) values.
+
+        Parameters
+        ----------
+        df: DataFrame
+            The dataframe to sort.
+
+        Returns
+        -------
+        DataFrame
+            The sorted dataframe.
+
+        """
+        return df.sort_values(self.by, inplace=False, **self.kwargs)
+
+
+class SetIndex(ArgRepr):
+    """Simple partial of a pandas dataframe's ``set_index`` method.
+
+    Parameters
+    ----------
+    keys: hashable or array-like
+        This parameter can be either a single column key, a single array of
+        the same length as the calling DataFrame, or a list containing an
+        arbitrary combination of column keys and arrays.
+    drop : bool, optional
+        Delete columns to be used as the new index. Defaults to ``True``.
+    append : bool, optional
+        Whether to append columns to existing index. Defaults to ``False``
+    verify_integrity : bool, optional
+        Whether to check the new index for duplicates. Defaults to ``False``.
+        Setting to ``True`` will impact the performance of this method.
+
+    """
+
+    def __init__(
+            self,
+            keys: Key | Keys,
+            drop: bool = True,
+            append: bool = False,
+            verify_integrity: bool = False
+    ) -> None:
+        self.keys = keys
+        self.drop = drop
+        self.append = append
+        self.verify_integrity = verify_integrity
+        super().__init__(
+            keys,
+            drop=drop,
+            append=append,
+            verify_integrity=verify_integrity
+        )
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Set the index of a pandas dataframe.
+
+        Parameters
+        ----------
+        df: DataFrame
+            The dataframe to set the index of.
+
+        Returns
+        -------
+        DataFrame
+            The Dataframe with a new index set.
+
+        """
+        return df.set_index(
+            self.keys,
+            drop=self.drop,
+            append=self.append,
+            inplace=False,
+            verify_integrity=self.verify_integrity
+        )
+
+
+class ResetIndex(ArgRepr):
+    """Simple partial of a pandas dataframe's ``reset_index`` method.
+
+    Parameters
+    ----------
+    level: int, str, tuple, or list, optional
+        Only remove the given levels from the index. Defaults to ``None``,
+        which removes all levels.
+    drop: bool, optional
+        Do not try to insert index into dataframe columns. This resets
+        the index to the default integer index. Default to ``False``.
+    col_level: int or str, optional
+        If the columns have multiple levels, determines which level the
+        labels are inserted into. Default to 0.
+    col_fill: Hashable, optional
+        If the columns have multiple levels, determines how the other
+        levels are named. Defaults to an empty string.
+    allow_duplicates : bool, optional
+        Allow duplicate column labels to be created. Defaults to ``False``
+    names : hashable or sequence, optional
+        Using the given string, rename the dataframe column which contains the
+        index data. If the dataframe has a multiindex, this has to be a list or
+        tuple with length equal to the number of levels. Defaults to ``None``.
+
+    """
+
+    def __init__(
+            self,
+            level: Hashable | Sequence[Hashable] | None = None,
+            drop: bool = False,
+            col_level: Hashable = 0,
+            col_fill: Hashable = '',
+            allow_duplicates: bool = False,
+            names: Hashable | Sequence[Hashable] | None = None,
+    ) -> None:
+        self.level = level
+        self.drop = drop
+        self.col_level = col_level
+        self.col_fill = col_fill
+        self.allow_duplicates = allow_duplicates
+        self.names = names
+        super().__init__(
+            level,
+            drop=drop,
+            col_level=col_level,
+            col_fill=col_fill,
+            allow_duplicates=allow_duplicates,
+            names=names
+        )
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Reset the index of a pandas dataframe.
+
+        Parameters
+        ----------
+        df: DataFrame
+            The dataframe to reset the index of.
+
+        Returns
+        -------
+        DataFrame
+            The dataframe with its index reset.
+
+        """
+        return df.reset_index(
+            self.level,
+            drop=self.drop,
+            inplace=False,
+            col_level=self.col_level,
+            col_fill=self.col_fill,
+            allow_duplicates=self.allow_duplicates,
+            names=self.names,
+        )
+
+
+class Rename(ArgRepr):
+    """Simple partial of a pandas dataframe's ``rename`` method.
+
+    Parameters
+    ----------
+    mapper : dict-like or function
+        Dict-like or function transformations to apply to that axis' values.
+    index : dict-like or function
+        Alternative to specifying `mapper` with `axis` = 0.
+    columns : dict-like or function
+        Alternative to specifying `mapper` with `axis` = 1.
+    axis : 1 or "columns", 0 or "index", optional
+        Axis to target with `mapper`. Defaults to 1.
+    level : Hashable, optional
+        In case of a MultiIndex, only rename labels in the specified level.
+        Defaults to ``None``
+    errors : "ignore" or "raise", optional
+        If "raise", raise a ``KeyError`` when a dict-like `mapper`, `index`,
+        or `columns` contains labels that are not present in the index
+        being transformed. If "ignore", existing keys will be renamed and
+        extra keys will be ignored. Defaults to "ignore".
+
+    """
+
+    def __init__(
+            self,
+            mapper: Renamer | None = None,
+            index: Renamer | None = None,
+            columns: Renamer | None = None,
+            axis: int | Literal['index', 'columns', 'rows'] = 1,
+            level: Hashable | None = None,
+            errors: Literal['ignore', 'raise'] = 'ignore'
+    ) -> None:
+        self.mapper = mapper
+        self.index = index
+        self.columns = columns
+        self.axis = axis
+        self.level = level
+        self.errors = errors
+        super().__init__(
+            mapper,
+            index=self.index,
+            columns=self.columns,
+            axis=self.axis,
+            level=self.level,
+            errors=self.errors
+        )
+
+    def __call__(self, df: DataFrame) -> DataFrame:
+        """Rename a pandas dataframe's columns or rows.
+
+        Parameters
+        ----------
+        df: DataFrame
+            The dataframe to rename columns or rows of.
+
+        Returns
+        -------
+        DataFrame
+            The dataframe with renamed columns or rows.
+
+
+        """
+        return df.rename(
+            self.mapper,
+            index=self.index,
+            columns=self.columns,
+            axis=self.axis,
+            level=self.level,
+            inplace=False,
+            errors=self.errors
+        )

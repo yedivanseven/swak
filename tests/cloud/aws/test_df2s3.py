@@ -82,7 +82,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.bucket.strip(' /'), self.upload.bucket)
 
     def test_prefix_stripped(self):
-        self.assertEqual(self.prefix.strip(' /'), self.upload.prefix)
+        self.assertEqual(self.prefix.strip().lstrip('/'), self.upload.prefix)
 
     def test_extra_kws(self):
         self.assertDictEqual(self.extra_kws, self.upload.extra_kws)
@@ -94,7 +94,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.kwargs, self.upload.kwargs)
 
     def test_repr(self):
-        expected = ("DataFrame2S3Parquet('s3', 'bucket', 'prefix', "
+        expected = ("DataFrame2S3Parquet('s3', 'bucket', 'prefix /', "
                     "extra_kws={'one': 1}, upload_kws={'two': 2}, three=3)")
         self.assertEqual(expected, repr(self.upload))
 

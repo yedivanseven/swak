@@ -30,10 +30,10 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(transform, 'tgt_col'))
         self.assertEqual(transform.src_col, transform.tgt_col)
 
-    def test_kwargs(self):
+    def test_na_action(self):
         transform = ColumnMapper('source', identity)
-        self.assertTrue(hasattr(transform, 'kwargs'))
-        self.assertDictEqual({}, transform.kwargs)
+        self.assertTrue(hasattr(transform, 'na_action'))
+        self.assertIsNone(transform.na_action)
 
 
 class TestCustomAttributes(unittest.TestCase):
@@ -47,27 +47,27 @@ class TestCustomAttributes(unittest.TestCase):
         self.assertTrue(hasattr(transform, 'tgt_col'))
         self.assertEqual('target', transform.tgt_col)
 
-    def test_kwargs(self):
-        transform = ColumnMapper('source', identity, hello='world')
+    def test_na_action(self):
+        transform = ColumnMapper('source', identity, na_action='ignore')
         self.assertTrue(hasattr(transform, 'src_col'))
         self.assertEqual('source', transform.src_col)
         self.assertTrue(hasattr(transform, 'transform'))
         self.assertIs(identity, transform.transform)
         self.assertTrue(hasattr(transform, 'tgt_col'))
         self.assertEqual('source', transform.tgt_col)
-        self.assertTrue(hasattr(transform, 'kwargs'))
-        self.assertDictEqual({'hello': 'world'}, transform.kwargs)
+        self.assertTrue(hasattr(transform, 'na_action'))
+        self.assertEqual('ignore', transform.na_action)
 
-    def test_target_and_kwargs(self):
-        transform = ColumnMapper('source', identity, 'target', hello='world')
+    def test_target_and_na_action(self):
+        transform = ColumnMapper('source', identity, 'target', 'ignore')
         self.assertTrue(hasattr(transform, 'src_col'))
         self.assertEqual('source', transform.src_col)
         self.assertTrue(hasattr(transform, 'transform'))
         self.assertIs(identity, transform.transform)
         self.assertTrue(hasattr(transform, 'tgt_col'))
         self.assertEqual('target', transform.tgt_col)
-        self.assertTrue(hasattr(transform, 'kwargs'))
-        self.assertDictEqual({'hello': 'world'}, transform.kwargs)
+        self.assertTrue(hasattr(transform, 'na_action'))
+        self.assertEqual('ignore', transform.na_action)
 
 
 class TestCall(unittest.TestCase):
@@ -89,17 +89,17 @@ class TestCall(unittest.TestCase):
         self.mock_frame.__getitem__.assert_called_once()
         self.mock_frame.__getitem__.assert_called_once_with(0)
 
-    def test_map(self):
+    def test_map_none(self):
         transform = ColumnMapper(0, identity)
         _ = transform(self.mock_frame)
         self.mock_series.map.assert_called_once()
-        self.mock_series.map.assert_called_once_with(identity)
+        self.mock_series.map.assert_called_once_with(identity, None)
 
-    def test_map_kwargs(self):
-        transform = ColumnMapper(0, identity, foo='bar')
+    def test_map_ignore(self):
+        transform = ColumnMapper(0, identity, na_action='ignore')
         _ = transform(self.mock_frame)
         self.mock_series.map.assert_called_once()
-        self.mock_series.map.assert_called_once_with(identity, foo='bar')
+        self.mock_series.map.assert_called_once_with(identity, 'ignore')
 
     def test_replace_return_type(self):
         transform = ColumnMapper(1, pow2)
@@ -150,17 +150,17 @@ class TestMisc(unittest.TestCase):
 
     def test_repr_function(self):
         transform = ColumnMapper(1, pow2)
-        expected = "ColumnMapper(1, pow2, None)"
+        expected = "ColumnMapper(1, pow2, None, na_action=None)"
         self.assertEqual(expected, repr(transform))
 
     def test_repr_dict(self):
         transform = ColumnMapper(1, {3: 4}, 'foo')
-        expected = "ColumnMapper(1, dict, 'foo')"
+        expected = "ColumnMapper(1, dict, 'foo', na_action=None)"
         self.assertEqual(expected, repr(transform))
 
     def test_repr_series(self):
         transform = ColumnMapper(1, pd.Series({3: 4}), 2)
-        expected = "ColumnMapper(1, Series, 2)"
+        expected = "ColumnMapper(1, Series, 2, na_action=None)"
         self.assertEqual(expected, repr(transform))
 
     def test_pickle_works_with_function(self):

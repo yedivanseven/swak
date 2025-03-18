@@ -92,5 +92,6 @@ class TestMisc(unittest.TestCase):
         join = Join(1, 2, three=3, four=4)
         _ = pickle.loads(pickle.dumps(join))
 
+
 if __name__ == '__main__':
     unittest.main()
