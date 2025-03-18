@@ -50,6 +50,13 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_errors(self):
         self.assertEqual('ignore', self.rename.errors)
 
+    def test_has_resolved(self):
+        self.assertTrue(hasattr(self.rename, 'resolved'))
+
+    def test_resolved(self):
+        expected = {'columns': None, 'index': None}
+        self.assertDictEqual(expected, self.rename.resolved)
+
 
 class TestAttributes(unittest.TestCase):
 
@@ -87,6 +94,14 @@ class TestAttributes(unittest.TestCase):
     def test_errors(self):
         self.assertEqual('raise', self.rename.errors)
 
+    def test_resolved(self):
+        self.assertDictEqual({'axis': 'index'}, self.rename.resolved)
+
+    def test_resolved_mapper_none(self):
+        rename = Rename(index=self.index, columns=self.columns)
+        expected = {'columns': self.columns, 'index': self.index}
+        self.assertDictEqual(expected, rename.resolved)
+
 
 class TestUsage(unittest.TestCase):
 
@@ -109,15 +124,26 @@ class TestUsage(unittest.TestCase):
     def test_callable(self):
         self.assertTrue(callable(self.rename))
 
-    def test_rename_called(self):
+    def test_rename_called_mapper_not_none(self):
         df = Mock()
         _ = self.rename(df)
         df.rename.assert_called_once_with(
             self.mapper,
-            index=self.index,
-            columns=self.columns,
             axis=self.axis,
             level=self.level,
+            inplace=False,
+            errors=self.errors
+        )
+
+    def test_rename_called_mapper_none(self):
+        rename = Rename(index=self.index, errors=self.errors)
+        df = Mock()
+        _ = rename(df)
+        df.rename.assert_called_once_with(
+            None,
+            index=self.index,
+            columns=None,
+            level=None,
             inplace=False,
             errors=self.errors
         )
