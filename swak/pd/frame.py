@@ -3,7 +3,7 @@ from collections.abc import Hashable, Callable, Sequence, Iterator, Mapping
 from numpy import dtype, ndarray
 from pandas.core.dtypes.base import ExtensionDtype
 from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
-from pandas import DataFrame, Series, Index
+from pandas import DataFrame, Series, Index, Grouper
 from ..misc.repr import ReprName
 from ..misc import ArgRepr
 
@@ -15,7 +15,16 @@ type Transform = dict[Hashable, Any] | Series | Callable[[Any], Any]
 type Others = Series | DataFrame | list[Series | DataFrame]
 type Key = Hashable | ndarray[Hashable] | Series | Index | Iterator[Hashable]
 type Keys = list[Key]
-type Renamer = Mapping[Any, Hashable] | Callable[[Any], Hashable]
+type Renamer = Mapping[Hashable, Hashable] | Callable[[Hashable], Hashable]
+type GroupKey = (
+    str
+    | Callable[[Hashable], Hashable]
+    | Grouper
+    | Mapping[Hashable, Hashable]
+    | ndarray[Hashable]
+    | Series
+)
+type GroupKeys = list[GroupKey]
 
 
 class AsType(ReprName):
@@ -276,23 +285,61 @@ class FrameGroupBy(ArgRepr):
 
     Parameters
     ----------
-    *args
-        Arguments to pass on to the ``groupby`` method call.
-    **kwargs
-        Keyword arguments to pass on to the ``groupby`` method call.
+    by: str, callable, series, array, dict, or list
+        Column name, function (to be called on each column name), list or numpy
+        array of the same length as the columns, a dict or series providing a
+        label -> group name mapping, or a list of the above.
+    level: hashable or sequence, optional
+        If the axis is a multi-index (hierarchical), group by a particular
+        level or levels. Do not specify both `by` and `level`.
+        Defaults to ``None``.
+    as_index: bool, optional
+        Whether to return group labels as index. Defaults to ``True``.
+    sort: bool, optional
+        Whether to sort group keys. Defaults to ``True``.
+    group_keys: bool, optional
+        Defaults to ``True``
+    observed: bool, optional
+        Whether to show only observed values for categorical groupers.
+        Defaults to ``False``.
+    dropna: bool, optional
+        Whether to treat NA values in group keys as groups.
+        Defaults to ``True``.
 
     Note
     ----
-    For a full list of (keyword) arguments and their description, see the
+    For a more extensive description of all (keyword) arguments, see the
     pandas `documentation <https://pandas.pydata.org/pandas-docs/stable/
     reference/api/pandas.DataFrame.groupby.html>`_.
 
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(
+            self,
+            by: GroupKey | GroupKeys | None = None,
+            level: Hashable | Sequence[Hashable] | None = None,
+            as_index: bool = True,
+            sort: bool = True,
+            group_keys: bool = True,
+            observed: bool = False,
+            dropna: bool = True,
+    ) -> None:
+        super().__init__(
+            by,
+            level,
+            as_index=as_index,
+            sort=sort,
+            group_keys=group_keys,
+            observed=observed,
+            dropna=dropna
+        )
+        self.by = by
+        self.level = level
+        self.as_index = as_index
+        self.sort = sort
+        self.group_keys = group_keys
+        self.observed = observed
+        self.dropna = dropna
 
     def __call__(self, df: DataFrame) -> DataFrameGroupBy:
         """Call the dataframe's ``groupby`` method with the cached (kw)args.
@@ -308,7 +355,16 @@ class FrameGroupBy(ArgRepr):
             The grouped dataframe.
 
         """
-        return df.groupby(*self.args, **self.kwargs)
+        return df.groupby(
+            self.by,
+            0,
+            self.level,
+            self.as_index,
+            self.sort,
+            self.group_keys,
+            self.observed,
+            self.dropna
+        )
 
 
 class Join(ArgRepr):
@@ -617,7 +673,7 @@ class SetIndex(ArgRepr):
 
     Parameters
     ----------
-    keys: Hashable or array-like
+    keys: hashable or array-like
         This parameter can be either a single column key, a single array of
         the same length as the calling DataFrame, or a list containing an
         arbitrary combination of column keys and arrays.
@@ -691,7 +747,7 @@ class ResetIndex(ArgRepr):
         levels are named. Defaults to an empty string.
     allow_duplicates : bool, optional
         Allow duplicate column labels to be created. Defaults to ``False``
-    names : Hashable or Sequence, optional
+    names : hashable or sequence, optional
         Using the given string, rename the dataframe column which contains the
         index data. If the dataframe has a multiindex, this has to be a list or
         tuple with length equal to the number of levels. Defaults to ``None``.
@@ -748,7 +804,7 @@ class ResetIndex(ArgRepr):
 
 
 class Rename(ArgRepr):
-    """Simple partial of a pandas dataframe's ``rename`` mathod.
+    """Simple partial of a pandas dataframe's ``rename`` method.
 
     Parameters
     ----------
@@ -806,7 +862,7 @@ class Rename(ArgRepr):
         Returns
         -------
         DataFrame
-            The dfataframe wiuth renamed columns or rows.
+            The dataframe with renamed columns or rows.
 
 
         """
