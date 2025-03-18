@@ -125,13 +125,12 @@ class TestUsage(unittest.TestCase):
         _ = self.groupby(df)
         df.groupby.assert_called_once_with(
             self.by,
-            0,
-            self.level,
-            self.as_index,
-            self.sort,
-            self.group_keys,
-            self.observed,
-            self.dropna
+            level=self.level,
+            as_index=self.as_index,
+            sort=self.sort,
+            group_keys=self.group_keys,
+            observed=self.observed,
+            dropna=self.dropna
         )
 
     def test_return_value(self):

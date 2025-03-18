@@ -375,13 +375,12 @@ class GroupBy(ArgRepr):
         """
         return df.groupby(
             self.by,
-            0,
-            self.level,
-            self.as_index,
-            self.sort,
-            self.group_keys,
-            self.observed,
-            self.dropna
+            level=self.level,
+            as_index=self.as_index,
+            sort=self.sort,
+            group_keys=self.group_keys,
+            observed=self.observed,
+            dropna=self.dropna
         )
 
 
@@ -827,7 +826,7 @@ class Rename(ArgRepr):
     Parameters
     ----------
     mapper : dict-like or function
-        Dict-like or function transformations to apply to that axis' values.
+        Dict-like or function transformations to apply to the `axis` values.
     index : dict-like or function
         Alternative to specifying `mapper` with `axis` = 0.
     columns : dict-like or function
@@ -869,6 +868,18 @@ class Rename(ArgRepr):
             errors=self.errors
         )
 
+    @property
+    def resolved(self) -> dict[str, Any]:
+        """Resolved mapper-axis vs. index vs. columns keywords."""
+        return {
+            'index': self.index,
+            'columns': self.columns
+        } if self.mapper is None else {
+            'axis': self.axis
+        }
+
+
+
     def __call__(self, df: DataFrame) -> DataFrame:
         """Rename a pandas dataframe's columns or rows.
 
@@ -882,13 +893,11 @@ class Rename(ArgRepr):
         DataFrame
             The dataframe with renamed columns or rows.
 
-
         """
+
         return df.rename(
             self.mapper,
-            index=self.index,
-            columns=self.columns,
-            axis=self.axis,
+            **self.resolved,
             level=self.level,
             inplace=False,
             errors=self.errors
@@ -900,11 +909,14 @@ class Agg(ArgRepr):
 
     Parameters
     ----------
-    func: callable, str, list, or dict
+    func: callable, str, list, or dict, optional
         Function(s) to use for aggregating the data. If a function, must work
         when passed a Series. Also acceptable are a function name, a list of
         function names and a dictionary with columns names as keys and
         functions, function names, or lists thereof as values.
+        Defaults to ``None``, which only works for a dataframe and relies on
+        `kwargs` to specify `named aggregations <https://pandas.pydata.org/
+        pandas-docs/stable/user_guide/groupby.html#groupby-aggregate-named>`_.
     *args
         Positional arguments to pass on to the ``agg`` or `func` call.
     **kwargs
@@ -919,7 +931,12 @@ class Agg(ArgRepr):
 
     """
 
-    def __init__(self, func: Func | Funcs, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+            self,
+            func: Func | Funcs | None = None,
+            *args: Any,
+            **kwargs: Any
+    ) -> None:
         super().__init__(func, *args, **kwargs)
         self.func = func
         self.args = args
@@ -950,7 +967,7 @@ class Agg(ArgRepr):
         ...
 
     def __call__(self, df):
-        """Call a pandas objectÄs ``agg`` method with the cached (kw)args.
+        """Call a pandas object's ``agg`` method with the cached (kw)args.
 
         Parameters
         ----------
