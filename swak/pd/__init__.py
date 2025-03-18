@@ -8,19 +8,14 @@ pipe of callable objects.
 
 from .read import ParquetReader
 from .write import ParquetWriter
-from .groupby import (
-    FrameGroupByAgg,
-    RollingGroupBy,
-    RollingGroupByAgg,
-    RollingGroupByApply
-)
+from .groupby import GroupByApply, RollingGroupByApply
 from .frame import (
     AsType,
     ColumnSelector,
     ColumnsSelector,
     ColumnMapper,
     RowsSelector,
-    FrameGroupBy,
+    GroupBy,
     Join,
     Assign,
     Drop,
@@ -28,7 +23,9 @@ from .frame import (
     SortValues,
     SetIndex,
     ResetIndex,
-    Rename
+    Rename,
+    Agg,
+    RollingWindow
 )
 
 __all__ = [
@@ -47,9 +44,9 @@ __all__ = [
     'SetIndex',
     'ResetIndex',
     'Rename',
-    'FrameGroupBy',
-    'FrameGroupByAgg',
-    'RollingGroupBy',
-    'RollingGroupByAgg',
-    'RollingGroupByApply'
+    'GroupBy',
+    'Agg',
+    'RollingWindow',
+    'GroupByApply',
+    'RollingGroupByApply',
 ]

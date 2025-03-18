@@ -1,7 +1,7 @@
 import pickle
 import unittest
 from unittest.mock import Mock
-from swak.pd import FrameGroupBy
+from swak.pd import GroupBy
 
 def f(x: str) -> str:
     return x.lower()
@@ -10,7 +10,7 @@ def f(x: str) -> str:
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.groupby = FrameGroupBy()
+        self.groupby = GroupBy()
 
     def test_has_by(self):
         self.assertTrue(hasattr(self.groupby, 'by'))
@@ -65,7 +65,7 @@ class TestAttributes(unittest.TestCase):
         self.group_keys = False
         self.observed = True
         self.dropna = False
-        self.groupby = FrameGroupBy(
+        self.groupby = GroupBy(
             self.by,
             self.level,
             self.as_index,
@@ -107,7 +107,7 @@ class TestUsage(unittest.TestCase):
         self.group_keys = False
         self.observed = True
         self.dropna = False
-        self.groupby = FrameGroupBy(
+        self.groupby = GroupBy(
             self.by,
             self.level,
             self.as_index,
@@ -144,13 +144,13 @@ class TestUsage(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
-        groupby = FrameGroupBy()
-        expected = ("FrameGroupBy(None, None, as_index=True, sort=True, "
+        groupby = GroupBy()
+        expected = ("GroupBy(None, None, as_index=True, sort=True, "
                     "group_keys=True, observed=False, dropna=True)")
         self.assertEqual(expected, repr(groupby))
 
     def test_custom_repr(self):
-        groupby = FrameGroupBy(
+        groupby = GroupBy(
             ['col1', 'col2'],
             1,
             False,
@@ -160,17 +160,17 @@ class TestMisc(unittest.TestCase):
             False
         )
         expected = (
-            "FrameGroupBy(['col1', 'col2'], 1, as_index=False, "
+            "GroupBy(['col1', 'col2'], 1, as_index=False, "
             "sort=False, group_keys=False, observed=True, dropna=False)"
         )
         self.assertEqual(expected, repr(groupby))
 
     def test_pickle_works_with_function(self):
-        groupby = FrameGroupBy(f)
+        groupby = GroupBy(f)
         _ = pickle.loads(pickle.dumps(groupby))
 
     def test_raises_with_lambda(self):
-        groupby = FrameGroupBy(lambda x: x.lower())
+        groupby = GroupBy(lambda x: x.lower())
         with self.assertRaises(AttributeError):
             _ = pickle.loads(pickle.dumps(groupby))
 
