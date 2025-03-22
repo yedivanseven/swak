@@ -295,15 +295,15 @@ class Trainer(ArgRepr):
         epoch, best_loss = self.checkpoint.load(model, optimizer, scheduler)
 
         # Initialize counting and accumulation variables.
-        best_epoch = epoch
         n_wait = 1
+        best_epoch = epoch
         max_epochs_reached = False
-        ema = None  # Exponential moving average of per-batch training loss
 
-        model.train()
-        self.loss.train()
         # Loop over epochs.
         for epoch in range(epoch + 1, self.max_epochs + 1):
+            ema = None
+            model.train()
+            self.loss.train()
             # Get an iterator over batches for one epoch of training data.
             n_batches, batches = train(self.batch_size, self.step_freq, epoch)
             # Initialize a progress bar to monitor training in real time.
@@ -343,12 +343,14 @@ class Trainer(ArgRepr):
             max_n = n if self.max_n is None else min(self.max_n, n)
             n_batches = math.ceil(max_n / self.batch_size)
 
+            # Put model into evaluation mode
+            model.eval()
+            self.loss.eval()
+
             # Evaluate model on training data ...
             n = 0
             ema = None
             train_loss = 0.0
-            model.eval()
-            self.loss.eval()
             with pt.inference_mode():
                 batches = train.sample(self.batch_size, max_n)
                 progress = tqdm(
