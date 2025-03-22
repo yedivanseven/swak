@@ -29,3 +29,8 @@ __all__ = [
     'IfExists',
     'DataFrame2Gbq'
 ]
+
+# ToDo: Refactor so that partial clients are created outside classes
+# ToDo: Allow overwriting cached client configs on calling wrappers
+# ToDo: Add download single file to local
+# ToDo: Add download single file to dataframe

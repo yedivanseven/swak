@@ -3,14 +3,13 @@ from io import BytesIO
 from functools import cached_property
 from botocore.client import BaseClient
 from boto3.s3.transfer import TransferConfig
-from pandas import DataFrame as PandasFrame
-from polars import DataFrame as PolarsFrame
+from pandas import DataFrame as Pandas
+from polars import DataFrame as Polars
 from ...misc import ArgRepr
 from .s3 import S3
 
-type Frame = PandasFrame | PolarsFrame
 
-
+# ToDo: Add skip and overwrite. Act accordingly!
 class DataFrame2S3Parquet(ArgRepr):
     """Upload a pandas or polars dataframe to an S3 bucket.
 
@@ -30,16 +29,18 @@ class DataFrame2S3Parquet(ArgRepr):
         the client. See the `docs <doc_>`__ for all options.
     upload_kws: dict, optional
         Passed on as ``Config`` to the `upload_fileobj <meth_>`__ method of
-        the client. See the `docs <doc_>`__ for all options.
+        the client. See the `docs <doc_>`__ for all `options <options_>`__.
     **kwargs
         Additional keyword arguments are passed on to the ``to_parquet`` method
         of the dataframe.
 
 
     .. _meth: https://boto3.amazonaws.com/v1/documentation/api/latest/reference
-             /services/s3/client/upload_fileobj.html
+        /services/s3/client/upload_fileobj.html
     .. _doc: https://boto3.amazonaws.com/v1/documentation/api/latest/
-            reference/customizations/s3.html#boto3.s3.transfer.TransferConfig
+        reference/customizations/s3.html#boto3.s3.transfer.TransferConfig
+    .. _options: https://boto3.amazonaws.com/v1/documentation/api/latest/
+        reference/services/s3/client/put_object.html
 
     See Also
     --------
@@ -76,7 +77,7 @@ class DataFrame2S3Parquet(ArgRepr):
         """A cached instance of a fully configured S3 client."""
         return self.s3.client
 
-    def __call__(self, df: Frame, *parts: str) -> tuple[()]:
+    def __call__(self, df: Pandas | Polars, *parts: str) -> tuple[()]:
         """Write a pandas or polars dataframe to S3 object storage.
 
         Parameters

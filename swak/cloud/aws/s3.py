@@ -132,6 +132,7 @@ class S3(ArgRepr):
             config=Config(**self.kwargs)
         )
 
+    # ToDo: Overwrite cached (kw)args with kwargs here.
     def __call__(self, *_: Any, **__: Any) -> BaseClient:
         """Return a fresh, new S3 client, ignoring any (keyword) arguments."""
         return self.client

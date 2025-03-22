@@ -164,7 +164,8 @@ class GbqDataset:
             'description': self.description,
             'defaultTableExpirationMs': self.to_ms(self.table_expire_days),
             'defaultPartitionExpirationMs': self.to_ms(
-                self.partition_expire_days),
+                self.partition_expire_days
+            ),
             'labels': self.labels,
             'access': self.access,
             'location': self.location,

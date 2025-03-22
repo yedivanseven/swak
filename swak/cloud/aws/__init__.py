@@ -13,3 +13,12 @@ __all__ = [
     'DataFrame2S3Parquet',
     'S3Parquet2DataFrame'
 ]
+
+# ToDo: Add CreateBucket
+# ToDo: Add PutLiveCycleRule
+# ToDo: Create Enum for ACL, LocationType, DataRedundancy, ObjectOwnership, ...
+# ToDo: ... StorageClass, CheckSumAlgorithm, ServerSideEncryption,
+# ToDo: ObjectLockMode
+# ToDo: Add download file to local
+# ToDo: Add download directory to local
+# ToDo: Add download directory to dataframe
