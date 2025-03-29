@@ -6,6 +6,7 @@ from typing import Any
 from ..misc import ArgRepr
 
 
+# ToDo: Strip prefix!
 class EnvParser(ArgRepr):
     """Parse OS environment variables, preferring prefixed over pure versions.
 
