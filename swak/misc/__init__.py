@@ -8,7 +8,8 @@ from .loggers import (
     DEFAULT_FMT,
     SHORT_FMT,
     PID_FMT,
-    RAW_FMT
+    RAW_FMT,
+    JSON_FMT
 )
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     'DEFAULT_FMT',
     'SHORT_FMT',
     'PID_FMT',
-    'RAW_FMT'
+    'RAW_FMT',
+    'JSON_FMT'
 ]

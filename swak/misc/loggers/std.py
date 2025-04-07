@@ -58,7 +58,7 @@ class StdLogger(ArgRepr):
 
     @staticmethod
     def __valid(stream: str) -> str:
-        """Ensure that the provided stream is one the permitted options."""
+        """Ensure that the provided stream is one of the permitted options."""
         if not isinstance(stream, str):
             cls = type(stream).__name__
             msg = f'stream must be a string, not {cls}!'

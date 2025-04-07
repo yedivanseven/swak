@@ -1,6 +1,6 @@
 import sys
 import logging
-from typing import ParamSpec
+from typing import ParamSpec, Literal
 from collections.abc import Callable
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
@@ -53,7 +53,7 @@ class PassThroughStdLogger(ArgRepr):
             name: str,
             level: int = logging.DEBUG,
             fmt: str = DEFAULT_FMT,
-            stream: str = 'stdout'
+            stream: Literal['stdout', 'stderr'] = 'stdout'
     ) -> None:
         self.name = name.strip()
         self.level = level

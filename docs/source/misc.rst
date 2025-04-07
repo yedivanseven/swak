@@ -8,6 +8,7 @@ misc
 .. autoattribute:: swak.misc.SHORT_FMT
 .. autoattribute:: swak.misc.PID_FMT
 .. autoattribute:: swak.misc.RAW_FMT
+.. autoattribute:: swak.misc.JSON_FMT
 
 
 .. autoclass:: swak.misc.StdLogger
