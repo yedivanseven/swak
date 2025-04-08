@@ -6,6 +6,7 @@ from logging import Logger
 from swak.misc import JsonLogger, JsonStreamHandler
 
 
+# ToDo: Test that params are forwarded to handler!
 class TestDefaultAttributes(unittest.TestCase):
 
     def test_instantiation(self):
@@ -299,10 +300,10 @@ class TestMisc(unittest.TestCase):
             'stderr',
             'asctime',
             'lineno',
-            asnwer=42
+            answer=42
         )
         excepted = ("JsonLogger('default', 30, 'stderr',"
-                    " 'asctime', 'lineno', asnwer=42)")
+                    " 'asctime', 'lineno', answer=42)")
         self.assertEqual(excepted, repr(logger))
 
     def test_pickle_works(self):
