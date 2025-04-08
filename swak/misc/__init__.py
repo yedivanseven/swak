@@ -5,6 +5,8 @@ from .enums import NotFound, LiteralNotFound, Bears, LiteralBears
 from .loggers import (
     StdLogger,
     FileLogger,
+    JsonLogger,
+    JsonStreamHandler,
     DEFAULT_FMT,
     SHORT_FMT,
     PID_FMT,
@@ -21,6 +23,8 @@ __all__ = [
     'LiteralBears',
     'StdLogger',
     'FileLogger',
+    'JsonLogger',
+    'JsonStreamHandler',
     'DEFAULT_FMT',
     'SHORT_FMT',
     'PID_FMT',

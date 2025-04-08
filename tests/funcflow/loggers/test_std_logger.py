@@ -134,9 +134,22 @@ class TestCustomAttributes(unittest.TestCase):
         self.assertTrue(hasattr(logger, 'level'))
 
     def test_level(self):
-        obj = object()
-        logger = PassThroughStdLogger('default', obj)
-        self.assertIs(logger.level, obj)
+        logger = PassThroughStdLogger('default', 20)
+        self.assertEqual(20, logger.level)
+        self.assertEqual(20, logger.logger.level)
+        self.assertEqual(20, logger.logger.handlers[0].level)
+
+    def test_level_truncated_lower(self):
+        logger = PassThroughStdLogger(str(uuid.uuid4()), -20)
+        self.assertEqual(10, logger.level)
+        self.assertEqual(10, logger.logger.level)
+        self.assertEqual(10, logger.logger.handlers[0].level)
+
+    def test_level_truncated_upper(self):
+        logger = PassThroughStdLogger(str(uuid.uuid4()), 70)
+        self.assertEqual(50, logger.level)
+        self.assertEqual(50, logger.logger.level)
+        self.assertEqual(50, logger.logger.handlers[0].level)
 
     def test_has_fmt(self):
         logger = PassThroughStdLogger('default', 20, 'format')

@@ -56,10 +56,10 @@ class PassThroughStdLogger(ArgRepr):
             stream: Literal['stdout', 'stderr'] = 'stdout'
     ) -> None:
         self.name = name.strip()
-        self.level = level
+        self.level = min(max(level, logging.DEBUG), logging.CRITICAL)
         self.fmt = fmt
         self.stream = self.__valid(stream)
-        super().__init__(self.name, level, fmt, stream)
+        super().__init__(self.name, self.level, fmt, stream)
 
     @staticmethod
     def __valid(stream: str) -> str:
@@ -218,7 +218,7 @@ class PassThroughStdLogger(ArgRepr):
         # Get Logger with the given name.
         logger = logging.getLogger(self.name)
         # Adjust its log level so that messages from the Handler get through.
-        logger.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
+        logger.setLevel(self.level)
         # Get all StreamHandlers to the requested stream.
         hdls = self.__filtered(logger.handlers)
         # If there are any, get the first one. If not, make a new one ...
@@ -244,7 +244,7 @@ class PassThroughStdLogger(ArgRepr):
     def __configured(self, handler: StreamHandler) -> StreamHandler:
         """Configure the selected StreamHandler."""
         # Set the level of the handler
-        handler.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
+        handler.setLevel(self.level)
         # Set the configured formatter
         handler.setFormatter(self.__formatter)
         return handler

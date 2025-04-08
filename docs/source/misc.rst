@@ -21,6 +21,16 @@ misc
    :show-inheritance:
 
 
+.. autoclass:: swak.misc.JsonLogger
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.misc.JsonStreamHandler
+   :members:
+   :show-inheritance:
+
+
 .. autoclass:: swak.misc.ArgRepr
    :members:
    :inherited-members: _name
