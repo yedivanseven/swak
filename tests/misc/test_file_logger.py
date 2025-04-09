@@ -231,6 +231,20 @@ class TestCustomAttributes(unittest.TestCase):
             self.assertEqual(20, logger.logger.level)
             self.assertEqual(20, logger.logger.handlers[0].level)
 
+    def test_level_truncated_lower(self):
+        with NamedTemporaryFile() as file:
+            logger = FileLogger(file.name, -20)
+            self.assertEqual(10, logger.level)
+            self.assertEqual(10, logger.logger.level)
+            self.assertEqual(10, logger.logger.handlers[0].level)
+
+    def test_level_truncated_upper(self):
+        with NamedTemporaryFile() as file:
+            logger = FileLogger(file.name, 70)
+            self.assertEqual(50, logger.level)
+            self.assertEqual(50, logger.logger.level)
+            self.assertEqual(50, logger.logger.handlers[0].level)
+
     def test_has_fmt(self):
         with NamedTemporaryFile() as file:
             logger = FileLogger(file.name, 20, 'format')

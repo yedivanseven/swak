@@ -55,7 +55,7 @@ class PassThroughFileLogger(ArgRepr):
             delay: bool = True,
     ) -> None:
         self.file = str(Path(file.strip()).resolve())
-        self.level = level
+        self.level = min(max(level, logging.DEBUG), logging.CRITICAL)
         self.fmt = fmt
         self.mode = mode.strip()
         self.encoding = encoding.strip()
@@ -63,7 +63,7 @@ class PassThroughFileLogger(ArgRepr):
         super().__init__(
             self.file,
             self.mode,
-            level,
+            self.level,
             fmt,
             self.encoding,
             self.delay
@@ -217,7 +217,7 @@ class PassThroughFileLogger(ArgRepr):
         # Get Logger with the given name.
         logger = logging.getLogger(self.name)
         # Adjust its log level so that messages from the Handler get through.
-        logger.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
+        logger.setLevel(self.level)
         # Get all Handlers to the requested file. There should be at most 1!
         handlers = tuple(filter(self.__handles_file, logger.handlers))
         # If there are any, ...
@@ -269,7 +269,7 @@ class PassThroughFileLogger(ArgRepr):
     def __configured(self, handler: FileHandler) -> FileHandler:
         """Configure the selected FileHandler."""
         # Set the level of the handler
-        handler.setLevel(min(max(self.level, logging.DEBUG), logging.CRITICAL))
+        handler.setLevel(self.level)
         # Set the configured formatter
         handler.setFormatter(self.__formatter)
         return handler

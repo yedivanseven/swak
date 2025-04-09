@@ -8,6 +8,7 @@ misc
 .. autoattribute:: swak.misc.SHORT_FMT
 .. autoattribute:: swak.misc.PID_FMT
 .. autoattribute:: swak.misc.RAW_FMT
+.. autoattribute:: swak.misc.JSON_FMT
 
 
 .. autoclass:: swak.misc.StdLogger
@@ -16,6 +17,16 @@ misc
 
 
 .. autoclass:: swak.misc.FileLogger
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.misc.JsonLogger
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.misc.JsonStreamHandler
    :members:
    :show-inheritance:
 

@@ -3,201 +3,214 @@ import uuid
 import unittest
 import pickle
 from unittest.mock import Mock
-from logging import Logger, StreamHandler
-from swak.funcflow.loggers import PassThroughStdLogger, DEFAULT_FMT, PID_FMT
+from logging import Logger
+from swak.misc import JsonStreamHandler
+from swak.funcflow.loggers import PassThroughJsonLogger
 
 
 def f(*_):
-    return 'msg'
+    return {'answer': 42}
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def test_instantiation(self):
-        _ = PassThroughStdLogger('default')
+        _ = PassThroughJsonLogger('default')
 
     def test_has_name(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertTrue(hasattr(logger, 'name'))
 
     def test_name(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertEqual('default', logger.name)
 
     def test_name_stripped(self):
-        logger = PassThroughStdLogger('  name ')
+        logger = PassThroughJsonLogger('  name ')
         self.assertEqual('name', logger.name)
 
     def test_has_level(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertTrue(hasattr(logger, 'level'))
 
     def test_level_type(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertIsInstance(logger.level, int)
 
     def test_level_value(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertEqual(10, logger.level)
 
-    def test_has_fmt(self):
-        logger = PassThroughStdLogger('default')
-        self.assertTrue(hasattr(logger, 'fmt'))
-
-    def test_fmt_type(self):
-        logger = PassThroughStdLogger('default')
-        self.assertIsInstance(logger.fmt, str)
-
-    def test_fmt_value(self):
-        logger = PassThroughStdLogger('default')
-        self.assertEqual(DEFAULT_FMT, logger.fmt)
-
     def test_has_stream(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertTrue(hasattr(logger, 'stream'))
 
     def test_stream(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertEqual('stdout', logger.stream)
 
+    def test_has_field(self):
+        logger = PassThroughJsonLogger('default')
+        self.assertTrue(hasattr(logger, 'field'))
+
+    def test_field(self):
+        logger = PassThroughJsonLogger('default')
+        self.assertTupleEqual(('levelname', 'name'), logger.field)
+
+    def test_has_fields(self):
+        logger = PassThroughJsonLogger('default')
+        self.assertTrue(hasattr(logger, 'fields'))
+
+    def test_fields(self):
+        logger = PassThroughJsonLogger('default')
+        self.assertTupleEqual((), logger.fields)
+
+    def test_has_extras(self):
+        logger = PassThroughJsonLogger('default')
+        self.assertTrue(hasattr(logger, 'extras'))
+
+    def test_extras(self):
+        logger = PassThroughJsonLogger('default')
+        self.assertDictEqual({}, logger.extras)
+
     def test_has_log(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertTrue(hasattr(logger, 'Log'))
 
     def test_log_type(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertIsInstance(logger.Log, type)
 
     def test_has_logger(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         self.assertTrue(hasattr(logger, 'logger'))
 
     def test_logger_type(self):
-        logger = PassThroughStdLogger('default').logger
+        logger = PassThroughJsonLogger('default').logger
         self.assertIsInstance(logger, Logger)
 
     def test_logger_level(self):
-        logger = PassThroughStdLogger('default').logger
+        logger = PassThroughJsonLogger('default').logger
         self.assertEqual(10, logger.level)
 
     def test_logger_has_handlers(self):
         name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
+        logger = PassThroughJsonLogger(name).logger
         self.assertTrue(logger.handlers)
         self.assertEqual(1, len(logger.handlers))
 
     def test_handler_is_stream(self):
         name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
+        logger = PassThroughJsonLogger(name).logger
         handler = logger.handlers[0]
-        self.assertIsInstance(handler, StreamHandler)
+        self.assertIsInstance(handler, JsonStreamHandler)
 
     def test_handler_stream_is_stdout(self):
         name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
+        logger = PassThroughJsonLogger(name).logger
         handler = logger.handlers[0]
         self.assertIs(handler.stream, sys.stdout)
 
     def test_handler_level(self):
         name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
+        logger = PassThroughJsonLogger(name).logger
         handler = logger.handlers[0]
         self.assertEqual(10, handler.level)
 
+    def test_handler_fields(self):
+        name = str(uuid.uuid4())
+        logger = PassThroughJsonLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertSetEqual({'levelname', 'name'}, handler.fields)
+
+    def test_handler_extras(self):
+        name = str(uuid.uuid4())
+        logger = PassThroughJsonLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertDictEqual({}, handler.extras)
+
     def test_new_logger_same_handler(self):
         name = str(uuid.uuid4())
-        logger_1 = PassThroughStdLogger(name).logger
-        handler_1 = logger_1.handlers[0]
-        logger_2 = PassThroughStdLogger(name).logger
-        handler_2 = logger_2.handlers[0]
-        self.assertIs(handler_1, handler_2)
+        wrapper_1 = PassThroughJsonLogger(name)
+        wrapper_2 = PassThroughJsonLogger(name)
+        self.assertIsNot(wrapper_1, wrapper_2)
+        logger_1 = wrapper_1.logger
+        logger_2 = wrapper_2.logger
+        self.assertIs(logger_1, logger_2)
         self.assertEqual(1, len(logger_1.handlers))
         self.assertEqual(1, len(logger_2.handlers))
-
-    def test_has_formatter(self):
-        name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
-        handler = logger.handlers[0]
-        self.assertTrue(hasattr(handler, 'formatter'))
-
-    def test_format_set(self):
-        name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
-        handler = logger.handlers[0]
-        self.assertEqual(DEFAULT_FMT, handler.formatter._fmt)
+        handler_1 = logger_1.handlers[0]
+        handler_2 = logger_2.handlers[0]
+        self.assertIs(handler_1, handler_2)
 
 
 class TestCustomAttributes(unittest.TestCase):
 
     def test_has_level(self):
-        logger = PassThroughStdLogger('default', 20)
+        logger = PassThroughJsonLogger('default', 20)
         self.assertTrue(hasattr(logger, 'level'))
 
     def test_level(self):
-        logger = PassThroughStdLogger('default', 20)
+        logger = PassThroughJsonLogger('default', 20)
         self.assertEqual(20, logger.level)
         self.assertEqual(20, logger.logger.level)
         self.assertEqual(20, logger.logger.handlers[0].level)
 
     def test_level_truncated_lower(self):
-        logger = PassThroughStdLogger(str(uuid.uuid4()), -20)
+        logger = PassThroughJsonLogger(str(uuid.uuid4()), -20)
         self.assertEqual(10, logger.level)
         self.assertEqual(10, logger.logger.level)
         self.assertEqual(10, logger.logger.handlers[0].level)
 
     def test_level_truncated_upper(self):
-        logger = PassThroughStdLogger(str(uuid.uuid4()), 70)
+        logger = PassThroughJsonLogger(str(uuid.uuid4()), 70)
         self.assertEqual(50, logger.level)
         self.assertEqual(50, logger.logger.level)
         self.assertEqual(50, logger.logger.handlers[0].level)
 
-    def test_has_fmt(self):
-        logger = PassThroughStdLogger('default', 20, 'format')
-        self.assertTrue(hasattr(logger, 'fmt'))
-
-    def test_fmt(self):
-        logger = PassThroughStdLogger('default', 20, 'format')
-        self.assertEqual('format', logger.fmt)
-
     def test_stream(self):
-        logger = PassThroughStdLogger('default', 20, stream='stderr')
+        logger = PassThroughJsonLogger('default', 20, stream='stderr')
         self.assertEqual('stderr', logger.stream)
 
-    def test_stream_stripped(self):
-        logger = PassThroughStdLogger('default', 20, stream='  stderr ')
-        self.assertEqual('stderr', logger.stream)
+    def test_single_field(self):
+        logger = PassThroughJsonLogger('default', 20, 'stderr', 'name')
+        self.assertEqual('name', logger.field)
 
-    def test_stream_lowercased(self):
-        logger = PassThroughStdLogger('default', 20, stream='StdErr')
-        self.assertEqual('stderr', logger.stream)
+    def test_multiple_fields(self):
+        logger = PassThroughJsonLogger(
+            'default',
+            20,
+            'stderr',
+            ['name', 'lineno']
+        )
+        self.assertListEqual(['name', 'lineno'], logger.field)
 
-    def test_wrong_stream_type_raises(self):
-        with self.assertRaises(TypeError):
-            _ = PassThroughStdLogger('default', 20, stream=1)
+    def test_additional_field(self):
+        logger = PassThroughJsonLogger(
+            'default',
+            20,
+            'stderr',
+            'name',
+            'lineno'
+        )
+        self.assertTupleEqual(('lineno',), logger.fields)
 
-    def test_wrong_stream_name_raises(self):
-        with self.assertRaises(ValueError):
-            _ = PassThroughStdLogger('default', 20, stream='hello world')
+    def test_extras(self):
+        logger = PassThroughJsonLogger('default', 20, 'stderr', answer=42)
+        self.assertDictEqual({'answer': 42}, logger.extras)
 
     def test_same_logger_new_level(self):
         name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
-        _ = PassThroughStdLogger(name, 20).logger
+        logger = PassThroughJsonLogger(name).logger
+        _ = PassThroughJsonLogger(name, 20).logger
         self.assertEqual(20, logger.level)
         self.assertEqual(20, logger.handlers[0].level)
 
-    def test_same_logger_new_format(self):
-        name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
-        _ = PassThroughStdLogger(name, fmt=PID_FMT).logger
-        handler = logger.handlers[0]
-        self.assertEqual(PID_FMT, handler.formatter._fmt)
-
     def test_new_stream_new_handler(self):
         name = str(uuid.uuid4())
-        logger = PassThroughStdLogger(name).logger
+        logger = PassThroughJsonLogger(name).logger
         self.assertEqual(1, len(logger.handlers))
-        _ = PassThroughStdLogger(name, stream='stderr').logger
+        _ = PassThroughJsonLogger(name, stream='stderr').logger
         self.assertEqual(2, len(logger.handlers))
         self.assertIs(logger.handlers[0].stream, sys.stdout)
         self.assertIs(logger.handlers[1].stream, sys.stderr)
@@ -206,7 +219,7 @@ class TestCustomAttributes(unittest.TestCase):
 class TestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.logger = PassThroughStdLogger('default')
+        self.logger = PassThroughJsonLogger('default')
 
     def test_has_debug(self):
         self.assertTrue(hasattr(self.logger, 'debug'))
@@ -242,27 +255,27 @@ class TestMethods(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.logger = PassThroughStdLogger('default')
+        self.logger = PassThroughJsonLogger('default')
 
     def test_debug_returns_log(self):
         call = self.logger.debug('msg')
-        self.assertIsInstance(call, PassThroughStdLogger.Log)
+        self.assertIsInstance(call, PassThroughJsonLogger.Log)
 
     def test_info_returns_log(self):
         call = self.logger.info('msg')
-        self.assertIsInstance(call, PassThroughStdLogger.Log)
+        self.assertIsInstance(call, PassThroughJsonLogger.Log)
 
     def test_warning_returns_log(self):
         call = self.logger.warning('msg')
-        self.assertIsInstance(call, PassThroughStdLogger.Log)
+        self.assertIsInstance(call, PassThroughJsonLogger.Log)
 
     def test_error_returns_log(self):
         call = self.logger.error('msg')
-        self.assertIsInstance(call, PassThroughStdLogger.Log)
+        self.assertIsInstance(call, PassThroughJsonLogger.Log)
 
     def test_critical_returns_log(self):
         call = self.logger.critical('msg')
-        self.assertIsInstance(call, PassThroughStdLogger.Log)
+        self.assertIsInstance(call, PassThroughJsonLogger.Log)
 
     def test_log_callable(self):
         log = self.logger.debug('msg')
@@ -326,7 +339,7 @@ class TestUsage(unittest.TestCase):
 class TestLogLevel(unittest.TestCase):
 
     def setUp(self):
-        self.logger = PassThroughStdLogger('default', 30, PID_FMT)
+        self.logger = PassThroughJsonLogger('default', 30)
 
     def test_debug_does_not_log(self):
         with self.assertNoLogs('default', 10):
@@ -352,29 +365,36 @@ class TestLogLevel(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
-        logger = PassThroughStdLogger('default')
-        excepted = (f"PassThroughStdLogger('default', "
-                    f"10, '{DEFAULT_FMT}', 'stdout')")
+        logger = PassThroughJsonLogger('default')
+        excepted = ("PassThroughJsonLogger('default', 10, "
+                    "'stdout', ('levelname', 'name'))")
         self.assertEqual(excepted, repr(logger))
 
     def test_custom_repr(self):
-        logger = PassThroughStdLogger('default', 30, PID_FMT, 'stderr')
-        excepted = (f"PassThroughStdLogger('default', "
-                    f"30, '{PID_FMT}', 'stderr')")
+        logger = PassThroughJsonLogger(
+            'default',
+            30,
+            'stderr',
+            'asctime',
+            'lineno',
+            answer=42
+        )
+        excepted = ("PassThroughJsonLogger('default', 30, 'stderr', "
+                    "'asctime', 'lineno', answer=42)")
         self.assertEqual(excepted, repr(logger))
 
     def test_wrapper_pickle_works(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         _ = pickle.loads(pickle.dumps(logger))
 
     def test_string_pickle_works_before(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         log = logger.debug('msg')
         _ = pickle.loads(pickle.dumps(logger))
         _ = pickle.loads(pickle.dumps(log))
 
     def test_string_pickle_works_after(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         log = logger.debug('msg')
         with self.assertLogs('default', 10):
             _ = log()
@@ -382,13 +402,13 @@ class TestMisc(unittest.TestCase):
         _ = pickle.loads(pickle.dumps(log))
 
     def test_call_pickle_works_before(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         log = logger.debug(f)
         _ = pickle.loads(pickle.dumps(logger))
         _ = pickle.loads(pickle.dumps(log))
 
     def test_call_pickle_works_after(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         log = logger.debug(f)
         with self.assertLogs('default', 10):
             _ = log()
@@ -396,7 +416,7 @@ class TestMisc(unittest.TestCase):
         _ = pickle.loads(pickle.dumps(log))
 
     def test_lambda_pickle_raises(self):
-        logger = PassThroughStdLogger('default')
+        logger = PassThroughJsonLogger('default')
         log = logger.debug(lambda *_: 'msg')
         with self.assertRaises(AttributeError):
             _ = pickle.dumps(log)
