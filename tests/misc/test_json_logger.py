@@ -6,7 +6,6 @@ from logging import Logger
 from swak.misc import JsonLogger, JsonStreamHandler
 
 
-# ToDo: Test that params are forwarded to handler!
 class TestDefaultAttributes(unittest.TestCase):
 
     def test_instantiation(self):
@@ -103,6 +102,18 @@ class TestDefaultAttributes(unittest.TestCase):
         logger = JsonLogger(name).logger
         handler = logger.handlers[0]
         self.assertEqual(10, handler.level)
+
+    def test_handler_fields(self):
+        name = str(uuid.uuid4())
+        logger = JsonLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertSetEqual({'levelname', 'name'}, handler.fields)
+
+    def test_handler_extras(self):
+        name = str(uuid.uuid4())
+        logger = JsonLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertDictEqual({}, handler.extras)
 
     def test_new_logger_new_handler(self):
         name = str(uuid.uuid4())

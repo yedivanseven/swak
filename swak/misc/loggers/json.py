@@ -152,16 +152,16 @@ class JsonLogger(ArgRepr):
     stream: str, optional
         Must be one of "stdout" or "stderr". Defaults to "stdout".
     field: str or iterable, optional
-        A single `log-record attributes <https://docs.python.org/3/library/
+        A single `LogRecord attribute <https://docs.python.org/3/library/
         logging.html#logrecord-attributes>`_ or an iterable thereof. All values
         that are not marked by "You shouldn’t need to format this yourself."
         are allowed. Logged messages will be merged with a dictionary of these
         keys before being written to `stream` unless you explicitly refer to
-        the log-record attribute "message", in which case that field will
+        the LogRecord attribute "message", in which case that field will
         contain the dictionary you want to log.
         Defaults to ``("levelname", "name")``.
     *fields: str
-        Additional log-record attributes to merge with the log message.
+        Additional LogRecord attributes to merge with the log message.
     **extras
         Additional, static key-value pairs to merge into every log message.
 

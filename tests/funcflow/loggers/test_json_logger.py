@@ -12,7 +12,6 @@ def f(*_):
     return {'answer': 42}
 
 
-# ToDo: Test that params are forwarded to handler!
 class TestDefaultAttributes(unittest.TestCase):
 
     def test_instantiation(self):
@@ -118,6 +117,18 @@ class TestDefaultAttributes(unittest.TestCase):
         handler = logger.handlers[0]
         self.assertEqual(10, handler.level)
 
+    def test_handler_fields(self):
+        name = str(uuid.uuid4())
+        logger = PassThroughJsonLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertSetEqual({'levelname', 'name'}, handler.fields)
+
+    def test_handler_extras(self):
+        name = str(uuid.uuid4())
+        logger = PassThroughJsonLogger(name).logger
+        handler = logger.handlers[0]
+        self.assertDictEqual({}, handler.extras)
+
     def test_new_logger_same_handler(self):
         name = str(uuid.uuid4())
         wrapper_1 = PassThroughJsonLogger(name)
@@ -166,11 +177,22 @@ class TestCustomAttributes(unittest.TestCase):
         self.assertEqual('name', logger.field)
 
     def test_multiple_fields(self):
-        logger = PassThroughJsonLogger('default', 20, 'stderr', ['name', 'lineno'])
+        logger = PassThroughJsonLogger(
+            'default',
+            20,
+            'stderr',
+            ['name', 'lineno']
+        )
         self.assertListEqual(['name', 'lineno'], logger.field)
 
     def test_additional_field(self):
-        logger = PassThroughJsonLogger('default', 20, 'stderr', 'name', 'lineno')
+        logger = PassThroughJsonLogger(
+            'default',
+            20,
+            'stderr',
+            'name',
+            'lineno'
+        )
         self.assertTupleEqual(('lineno',), logger.fields)
 
     def test_extras(self):
