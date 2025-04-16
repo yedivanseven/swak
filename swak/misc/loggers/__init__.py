@@ -14,3 +14,4 @@ __all__ = [
     'JsonLogger',
     'JsonStreamHandler'
 ]
+# ToDo: Make sure LOGGER.log works standalone!
