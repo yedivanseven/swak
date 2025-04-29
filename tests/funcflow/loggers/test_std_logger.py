@@ -208,6 +208,12 @@ class TestMethods(unittest.TestCase):
     def setUp(self):
         self.logger = PassThroughStdLogger('default')
 
+    def test_has_log(self):
+        self.assertTrue(hasattr(self.logger, 'log'))
+
+    def test_callable_log(self):
+        self.assertTrue(callable(self.logger.log))
+
     def test_has_debug(self):
         self.assertTrue(hasattr(self.logger, 'debug'))
 
@@ -243,6 +249,10 @@ class TestUsage(unittest.TestCase):
 
     def setUp(self):
         self.logger = PassThroughStdLogger('default')
+
+    def test_log_returns_log(self):
+        call = self.logger.log(10, 'msg')
+        self.assertIsInstance(call, PassThroughStdLogger.Log)
 
     def test_debug_returns_log(self):
         call = self.logger.debug('msg')
@@ -331,22 +341,27 @@ class TestLogLevel(unittest.TestCase):
     def test_debug_does_not_log(self):
         with self.assertNoLogs('default', 10):
             _ = self.logger.debug('msg')()
+            _ = self.logger.log(10, 'msg')()
 
     def test_info_does_not_log(self):
         with self.assertNoLogs('default', 30):
             _ = self.logger.info('msg')()
+            _ = self.logger.log(20, 'msg')()
 
     def test_warning_logs(self):
         with self.assertLogs('default', 30):
             _ = self.logger.warning('msg')()
+            _ = self.logger.log(30, 'msg')()
 
     def test_error_logs(self):
         with self.assertLogs('default', 40):
             _ = self.logger.error('msg')()
+            _ = self.logger.log(40, 'msg')()
 
     def test_critical_logs(self):
         with self.assertLogs('default', 50):
             _ = self.logger.critical('msg')()
+            _ = self.logger.log(50, 'msg')()
 
 
 class TestMisc(unittest.TestCase):
