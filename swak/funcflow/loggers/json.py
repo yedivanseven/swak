@@ -1,17 +1,16 @@
 import sys
 import logging
-from typing import ParamSpec, Literal, Any
+from typing import Literal, Any
 from collections.abc import Callable, Iterable, Mapping
 from functools import cached_property
 from logging import Logger, StreamHandler, Handler
 from ...misc import ArgRepr, JsonStreamHandler
 from .formats import JSON_FMT
 
-P = ParamSpec('P')
-type Message = Mapping[str, Any] | Callable[P, Mapping[str, Any]]
+type JSON = Mapping[str, Any]
 
 
-class PassThroughJsonLogger(ArgRepr):
+class PassThroughJsonLogger[**P](ArgRepr):
     """Pass-through Logger to stdout or stderr with a JSON-formatted messages.
 
     Parameters
@@ -94,7 +93,7 @@ class PassThroughJsonLogger(ArgRepr):
                 self,
                 parent: 'PassThroughJsonLogger',
                 level: int,
-                msg: Message
+                msg: JSON | Callable[[JSON], str]
         ) -> None:
             self.parent = parent
             self.level = level
@@ -121,7 +120,27 @@ class PassThroughJsonLogger(ArgRepr):
             self.parent.logger.log(self.level, msg)
             return args[0] if len(args) == 1 else args
 
-    def debug(self, message: Message) -> Log:
+    def log(self, level: int, message: JSON | Callable[[P], JSON]) -> Log:
+        """Log a (dictionary) message, optionally depending on call args.
+
+        Parameters
+        ----------
+        level: int
+            The level to log at.
+        message: str or callable
+            Message to log when the returned object is called. If it is
+            callable, then it will be called with whatever argument(s) the
+            returned object is called with and the result will be logged.
+
+        Returns
+        -------
+        Log
+            A callable object that logs the `message` when called.
+
+        """
+        return self.Log(self, level, message)
+
+    def debug(self, message: JSON | Callable[[P], JSON]) -> Log:
         """Log a DEBUG (dictionary) message, optionally depending on call args.
 
         Parameters
@@ -139,7 +158,7 @@ class PassThroughJsonLogger(ArgRepr):
         """
         return self.Log(self, logging.DEBUG, message)
 
-    def info(self, message: Message):
+    def info(self, message: JSON | Callable[[P], JSON]) -> Log:
         """Log an INFO (dictionary) message, optionally depending on call args.
 
         Parameters
@@ -157,7 +176,7 @@ class PassThroughJsonLogger(ArgRepr):
         """
         return self.Log(self, logging.INFO, message)
 
-    def warning(self, message: Message):
+    def warning(self, message: JSON | Callable[[P], JSON]) -> Log:
         """Log a WARNING (dict) message, optionally depending on call args.
 
         Parameters
@@ -175,7 +194,7 @@ class PassThroughJsonLogger(ArgRepr):
         """
         return self.Log(self, logging.WARNING, message)
 
-    def error(self, message: Message):
+    def error(self, message: JSON | Callable[[P], JSON]) -> Log:
         """Log an ERROR (dict-like) message, optionally depending on call args.
 
         Parameters
@@ -193,7 +212,7 @@ class PassThroughJsonLogger(ArgRepr):
         """
         return self.Log(self, logging.ERROR, message)
 
-    def critical(self, message: Message):
+    def critical(self, message: JSON | Callable[[P], JSON]) -> Log:
         """Log a CRITICAL (dict) message, optionally depending on call args.
 
         Parameters

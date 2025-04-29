@@ -1,17 +1,14 @@
 import sys
 import logging
-from typing import ParamSpec, Literal
+from typing import Literal
 from collections.abc import Callable
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
 from ...misc import ArgRepr
 from .formats import DEFAULT_FMT
 
-P = ParamSpec('P')
-type Message = str | Callable[P, str]
 
-
-class PassThroughStdLogger(ArgRepr):
+class PassThroughStdLogger[**P](ArgRepr):
     """Pass-through Logger to stdout or stderr with a formatted StreamHandler.
 
     Parameters
@@ -95,7 +92,7 @@ class PassThroughStdLogger(ArgRepr):
                 self,
                 parent: 'PassThroughStdLogger',
                 level: int,
-                msg: Message
+                msg: str | Callable[P, str]
         ) -> None:
             self.parent = parent
             self.level = level
@@ -122,7 +119,27 @@ class PassThroughStdLogger(ArgRepr):
             self.parent.logger.log(self.level, msg)
             return args[0] if len(args) == 1 else args
 
-    def debug(self, message: Message) -> Log:
+    def log(self, level: int, message: str | Callable[P, str]) -> Log:
+        """Log a message a a level, optionally depending on call arguments.
+
+        Parameters
+        ----------
+        level: int
+            The level to log at.
+        message: str or callable
+            Message to log when the returned object is called. If it is
+            callable, then it will be called with whatever argument(s) the
+            returned object is called with and the result will be logged.
+
+        Returns
+        -------
+        Log
+            A callable object that logs the `message` when called.
+
+        """
+        return self.Log(self, level, message)
+
+    def debug(self, message: str | Callable[P, str]) -> Log:
         """Log a DEBUG message, optionally depending on call arguments.
 
         Parameters
@@ -140,7 +157,7 @@ class PassThroughStdLogger(ArgRepr):
         """
         return self.Log(self, logging.DEBUG, message)
 
-    def info(self, message: Message):
+    def info(self, message: str | Callable[P, str]) -> Log:
         """Log an INFO message, optionally depending on call arguments.
 
         Parameters
@@ -158,7 +175,7 @@ class PassThroughStdLogger(ArgRepr):
         """
         return self.Log(self, logging.INFO, message)
 
-    def warning(self, message: Message):
+    def warning(self, message: str | Callable[P, str]) -> Log:
         """Log a WARNING message, optionally depending on call arguments.
 
         Parameters
@@ -176,7 +193,7 @@ class PassThroughStdLogger(ArgRepr):
         """
         return self.Log(self, logging.WARNING, message)
 
-    def error(self, message: Message):
+    def error(self, message: str | Callable[P, str]) -> Log:
         """Log an ERROR message, optionally depending on call arguments.
 
         Parameters
@@ -194,7 +211,7 @@ class PassThroughStdLogger(ArgRepr):
         """
         return self.Log(self, logging.ERROR, message)
 
-    def critical(self, message: Message):
+    def critical(self, message: str | Callable[P, str]) -> Log:
         """Log a CRITICAL message, optionally depending on call arguments.
 
         Parameters

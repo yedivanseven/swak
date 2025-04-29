@@ -373,6 +373,16 @@ class TestCustomAttributes(unittest.TestCase):
 
 class TestMethods(unittest.TestCase):
 
+    def test_has_log(self):
+        with NamedTemporaryFile() as file:
+            logger = PassThroughFileLogger(file.name)
+            self.assertTrue(hasattr(logger, 'log'))
+
+    def test_callable_log(self):
+        with NamedTemporaryFile() as file:
+            logger = PassThroughFileLogger(file.name)
+            self.assertTrue(callable(logger.log))
+
     def test_has_debug(self):
         with NamedTemporaryFile() as file:
             logger = PassThroughFileLogger(file.name)
@@ -425,6 +435,12 @@ class TestMethods(unittest.TestCase):
 
 
 class TestUsage(unittest.TestCase):
+
+    def test_log_returns_log(self):
+        with NamedTemporaryFile() as file:
+            logger = PassThroughFileLogger(file.name, fmt=RAW_FMT)
+            log = logger.log(10, 'msg')
+            self.assertIsInstance(log, PassThroughFileLogger.Log)
 
     def test_debug_returns_log(self):
         with NamedTemporaryFile() as file:
@@ -538,17 +554,25 @@ class TestLogLevel(unittest.TestCase):
             logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
             with self.assertNoLogs('name', 10):
                 _ = logger.debug('msg')()
+            with self.assertNoLogs('name', 10):
+                _ = logger.log(10, 'msg')()
 
     def test_info_does_not_log(self):
         with NamedTemporaryFile() as file:
             logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
             with self.assertNoLogs('name', 20):
                 _ = logger.info('msg')()
+            with self.assertNoLogs('name', 20):
+                _ = logger.log(20, 'msg')()
 
     def test_warning_logs(self):
         with NamedTemporaryFile() as file:
             logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
             _ = logger.warning('msg')()
+            self.assertEqual(b'msg\n', file.read())
+        with NamedTemporaryFile() as file:
+            logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
+            _ = logger.log(30, 'msg')()
             self.assertEqual(b'msg\n', file.read())
 
     def test_error_logs(self):
@@ -556,11 +580,19 @@ class TestLogLevel(unittest.TestCase):
             logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
             _ = logger.error('msg')()
             self.assertEqual(b'msg\n', file.read())
+        with NamedTemporaryFile() as file:
+            logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
+            _ = logger.log(40, 'msg')()
+            self.assertEqual(b'msg\n', file.read())
 
     def test_critical_logs(self):
         with NamedTemporaryFile() as file:
             logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
             _ = logger.critical('msg')()
+            self.assertEqual(b'msg\n', file.read())
+        with NamedTemporaryFile() as file:
+            logger = PassThroughFileLogger(file.name, 30, fmt=RAW_FMT)
+            _ = logger.log(50, 'msg')()
             self.assertEqual(b'msg\n', file.read())
 
 

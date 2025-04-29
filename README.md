@@ -15,8 +15,8 @@ applications. In abstracting away boiler-plate code, it thus saves time and effo
 * Focus on writing small, configurable, modular, reusable, and testable 
   building blocks. Then use the flow controls in `funcflow` to compose them
   into arbitrarily complex workflows, that are still easy to maintain and to expand.
-* Quickly set up projects on Google BigQuery and Google Cloud Storage, and
-  efficiently download lots of data in parallel with `cloud.gcp`.
+* Quickly set up projects on Google BigQuery and Google Cloud as well as AWS object Storage, and
+  efficiently download lots of data in parallel with the `cloud` sub-package.
 * Build powerful neural-network architectures from the elements in `pt` and
   train your deep-learning models with early stopping and checkpointing.
   From feature embedding, over feature importance, to repeated residual blocks,
