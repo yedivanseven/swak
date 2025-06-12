@@ -7,6 +7,7 @@ Time = str | dt.date | dt.datetime | Timestamp
 Delta = dt.timedelta | Timedelta
 
 
+# ToDo: Add as_np and try to convert from numpy datetime64
 class FlexiTime:
     """Flexible wrapper around python's own ``datetime.datetime`` object.
 

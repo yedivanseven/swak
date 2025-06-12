@@ -292,6 +292,15 @@ class JsonObject(metaclass=SchemaMeta):
     def __bool__(self) -> bool:
         return bool(self.__dict__)
 
+    def __or__(self, other: Raw | Self) -> Self:
+        return self.__call__(other)
+
+    def __ror__(self, other: Raw | Self) -> dict:
+        try:
+            return {**other, **self}
+        except TypeError:
+            return NotImplemented
+
     def __call__(self, mapping: Raw | Self = None, **kwargs: Any) -> Self:
         """Update one or more (nested) fields with `mapping` and kwargs.
 
