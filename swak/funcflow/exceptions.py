@@ -34,7 +34,7 @@ class SumError(Exception):
     pass
 
 
-class SideEffectsError(Exception):
+class FallbackErrors(ExceptionGroup):
     pass
 
 
