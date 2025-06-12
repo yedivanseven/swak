@@ -292,6 +292,9 @@ class JsonObject(metaclass=SchemaMeta):
     def __bool__(self) -> bool:
         return bool(self.__dict__)
 
+    def __or__(self, other: Raw | Self) -> Self:
+        return self(other)  # ToDo: Continue here
+
     # ToDo: Add the or operator overload ("|") as a synonym for __call__
     def __call__(self, mapping: Raw | Self = None, **kwargs: Any) -> Self:
         """Update one or more (nested) fields with `mapping` and kwargs.
