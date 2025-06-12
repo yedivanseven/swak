@@ -4,6 +4,7 @@ import pickle
 import unittest
 import datetime as dt
 from logging import LogRecord
+from swak.jsonobject import JsonObject
 from swak.misc import JsonStreamHandler
 
 
@@ -20,6 +21,16 @@ class Custom:
     @property
     def as_json(self) -> str:
         return 'JSON'
+
+
+class Child(JsonObject):
+    c: int = 1
+    d: bool = True
+
+
+class Parent(JsonObject):
+    a: str = 'foo'
+    b: Child = Child()
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -330,6 +341,30 @@ class TestDictFormat(unittest.TestCase):
 
 
 class TestMisc(unittest.TestCase):
+
+    def setUp(self):
+        self.name = 'logger'
+        self.level = 20
+        self.pathname = '/path/name'
+        self.lineno = 42
+        self.msg = {'answer': 42}
+        self.func = 'func'
+        self.record = LogRecord(
+            name=self.name,
+            level=self.level,
+            pathname=self.pathname,
+            lineno=self.lineno,
+            msg=Parent(),
+            args=(),
+            exc_info=(None, None, None),
+            func=self.func
+        )
+
+    def test_json_object(self):
+        handler = JsonStreamHandler('stdout', 'levelname')
+        actual = handler.format(self.record)
+        expected = {'levelname': 'INFO', **Parent()}
+        self.assertEqual(serialize(expected), actual)
 
     def test_pickle_fails(self):
         handler = JsonStreamHandler()

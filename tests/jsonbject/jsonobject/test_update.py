@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 from pandas import Series
 from swak.jsonobject import JsonObject
 from swak.jsonobject.fields import Maybe
@@ -705,6 +706,15 @@ class TestNesting(unittest.TestCase):
     def test_bytearray(self):
         updated = self.nested(bytearray(b'{"child": {"c": 42}}'))
         self.check_attributes(updated)
+
+
+class TestMagic(unittest.TestCase):
+
+    def test_or_calls_update(self):
+        child = Child()
+        with patch.object(child, '__call__') as mock:
+            _ = child | 'foo'
+            mock.assert_called_once_with('foo')
 
 
 if __name__ == '__main__':

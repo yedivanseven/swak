@@ -212,6 +212,19 @@ class TestMagic(unittest.TestCase):
         empty = Empty()
         self.assertDictEqual({}, dict(empty))
 
+    def test_dict_merging(self):
+        simple = Simple()
+        d = {'c': 'bar', 'd': 'baz'}
+        expected = {'a': 1, 'b': 'foo', 'c': 'bar', 'd': 'baz'}
+        actual = d | simple
+        self.assertDictEqual(expected, actual)
+
+    def test_dict_merging_raises(self):
+        simple = Simple()
+        with self.assertRaises(TypeError):
+            1 | simple
+
+
 
 if __name__ == '__main__':
     unittest.main()
