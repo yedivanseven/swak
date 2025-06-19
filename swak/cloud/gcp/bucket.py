@@ -125,7 +125,7 @@ class GcsBucket(ArgRepr):
         Raises
         ------
         Conflict
-            If `exists_ok` is set to ``False`` and the dataset already exists.
+            If `exists_ok` is set to ``False`` and the bucket already exists.
 
         Returns
         -------
