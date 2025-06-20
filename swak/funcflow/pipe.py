@@ -7,7 +7,6 @@ from .exceptions import PipeError
 type Call = type | Callable[..., Any]
 
 
-# ToDo: How do we deal with one-tuples as input and output
 class Pipe[**P, T](IndentRepr):
     """Chain any number of callable objects into a single callable object.
 
@@ -67,6 +66,9 @@ class Pipe[**P, T](IndentRepr):
     def _(self, index: slice) -> Self:
         return self.__class__(*self.calls[index])
 
+    def __hash__(self) -> int:
+        return self.calls.__hash__()
+
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return self.calls == other.calls
@@ -112,7 +114,6 @@ class Pipe[**P, T](IndentRepr):
             When one of the callables in the chain raises an exception.
 
         """
-        args = args[0] if len(args) == 1 else args
         for i, call in enumerate(self):
             try:
                 args = call(*args) if isinstance(args, tuple) else call(args)
@@ -122,7 +123,7 @@ class Pipe[**P, T](IndentRepr):
                 name = self._name(call)
                 fmt = msg.format(err_cls, name, i, self, error)
                 raise PipeError(fmt) from error
-        return args
+        return  args[0] if isinstance(args, tuple) and len(args) == 1 else args
 
     @staticmethod
     def __valid(calls: Call | Iterable[Call]) -> tuple[Call, ...]:

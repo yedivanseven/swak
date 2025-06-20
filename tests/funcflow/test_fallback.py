@@ -62,7 +62,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.one, 'errors'))
 
     def test_errors(self):
-        self.assertTupleEqual((Exception,), self.one.errors)
+        self.assertSetEqual({Exception}, set(self.one.errors))
 
     def test_has_callback(self):
         self.assertTrue(hasattr(self.one, 'callback'))
@@ -86,7 +86,11 @@ class TestAttributes(unittest.TestCase):
         self.one = Fallback(f, TypeError, ValueError, callback=cb)
 
     def test_errors(self):
-        self.assertTupleEqual((TypeError, ValueError), self.one.errors)
+        self.assertSetEqual({TypeError, ValueError}, set(self.one.errors))
+
+    def test_errors_deduplicated(self):
+        fallback = Fallback(f, TypeError, TypeError, callback=cb)
+        self.assertTupleEqual((TypeError, ), fallback.errors)
 
     def test_callback(self):
         self.assertIs(self.one.callback, cb)
@@ -118,6 +122,14 @@ class TestDefaultUsage(unittest.TestCase):
         callback = Mock()
         empty = Fallback([], callback=callback)
         expected = object(),
+        actual = empty(expected)
+        self.assertTupleEqual(expected, actual)
+        callback.assert_not_called()
+
+    def test_empty_two_tuple_arg(self):
+        callback = Mock()
+        empty = Fallback([], callback=callback)
+        expected = object(), object()
         actual = empty(expected)
         self.assertTupleEqual(expected, actual)
         callback.assert_not_called()
@@ -157,6 +169,33 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(3, actual)
         callback.assert_not_called()
 
+    def test_one_call_called_with_empty_tuple(self):
+        callback = Mock()
+        mock = Mock(return_value=3)
+        one = Fallback(mock, callback=callback)
+        actual = one(())
+        mock.assert_called_once_with(())
+        self.assertEqual(3, actual)
+        callback.assert_not_called()
+
+    def test_one_call_called_with_one_tuple(self):
+        callback = Mock()
+        mock = Mock(return_value=3)
+        one = Fallback(mock, callback=callback)
+        actual = one((42,))
+        mock.assert_called_once_with((42,))
+        self.assertEqual(3, actual)
+        callback.assert_not_called()
+
+    def test_one_call_called_with_two_tuple(self):
+        callback = Mock()
+        mock = Mock(return_value=3)
+        one = Fallback(mock, callback=callback)
+        actual = one((42, 'foo'))
+        mock.assert_called_once_with((42, 'foo'))
+        self.assertEqual(3, actual)
+        callback.assert_not_called()
+
     def test_one_call_no_return_value(self):
         callback = Mock()
         one = Fallback(q, callback=callback)
@@ -172,7 +211,7 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(3, actual)
         callback.assert_not_called()
 
-    def test_one_call_one_tuple_return_value(self):
+    def test_one_call_returns_value_from_one_tuple(self):
         callback = Mock()
         one = Fallback(g, callback=callback)
         actual = one(2)
@@ -180,7 +219,14 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(3, actual)
         callback.assert_not_called()
 
-    def test_one_call_two_return_values(self):
+    def test_one_call_returns_one_tuple_from_one_tuple(self):
+        callback = Mock()
+        one = Fallback(lambda x: ((x,),), callback=callback)
+        actual = one(2)
+        self.assertTupleEqual((2,), actual)
+        callback.assert_not_called()
+
+    def test_one_call_returns_two_tuple_from_two_tuple(self):
         callback = Mock()
         one = Fallback(h, callback=callback)
         actual = one(2)
@@ -338,7 +384,7 @@ class TestMisc(unittest.TestCase):
 
     def test_empty_repr(self):
         fallback = Fallback([], TypeError, ValueError, callback=cb)
-        expected = 'Fallback(TypeError, ValueError, callback=cb)'
+        expected = 'Fallback(ValueError, TypeError, callback=cb)'
         self.assertEqual(expected, repr(fallback))
 
     def test_one_call_default_repr(self):
@@ -348,9 +394,8 @@ class TestMisc(unittest.TestCase):
 
     def test_one_call_repr(self):
         fallback = Fallback(f, TypeError, ValueError, callback=cb)
-        expected = 'Fallback(TypeError, ValueError, callback=cb):\n[ 0] f'
+        expected = 'Fallback(ValueError, TypeError, callback=cb):\n[ 0] f'
         self.assertEqual(expected, repr(fallback))
-
 
     def test_two_calls_default_repr(self):
         fallback = Fallback([f, g])

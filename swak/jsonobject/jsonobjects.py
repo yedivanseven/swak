@@ -112,6 +112,8 @@ class JsonObjects[T]:
         except (ParseError, CastError, ValidationErrors):
             return False
 
+    __hash__ = None
+
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return self.__items == other.__items

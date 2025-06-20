@@ -6,7 +6,6 @@ from .misc import unit
 from .exceptions import FallbackErrors
 
 
-# ToDo: How do we deal with one-tuples as input and as output
 class Fallback[**P, T](IndentRepr):
     """Try different options in case a callable fails to process its input.
 
@@ -44,7 +43,7 @@ class Fallback[**P, T](IndentRepr):
             callback: Callable[[str, P, Exception], Any] = unit
     ) -> None:
         self.calls = self.__valid(calls)
-        self.errors = errors or (Exception,)
+        self.errors = tuple(set(errors)) if errors else (Exception,)
         self.callback = callback
         super().__init__(self.calls,*self.errors, callback=callback)
 
@@ -77,6 +76,9 @@ class Fallback[**P, T](IndentRepr):
             callback=self.callback
         )
 
+    def __hash__(self) -> int:
+        return hash((self.calls, self.errors, self.callback))
+
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return (
@@ -102,7 +104,7 @@ class Fallback[**P, T](IndentRepr):
         if isinstance(other, self.__class__):
             return self.__class__(
                 [*self.calls, *other.calls],
-                *self.errors,
+                *{*self.errors, *other.errors},
                 callback=self.callback
             )
         try:

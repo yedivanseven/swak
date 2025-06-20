@@ -380,6 +380,17 @@ class TestUsage(unittest.TestCase):
         self.assertIsInstance(actual, int)
         self.assertEqual(3, actual)
 
+    def test_return_value_from_one_tuple(self):
+        route = Route([1], lambda x: (x,))
+        actual = route(1, 2, 4)
+        self.assertIsInstance(actual, int)
+        self.assertEqual(2, actual)
+
+    def test_return_one_tuple(self):
+        route = Route([1], lambda x: ((x,),))
+        actual = route(1, 2, 4)
+        self.assertTupleEqual((2,), actual)
+
     def test_return_tuple(self):
         route = Route([(2, 0)], g)
         actual = route(1, 2, 4)
@@ -542,6 +553,15 @@ class TestMagic(unittest.TestCase):
         self.assertIsInstance(self.route[1:4], Route)
         self.assertTupleEqual(self.routes[1:4], self.route[1:4].routes)
         self.assertTupleEqual(self.calls[1:4], self.route[1:4].calls)
+
+    def test_hash(self):
+        route = Route(self.routes, self.calls)
+        self.assertEqual(hash((route.calls, route.routes)), hash(route))
+
+    def test_hash_contract(self):
+        route1 = Route(self.routes, self.calls)
+        route2 = Route(self.routes, self.calls)
+        self.assertEqual(hash(route1), hash(route2))
 
     def test_equal_self(self):
         self.assertEqual(self.route, self.route)

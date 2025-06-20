@@ -20,6 +20,18 @@ class TestUnit(unittest.TestCase):
         self.assertIsInstance(actual, tuple)
         self.assertTupleEqual((), actual)
 
+    def test_empty_tuple(self):
+        actual = unit(())
+        self.assertTupleEqual((), actual)
+
+    def test_one_tuple(self):
+        actual = unit((42,))
+        self.assertTupleEqual((), actual)
+
+    def test_two_tuple(self):
+        actual = unit((42, 'foo'))
+        self.assertTupleEqual((), actual)
+
 
 class TestIdentity(unittest.TestCase):
 
@@ -36,6 +48,21 @@ class TestIdentity(unittest.TestCase):
     def test_many(self):
         expected = 1, 'foo', False
         actual = identity(*expected)
+        self.assertTupleEqual(expected, actual)
+
+    def test_empty_tuple(self):
+        expected = ()
+        actual = identity(expected)
+        self.assertTupleEqual(expected, actual)
+
+    def test_one_tuple(self):
+        expected = 42,
+        actual = identity(expected)
+        self.assertTupleEqual(expected, actual)
+
+    def test_two_tuple(self):
+        expected = 42, 'foo'
+        actual = identity(expected)
         self.assertTupleEqual(expected, actual)
 
 
@@ -58,6 +85,24 @@ class TestApply(unittest.TestCase):
         _ = apply(mock, 1, 'foo', False)
         mock.assert_called_once()
         mock.assert_called_once_with(1, 'foo', False)
+
+    def test_call_called_with_empty_tuple(self):
+        mock = Mock()
+        _ = apply(mock, ())
+        mock.assert_called_once()
+        mock.assert_called_once_with(())
+
+    def test_call_called_with_one_tuple(self):
+        mock = Mock()
+        _ = apply(mock, (42,))
+        mock.assert_called_once()
+        mock.assert_called_once_with((42,))
+
+    def test_call_called_with_two_tuple(self):
+        mock = Mock()
+        _ = apply(mock, (42, 'foo'))
+        mock.assert_called_once()
+        mock.assert_called_once_with((42, 'foo'))
 
 
 if __name__ == '__main__':

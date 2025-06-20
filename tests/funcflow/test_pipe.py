@@ -192,6 +192,64 @@ class TestUsage(unittest.TestCase):
         self.assertIsInstance(result, tuple)
         self.assertTupleEqual(('foo', 1), result)
 
+    def test_empty_empty_tuple(self):
+        pipe = Pipe()
+        result = pipe(())
+        self.assertTupleEqual((), result)
+
+    def test_empty_one_tuple(self):
+        pipe = Pipe()
+        result = pipe((42,))
+        self.assertTupleEqual((42,), result)
+
+    def test_empty_two_tuple(self):
+        pipe = Pipe()
+        result = pipe((42, 'foo'))
+        self.assertTupleEqual((42, 'foo'), result)
+
+    def test_called_with_empty_tuple(self):
+        mock = Mock()
+        pipe = Pipe(mock)
+        _ = pipe(())
+        mock.assert_called_once_with(())
+
+    def test_called_with_one_tuple(self):
+        mock = Mock()
+        pipe = Pipe(mock)
+        _ = pipe((42,))
+        mock.assert_called_once_with((42,))
+
+    def test_called_with_two_tuple(self):
+        mock = Mock()
+        pipe = Pipe(mock)
+        _ = pipe((42, 'foo'))
+        mock.assert_called_once_with((42, 'foo'))
+
+    def test_returns_empty_tuple(self):
+        pipe = Pipe(lambda x: ())
+        result = pipe(42)
+        self.assertTupleEqual((), result)
+
+    def test_returns_one_tuple(self):
+        pipe = Pipe(lambda x: ((x,),))
+        result = pipe(42)
+        self.assertTupleEqual((42, ), result)
+
+    def test_returns_value_from_one_tuple(self):
+        pipe = Pipe(lambda x: (x,))
+        result = pipe(42)
+        self.assertEqual(42, result)
+
+    def test_returns_two_tuple(self):
+        pipe = Pipe(lambda x: ((x, x),))
+        result = pipe(42)
+        self.assertTupleEqual((42, 42), result)
+
+    def test_returns_two_tuple_from_two_tuple(self):
+        pipe = Pipe(lambda x: (x, x))
+        result = pipe(42)
+        self.assertEqual((42, 42), result)
+
     def test_empty_empty(self):
         pipe = Pipe(lambda: (), lambda: ())
         result = pipe()
@@ -321,6 +379,14 @@ class TestMagic(unittest.TestCase):
     def test_getitem_multiple_slice(self):
         self.assertIsInstance(self.pipe[:3], Pipe)
         self.assertTupleEqual(self.calls[:3], self.pipe[:3].calls)
+
+    def test_hash(self):
+        self.assertEqual(hash(self.pipe.calls), hash(self.pipe))
+
+    def test_hash_contract(self):
+        pipe1 = Pipe(*self.calls)
+        pipe2 = Pipe(*self.calls)
+        self.assertEqual(hash(pipe1), hash(pipe2))
 
     def test_equality_true_self(self):
         self.assertEqual(self.pipe, self.pipe)

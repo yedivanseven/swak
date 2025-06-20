@@ -74,6 +74,9 @@ class ValuesGetter[T](ArgRepr):
     def _(self, index: slice) -> Self:
         return self.__class__(*self.keys[index])
 
+    def __hash__(self) -> int:
+        return self.keys.__hash__()
+
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return self.keys == other.keys
