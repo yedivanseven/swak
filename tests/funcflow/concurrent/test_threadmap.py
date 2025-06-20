@@ -473,7 +473,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_pickle_works(self):
         m = ThreadMap(plus_2)
-        _ = pickle.dumps(m)
+        _ = pickle.loads(pickle.dumps(m))
 
     def test_default_pickle_raises_with_lambda(self):
         m = ThreadMap(lambda x: x + 2)

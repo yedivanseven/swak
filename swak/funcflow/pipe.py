@@ -7,6 +7,7 @@ from .exceptions import PipeError
 type Call = type | Callable[..., Any]
 
 
+# ToDo: How do we deal with one-tuples as input and output
 class Pipe[**P, T](IndentRepr):
     """Chain any number of callable objects into a single callable object.
 

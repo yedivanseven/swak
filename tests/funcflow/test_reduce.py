@@ -274,21 +274,21 @@ class TestMisc(unittest.TestCase):
 
     def test_default_pickle_works(self):
         r = Reduce(f)
-        _ = pickle.dumps(r)
+        _ = pickle.loads(pickle.dumps(r))
 
     def test_default_pickle_raises_lambda(self):
         r = Reduce(lambda x, y: x + y)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(r)
+            _ = pickle.loads(pickle.dumps(r))
 
     def test_acc_pickle_works(self):
         r = Reduce(f, 1)
-        _ = pickle.dumps(r)
+        _ = pickle.loads(pickle.dumps(r))
 
     def test_acc_pickle_raises_lambda(self):
         r = Reduce(lambda x, y: x + y, 1)
         with self.assertRaises(AttributeError):
-            _ = pickle.dumps(r)
+            _ = pickle.loads(pickle.dumps(r))
 
     def test_default_lambda_repr(self):
         r = Reduce(lambda x, y: x + y)

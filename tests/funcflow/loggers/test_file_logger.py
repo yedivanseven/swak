@@ -659,7 +659,7 @@ class TestMisc(unittest.TestCase):
             logger = PassThroughFileLogger(file.name)
             log = logger.debug(lambda *_: 'msg')
             with self.assertRaises(AttributeError):
-                _ = pickle.dumps(log)
+                _ = pickle.loads(pickle.dumps(log))
 
 
 if __name__ == '__main__':
