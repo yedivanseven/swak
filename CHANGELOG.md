@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - Added Fallback to funcflow
 - Homogenized funcflow behavior on functions returning one-tuples
-- Added missing __hash__ magic methods 
+- Added missing `__hash__` magic methods 
 
 ## [0.5.2] - 2025-06-12
 - Fixed JSON logging issue with JsonObject

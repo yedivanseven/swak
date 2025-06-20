@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 
+# ToDo: Add polars support
 class CustomField(ABC):
     """Abstract base class for defining custom field types in a JsonObject."""
 

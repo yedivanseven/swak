@@ -79,7 +79,6 @@ class TestDefaultAttributes(unittest.TestCase):
             _ = Fallback([f, 42, g])
 
 
-
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
@@ -357,7 +356,6 @@ class TestMisc(unittest.TestCase):
 
     def test_type_annotation_works(self):
         _ = Fallback[[int, str], bool](p)
-
 
     def test_empty_pickle_works(self):
         fallback = Fallback([])
