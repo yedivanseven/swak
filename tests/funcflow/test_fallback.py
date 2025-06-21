@@ -82,17 +82,25 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.one = Fallback(f, TypeError, ValueError, callback=cb)
+        self.fallback = Fallback(f, TypeError, ValueError, callback=cb)
 
     def test_errors(self):
-        self.assertSetEqual({TypeError, ValueError}, set(self.one.errors))
+        self.assertSetEqual({TypeError, ValueError}, set(self.fallback.errors))
 
     def test_errors_deduplicated(self):
         fallback = Fallback(f, TypeError, TypeError, callback=cb)
         self.assertTupleEqual((TypeError, ), fallback.errors)
 
+    def test_wrong_errors_raise(self):
+        with self.assertRaises(FallbackErrors):
+            _ = Fallback(f, TypeError, 'foo', 42, ValueError)
+
     def test_callback(self):
-        self.assertIs(self.one.callback, cb)
+        self.assertIs(self.fallback.callback, cb)
+
+    def test_wrong_callback_raises(self):
+        with self.assertRaises(TypeError):
+            _ = Fallback(f, TypeError, ValueError, callback='foo')
 
 
 class TestDefaultUsage(unittest.TestCase):
@@ -347,9 +355,176 @@ class TestErrorsUsage(unittest.TestCase):
         )
 
 
-# ToDo: Continue here!
 class TestMagic(unittest.TestCase):
-    pass
+
+    def setUp(self):
+        self.calls = f, g, h, q
+        self.fallback = Fallback(
+            self.calls,
+            TypeError,
+            ValueError,
+            callback=cb
+        )
+
+    def test_iter(self):
+        print(repr(self.fallback))
+        for i, call in enumerate(self.fallback):
+            self.assertIs(self.calls[i], call)
+
+    def test_len(self):
+        self.assertEqual(len(self.calls), len(self.fallback))
+        self.assertEqual(0, len(Fallback([])))
+
+    def test_bool(self):
+        self.assertTrue(self.fallback)
+        self.assertFalse(Fallback([]))
+
+    def test_contains(self):
+        for call in self.calls:
+            self.assertIn(call, self.fallback)
+
+    def test_reversed_raises(self):
+        with self.assertRaises(TypeError):
+            _ = reversed(self.fallback)
+
+    def test_getitem_int(self):
+        for i, call in enumerate(self.calls):
+            self.assertIs(call, self.fallback[i])
+
+    def test_getitem_single_slice(self):
+        self.assertIsInstance(self.fallback[:1], Fallback)
+        self.assertTupleEqual(self.calls[:1], self.fallback[:1].calls)
+
+    def test_getitem_multiple_slice(self):
+        self.assertIsInstance(self.fallback[:3], Fallback)
+        self.assertTupleEqual(self.calls[:3], self.fallback[:3].calls)
+
+    def test_hash(self):
+        expected = hash((
+            self.fallback.calls,
+            self.fallback.errors,
+            self.fallback.callback
+        ))
+        self.assertEqual(expected, hash(self.fallback))
+
+    def test_hash_contract(self):
+        fallback = Fallback(self.calls, TypeError, ValueError, callback=cb)
+        self.assertEqual(hash(self.fallback), hash(fallback))
+
+    def test_equality_true_self(self):
+        self.assertEqual(self.fallback, self.fallback)
+
+    def test_equality_true_other(self):
+        fallback = Fallback(self.calls, TypeError, ValueError, callback=cb)
+        self.assertEqual(self.fallback, fallback)
+
+    def test_equality_true_ordering_errors(self):
+        fallback = Fallback(self.calls, ValueError, TypeError, callback=cb)
+        self.assertEqual(self.fallback, fallback)
+
+    def test_equality_false_wrong_class(self):
+        self.assertFalse(self.fallback == 'foo')
+
+    def test_equality_false_wrong_calls(self):
+        fallback = Fallback(self.calls[:2], TypeError, ValueError, callback=cb)
+        self.assertFalse(self.fallback == fallback)
+
+    def test_equality_false_wrong_errors(self):
+        fallback = Fallback(self.calls, TypeError, callback=cb)
+        self.assertFalse(self.fallback == fallback)
+
+    def test_equality_false_wrong_callback(self):
+        fallback = Fallback(self.calls, TypeError, ValueError)
+        self.assertFalse(self.fallback == fallback)
+
+    def test_inequality_false_self(self):
+        self.assertFalse(self.fallback != self.fallback)
+
+    def test_inequality_false_other(self):
+        fallback = Fallback(self.calls, ValueError, TypeError, callback=cb)
+        self.assertFalse(self.fallback != fallback)
+
+    def test_inequality_true_wrong_class(self):
+        self.assertNotEqual(self.fallback, 'foo')
+
+    def test_inequality_true_wrong_calls(self):
+        fallback = Fallback(self.calls[:2], TypeError, ValueError, callback=cb)
+        self.assertNotEqual(self.fallback, fallback)
+
+    def test_inequality_true_wrong_errors(self):
+        fallback = Fallback(self.calls[:2], ValueError, callback=cb)
+        self.assertNotEqual(self.fallback, fallback)
+
+    def test_inequality_true_wrong_callback(self):
+        fallback = Fallback(self.calls[:2], TypeError, ValueError)
+        self.assertNotEqual(self.fallback, fallback)
+
+    # ToDo: Test also errors and callback!
+    def test_add_call(self):
+        fallback = self.fallback + f
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual((*self.calls, f), fallback.calls)
+        self.assertTupleEqual(self.fallback.errors, fallback.errors)
+
+    def test_add_empty_calls(self):
+        fallback = self.fallback + []
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual(self.calls, fallback.calls)
+        self.assertTupleEqual(self.fallback.errors, fallback.errors)
+
+    def test_add_calls(self):
+        fallback = self.fallback + [f, g]
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual((*self.calls, f, g), fallback.calls)
+        self.assertTupleEqual(self.fallback.errors, fallback.errors)
+
+    def test_add_empty_self(self):
+        fallback = self.fallback + Fallback([])
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual(self.calls, fallback.calls)
+        self.assertTupleEqual(self.fallback.errors, fallback.errors)
+
+    def test_add_self(self):
+        fallback = self.fallback + Fallback([f, g], AttributeError)
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual((*self.calls, f, g), fallback.calls)
+        self.assertSetEqual(
+            {*self.fallback.errors, AttributeError}, set(fallback.errors)
+        )
+
+    def test_add_non_callable_raises(self):
+        with self.assertRaises(TypeError):
+            _ = self.fallback + 'foo'
+
+    def test_add_non_callables_raises(self):
+        with self.assertRaises(TypeError):
+            _ = self.fallback + [f, object(), 1, g]
+
+    def test_radd_call(self):
+        fallback = f + self.fallback
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual((f, *self.calls), fallback.calls)
+        self.assertTupleEqual(self.fallback.errors, fallback.errors)
+
+    def test_radd_empty_calls(self):
+        fallback = [] + self.fallback
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual(self.calls, fallback.calls)
+        self.assertTupleEqual(self.fallback.errors, fallback.errors)
+
+    def test_radd_calls(self):
+        fallback = [f, g] + self.fallback
+        self.assertIsInstance(fallback, Fallback)
+        self.assertTupleEqual((f, g, *self.calls), fallback.calls)
+        self.assertTupleEqual(self.fallback.errors, fallback.errors)
+
+    def test_radd_non_callable_raises(self):
+        with self.assertRaises(TypeError):
+            _ = 'foo' + self.fallback
+
+    def test_radd_non_callables_raises(self):
+        with self.assertRaises(TypeError):
+            _ = [f, object(), 1, g] + self.fallback
 
 
 class TestMisc(unittest.TestCase):

@@ -5,6 +5,8 @@ from ..misc import IndentRepr
 from .misc import unit
 from .exceptions import FallbackErrors
 
+type Errors = tuple[type[Exception], ...]
+
 
 class Fallback[**P, T](IndentRepr):
     """Try different options in case a callable fails to process its input.
@@ -33,18 +35,21 @@ class Fallback[**P, T](IndentRepr):
     Raises
     ------
     TypeError
-        If `calls` is neither a callable nor an iterable thereof.
+        If `calls` is neither a callable nor an iterable thereof or `callback`
+        is not, in fact, callable.
+    FallbackErrors
+        If any of the `errors` does not derive from ``Exception``.
 
     """
     def __init__(
             self,
             calls: Callable[P, T] | Iterable[Callable[P, T]],
             *errors: type[Exception],
-            callback: Callable[[str, P, Exception], Any] = unit
+            callback: Callable[[str, P.args, Exception], Any] = unit
     ) -> None:
         self.calls = self.__valid(calls)
-        self.errors = tuple(set(errors)) if errors else (Exception,)
-        self.callback = callback
+        self.errors = self.__actual(errors) or (Exception,)
+        self.callback = self.__valid(callback)[0]
         super().__init__(self.calls,*self.errors, callback=callback)
 
     def __iter__(self) -> Iterator[Callable[P, T]]:
@@ -60,8 +65,8 @@ class Fallback[**P, T](IndentRepr):
     def __contains__(self, item: Callable[P, T]) -> bool:
         return item in self.calls
 
-    def __reversed__(self) -> NotImplemented:
-        return NotImplemented
+    def __reversed__(self):
+        raise TypeError(f'{type(self).__name__} objects cannot be reversed')
 
     @singledispatchmethod
     def __getitem__(self, index: int) -> Callable[P, T]:
@@ -84,7 +89,7 @@ class Fallback[**P, T](IndentRepr):
             return (
                 self.calls == other.calls and
                 self.errors == other.errors and
-                self.callback is other.callback
+                self.callback == other.callback
             )
         return NotImplemented
 
@@ -102,9 +107,10 @@ class Fallback[**P, T](IndentRepr):
             other: Callable[P, T] | Iterable[Callable[P, T]] | Self
     ) -> Self:
         if isinstance(other, self.__class__):
+            others = filter(lambda error: error is not Exception, other.errors)
             return self.__class__(
                 [*self.calls, *other.calls],
-                *{*self.errors, *other.errors},
+                *{*self.errors, *others},
                 callback=self.callback
             )
         try:
@@ -142,6 +148,11 @@ class Fallback[**P, T](IndentRepr):
         object
             Whatever the cached callables return.
 
+        Raises
+        ------
+        FallbackErrors
+            If all `calls` raised one of the `errors` when called with `args`.
+
         """
         if self.calls:
             errors = []
@@ -172,4 +183,18 @@ class Fallback[**P, T](IndentRepr):
             iterable = False
         if iterable and all_callable:
             return tuple(calls)
-        raise TypeError('All calls must be callable!')
+        raise TypeError('All calls and the callback must be, well, callable!')
+
+    @staticmethod
+    def __actual(errors: Errors) -> Errors:
+        """Ensure that the provided errors are actually, well, errors.."""
+        msg = '{} is of type {}'
+        wrong = [
+            TypeError(msg.format(error, type(error).__name__))
+            for error in errors
+            if not (isinstance(error, type) and issubclass(error, Exception))
+        ]
+        if wrong:
+            msg = 'All errors must derive from Exception!'
+            raise FallbackErrors(msg, wrong)
+        return tuple(set(errors))

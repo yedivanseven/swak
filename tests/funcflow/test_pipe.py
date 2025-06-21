@@ -368,6 +368,10 @@ class TestMagic(unittest.TestCase):
     def test_contains(self):
         self.assertIn(Cls, self.pipe)
 
+    def test_reversed_raises(self):
+        with self.assertRaises(TypeError):
+            _ = reversed(self.pipe)
+
     def test_getitem_int(self):
         for i, call in enumerate(self.calls):
             self.assertIs(call, self.pipe[i])

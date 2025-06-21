@@ -54,8 +54,8 @@ class Pipe[**P, T](IndentRepr):
     def __contains__(self, item: Call) -> bool:
         return item in self.calls
 
-    def __reversed__(self) -> NotImplemented:
-        return NotImplemented
+    def __reversed__(self):
+        raise TypeError(f'{type(self).__name__} objects cannot be reversed')
 
     @singledispatchmethod
     def __getitem__(self, index: int) -> Call:
