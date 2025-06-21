@@ -367,7 +367,6 @@ class TestMagic(unittest.TestCase):
         )
 
     def test_iter(self):
-        print(repr(self.fallback))
         for i, call in enumerate(self.fallback):
             self.assertIs(self.calls[i], call)
 
