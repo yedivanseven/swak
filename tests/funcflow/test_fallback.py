@@ -458,7 +458,6 @@ class TestMagic(unittest.TestCase):
         fallback = Fallback(self.calls[:2], TypeError, ValueError)
         self.assertNotEqual(self.fallback, fallback)
 
-    # ToDo: Test also errors and callback!
     def test_add_call(self):
         fallback = self.fallback + f
         self.assertIsInstance(fallback, Fallback)
