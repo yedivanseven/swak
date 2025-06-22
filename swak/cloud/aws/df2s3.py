@@ -70,6 +70,7 @@ class DataFrame2S3Parquet(ArgRepr):
             **self.kwargs
         )
 
+    # ToDo: Remove "client" property
     @property
     def client(self) -> BaseClient:
         """A cached instance of a fully configured S3 client."""
@@ -94,6 +95,7 @@ class DataFrame2S3Parquet(ArgRepr):
 
         """
         key = self.prefix.format(*parts).strip()
+        # ToDo: make client
         with BytesIO() as buffer:
             df.to_parquet(buffer, **self.kwargs)
             buffer.seek(0)
@@ -104,4 +106,5 @@ class DataFrame2S3Parquet(ArgRepr):
                 ExtraArgs=self.extra_kws,
                 Config=TransferConfig(**self.upload_kws)
             )
+        # ToDo: close client
         return ()

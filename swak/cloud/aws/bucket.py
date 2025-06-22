@@ -52,7 +52,7 @@ class S3Bucket(ArgRepr):
             blob_expire_days: int | None = None
     ) -> None:
         self.s3 = s3
-        self.bucket = bucket if bucket is None else bucket.strip(' /.')
+        self.bucket = bucket.strip(' /.')
         self.location = location.strip().lower()
         self.exists_ok = bool(exists_ok)
         self.blob_expire_days = self.__valid(blob_expire_days)

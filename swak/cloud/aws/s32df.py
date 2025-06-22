@@ -50,7 +50,7 @@ class S3Parquet2DataFrame[T](ArgRepr):
             s3: S3,
             bucket: str,
             prefix: str = '',
-            bear: str | Bears | LiteralBears = Bears.PANDAS,
+            bear: Bears | LiteralBears = Bears.PANDAS,
             get_kws: dict[str, Any] | None = None,
             **kwargs: Any
     ) -> None:
@@ -69,6 +69,7 @@ class S3Parquet2DataFrame[T](ArgRepr):
             **self.kwargs
         )
 
+    # ToDo: Remove "client" property
     @cached_property
     def client(self) -> BaseClient:
         """A cached instance of a fully configured S3 client."""
@@ -101,6 +102,7 @@ class S3Parquet2DataFrame[T](ArgRepr):
         stripped = path.strip(' /')
         prepended = '/' + stripped if stripped else stripped
         key = self.prefix + prepended
+        # ToDo: Make client
         response = self.client.get_object(
             Key=key,
             Bucket=self.bucket,
@@ -108,4 +110,5 @@ class S3Parquet2DataFrame[T](ArgRepr):
         )
         with BytesIO(response.get('Body').read()) as buffer:
             df = self.read_parquet(buffer, **self.kwargs)
+        # ToDo: close client
         return df
