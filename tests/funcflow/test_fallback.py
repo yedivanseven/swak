@@ -562,8 +562,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(fallback))
 
     def test_empty_repr(self):
-        fallback = Fallback([], TypeError, ValueError, callback=cb)
-        expected = 'Fallback(ValueError, TypeError, callback=cb)'
+        fallback = Fallback([], TypeError, callback=cb)
+        expected = 'Fallback(TypeError, callback=cb)'
         self.assertEqual(expected, repr(fallback))
 
     def test_one_call_default_repr(self):
@@ -572,8 +572,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(fallback))
 
     def test_one_call_repr(self):
-        fallback = Fallback(f, TypeError, ValueError, callback=cb)
-        expected = 'Fallback(ValueError, TypeError, callback=cb):\n[ 0] f'
+        fallback = Fallback(f, ValueError, callback=cb)
+        expected = 'Fallback(ValueError, callback=cb):\n[ 0] f'
         self.assertEqual(expected, repr(fallback))
 
     def test_two_calls_default_repr(self):
