@@ -120,7 +120,7 @@ class JsonStreamHandler(StreamHandler):
         else:
             # If the message is indeed a dictionary, this should work ...
             try:
-                message = {**record.msg, ** basics}
+                message = {**record.msg, **basics}
             # ... but if it does not, we fall back to a nested message.
             except TypeError:
                 message = basics | {'message': record.msg}

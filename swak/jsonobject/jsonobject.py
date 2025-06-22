@@ -273,6 +273,8 @@ class JsonObject(metaclass=SchemaMeta):
     def __repr__(self) -> str:
         return json.dumps(self.__dict__, indent=4, default=self._serialize)
 
+    __hash__ = None
+
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__

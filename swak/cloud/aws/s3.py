@@ -1,4 +1,5 @@
 from typing import Any, overload
+from functools import cached_property
 import boto3
 from botocore.client import BaseClient
 from botocore.config import Config
@@ -115,9 +116,9 @@ class S3(ArgRepr):
         """Return mock string if secrets are not None."""
         return attr if attr is None else '****'
 
-    @property
+    @cached_property
     def client(self) -> BaseClient:
-        """A fresh, new  S3 client."""
+        """New S3 client on first request, cached for subsequent requests."""
         return boto3.client(
             service_name='s3',
             region_name=self.region_name,
@@ -132,7 +133,18 @@ class S3(ArgRepr):
             config=Config(**self.kwargs)
         )
 
-    # ToDo: Overwrite cached (kw)args with kwargs here.
     def __call__(self, *_: Any, **__: Any) -> BaseClient:
-        """Return a fresh, new S3 client, ignoring any (keyword) arguments."""
-        return self.client
+        """New S3 client on every call, ignoring any (keyword) arguments."""
+        return boto3.client(
+            service_name='s3',
+            region_name=self.region_name,
+            api_version=self.api_version,
+            use_ssl=self.use_ssl,
+            verify=self.verify,
+            endpoint_url=self.endpoint_url,
+            aws_account_id=self.__aws_account_id,
+            aws_access_key_id=self.__aws_access_key_id,
+            aws_secret_access_key=self.__aws_secret_access_key,
+            aws_session_token=self.__aws_session_token,
+            config=Config(**self.kwargs)
+        )

@@ -155,11 +155,11 @@ class TestMisc(unittest.TestCase):
 
     def test_default_pickle_works(self):
         s = Sum()
-        _ = pickle.dumps(s)
+        _ = pickle.loads(pickle.dumps(s))
 
     def test_acc_pickle_works(self):
         s = Sum(1)
-        _ = pickle.dumps(s)
+        _ = pickle.loads(pickle.dumps(s))
 
     def test_default_repr(self):
         s = Sum()

@@ -30,6 +30,10 @@ class TestAttributes(unittest.TestCase):
         e = EnvParser('PRE_')
         self.assertEqual('PRE_', e.prefix)
 
+    def test_custom_prefix_stripped(self):
+        e = EnvParser(' PRE_  ')
+        self.assertEqual('PRE_', e.prefix)
+
 
 class TestUsage(unittest.TestCase):
 

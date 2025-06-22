@@ -13,6 +13,9 @@ class Custom:
     def __eq__(self, _):
         return True
 
+    def __hash__(self):
+        return 1234
+
 
 class Simple(JsonObject):
     a: int = 1

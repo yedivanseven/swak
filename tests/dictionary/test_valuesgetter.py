@@ -222,6 +222,14 @@ class TestMagic(unittest.TestCase):
         self.assertEqual(2, len(g))
         self.assertTupleEqual(self.keys[:2], g.keys[:2])
 
+    def test_hash(self):
+        self.assertEqual(hash(self.values_from.keys), hash(self.values_from))
+
+    def test_hash_contract(self):
+        values_from1 = ValuesGetter(*self.keys)
+        values_from2 = ValuesGetter(*self.keys)
+        self.assertEqual(hash(values_from1), hash(values_from2))
+
     def test_equality_true_other(self):
         self.assertEqual(self.values_from, ValuesGetter(*self.keys))
 

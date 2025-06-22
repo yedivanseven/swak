@@ -6,7 +6,6 @@ from typing import Any
 from ..misc import ArgRepr
 
 
-# ToDo: Strip prefix!
 class EnvParser(ArgRepr):
     """Parse OS environment variables, preferring prefixed over pure versions.
 
@@ -27,7 +26,7 @@ class EnvParser(ArgRepr):
 
     def __init__(self, prefix: str = '') -> None:
         super().__init__(prefix)
-        self.prefix = prefix
+        self.prefix = prefix.strip()
 
     def __call__(self, env: dict[str, str] | None = None) -> dict[str, Any]:
         """Parse the OS environment, resolving potentially prefixed variables.

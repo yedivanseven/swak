@@ -196,6 +196,11 @@ class TestUsage(unittest.TestCase):
         self.assertIsInstance(result, tuple)
         self.assertTupleEqual((), result)
 
+    def test_empty_empty_tuple(self):
+        fork = Fork()
+        result = fork(())
+        self.assertTupleEqual((), result)
+
     def test_calls_called_with_arg(self):
         mock_1 = Mock()
         mock_2 = Mock()
@@ -256,6 +261,16 @@ class TestUsage(unittest.TestCase):
         result = fork('foo', 1)
         self.assertIsInstance(result, int)
         self.assertEqual(2, result)
+
+    def test_single_args_value_from_one_tuple_return_value(self):
+        fork = Fork(lambda *x: (2,))
+        result = fork('foo', 1)
+        self.assertEqual(2, result)
+
+    def test_single_args_one_tuple_return_value(self):
+        fork = Fork(lambda *x: ((2,),))
+        result = fork('foo', 1)
+        self.assertTupleEqual((2,), result)
 
     def test_single_args_return_values(self):
         fork = Fork(lambda *x: (1, 2))
@@ -367,6 +382,14 @@ class TestMagic(unittest.TestCase):
     def test_getitem_multiple_slice(self):
         self.assertIsInstance(self.fork[:3], Fork)
         self.assertTupleEqual(self.calls[:3], self.fork[:3].calls)
+
+    def test_hash(self):
+        self.assertEqual(hash(self.fork.calls), hash(self.fork))
+
+    def test_hash_contract(self):
+        fork1 = Fork(*self.calls)
+        fork2 = Fork(*self.calls)
+        self.assertEqual(hash(fork1), hash(fork2))
 
     def test_equality_true_self(self):
         self.assertEqual(self.fork, self.fork)

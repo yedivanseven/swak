@@ -12,7 +12,7 @@ def resolve(path: str) -> str:
     Returns
     -------
     str
-        The resolved path
+        The resolved path.
 
     """
     return str(Path(path).resolve())

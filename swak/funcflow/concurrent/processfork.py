@@ -101,6 +101,9 @@ class ProcessFork[**P, T](IndentRepr):
     def _(self, index: slice) -> Self:
         return self.__class__(*self.calls[index])
 
+    def  __hash__(self) -> int:
+        return self.calls.__hash__()
+
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return self.calls == other.calls

@@ -54,8 +54,8 @@ class Pipe[**P, T](IndentRepr):
     def __contains__(self, item: Call) -> bool:
         return item in self.calls
 
-    def __reversed__(self) -> NotImplemented:
-        return NotImplemented
+    def __reversed__(self):
+        raise TypeError(f'{type(self).__name__} objects cannot be reversed')
 
     @singledispatchmethod
     def __getitem__(self, index: int) -> Call:
@@ -65,6 +65,9 @@ class Pipe[**P, T](IndentRepr):
     @__getitem__.register
     def _(self, index: slice) -> Self:
         return self.__class__(*self.calls[index])
+
+    def __hash__(self) -> int:
+        return self.calls.__hash__()
 
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
@@ -111,7 +114,6 @@ class Pipe[**P, T](IndentRepr):
             When one of the callables in the chain raises an exception.
 
         """
-        args = args[0] if len(args) == 1 else args
         for i, call in enumerate(self):
             try:
                 args = call(*args) if isinstance(args, tuple) else call(args)
@@ -121,7 +123,7 @@ class Pipe[**P, T](IndentRepr):
                 name = self._name(call)
                 fmt = msg.format(err_cls, name, i, self, error)
                 raise PipeError(fmt) from error
-        return args
+        return  args[0] if isinstance(args, tuple) and len(args) == 1 else args
 
     @staticmethod
     def __valid(calls: Call | Iterable[Call]) -> tuple[Call, ...]:

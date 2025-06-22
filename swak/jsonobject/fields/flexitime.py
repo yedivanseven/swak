@@ -8,6 +8,8 @@ Delta = dt.timedelta | Timedelta
 
 
 # ToDo: Add as_np and try to convert from numpy datetime64
+# ToDo: Add polars support
+# Todo: Add as_date
 class FlexiTime:
     """Flexible wrapper around python's own ``datetime.datetime`` object.
 

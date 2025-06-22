@@ -87,6 +87,9 @@ class Route[**P, T](IndentRepr):
     def _(self, index: slice) -> Self:
         return self.__class__(self.routes[index], *self.calls[index])
 
+    def __hash__(self) -> int:
+        return hash((self.calls, self.routes))
+
     def __eq__(self, other: Self) -> bool:
         if isinstance(other, self.__class__):
             return self.calls == other.calls and self.routes == other.routes

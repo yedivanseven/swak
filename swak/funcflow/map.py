@@ -3,6 +3,7 @@ from ..misc import ArgRepr
 from .exceptions import MapError
 
 
+# ToDo: Add a "flatten" option that weeds out emtpy tuples from the results
 class Map[**P, S, T](ArgRepr):
     """Equivalent to a partial of the python builtin ``map`` function.
 

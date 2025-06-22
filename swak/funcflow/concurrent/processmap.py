@@ -5,6 +5,7 @@ from ...misc import ArgRepr
 from ..exceptions import MapError
 
 
+# ToDo: Add a "flatten" option that weeds out emtpy tuples from the results
 class ProcessMap[**P, S, T](ArgRepr):
     """Partial of ``concurrent.futures.ProcessPoolExecutor.map``.
 
