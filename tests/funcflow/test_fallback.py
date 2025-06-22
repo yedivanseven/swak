@@ -464,24 +464,28 @@ class TestMagic(unittest.TestCase):
         self.assertIsInstance(fallback, Fallback)
         self.assertTupleEqual((*self.calls, f), fallback.calls)
         self.assertTupleEqual(self.fallback.errors, fallback.errors)
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_add_empty_calls(self):
         fallback = self.fallback + []
         self.assertIsInstance(fallback, Fallback)
         self.assertTupleEqual(self.calls, fallback.calls)
         self.assertTupleEqual(self.fallback.errors, fallback.errors)
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_add_calls(self):
         fallback = self.fallback + [f, g]
         self.assertIsInstance(fallback, Fallback)
         self.assertTupleEqual((*self.calls, f, g), fallback.calls)
         self.assertTupleEqual(self.fallback.errors, fallback.errors)
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_add_empty_self(self):
         fallback = self.fallback + Fallback([])
         self.assertIsInstance(fallback, Fallback)
         self.assertTupleEqual(self.calls, fallback.calls)
         self.assertTupleEqual(self.fallback.errors, fallback.errors)
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_add_self(self):
         fallback = self.fallback + Fallback([f, g], AttributeError)
@@ -490,6 +494,7 @@ class TestMagic(unittest.TestCase):
         self.assertSetEqual(
             {*self.fallback.errors, AttributeError}, set(fallback.errors)
         )
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_add_non_callable_raises(self):
         with self.assertRaises(TypeError):
@@ -504,18 +509,21 @@ class TestMagic(unittest.TestCase):
         self.assertIsInstance(fallback, Fallback)
         self.assertTupleEqual((f, *self.calls), fallback.calls)
         self.assertTupleEqual(self.fallback.errors, fallback.errors)
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_radd_empty_calls(self):
         fallback = [] + self.fallback
         self.assertIsInstance(fallback, Fallback)
         self.assertTupleEqual(self.calls, fallback.calls)
         self.assertTupleEqual(self.fallback.errors, fallback.errors)
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_radd_calls(self):
         fallback = [f, g] + self.fallback
         self.assertIsInstance(fallback, Fallback)
         self.assertTupleEqual((f, g, *self.calls), fallback.calls)
         self.assertTupleEqual(self.fallback.errors, fallback.errors)
+        self.assertIs(self.fallback.callback, fallback.callback)
 
     def test_radd_non_callable_raises(self):
         with self.assertRaises(TypeError):
