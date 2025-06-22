@@ -158,13 +158,13 @@ class TestUsage(unittest.TestCase):
 
     @patch('boto3.client')
     @patch('swak.cloud.aws.s3.Config')
-    def test_new_clients_when_requested_again(self, config, client):
+    def test_same_client_when_requested_again(self, config, client):
         config.return_value = 'config'
         _ = self.s3.client
         _ = self.s3.client
         _ = self.s3.client
-        self.assertEqual(3, client.call_count)
-        self.assertEqual(3, config.call_count)
+        self.assertEqual(1, client.call_count)
+        self.assertEqual(1, config.call_count)
 
     @patch('boto3.client')
     @patch('swak.cloud.aws.s3.Config')

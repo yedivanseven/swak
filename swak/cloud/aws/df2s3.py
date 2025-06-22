@@ -1,6 +1,5 @@
 from typing import Any
 from io import BytesIO
-from functools import cached_property
 from botocore.client import BaseClient
 from boto3.s3.transfer import TransferConfig
 from pandas import DataFrame as Pandas
@@ -33,7 +32,6 @@ class DataFrame2S3Parquet(ArgRepr):
     **kwargs
         Additional keyword arguments are passed on to the ``to_parquet`` method
         of the dataframe.
-
 
     .. _meth: https://boto3.amazonaws.com/v1/documentation/api/latest/reference
         /services/s3/client/upload_fileobj.html
@@ -72,7 +70,7 @@ class DataFrame2S3Parquet(ArgRepr):
             **self.kwargs
         )
 
-    @cached_property
+    @property
     def client(self) -> BaseClient:
         """A cached instance of a fully configured S3 client."""
         return self.s3.client
