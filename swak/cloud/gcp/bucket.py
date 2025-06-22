@@ -29,7 +29,7 @@ class GcsBucket(ArgRepr):
         Google Cloud Platform `documentation <https://cloud.google.com/storage/
         docs/locations>`__ for options.
     blob_expire_days: int, optional
-        Defaults to ``None``. If sets, blobs older than the specified number of
+        Defaults to ``None``. If set, blobs older than the specified number of
         days will be automatically deleted.
     labels: dict, optional
         Any number of string-valued labels of the bucket. Defaults to none.
