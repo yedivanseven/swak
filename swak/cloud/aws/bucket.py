@@ -22,8 +22,8 @@ class S3Bucket(ArgRepr):
         global-infrastructure/latest/regions/aws-regions.html>`__
         for options. Defaults to "eu-west-1".
     exists_ok: bool, optional
-        Whether to raise an exception if the targeted bucket already exists
-        or not. Defaults to ``False``.
+        Whether quietly return the requested bucket if it exists or not.
+        Defaults to ``False``.
     blob_expire_days: int, optional
         Defaults to ``None``. If set, objects older than the specified number
         of days will be automatically deleted.
@@ -149,10 +149,11 @@ class S3Bucket(ArgRepr):
             as_int = int(blob_expire_days)
         except (TypeError, ValueError) as error:
             cls = type(blob_expire_days).__name__
-            tmp = '"{}" must at least be convertible to integer unlike {}!'
+            tmp = '"{}" must at least be convertible to integer, unlike {}!'
             msg = tmp.format('blob_expire_days', cls)
             raise TypeError(msg) from error
         if as_int < 1:
-            msg = '"blob_expire_days" must be greater (or equal) to one!'
+            tmp = '"{}" must be greater than (or equal to) one, unlike {}!'
+            msg = tmp.format('blob_expire_days', as_int)
             raise ValueError(msg)
         return as_int
