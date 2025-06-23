@@ -2,8 +2,7 @@ import pickle
 import unittest
 from unittest.mock import Mock
 from botocore.exceptions import ClientError
-from swak.cloud.aws import S3
-from swak.cloud.aws import S3Bucket
+from swak.cloud.aws import S3, S3Bucket
 from swak.cloud.aws.exceptions import S3Error
 
 

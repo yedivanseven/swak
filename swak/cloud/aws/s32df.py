@@ -1,8 +1,6 @@
 from typing import Any
 from io import BytesIO
 from collections.abc import Callable
-from functools import cached_property
-from botocore.client import BaseClient
 import pandas as pd
 import polars as pl
 from ...misc import ArgRepr, Bears, LiteralBears
@@ -38,6 +36,11 @@ class S3Parquet2DataFrame[T](ArgRepr):
         Additional keyword arguments are passed on to the top-level
         ``read_parquet`` function of either pandas or polars.
 
+    Raises
+    ------
+    AttributeError
+        If `bucket`, `prefix`, or `bear` are not, in fact, strings.
+
     See Also
     --------
     S3
@@ -55,8 +58,8 @@ class S3Parquet2DataFrame[T](ArgRepr):
             **kwargs: Any
     ) -> None:
         self.s3 = s3
-        self.bucket = bucket.strip(' /')
-        self.prefix = prefix.strip().lstrip('/')
+        self.bucket = bucket.strip(' /.')
+        self.prefix = prefix.strip(' .').lstrip('./')
         self.bear = bear.strip().lower()
         self.get_kws = {} if get_kws is None else get_kws
         self.kwargs = kwargs
@@ -68,12 +71,6 @@ class S3Parquet2DataFrame[T](ArgRepr):
             get_kws=get_kws,
             **self.kwargs
         )
-
-    # ToDo: Remove "client" property
-    @cached_property
-    def client(self) -> BaseClient:
-        """A cached instance of a fully configured S3 client."""
-        return self.s3.client
 
     @property
     def read_parquet(self) -> Callable[[BytesIO, ...], T]:
@@ -99,16 +96,16 @@ class S3Parquet2DataFrame[T](ArgRepr):
             A pandas or polars dataframe, depending on `bear`.
 
         """
-        stripped = path.strip(' /')
+        stripped = path.strip(' ./')
         prepended = '/' + stripped if stripped else stripped
         key = self.prefix + prepended
-        # ToDo: Make client
-        response = self.client.get_object(
+        client = self.s3()
+        response = client.get_object(
             Key=key,
             Bucket=self.bucket,
             **self.get_kws
         )
         with BytesIO(response.get('Body').read()) as buffer:
             df = self.read_parquet(buffer, **self.kwargs)
-        # ToDo: close client
+        client.close()
         return df

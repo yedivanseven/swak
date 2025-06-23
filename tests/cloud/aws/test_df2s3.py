@@ -2,7 +2,7 @@ import io
 import unittest
 import pickle
 from unittest.mock import patch, Mock
-from swak.cloud.aws import DataFrame2S3Parquet
+from swak.cloud.aws import DataFrame2S3Parquet, S3
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -48,24 +48,13 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_kwargs(self):
         self.assertDictEqual({}, self.upload.kwargs)
 
-    def test_has_client(self):
-        upload = DataFrame2S3Parquet(Mock(), self.bucket)
-        self.assertTrue(hasattr(upload, 'client'))
-
-    def test_client(self):
-        s3 = Mock()
-        client = Mock()
-        s3.client = client
-        upload = DataFrame2S3Parquet(s3, self.bucket)
-        self.assertIs(upload.client, client)
-
 
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.s3 = 's3'
-        self.bucket = ' / bucket /'
-        self.prefix = ' /prefix / '
+        self.bucket = ' ./ bucket ./'
+        self.prefix = ' ./prefix . '
         self.extra_kws = {'one': 1}
         self.upload_kws = {'two': 2}
         self.kwargs = {'three': 3}
@@ -79,10 +68,12 @@ class TestAttributes(unittest.TestCase):
         )
 
     def test_bucket_stripped(self):
-        self.assertEqual(self.bucket.strip(' /'), self.upload.bucket)
+        self.assertEqual(self.bucket.strip(' /.'), self.upload.bucket)
 
     def test_prefix_stripped(self):
-        self.assertEqual(self.prefix.strip().lstrip('/'), self.upload.prefix)
+        self.assertEqual(
+            self.prefix.strip(' .').lstrip('/.'), self.upload.prefix
+        )
 
     def test_extra_kws(self):
         self.assertDictEqual(self.extra_kws, self.upload.extra_kws)
@@ -94,7 +85,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.kwargs, self.upload.kwargs)
 
     def test_repr(self):
-        expected = ("DataFrame2S3Parquet('s3', 'bucket', 'prefix /', "
+        expected = ("DataFrame2S3Parquet('s3', 'bucket', 'prefix', "
                     "extra_kws={'one': 1}, upload_kws={'two': 2}, three=3)")
         self.assertEqual(expected, repr(self.upload))
 
@@ -102,7 +93,9 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.s3 = Mock()
+        self.s3 = Mock(spec=S3)
+        self.client = Mock()
+        self.s3.return_value = self.client
         self.bucket = 'bucket'
         self.prefix = 'prefix'
         self.extra_kws = {'one': 1}
@@ -119,6 +112,12 @@ class TestUsage(unittest.TestCase):
 
     def test_callable(self):
         self.assertTrue(callable(self.upload))
+
+    @patch('swak.cloud.aws.df2s3.TransferConfig')
+    def test_client_created(self, _):
+        df = Mock()
+        _ = self.upload(df)
+        self.s3.assert_called_once_with()
 
     @patch('swak.cloud.aws.df2s3.TransferConfig')
     def test_to_parquet_called(self, _):
@@ -142,10 +141,10 @@ class TestUsage(unittest.TestCase):
         config = Mock()
         config_cls.return_value = config
         _ = self.upload(df)
-        self.upload.s3.client.upload_fileobj.assert_called_once()
-        args = self.upload.s3.client.upload_fileobj.call_args[0]
+        self.client.upload_fileobj.assert_called_once()
+        args = self.client.upload_fileobj.call_args[0]
         self.assertTupleEqual((), args)
-        kwargs = self.upload.s3.client.upload_fileobj.call_args[1]
+        kwargs = self.client.upload_fileobj.call_args[1]
         file_obj = kwargs.pop('Fileobj')
         self.assertIsInstance(file_obj, io.BytesIO)
         expected = {
@@ -159,11 +158,16 @@ class TestUsage(unittest.TestCase):
     @patch('swak.cloud.aws.df2s3.TransferConfig')
     def test_prefix_interpolated_stripped(self, _):
         df = Mock()
-        s3 = Mock()
-        upload = DataFrame2S3Parquet(s3, 'bucket', ' This {} is {}!  ')
+        upload = DataFrame2S3Parquet(self.s3, 'bucket', ' ./This {} is {}! . ')
         _ = upload(df, 'class', 'great')
-        key = s3.client.upload_fileobj.call_args[1].pop('Key')
+        key = self.client.upload_fileobj.call_args[1].pop('Key')
         self.assertTrue('This class is great!', key)
+
+    @patch('swak.cloud.aws.df2s3.TransferConfig')
+    def test_client_closed(self, _):
+        df = Mock()
+        _ = self.upload(df)
+        self.client.close.assert_called_once_with()
 
     @patch('swak.cloud.aws.df2s3.TransferConfig')
     def test_return_value(self, _):

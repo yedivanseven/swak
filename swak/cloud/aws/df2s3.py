@@ -1,6 +1,5 @@
 from typing import Any
 from io import BytesIO
-from botocore.client import BaseClient
 from boto3.s3.transfer import TransferConfig
 from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
@@ -40,6 +39,11 @@ class DataFrame2S3Parquet(ArgRepr):
     .. _options: https://boto3.amazonaws.com/v1/documentation/api/latest/
         reference/services/s3/client/put_object.html
 
+    Raises
+    ------
+    AttributeError
+        If either `bucket` or `prefix` are not, in fact, strings.
+
     See Also
     --------
     S3
@@ -56,8 +60,8 @@ class DataFrame2S3Parquet(ArgRepr):
             **kwargs: Any
     ) -> None:
         self.s3 = s3
-        self.bucket = bucket.strip(' /')
-        self.prefix = prefix.strip().lstrip('/')
+        self.bucket = bucket.strip(' ./')
+        self.prefix = prefix.strip(' .').lstrip('./')
         self.extra_kws = {} if extra_kws is None else extra_kws
         self.upload_kws = {} if upload_kws is None else upload_kws
         self.kwargs = kwargs
@@ -69,12 +73,6 @@ class DataFrame2S3Parquet(ArgRepr):
             upload_kws=upload_kws,
             **self.kwargs
         )
-
-    # ToDo: Remove "client" property
-    @property
-    def client(self) -> BaseClient:
-        """A cached instance of a fully configured S3 client."""
-        return self.s3.client
 
     def __call__(self, df: Pandas | Polars, *parts: str) -> tuple[()]:
         """Write a pandas or polars dataframe to S3 object storage.
@@ -94,17 +92,17 @@ class DataFrame2S3Parquet(ArgRepr):
             An empty tuple.
 
         """
-        key = self.prefix.format(*parts).strip()
-        # ToDo: make client
+        key = self.prefix.format(*parts).strip(' /.')
+        client = self.s3()
         with BytesIO() as buffer:
             df.to_parquet(buffer, **self.kwargs)
             buffer.seek(0)
-            self.client.upload_fileobj(
+            client.upload_fileobj(
                 Fileobj=buffer,
                 Bucket=self.bucket,
                 Key=key,
                 ExtraArgs=self.extra_kws,
                 Config=TransferConfig(**self.upload_kws)
             )
-        # ToDo: close client
+        client.close()
         return ()
