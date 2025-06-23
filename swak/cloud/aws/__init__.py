@@ -16,6 +16,7 @@ __all__ = [
     'S3Parquet2DataFrame'
 ]
 
-# ToDo: Add download file to local
-# ToDo: Add download directory to local
-# ToDo: Add download directory to dataframe
+# ToDo: Add download file to local!
+# ToDo: Add discover files!
+# ToDo: Add download directory to local?
+# ToDo: Add download directory to dataframe?
