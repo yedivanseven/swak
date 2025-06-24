@@ -60,8 +60,8 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.s3 = 's3'
-        self.bucket = ' ./ bucket / .'
-        self.prefix = ' ./prefix /. '
+        self.bucket = ' / bucket/ '
+        self.prefix = ' /prefix / '
         self.bear = ' PoLars '
         self.get_kws = {'one': 1}
         self.kwargs = {'two': 2}
@@ -75,11 +75,11 @@ class TestAttributes(unittest.TestCase):
         )
 
     def test_bucket_stripped(self):
-        self.assertEqual(self.bucket.strip(' /.'), self.download.bucket)
+        self.assertEqual(self.bucket.strip(' /'), self.download.bucket)
 
     def test_prefix_stripped(self):
         self.assertEqual(
-            self.prefix.strip(' .').lstrip('./'), self.download.prefix
+            self.prefix.strip().lstrip('/'), self.download.prefix
         )
 
     def test_bear_stripped(self):

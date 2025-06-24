@@ -39,6 +39,7 @@ class DataFrame2S3Parquet(ArgRepr):
         Additional keyword arguments are passed on to the ``to_parquet`` method
         of the dataframe.
 
+
     .. _meth: https://boto3.amazonaws.com/v1/documentation/api/latest/reference
         /services/s3/client/upload_fileobj.html
     .. _doc: https://boto3.amazonaws.com/v1/documentation/api/latest/
@@ -69,8 +70,8 @@ class DataFrame2S3Parquet(ArgRepr):
             **kwargs: Any
     ) -> None:
         self.s3 = s3
-        self.bucket = bucket.strip(' ./')
-        self.prefix = prefix.strip(' .').lstrip('./')
+        self.bucket = bucket.strip(' /')
+        self.prefix = prefix.strip().lstrip('/')
         self.overwrite = bool(overwrite)
         self.skip = bool(skip)
         self.extra_kws = {} if extra_kws is None else extra_kws
@@ -105,7 +106,7 @@ class DataFrame2S3Parquet(ArgRepr):
             An empty tuple.
 
         """
-        key = self.prefix.format(*parts).strip(' /.')
+        key = self.prefix.format(*parts).strip(' /')
         client = self.s3()
         try:
             _ = client.head_object(Bucket=self.bucket, Key=key)

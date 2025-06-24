@@ -28,7 +28,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(self.name, self.bucket.bucket)
 
     def test_bucket_stripped(self):
-        bucket = S3Bucket(self.s3, ' / .bucket / . ')
+        bucket = S3Bucket(self.s3, ' / bucket/  ')
         self.assertEqual('bucket', bucket.bucket)
 
     def test_has_location(self):

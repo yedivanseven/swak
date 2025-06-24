@@ -69,8 +69,8 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.s3 = 's3'
-        self.bucket = ' ./ bucket ./'
-        self.prefix = ' ./prefix . '
+        self.bucket = ' / bucket/ '
+        self.prefix = ' /prefix '
         self.overwrite = True
         self.skip = True
         self.extra_kws = {'one': 1}
@@ -88,12 +88,10 @@ class TestAttributes(unittest.TestCase):
         )
 
     def test_bucket_stripped(self):
-        self.assertEqual(self.bucket.strip(' /.'), self.upload.bucket)
+        self.assertEqual(self.bucket.strip(' /'), self.upload.bucket)
 
     def test_prefix_stripped(self):
-        self.assertEqual(
-            self.prefix.strip(' .').lstrip('/.'), self.upload.prefix
-        )
+        self.assertEqual(self.prefix.strip().lstrip('/'), self.upload.prefix)
 
     def test_overwrite(self):
         self.assertTrue(self.upload.overwrite)

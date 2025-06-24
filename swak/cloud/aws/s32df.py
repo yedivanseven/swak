@@ -8,7 +8,7 @@ from .s3 import S3
 
 
 class S3Parquet2DataFrame[T](ArgRepr):
-    """Download a single parquet file from S3 object storage.
+    """Load a single parquet file from S3 object storage into a data frame.
 
     Type-annotate classes on instantiation with either a pandas or a polars
     dataframe so that static type checkers can infer the return type of
@@ -58,8 +58,8 @@ class S3Parquet2DataFrame[T](ArgRepr):
             **kwargs: Any
     ) -> None:
         self.s3 = s3
-        self.bucket = bucket.strip(' /.')
-        self.prefix = prefix.strip(' .').lstrip('./')
+        self.bucket = bucket.strip(' /')
+        self.prefix = prefix.strip().lstrip('/')
         self.bear = bear.strip().lower()
         self.get_kws = {} if get_kws is None else get_kws
         self.kwargs = kwargs
@@ -96,7 +96,7 @@ class S3Parquet2DataFrame[T](ArgRepr):
             A pandas or polars dataframe, depending on `bear`.
 
         """
-        stripped = path.strip(' ./')
+        stripped = path.strip(' /')
         prepended = '/' + stripped if stripped else stripped
         key = self.prefix + prepended
         client = self.s3()

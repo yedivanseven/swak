@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Added S3Bucket creation
 - Added overwrite and skip to DataFrame2S3Bucket
+- Added download S3 file to local
 
 ## [0.5.3] - 2025-06-22
 - Added Fallback to funcflow
