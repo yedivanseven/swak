@@ -117,7 +117,9 @@ class S3Bucket(ArgRepr):
 
         """
         bucket = self.bucket.format(*parts).strip(' /.')
+
         client = self.s3()
+
         try:
             _ = client.head_bucket(Bucket=bucket)
             bucket_exists = True
@@ -128,16 +130,20 @@ class S3Bucket(ArgRepr):
                 Bucket=bucket,
                 **self.bucket_cfg
             )
+
         if bucket_exists and not self.exists_ok:
             tmp = 'Bucket "{}" already exists in location "{}"!'
             msg = tmp.format(bucket, self.location)
             raise S3Error(msg)
+
         if self.blob_expire_days is not None:
             client.put_bucket_lifecycle_configuration(
                 Bucket=bucket,
                 LifecycleConfiguration=self.lifecycle_cfg
             )
+
         client.close()
+
         return bucket, not bucket_exists
 
     @staticmethod

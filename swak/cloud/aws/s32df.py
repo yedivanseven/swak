@@ -99,7 +99,9 @@ class S3Parquet2DataFrame[T](ArgRepr):
         stripped = path.strip(' /')
         prepended = '/' + stripped if stripped else stripped
         key = self.prefix + prepended
+
         client = self.s3()
+
         response = client.get_object(
             Key=key,
             Bucket=self.bucket,
@@ -107,5 +109,7 @@ class S3Parquet2DataFrame[T](ArgRepr):
         )
         with BytesIO(response.get('Body').read()) as buffer:
             df = self.read_parquet(buffer, **self.kwargs)
+
         client.close()
+
         return df

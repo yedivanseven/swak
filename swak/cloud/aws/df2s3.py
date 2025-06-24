@@ -107,12 +107,15 @@ class DataFrame2S3Parquet(ArgRepr):
 
         """
         key = self.prefix.format(*parts).strip(' /')
+
         client = self.s3()
+
         try:
             _ = client.head_object(Bucket=self.bucket, Key=key)
             object_exists = True
         except ClientError:
             object_exists = False
+
         if object_exists:
             if self.skip:
                 client.close()
@@ -122,6 +125,7 @@ class DataFrame2S3Parquet(ArgRepr):
                 tmp = 'Object "{}" already exists in bucket "{}"!'
                 msg = tmp.format(key, self.bucket)
                 raise S3Error(msg)
+
         with BytesIO() as buffer:
             df.to_parquet(buffer, **self.kwargs)
             buffer.seek(0)
@@ -132,5 +136,7 @@ class DataFrame2S3Parquet(ArgRepr):
                 ExtraArgs=self.extra_kws,
                 Config=TransferConfig(**self.upload_kws)
             )
+
         client.close()
+
         return ()

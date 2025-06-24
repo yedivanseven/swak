@@ -116,6 +116,7 @@ class S3File2LocalFile(ArgRepr):
         Path(local).parent.mkdir(parents=True, exist_ok=True)
 
         client = self.s3()
+
         with Path(local).open('wb') as file:
             client.download_fileobj(
                 Bucket=self.bucket,
@@ -124,5 +125,7 @@ class S3File2LocalFile(ArgRepr):
                 ExtraArgs=self.extra_kws,
                 Config=TransferConfig(**self.download_kws)
             )
+
         client.close()
+
         return local
