@@ -199,9 +199,114 @@ class TestUsage(unittest.TestCase):
         self.client.download_fileobj.assert_called_once()
         kwargs = self.client.download_fileobj.call_args[1]
         self.assertEqual(self.bucket, kwargs['Bucket'])
-        self.assertEqual(self.prefix + '/test.txt', kwargs['Key'])
-        self.assertEqual(self.base_dir + '/test.txt', kwargs['Fileobj'].name)
         self.assertDictEqual({'one': 1}, kwargs['ExtraArgs'])
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_download_called_prefix_no_slash_no_path(self, _):
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            'prefix',
+            self.base_dir,
+
+        )
+        _ = download()
+        kwargs = self.client.download_fileobj.call_args[1]
+        remote = kwargs['Key']
+        local = kwargs['Fileobj'].name
+        self.assertEqual('prefix', remote)
+        self.assertEqual(self.base_dir + '/prefix', local)
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_download_called_prefix_slash_no_path(self, _):
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            '/prefix/',
+            self.base_dir,
+
+        )
+        _ = download()
+        kwargs = self.client.download_fileobj.call_args[1]
+        remote = kwargs['Key']
+        local = kwargs['Fileobj'].name
+        self.assertEqual('prefix', remote)
+        self.assertEqual(self.base_dir + '/prefix', local)
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_download_called_path_no_slash_no_prefix(self, _):
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            '',
+            self.base_dir,
+        )
+        _ = download('prefix')
+        kwargs = self.client.download_fileobj.call_args[1]
+        remote = kwargs['Key']
+        local = kwargs['Fileobj'].name
+        self.assertEqual('prefix', remote)
+        self.assertEqual(self.base_dir + '/prefix', local)
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_download_called_path_slash_no_prefix(self, _):
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            '',
+            self.base_dir,
+        )
+        _ = download('/prefix/')
+        kwargs = self.client.download_fileobj.call_args[1]
+        remote = kwargs['Key']
+        local = kwargs['Fileobj'].name
+        self.assertEqual('prefix', remote)
+        self.assertEqual(self.base_dir + '/prefix', local)
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_download_called_prefix_slash_path_no_slash(self, _):
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            '/pre/',
+            self.base_dir,
+        )
+        _ = download('fix')
+        kwargs = self.client.download_fileobj.call_args[1]
+        remote = kwargs['Key']
+        local = kwargs['Fileobj'].name
+        self.assertEqual('pre/fix', remote)
+        self.assertEqual(self.base_dir + '/fix', local)
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_download_called_prefix_no_slash_path_slash(self, _):
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            'pre',
+            self.base_dir,
+        )
+        _ = download('/fix/')
+        kwargs = self.client.download_fileobj.call_args[1]
+        remote = kwargs['Key']
+        local = kwargs['Fileobj'].name
+        self.assertEqual('pre/fix', remote)
+        self.assertEqual(self.base_dir + '/fix', local)
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_download_called_prefix_slash_path_slash(self, _):
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            '/pre/',
+            self.base_dir,
+        )
+        _ = download('/fix/')
+        kwargs = self.client.download_fileobj.call_args[1]
+        remote = kwargs['Key']
+        local = kwargs['Fileobj'].name
+        self.assertEqual('pre/fix', remote)
+        self.assertEqual(self.base_dir + '/fix', local)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_path_stripped(self, _):

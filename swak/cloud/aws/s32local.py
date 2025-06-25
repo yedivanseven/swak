@@ -68,8 +68,8 @@ class S3File2LocalFile(ArgRepr):
     ) -> None:
         self.s3 = s3
         self.bucket = bucket.strip(' /')
-        self.prefix = prefix.strip().lstrip('/')
-        self.base_dir = str(Path(base_dir.strip()).resolve())
+        self.prefix = prefix.strip(' /')
+        self.base_dir = str(Path(base_dir.strip()).resolve()).rstrip('/')
         self.overwrite = bool(overwrite)
         self.skip = bool(skip)
         self.extra_kws = {} if extra_kws is None else extra_kws
@@ -102,9 +102,10 @@ class S3File2LocalFile(ArgRepr):
 
         """
         stripped = path.strip(' /')
-        prepended = '/' + stripped if stripped else stripped
-        remote = self.prefix + prepended
-        local = self.base_dir + prepended
+        remote_separator = '/' if (self.prefix and stripped) else ''
+        remote = self.prefix + remote_separator + stripped
+        local_separator = '/' if (stripped or remote) else ''
+        local = self.base_dir + local_separator + (stripped or remote)
 
         if Path(local).exists():
             if self.skip:

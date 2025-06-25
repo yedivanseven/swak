@@ -4,26 +4,27 @@ from .s3 import S3
 
 
 class S3ObjectDiscovery(ArgRepr):
-    """List all object keys from S3 object storage with given prefix/suffix.
+    """List all files on S3 object storage with given a prefix and/or suffix.
 
     Parameters
     ----------
     s3: S3
         An instance of a wrapped S3 client.
     bucket: str
-        The name of the bucket to list objects from.
+        The name of the bucket to list files from.
     prefix: str, optional
-        The prefix to filter object keys. Defaults to an empty string,
-        which will list all objects in the bucket.
+        The prefix to filter file names by. Since it (or part of it)
+        can also be provided later, when the callable instance is called, it
+        is optional here. Defaults to an empty string.
     suffix: str, optional
-        The suffix to filter object keys. Defaults to an empty string,
-        which will list all objects in the bucket.
+        The suffix to filter file names by. Defaults to an empty string,
+        which will allow all and any suffixes.
     subdir: bool, optional
-        Whether to include objects in "subdirectories", that is, objects whose
-        key contains more forward slashes than the specified `prefix`.
+        Whether to include files in "subdirectories", that is, files whose
+        name contains more forward slashes than the specified `prefix`.
         Defaults to ``False``
     page_size: int, optional
-        The number of objects to fetch per API call. Must be between 1 and
+        The number of file names to fetch per API call. Must be between 1 and
         1000. Defaults to 1000.
     **kwargs
         Additional keyword arguments passed to the `list_objects_v2` paginator.
@@ -77,29 +78,27 @@ class S3ObjectDiscovery(ArgRepr):
         )
 
     def __call__(self, path: str = '') -> list[str]:
-        """List all object keys from S3 object storage that match criteria.
+        """List all files on S3 object storage that match the cached criteria.
 
         Parameters
         ----------
         path: str, optional
-            The path to the objects file to list. If given here, it will
-            be appended to the `prefix` given at instantiation time.
-            Defaults to an empty string.
+            The path to the files to list. If given here, it will be appended
+            to the `prefix` given at instantiation time, separated by a
+            forward slash. Defaults to an empty string.
 
         Returns
         -------
         list
-            Object keys matching the prefix/suffix/subdir criteria.
-
-        Raises
-        ------
-        S3Error
-            If the bucket does not exist or other S3-related errors occur.
+           File names matching the prefix/suffix/subdir criteria.
 
         """
-        stripped = path.strip(' /')
-        prepended = '/' + stripped if stripped else stripped
-        prefix = self.prefix + prepended
+        stripped = path.strip().lstrip('/')
+        if self.prefix and not self.prefix.endswith('/') and stripped:
+            seperator = '/'
+        else:
+            seperator = ''
+        prefix = self.prefix + seperator + stripped
         depth = prefix.count('/')
 
         client = self.s3()
@@ -117,7 +116,11 @@ class S3ObjectDiscovery(ArgRepr):
                 obj['Key']
                 for obj in page.get('Contents', [])
                 if obj['Key'].endswith(self.suffix)
-                and (self.subdir or obj['Key'].count('/') == depth)
+                and (
+                    obj['Key'].count('/') >= depth
+                    if self.subdir else
+                    obj['Key'].count('/') == depth
+                )
             )
 
         client.close()

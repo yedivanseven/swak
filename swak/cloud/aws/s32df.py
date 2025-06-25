@@ -59,7 +59,7 @@ class S3Parquet2DataFrame[T](ArgRepr):
     ) -> None:
         self.s3 = s3
         self.bucket = bucket.strip(' /')
-        self.prefix = prefix.strip().lstrip('/')
+        self.prefix = prefix.strip(' /')
         self.bear = bear.strip().lower()
         self.get_kws = {} if get_kws is None else get_kws
         self.kwargs = kwargs
@@ -97,8 +97,8 @@ class S3Parquet2DataFrame[T](ArgRepr):
 
         """
         stripped = path.strip(' /')
-        prepended = '/' + stripped if stripped else stripped
-        key = self.prefix + prepended
+        seperator = '/' if (self.prefix and stripped) else ''
+        key = self.prefix + seperator + stripped
 
         client = self.s3()
 
