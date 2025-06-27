@@ -108,9 +108,8 @@ class S3Parquet2DataFrame[T](ArgRepr):
             **self.get_kws
         )
         with BytesIO(response.get('Body').read()) as buffer:
-            try:
-                df = self.read_parquet(buffer, **self.kwargs)
-            finally:
-                client.close()
+            df = self.read_parquet(buffer, **self.kwargs)
+
+        client.close()
 
         return df
