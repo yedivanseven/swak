@@ -129,14 +129,15 @@ class DataFrame2S3Parquet(ArgRepr):
         with BytesIO() as buffer:
             df.to_parquet(buffer, **self.kwargs)
             buffer.seek(0)
-            client.upload_fileobj(
-                Fileobj=buffer,
-                Bucket=self.bucket,
-                Key=key,
-                ExtraArgs=self.extra_kws,
-                Config=TransferConfig(**self.upload_kws)
-            )
-
-        client.close()
+            try:
+                client.upload_fileobj(
+                    Fileobj=buffer,
+                    Bucket=self.bucket,
+                    Key=key,
+                    ExtraArgs=self.extra_kws,
+                    Config=TransferConfig(**self.upload_kws)
+                )
+            finally:
+                client.close()
 
         return ()

@@ -1,5 +1,7 @@
+import shutil
 from typing import Any
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from boto3.s3.transfer import TransferConfig
 from ...misc import ArgRepr
 from .exceptions import S3Error
@@ -106,27 +108,30 @@ class S3File2LocalFile(ArgRepr):
         remote = self.prefix + remote_separator + stripped
         local_separator = '/' if (stripped or remote) else ''
         local = self.base_dir + local_separator + (stripped or remote)
+        path = Path(local)
 
-        if Path(local).exists():
+        if path.exists():
             if self.skip:
                 return local
             if not self.overwrite:
                 msg = f'File "{local}" already exists on local disk!'
                 raise S3Error(msg)
 
-        Path(local).parent.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
         client = self.s3()
 
-        with Path(local).open('wb') as file:
-            client.download_fileobj(
-                Bucket=self.bucket,
-                Key=remote,
-                Fileobj=file,
-                ExtraArgs=self.extra_kws,
-                Config=TransferConfig(**self.download_kws)
-            )
-
-        client.close()
+        with NamedTemporaryFile('wb') as file:
+            try:
+                client.download_fileobj(
+                    Bucket=self.bucket,
+                    Key=remote,
+                    Fileobj=file,
+                    ExtraArgs=self.extra_kws,
+                    Config=TransferConfig(**self.download_kws)
+                )
+                shutil.move(file.name, path)
+            finally:
+                client.close()
 
         return local

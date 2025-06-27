@@ -3,6 +3,7 @@ import pickle
 from unittest.mock import patch, Mock
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from botocore.exceptions import ClientError
 from swak.cloud.aws.exceptions import S3Error
 from swak.cloud.aws import S3File2LocalFile, S3
 
@@ -107,11 +108,10 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.content = b'Hello World!'
         self.tmp = TemporaryDirectory()
         self.s3 = Mock(spec=S3)
         self.client = Mock()
-        self.client.download_fileobj = Mock(return_value=self.content)
+        self.client.download_fileobj = Mock()
         self.s3.return_value = self.client
         self.bucket = 'bucket'
         self.prefix = 'prefix'
@@ -206,16 +206,14 @@ class TestUsage(unittest.TestCase):
         download = S3File2LocalFile(
             self.s3,
             self.bucket,
-            'prefix',
+            'test.txt',
             self.base_dir,
 
         )
         _ = download()
         kwargs = self.client.download_fileobj.call_args[1]
         remote = kwargs['Key']
-        local = kwargs['Fileobj'].name
-        self.assertEqual('prefix', remote)
-        self.assertEqual(self.base_dir + '/prefix', local)
+        self.assertEqual('test.txt', remote)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_download_called_prefix_slash_no_path(self, _):
@@ -229,9 +227,7 @@ class TestUsage(unittest.TestCase):
         _ = download()
         kwargs = self.client.download_fileobj.call_args[1]
         remote = kwargs['Key']
-        local = kwargs['Fileobj'].name
         self.assertEqual('prefix', remote)
-        self.assertEqual(self.base_dir + '/prefix', local)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_download_called_path_no_slash_no_prefix(self, _):
@@ -241,12 +237,10 @@ class TestUsage(unittest.TestCase):
             '',
             self.base_dir,
         )
-        _ = download('prefix')
+        _ = download('test.txt')
         kwargs = self.client.download_fileobj.call_args[1]
         remote = kwargs['Key']
-        local = kwargs['Fileobj'].name
-        self.assertEqual('prefix', remote)
-        self.assertEqual(self.base_dir + '/prefix', local)
+        self.assertEqual('test.txt', remote)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_download_called_path_slash_no_prefix(self, _):
@@ -259,9 +253,7 @@ class TestUsage(unittest.TestCase):
         _ = download('/prefix/')
         kwargs = self.client.download_fileobj.call_args[1]
         remote = kwargs['Key']
-        local = kwargs['Fileobj'].name
         self.assertEqual('prefix', remote)
-        self.assertEqual(self.base_dir + '/prefix', local)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_download_called_prefix_slash_path_no_slash(self, _):
@@ -274,9 +266,7 @@ class TestUsage(unittest.TestCase):
         _ = download('fix')
         kwargs = self.client.download_fileobj.call_args[1]
         remote = kwargs['Key']
-        local = kwargs['Fileobj'].name
         self.assertEqual('pre/fix', remote)
-        self.assertEqual(self.base_dir + '/fix', local)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_download_called_prefix_no_slash_path_slash(self, _):
@@ -289,9 +279,7 @@ class TestUsage(unittest.TestCase):
         _ = download('/fix/')
         kwargs = self.client.download_fileobj.call_args[1]
         remote = kwargs['Key']
-        local = kwargs['Fileobj'].name
         self.assertEqual('pre/fix', remote)
-        self.assertEqual(self.base_dir + '/fix', local)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_download_called_prefix_slash_path_slash(self, _):
@@ -304,9 +292,7 @@ class TestUsage(unittest.TestCase):
         _ = download('/fix/')
         kwargs = self.client.download_fileobj.call_args[1]
         remote = kwargs['Key']
-        local = kwargs['Fileobj'].name
         self.assertEqual('pre/fix', remote)
-        self.assertEqual(self.base_dir + '/fix', local)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_path_stripped(self, _):
@@ -320,7 +306,6 @@ class TestUsage(unittest.TestCase):
         _ = download(' / test.txt/ ')
         kwargs = self.client.download_fileobj.call_args[1]
         self.assertEqual(self.prefix + '/test.txt', kwargs['Key'])
-        self.assertEqual(self.base_dir + '/test.txt', kwargs['Fileobj'].name)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_transfer_config_called(self, config):
@@ -369,6 +354,43 @@ class TestUsage(unittest.TestCase):
         self.assertTrue(path.exists())
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_local_file_not_created_when_error(self, _):
+        error = ClientError({}, 'download_fileobj')
+        self.client.download_fileobj.side_effect = error
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            self.prefix,
+            self.base_dir
+        )
+        with self.assertRaises(ClientError):
+            _ = download('test.txt')
+        path = Path(self.base_dir) / 'test.txt'
+        self.assertFalse(path.exists())
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
+    def test_local_file_not_removed_when_error(self, _):
+        path = Path(self.base_dir) / 'test.txt'
+        with path.open('wb') as file:
+            file.write(b'I was first!')
+        error = ClientError({}, 'download_fileobj')
+        self.client.download_fileobj.side_effect = error
+        download = S3File2LocalFile(
+            self.s3,
+            self.bucket,
+            self.prefix,
+            self.base_dir,
+            overwrite=True,
+            skip=False
+        )
+        with self.assertRaises(ClientError):
+            _ = download('test.txt')
+        self.assertTrue(path.exists())
+        with path.open('rb') as file:
+            content = file.read()
+        self.assertEqual(b'I was first!', content)
+
+    @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_local_file_content(self, _):
         download = S3File2LocalFile(
             self.s3,
@@ -410,7 +432,8 @@ class TestUsage(unittest.TestCase):
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_no_overwrite_when_skip(self, _):
-        with (Path(self.base_dir) / 'test.txt').open('wb') as file:
+        path = Path(self.base_dir) / 'test.txt'
+        with path.open('wb') as file:
             file.write(b'I was first!')
         download = S3File2LocalFile(
             self.s3,
@@ -422,13 +445,14 @@ class TestUsage(unittest.TestCase):
         )
         _ = download('test.txt')
         self.s3.assert_not_called()
-        with (Path(self.base_dir) / 'test.txt').open('rb') as file:
+        with path.open('rb') as file:
             actual = file.read()
         self.assertEqual(b'I was first!', actual)
 
     @patch('swak.cloud.aws.s32local.TransferConfig')
     def test_overwrite_when_not_skipped(self, _):
-        with (Path(self.base_dir) / 'test.txt').open('wb') as file:
+        path = Path(self.base_dir) / 'test.txt'
+        with path.open('wb') as file:
             file.write(b'I was first!')
         download = S3File2LocalFile(
             self.s3,
@@ -439,7 +463,7 @@ class TestUsage(unittest.TestCase):
         )
         _ = download('test.txt')
         self.client.download_fileobj.assert_called_once()
-        with (Path(self.base_dir) / 'test.txt').open('rb') as file:
+        with path.open('rb') as file:
             actual = file.read()
         self.assertEqual(b'', actual)
 
