@@ -44,27 +44,27 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.bucket.exists_ok, bool)
         self.assertFalse(self.bucket.exists_ok)
 
-    def test_has_blob_expire_days(self):
-        self.assertTrue(hasattr(self.bucket, 'blob_expire_days'))
+    def test_has_age(self):
+        self.assertTrue(hasattr(self.bucket, 'age'))
 
-    def test_blob_expire_days(self):
-        self.assertIsNone(self.bucket.blob_expire_days)
+    def test_age(self):
+        self.assertIsNone(self.bucket.age)
 
-    def test_has_bucket_cfg(self):
-        self.assertTrue(hasattr(self.bucket, 'bucket_cfg'))
+    def test_has_config(self):
+        self.assertTrue(hasattr(self.bucket, 'config'))
 
-    def test_bucket_cfg(self):
+    def test_config(self):
         expected = {
             'CreateBucketConfiguration': {
                 'LocationConstraint': 'eu-west-1'
             }
         }
-        self.assertDictEqual(expected, self.bucket.bucket_cfg)
+        self.assertDictEqual(expected, self.bucket.config)
 
-    def test_has_lifecycle_cfg(self):
-        self.assertTrue(hasattr(self.bucket, 'lifecycle_cfg'))
+    def test_has_lifecycle(self):
+        self.assertTrue(hasattr(self.bucket, 'lifecycle'))
 
-    def test_lifecycle_cfg(self):
+    def test_lifecycle(self):
         expected = {
             'Rules': [
                 {
@@ -77,7 +77,7 @@ class TestDefaultAttributes(unittest.TestCase):
                 }
             ]
         }
-        self.assertDictEqual(expected, self.bucket.lifecycle_cfg)
+        self.assertDictEqual(expected, self.bucket.lifecycle)
 
 
 class TesttAttributes(unittest.TestCase):
@@ -101,32 +101,32 @@ class TesttAttributes(unittest.TestCase):
         expected = {
             'CreateBucketConfiguration': {'LocationConstraint': 'location'}
         }
-        self.assertDictEqual(expected, bucket.bucket_cfg)
+        self.assertDictEqual(expected, bucket.config)
 
     def test_default_location_bucket_cfg(self):
         bucket = S3Bucket(self.s3, self.name, ' uS-eASt-1  ')
-        self.assertDictEqual({}, bucket.bucket_cfg)
+        self.assertDictEqual({}, bucket.config)
 
     def test_exists_ok(self):
         bucket = S3Bucket(self.s3, self.name, exists_ok=True)
         self.assertIsInstance(bucket.exists_ok, bool)
         self.assertTrue(bucket.exists_ok)
 
-    def test_blob_expire_days(self):
-        bucket = S3Bucket(self.s3, self.name, blob_expire_days=3)
-        self.assertIsInstance(bucket.blob_expire_days, int)
-        self.assertEqual(3, bucket.blob_expire_days)
+    def test_age(self):
+        bucket = S3Bucket(self.s3, self.name, age=3)
+        self.assertIsInstance(bucket.age, int)
+        self.assertEqual(3, bucket.age)
 
     def test_raises_on_days_wrong_type(self):
         with self.assertRaises(TypeError):
-            _ = S3Bucket(self.s3, self.name, blob_expire_days='three')
+            _ = S3Bucket(self.s3, self.name, age='three')
 
     def test_raises_on_days_wrong_value(self):
         with self.assertRaises(ValueError):
-            _ = S3Bucket(self.s3, self.name, blob_expire_days=-5)
+            _ = S3Bucket(self.s3, self.name, age=-5)
 
     def test_lifecycle_cfg(self):
-        bucket = S3Bucket(self.s3, self.name, blob_expire_days=3)
+        bucket = S3Bucket(self.s3, self.name, age=3)
         expected = {
             'Rules': [
                 {
@@ -139,7 +139,7 @@ class TesttAttributes(unittest.TestCase):
                 }
             ]
         }
-        self.assertDictEqual(expected, bucket.lifecycle_cfg)
+        self.assertDictEqual(expected, bucket.lifecycle)
 
 
 class TestUsage(unittest.TestCase):
@@ -182,7 +182,7 @@ class TestUsage(unittest.TestCase):
         self.client.head_bucket.side_effect = error
         _ = bucket()
         self.client.create_bucket.assert_called_once_with(
-            ACL='private', Bucket=self.name, **bucket.bucket_cfg
+            ACL='private', Bucket=self.name, **bucket.config
         )
 
     def test_create_bucket_called_with_parts(self):
@@ -191,7 +191,7 @@ class TestUsage(unittest.TestCase):
         self.client.head_bucket.side_effect = error
         _ = bucket(' ./ head', 'tail. / ')
         self.client.create_bucket.assert_called_once_with(
-            ACL='private', Bucket='head-bucket-tail', **bucket.bucket_cfg
+            ACL='private', Bucket='head-bucket-tail', **bucket.config
         )
 
     def test_existing_bucket_raises(self):
@@ -215,11 +215,11 @@ class TestUsage(unittest.TestCase):
             self.s3,
             self.name,
             exists_ok=True,
-            blob_expire_days=3
+            age=3
         )
         _ = bucket()
         self.client.put_bucket_lifecycle_configuration.assert_called_once_with(
-            Bucket=self.name, LifecycleConfiguration=bucket.lifecycle_cfg
+            Bucket=self.name, LifecycleConfiguration=bucket.lifecycle
         )
 
     def test_client_closed(self):

@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 from boto3.s3.transfer import TransferConfig
 from ...misc import ArgRepr
 from .exceptions import S3Error
-from .s3 import S3
+from .clients import S3
 
 
 class S3File2LocalFile(ArgRepr):

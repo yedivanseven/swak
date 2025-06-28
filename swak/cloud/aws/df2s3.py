@@ -6,7 +6,7 @@ from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
 from ...misc import ArgRepr
 from .exceptions import S3Error
-from .s3 import S3
+from .clients import S3
 
 
 class DataFrame2S3Parquet(ArgRepr):

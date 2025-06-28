@@ -1,6 +1,6 @@
 from typing import Any
 from ...misc import ArgRepr
-from .s3 import S3
+from .clients import S3
 
 
 class S3ObjectDiscovery(ArgRepr):

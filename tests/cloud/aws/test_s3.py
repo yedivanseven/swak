@@ -132,12 +132,12 @@ class TestUsage(unittest.TestCase):
         self.assertTrue(callable(self.s3))
 
     @patch('boto3.client')
-    @patch('swak.cloud.aws.s3.Config')
+    @patch('swak.cloud.aws.clients.Config')
     def test_has_client(self, config, client):
         self.assertTrue(hasattr(self.s3, 'client'))
 
     @patch('boto3.client')
-    @patch('swak.cloud.aws.s3.Config')
+    @patch('swak.cloud.aws.clients.Config')
     def test_client_instantiated_when_requested(self, config, client):
         config.return_value = 'config'
         _ = self.s3.client
@@ -157,7 +157,7 @@ class TestUsage(unittest.TestCase):
         config.assert_called_once_with(**self.kwargs)
 
     @patch('boto3.client')
-    @patch('swak.cloud.aws.s3.Config')
+    @patch('swak.cloud.aws.clients.Config')
     def test_same_client_when_requested_again(self, config, client):
         config.return_value = 'config'
         _ = self.s3.client
@@ -167,7 +167,7 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(1, config.call_count)
 
     @patch('boto3.client')
-    @patch('swak.cloud.aws.s3.Config')
+    @patch('swak.cloud.aws.clients.Config')
     def test_client_instantiated_when_called(self, config, client):
         config.return_value = 'config'
         _ = self.s3()
@@ -187,7 +187,7 @@ class TestUsage(unittest.TestCase):
         config.assert_called_once_with(**self.kwargs)
 
     @patch('boto3.client')
-    @patch('swak.cloud.aws.s3.Config')
+    @patch('swak.cloud.aws.clients.Config')
     def test_new_clients_when_called_again(self, config, client):
         config.return_value = 'config'
         _ = self.s3()

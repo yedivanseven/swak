@@ -4,7 +4,7 @@ Specifically, data scientists tend to interact heavily with S3 object storage.
 
 """
 
-from .s3 import S3
+from .clients import S3
 from .bucket import S3Bucket
 from .df2s3 import DataFrame2S3Parquet
 from .s32df import S3Parquet2DataFrame

@@ -1,7 +1,7 @@
 from typing import Any
 from botocore.exceptions import ClientError
 from ...misc import ArgRepr
-from .s3 import S3
+from .clients import S3
 from .exceptions import S3Error
 
 
@@ -19,12 +19,12 @@ class S3Bucket(ArgRepr):
     location: str, optional
         The physical datacenter location to create the bucket in. See the
         AWS `documentation <https://docs.aws.amazon.com/
-        global-infrastructure/latest/regions/aws-regions.html>`__
+        global-infrastructure/latest/regions/aws-regions.html>`_
         for options. Defaults to "eu-west-1".
     exists_ok: bool, optional
-        Whether quietly return the requested bucket if it exists or not.
-        Defaults to ``False``.
-    blob_expire_days: int, optional
+        Whether quietly return the requested bucket if it exists or raise an.
+        exception. Defaults to ``False``.
+    age: int, optional
         Defaults to ``None``. If set, objects older than the specified number
         of days will be automatically deleted.
 
@@ -33,9 +33,9 @@ class S3Bucket(ArgRepr):
     AttributeError
         If `bucket` or `location` are not strings.
     TypeError
-        If `blob_expire_days` cannot be cast to an integer.
+        If `age` cannot be cast to an integer.
     ValueError
-        If `blob_expire_days` is less than one.
+        If `age` is less than one.
 
     See Also
     --------
@@ -49,23 +49,23 @@ class S3Bucket(ArgRepr):
             bucket: str,
             location: str = 'eu-west-1',
             exists_ok: bool = False,
-            blob_expire_days: int | None = None
+            age: int | None = None
     ) -> None:
         self.s3 = s3
         self.bucket = bucket.strip(' /')
         self.location = location.strip().lower()
         self.exists_ok = bool(exists_ok)
-        self.blob_expire_days = self.__valid(blob_expire_days)
+        self.age = self.__valid(age)
         super().__init__(
             s3,
             self.bucket,
             self.location,
             self.exists_ok,
-            self.blob_expire_days
+            self.age
         )
 
     @property
-    def bucket_cfg(self) -> dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         """Minimal configuration used for bucket creation (if required)."""
         # In the default location, no bucket config must be given
         if self.location == 'us-east-1':
@@ -77,15 +77,15 @@ class S3Bucket(ArgRepr):
         }
 
     @property
-    def lifecycle_cfg(self) -> dict[str, list[dict[str, Any]]]:
+    def lifecycle(self) -> dict[str, list[dict[str, Any]]]:
         """Minimal configuration for adding a life-cycle rule (if required)."""
         return {
             'Rules': [
                 {
-                    'ID': f'delete-objects-after-{self.blob_expire_days}-days',
+                    'ID': f'delete-objects-after-{self.age}-days',
                     'Filter': {},
                     'Expiration': {
-                        'Days': self.blob_expire_days,
+                        'Days': self.age,
                     },
                     'Status': 'Enabled'
                 }
@@ -128,7 +128,7 @@ class S3Bucket(ArgRepr):
             _ = client.create_bucket(
                 ACL='private',
                 Bucket=bucket,
-                **self.bucket_cfg
+                **self.config
             )
 
         if bucket_exists and not self.exists_ok:
@@ -136,10 +136,10 @@ class S3Bucket(ArgRepr):
             msg = tmp.format(bucket, self.location)
             raise S3Error(msg)
 
-        if self.blob_expire_days is not None:
+        if self.age:
             client.put_bucket_lifecycle_configuration(
                 Bucket=bucket,
-                LifecycleConfiguration=self.lifecycle_cfg
+                LifecycleConfiguration=self.lifecycle
             )
 
         client.close()
@@ -147,19 +147,19 @@ class S3Bucket(ArgRepr):
         return bucket, not bucket_exists
 
     @staticmethod
-    def __valid(blob_expire_days: Any) -> int | None:
-        """Try to convert blob_expire_days to a meaningful integer."""
-        if blob_expire_days is None:
-            return blob_expire_days
+    def __valid(age: Any) -> int | None:
+        """Try to convert age to a meaningful integer."""
+        if age is None:
+            return age
         try:
-            as_int = int(blob_expire_days)
+            as_int = int(age)
         except (TypeError, ValueError) as error:
-            cls = type(blob_expire_days).__name__
+            cls = type(age).__name__
             tmp = '"{}" must at least be convertible to integer, unlike {}!'
-            msg = tmp.format('blob_expire_days', cls)
+            msg = tmp.format('age', cls)
             raise TypeError(msg) from error
         if as_int < 1:
             tmp = '"{}" must be greater than (or equal to) one, unlike {}!'
-            msg = tmp.format('blob_expire_days', as_int)
+            msg = tmp.format('age', as_int)
             raise ValueError(msg)
         return as_int

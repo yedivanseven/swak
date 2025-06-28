@@ -5,7 +5,8 @@ Specifically, data scientists tend to interact mostly with Google's BigQuery
 
 """
 
-from .bucket import Storage, GcsBucket
+from .clients import Gcs
+from .bucket import GcsBucket
 from .query import GbqQuery
 from .query2gcs import GbqQuery2GcsParquet
 from .gcs2local import GcsDir2LocalDir
@@ -15,11 +16,11 @@ from .df2gbq import IfExists, DataFrame2Gbq
 from .dataset import Collation, Rounding, Billing, GbqDataset
 
 __all__ = [
+    'Gcs',
     'Collation',
     'Rounding',
     'Billing',
     'GbqDataset',
-    'Storage',
     'GcsBucket',
     'GbqQuery',
     'GbqQuery2GcsParquet',

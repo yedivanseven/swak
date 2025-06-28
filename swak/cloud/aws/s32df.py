@@ -4,7 +4,7 @@ from collections.abc import Callable
 import pandas as pd
 import polars as pl
 from ...misc import ArgRepr, Bears, LiteralBears
-from .s3 import S3
+from .clients import S3
 
 
 class S3Parquet2DataFrame[T](ArgRepr):

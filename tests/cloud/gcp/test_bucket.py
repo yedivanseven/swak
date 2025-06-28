@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import Mock, patch
 from swak.cloud.gcp import GcsBucket
 
-
+# ToDo: Continue here
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
@@ -27,7 +27,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_blob_expire_days(self):
         self.assertTrue(hasattr(self.create, 'blob_expire_days'))
-        self.assertIsNone(self.create.blob_expire_days)
+        self.assertIsNone(self.create.age)
 
     def test_labels(self):
         self.assertTrue(hasattr(self.create, 'labels'))
@@ -90,8 +90,8 @@ class TestAttributes(unittest.TestCase):
         )
 
     def test_blob_expire_days(self):
-        self.assertIsInstance(self.create.blob_expire_days, int)
-        self.assertEqual(4, self.create.blob_expire_days)
+        self.assertIsInstance(self.create.age, int)
+        self.assertEqual(4, self.create.age)
 
     def test_labels(self):
         self.assertDictEqual({'foo': 'bar'}, self.create.labels)
