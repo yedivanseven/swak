@@ -1,401 +1,333 @@
 import unittest
 import pickle
-from unittest.mock import Mock, patch
-from swak.cloud.gcp import GcsBucket
+from unittest.mock import Mock
+from swak.cloud.gcp.exceptions import GcsError
+from swak.cloud.gcp import GcsBucket, Gcs
 
-# ToDo: Continue here
+
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.create = GcsBucket(
-            'project',
-            'bucket',
-            'location'
-        )
+        self.project = 'project'
+        self.gcs = Mock()
+        self.gcs.project = self.project
+        self.create = GcsBucket(self.gcs, 'bucket')
 
-    def test_project(self):
-        self.assertTrue(hasattr(self.create, 'project'))
-        self.assertEqual('project', self.create.project)
+    def test_gcs(self):
+        self.assertTrue(hasattr(self.create, 'gcs'))
+        self.assertIs(self.create.gcs, self.gcs)
 
     def test_bucket(self):
         self.assertTrue(hasattr(self.create, 'bucket'))
         self.assertEqual('bucket', self.create.bucket)
 
+    def test_bucket_stripped(self):
+        create = GcsBucket(self.gcs, ' /.bucket ./')
+        self.assertEqual('bucket', create.bucket)
+
     def test_location(self):
         self.assertTrue(hasattr(self.create, 'location'))
-        self.assertEqual('LOCATION', self.create.location)
+        self.assertEqual('EUROPE-NORTH1', self.create.location)
 
-    def test_blob_expire_days(self):
-        self.assertTrue(hasattr(self.create, 'blob_expire_days'))
+    def test_exists_ok(self):
+        self.assertTrue(hasattr(self.create, 'exists_ok'))
+        self.assertIsInstance(self.create.exists_ok, bool)
+        self.assertFalse(self.create.exists_ok)
+
+    def test_age(self):
+        self.assertTrue(hasattr(self.create, 'age'))
         self.assertIsNone(self.create.age)
-
-    def test_labels(self):
-        self.assertTrue(hasattr(self.create, 'labels'))
-        self.assertDictEqual({}, self.create.labels)
 
     def test_user_project(self):
         self.assertTrue(hasattr(self.create, 'user_project'))
         self.assertEqual('project', self.create.user_project)
 
-    def test_storage_class(self):
-        self.assertTrue(hasattr(self.create, 'storage_class'))
-        self.assertIsNone(self.create.storage_class)
-
     def test_requester_pays(self):
         self.assertTrue(hasattr(self.create, 'requester_pays'))
+        self.assertIsInstance(self.create.requester_pays, bool)
         self.assertFalse(self.create.requester_pays)
 
     def test_kwargs(self):
         self.assertTrue(hasattr(self.create, 'kwargs'))
         self.assertDictEqual({}, self.create.kwargs)
 
-    def test_project_stripped(self):
-        create = GcsBucket(
-            ' /.project ./',
-            ' /.bucket ./',
-            ' location  '
-        )
-        self.assertEqual('project', create.project)
-
-    def test_bucket_stripped(self):
-        create = GcsBucket(
-            ' /.project ./',
-            ' /.bucket ./',
-            ' location  '
-        )
-        self.assertEqual('bucket', create.bucket)
-
-    def test_location_stripped(self):
-        create = GcsBucket(
-            ' /.project ./',
-            ' /.bucket ./',
-            ' location  '
-        )
-        self.assertEqual('LOCATION', create.location)
+    def test_lifecycle(self):
+        self.assertTrue(hasattr(self.create, 'lifecycle'))
+        expected = {'action': {'type': 'Delete'}, 'condition': {'age': None}}
+        self.assertDictEqual(expected, self.create.lifecycle)
 
 
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
+        self.project = 'project'
+        self.gcs = Mock()
+        self.gcs.project = self.project
         self.create = GcsBucket(
-            'project',
+            self.gcs,
             'bucket',
-            'location',
-            4,
-            {'foo': 'bar'},
-            'user',
-            'storage',
+            ' location ',
             True,
-            hello='world'
+            2,
+            ' /.user_project ./',
+            True,
+            hello='world',
+            answer=42
         )
 
-    def test_blob_expire_days(self):
-        self.assertIsInstance(self.create.age, int)
-        self.assertEqual(4, self.create.age)
+    def test_location(self):
+        self.assertEqual('LOCATION', self.create.location)
 
-    def test_labels(self):
-        self.assertDictEqual({'foo': 'bar'}, self.create.labels)
+    def test_exists_ok(self):
+        self.assertIsInstance(self.create.exists_ok, bool)
+        self.assertTrue(self.create.exists_ok)
+
+    def test_age(self):
+        self.assertIsInstance(self.create.age, int)
+        self.assertEqual(2, self.create.age)
+
+    def test_raises_one_wrong_age_type(self):
+        with self.assertRaises(TypeError):
+            GcsBucket(self.gcs, 'bucket', age='foo')
+
+    def test_raises_one_wrong_age_value(self):
+        with self.assertRaises(ValueError):
+            GcsBucket(self.gcs, 'bucket', age=0)
 
     def test_user_project(self):
-        self.assertEqual('user', self.create.user_project)
-
-    def test_storage_class(self):
-        self.assertEqual('storage', self.create.storage_class)
+        self.assertEqual('user_project', self.create.user_project)
 
     def test_requester_pays(self):
+        self.assertIsInstance(self.create.requester_pays, bool)
         self.assertTrue(self.create.requester_pays)
 
     def test_kwargs(self):
-        self.assertDictEqual({'hello': 'world'}, self.create.kwargs)
-
-    def test_user_project_stripped(self):
-        create = GcsBucket(
-            'project',
-            'bucket',
-            'location',
-            user_project=' /. user /.'
-        )
-        self.assertEqual('user', create.user_project)
+        expected = {'hello': 'world', 'answer': 42}
+        self.assertDictEqual(expected, self.create.kwargs)
 
 
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.create = GcsBucket(
-            'project',
-            'bucket',
+        self.lifecycle_rules = [
+            {'action': {'type': 'Delete'}, 'condition': {'age': 17}},
+            {'action': {'type': 'Forget'}, 'condition': {'feeling': 'good'}},
+            {'reaction': {'type': 'Reply'}, 'reason': {'answer': 42}}
+        ]
+        self.bucket = Mock(spec=[
+            'lifecycle_rules',
+            'name',
             'location',
-            4,
-            {'foo': 'bar'},
-            'user',
-            'storage',
-            True,
-            hello='world'
-        )
+            'patch',
+            'foo',
+            'baz'
+        ])
+        self.bucket.lifecycle_rules = self.lifecycle_rules
+        self.bucket.name = 'bucket'
+        self.bucket.location = 'LOCATION'
+        self.client = Mock()
+        self.client.lookup_bucket = Mock(return_value=self.bucket)
+        self.client.get_bucket = Mock(return_value=self.bucket)
+        self.gcs = Mock(return_value=self.client)
+        self.project = 'project'
+        self.gcs.project = self.project
 
     def test_callable(self):
-        self.assertTrue(callable(self.create))
+        create = GcsBucket(self.gcs, 'bucket')
+        self.assertTrue(callable(create))
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_client_called_once(self, mock_client, _):
-        _ = self.create()
-        mock_client.assert_called_once()
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_client_called_once_with_kwargs(self, mock_client, _):
-        _ = self.create()
-        mock_client.assert_called_once_with('project', hello='world')
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_bucket_called_once(self, _, mock_bucket):
-        _ = self.create()
-        mock_bucket.assert_called_once()
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_bucket_called_once_with_args(self, mock_client, mock_bucket):
-        client = Mock()
-        client.get_bucket = Mock()
-        mock_client.return_value = client
-        _ = self.create()
-        mock_bucket.assert_called_once_with(
-            client,
-            self.create.bucket,
-            self.create.user_project
-        )
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_bucket_default_attributes_set(self, mock_client, mock_bucket):
-        create = GcsBucket(
-            'project',
-            'bucket',
-            'location'
-        )
-        client = Mock()
-        client.get_bucket = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock()
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
+    def test_client_created(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket')
         _ = create()
-        self.assertTrue(hasattr(bucket, 'requester_pays'))
-        self.assertFalse(bucket.requester_pays)
-        self.assertTrue(hasattr(bucket, 'storage_class'))
-        self.assertIsNone(bucket.storage_class)
-        self.assertTrue(hasattr(bucket, 'labels'))
-        self.assertDictEqual({}, bucket.labels)
-        bucket.add_lifecycle_delete_rule.assert_not_called()
+        self.gcs.assert_called_once_with()
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_bucket_attributes_set(self, mock_client, mock_bucket):
-        client = Mock()
-        client.get_bucket = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock()
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create()
-        self.assertTrue(hasattr(bucket, 'requester_pays'))
-        self.assertTrue(bucket.requester_pays)
-        self.assertTrue(hasattr(bucket, 'storage_class'))
-        self.assertEqual('storage', bucket.storage_class)
-        self.assertTrue(hasattr(bucket, 'labels'))
-        self.assertDictEqual({'foo': 'bar'}, bucket.labels)
-        bucket.add_lifecycle_delete_rule.assert_called_once_with(age=4)
+    def test_lookup_bucket_called(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket')
+        _ = create()
+        self.client.lookup_bucket.assert_called_once_with('bucket')
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_bucket_exists_called(self, mock_client, mock_bucket):
-        client = Mock()
-        client.get_bucket = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock()
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create()
-        bucket.exists.assert_called_once_with()
+    def test_lookup_bucket_interpolated_parts(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, '{}_bucket_{}')
+        _ = create(' . / a', 'full / .')
+        self.client.lookup_bucket.assert_called_once_with('a_bucket_full')
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_get_bucket_called_with_defaults(self, mock_client, mock_bucket):
-        client = Mock()
-        client.get_bucket = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=True)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create()
-        client.get_bucket.assert_called_once_with(
-            bucket,
-            retry=None,
-            timeout=None
-        )
-        bucket.create.assert_not_called()
+    def test_raises_on_existing(self):
+        create = GcsBucket(self.gcs, 'bucket')
+        with self.assertRaises(GcsError):
+            _ = create()
+        self.client.create_bucket.assert_not_called()
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_get_bucket_called_with_kwargs(self, mock_client, mock_bucket):
-        client = Mock()
-        client.get_bucket = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=True)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create(retry='retry', timeout='timeout')
-        client.get_bucket.assert_called_once_with(
-            bucket,
-            retry='retry',
-            timeout='timeout'
-        )
-        bucket.create.assert_not_called()
+    def test_passes_on_existing_exists_ok(self):
+        create = GcsBucket(self.gcs, 'bucket', exists_ok=True)
+        _ = create()
+        self.client.create_bucket.assert_not_called()
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_get_bucket_return_value(self, mock_client, mock_bucket):
-        client = Mock()
-        client.get_bucket = Mock(return_value='old')
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=True)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        existing, created = self.create()
-        self.assertTupleEqual(('old', False), (existing, created))
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_create_called_true_false(self, mock_client, mock_bucket):
-        client = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=True)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create(False)
-        client.get_bucket.assert_not_called()
-        bucket.create.assert_called_once()
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_create_called_false_true(self, mock_client, mock_bucket):
-        client = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=False)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create(True)
-        client.get_bucket.assert_not_called()
-        bucket.create.assert_called_once()
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_create_called_false_false(self, mock_client, mock_bucket):
-        client = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=False)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create(False)
-        client.get_bucket.assert_not_called()
-        bucket.create.assert_called_once()
-
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_create_called_with_defaults(self, mock_client, mock_bucket):
-        client = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=False)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create()
-        bucket.create.assert_called_once_with(
-            client,
-            self.create.project,
-            self.create.location,
-            retry=None,
-            timeout=None
+    def test_create_bucket_called_default(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket')
+        _ = create()
+        self.client.create_bucket.assert_called_once_with(
+            'bucket',
+            create.requester_pays,
+            self.gcs.project,
+            create.user_project,
+            create.location
         )
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_create_called_with_kwargs(self, mock_client, mock_bucket):
-        client = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=False)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        _ = self.create(retry='retry', timeout='timeout')
-        bucket.create.assert_called_once_with(
-            client,
-            self.create.project,
-            self.create.location,
-            retry='retry',
-            timeout='timeout'
+    def test_create_bucket_interpolated_parts(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, '{}_bucket_{}')
+        _ = create(' . / a', 'full / .')
+        self.client.create_bucket.assert_called_once_with(
+            'a_bucket_full',
+            create.requester_pays,
+            self.gcs.project,
+            create.user_project,
+            create.location
         )
 
-    @patch('swak.cloud.gcp.bucket.Bucket')
-    @patch('swak.cloud.gcp.bucket.Client')
-    def test_create_return_value(self, mock_client, mock_bucket):
-        client = Mock()
-        mock_client.return_value = client
-        bucket = Mock()
-        bucket.add_lifecycle_delete_rule = Mock()
-        bucket.exists = Mock(return_value=False)
-        bucket.create = Mock()
-        mock_bucket.return_value = bucket
-        new, created = self.create()
-        self.assertIs(bucket, new)
-        self.assertTrue(created)
+    def test_create_bucket_called_custom(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(
+            self.gcs,
+            'bucket',
+            'location',
+            user_project='user_project',
+            requester_pays=True
+        )
+        _ = create()
+        self.client.create_bucket.assert_called_once_with(
+            'bucket',
+            True,
+            self.gcs.project,
+            'user_project',
+            'LOCATION'
+        )
+
+    def test_get_bucket_called(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket')
+        _ = create()
+        self.client.get_bucket.assert_called_once_with('bucket')
+
+    def test_get_bucket_interpolated_parts(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, '{}_bucket_{}')
+        _ = create(' . / a', 'full / .')
+        self.client.get_bucket.assert_called_once_with('a_bucket_full')
+
+    def test_lifecycle_rules_unchanged_on_lookup(self):
+        create = GcsBucket(self.gcs, 'bucket', exists_ok=True)
+        _ = create()
+        self.assertListEqual(self.lifecycle_rules, self.bucket.lifecycle_rules)
+
+    def test_lifecycle_rules_none_one_added_on_lookup(self):
+        self.bucket.lifecycle_rules = None
+        create = GcsBucket(self.gcs, 'bucket', exists_ok=True, age=2)
+        _ = create()
+        self.assertListEqual([create.lifecycle], self.bucket.lifecycle_rules)
+
+    def test_lifecycle_rules_empty_one_added_on_lookup(self):
+        self.bucket.lifecycle_rules = []
+        create = GcsBucket(self.gcs, 'bucket', exists_ok=True, age=2)
+        _ = create()
+        self.assertListEqual([create.lifecycle], self.bucket.lifecycle_rules)
+
+    def test_lifecycle_rules_changed_on_lookup(self):
+        create = GcsBucket(self.gcs, 'bucket', exists_ok=True, age=2)
+        _ = create()
+        expected = [*self.lifecycle_rules[1:], create.lifecycle]
+        self.assertListEqual(expected, self.bucket.lifecycle_rules)
+
+    def test_lifecycle_rules_unchanged_on_create(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket')
+        _ = create()
+        self.assertListEqual(self.lifecycle_rules, self.bucket.lifecycle_rules)
+
+    def test_lifecycle_rules_none_one_added_on_create(self):
+        self.client.lookup_bucket.return_value = None
+        self.bucket.lifecycle_rules = None
+        create = GcsBucket(self.gcs, 'bucket', age=2)
+        _ = create()
+        self.assertListEqual([create.lifecycle], self.bucket.lifecycle_rules)
+
+    def test_lifecycle_rules_empty_one_added_on_create(self):
+        self.client.lookup_bucket.return_value = None
+        self.bucket.lifecycle_rules = []
+        create = GcsBucket(self.gcs, 'bucket', age=2)
+        _ = create()
+        self.assertListEqual([create.lifecycle], self.bucket.lifecycle_rules)
+
+    def test_lifecycle_rules_changed_on_create(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket', age=2)
+        _ = create()
+        expected = [*self.lifecycle_rules[1:], create.lifecycle]
+        self.assertListEqual(expected, self.bucket.lifecycle_rules)
+
+    def test_patch_called_on_lookup(self):
+        create = GcsBucket(self.gcs, 'bucket', exists_ok=True)
+        _ = create()
+        self.bucket.patch.assert_called_once_with()
+
+    def test_patch_called_on_create(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket')
+        _ = create()
+        self.bucket.patch.assert_called_once_with()
+
+    def test_allowed_kwargs_set(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket', foo='bar', baz='cheese')
+        self.assertNotEqual('bar', self.bucket.foo)
+        self.assertNotEqual('cheese', self.bucket.baz)
+        _ = create()
+        self.assertEqual('bar', self.bucket.foo)
+        self.assertEqual('cheese', self.bucket.baz)
+
+    def test_wrong_kwargs_raise(self):
+        self.client.lookup_bucket.return_value = None
+        create = GcsBucket(self.gcs, 'bucket', wrong='kwarg')
+        with self.assertRaises(GcsError):
+            _ = create()
+
 
 
 class TestMisc(unittest.TestCase):
 
     def setUp(self):
-        self.create = GcsBucket(
-            'project',
+        self.project = 'project'
+        self.gcs = Mock()
+        self.gcs.project = self.project
+
+    def test_default_repr(self):
+        create = GcsBucket(self.gcs, 'bucket')
+        expected = ("GcsBucket(Mock(...), 'bucket', 'EUROPE-NORTH1',"
+                    " False, None, 'project', False)")
+        self.assertEqual(expected, repr(create))
+
+    def test_custom_repr(self):
+        create = GcsBucket(
+            self.gcs,
             'bucket',
-            'location',
-            4,
-            {'foo': 'bar'},
-            'user',
-            'storage',
+            'LOCATION',
+            True,
+            42,
+            'user_project',
             True
         )
-
-    def test_repr(self):
-        expected = ("GcsBucket('project', 'bucket', 'LOCATION', "
-                    "blob_expire_days=4, labels={'foo': 'bar'}, "
-                    "user_project='user', storage_class='storage', "
-                    "requester_pays=True)")
-        self.assertEqual(expected, repr(self.create))
+        expected = ("GcsBucket(Mock(...), 'bucket', 'LOCATION',"
+                    " True, 42, 'user_project', True)")
+        self.assertEqual(expected, repr(create))
 
     def test_pickle_works(self):
-        _ = pickle.loads(pickle.dumps(self.create))
+        gcs = Gcs('project')
+        create = GcsBucket(gcs, 'bucket')
+        _ = pickle.loads(pickle.dumps(create))
 
 
 if __name__ == '__main__':

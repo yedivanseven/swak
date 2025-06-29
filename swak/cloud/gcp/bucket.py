@@ -60,7 +60,7 @@ class GcsBucket(ArgRepr):
         self.exists_ok = bool(exists_ok)
         self.age = self.__valid(age)
         self.user_project = self.__stripped(user_project) or self.gcs.project
-        self.requester_pays = requester_pays
+        self.requester_pays = bool(requester_pays)
         self.kwargs = kwargs
         super().__init__(
             self.gcs,
