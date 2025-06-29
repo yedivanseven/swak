@@ -37,6 +37,15 @@ class GcsBucket(ArgRepr):
         See the `GCS docs <https://cloud.google.com/python/docs/reference/
         storage/latest/google.cloud.storage.bucket.Bucket>`_ for all options.
 
+    Raises
+    ------
+    AttributeError
+        If `bucket` or `location` are not strings.
+    TypeError
+        If `age` cannot be cast to an integer.
+    ValueError
+        If `age` is less than one.
+
     See Also
     --------
     Gcs

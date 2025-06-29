@@ -71,7 +71,7 @@ class DataFrame2S3Parquet(ArgRepr):
     ) -> None:
         self.s3 = s3
         self.bucket = bucket.strip(' /')
-        self.prefix = prefix.strip().lstrip('/')
+        self.prefix = prefix.strip(' /')
         self.overwrite = bool(overwrite)
         self.skip = bool(skip)
         self.extra_kws = {} if extra_kws is None else extra_kws
@@ -127,7 +127,7 @@ class DataFrame2S3Parquet(ArgRepr):
                 raise S3Error(msg)
 
         with BytesIO() as buffer:
-            df.to_parquet(buffer, **self.kwargs)
+            getattr(df, 'to_parquet', df.write_parquet)(buffer, **self.kwargs)
             buffer.seek(0)
             try:
                 client.upload_fileobj(

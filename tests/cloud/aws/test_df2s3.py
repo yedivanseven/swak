@@ -156,8 +156,20 @@ class TestUsage(unittest.TestCase):
         df = Mock()
         _ = self.upload(df)
         df.to_parquet.assert_called_once()
+        df.write_parquet.assert_not_called()
         buffer = df.to_parquet.call_args[0][0]
         kwargs = df.to_parquet.call_args[1]
+        self.assertIsInstance(buffer, io.BytesIO)
+        self.assertDictEqual(self.kwargs, kwargs)
+
+    @patch('swak.cloud.aws.df2s3.TransferConfig')
+    def test_write_parquet_called_object_not_exists(self, _):
+        self.client.head_object.side_effect = ClientError({}, 'head_object')
+        df = Mock(spec=['write_parquet'])
+        _ = self.upload(df)
+        df.write_parquet.assert_called_once()
+        buffer = df.write_parquet.call_args[0][0]
+        kwargs = df.write_parquet.call_args[1]
         self.assertIsInstance(buffer, io.BytesIO)
         self.assertDictEqual(self.kwargs, kwargs)
 
@@ -210,6 +222,7 @@ class TestUsage(unittest.TestCase):
             _ = upload(df)
         self.client.close.assert_called_once_with()
         df.to_parquet.assert_not_called()
+        df.write_parquet.assert_not_called()
         self.client.upload_fileobj.assert_not_called()
         config.assert_not_called()
 
@@ -226,6 +239,7 @@ class TestUsage(unittest.TestCase):
         _ = upload(df)
         self.client.close.assert_called_once_with()
         df.to_parquet.assert_not_called()
+        df.write_parquet.assert_not_called()
         self.client.upload_fileobj.assert_not_called()
         config.assert_not_called()
 
@@ -242,6 +256,7 @@ class TestUsage(unittest.TestCase):
         _ = upload(df)
         self.client.close.assert_called_once_with()
         df.to_parquet.assert_not_called()
+        df.write_parquet.assert_not_called()
         self.client.upload_fileobj.assert_not_called()
         config.assert_not_called()
 
@@ -250,8 +265,19 @@ class TestUsage(unittest.TestCase):
         df = Mock()
         _ = self.upload(df)
         df.to_parquet.assert_called_once()
+        df.write_parquet.assert_not_called()
         buffer = df.to_parquet.call_args[0][0]
         kwargs = df.to_parquet.call_args[1]
+        self.assertIsInstance(buffer, io.BytesIO)
+        self.assertDictEqual(self.kwargs, kwargs)
+
+    @patch('swak.cloud.aws.df2s3.TransferConfig')
+    def test_write_parquet_called_object_exists(self, _):
+        df = Mock(spec=['write_parquet'])
+        _ = self.upload(df)
+        df.write_parquet.assert_called_once()
+        buffer = df.write_parquet.call_args[0][0]
+        kwargs = df.write_parquet.call_args[1]
         self.assertIsInstance(buffer, io.BytesIO)
         self.assertDictEqual(self.kwargs, kwargs)
 

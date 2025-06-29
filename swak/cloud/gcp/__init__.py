@@ -7,6 +7,7 @@ Specifically, data scientists tend to interact mostly with Google's BigQuery
 
 from .clients import Gcs
 from .bucket import GcsBucket
+from .df2gcs import DataFrame2GcsParquet
 from .query import GbqQuery
 from .query2gcs import GbqQuery2GcsParquet
 from .gcs2local import GcsDir2LocalDir
@@ -22,6 +23,7 @@ __all__ = [
     'Billing',
     'GbqDataset',
     'GcsBucket',
+    'DataFrame2GcsParquet',
     'GbqQuery',
     'GbqQuery2GcsParquet',
     'GcsDir2LocalDir',
@@ -32,6 +34,5 @@ __all__ = [
 ]
 
 # ToDo: Refactor so that partial clients are created outside classes
-# ToDo: Allow overwriting cached client configs on calling wrappers
 # ToDo: Add download single file to local
 # ToDo: Add download single file to dataframe
