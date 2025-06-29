@@ -111,8 +111,9 @@ class DataFrame2GcsParquet(ArgRepr):
                 msg = tmp.format(key, self.bucket)
                 raise GcsError(msg)
 
+        writer = 'to_parquet' if hasattr(df, 'to_parquet') else 'write_parquet'
         with blob.open('wb', self.chunk_bytes) as buffer:
-            getattr(df, 'to_parquet', df.write_parquet)(buffer, **self.kwargs)
+            getattr(df, writer)(buffer, **self.kwargs)
 
         return ()
 

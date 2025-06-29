@@ -126,8 +126,9 @@ class DataFrame2S3Parquet(ArgRepr):
                 msg = tmp.format(key, self.bucket)
                 raise S3Error(msg)
 
+        writer = 'to_parquet' if hasattr(df, 'to_parquet') else 'write_parquet'
         with BytesIO() as buffer:
-            getattr(df, 'to_parquet', df.write_parquet)(buffer, **self.kwargs)
+            getattr(df, writer)(buffer, **self.kwargs)
             buffer.seek(0)
             try:
                 client.upload_fileobj(

@@ -33,6 +33,6 @@ __all__ = [
     'DataFrame2Gbq'
 ]
 
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 # ToDo: Refactor so that partial clients are created outside classes
-# ToDo: Add download single file to local
-# ToDo: Add download single file to dataframe
+# ToDo: Add move single file to local

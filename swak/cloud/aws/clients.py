@@ -14,9 +14,11 @@ class S3(ArgRepr):
 
     Parameters
     ----------
-    region_name: str, optional
-        The name of the region associated with the client.
-        Defaults to ``None``.
+    location: str, optional
+        The name of the region associated with the client. See the list of
+        available ` locations <https://docs.aws.amazon.com/
+        global-infrastructure/latest/regions/aws-regions.html>`_ for choices.
+        Defaults to ``eu-west-1`` (Ireland).
     api_version: str, optional
         The API version to use.  By default, botocore will use the latest API
         version when creating a client. You only need to specify this parameter
@@ -48,11 +50,16 @@ class S3(ArgRepr):
         `config <https://botocore.amazonaws.com/v1/documentation/api/latest/
         reference/config.html>`_ for options. Defaults to ``None``.
 
+    Raises
+    ------
+    AttributeError
+        If `location` is not a string.
+
     """
 
     def __init__(
             self,
-            region_name: str | None = None,
+            location: str = 'eu-west-1',
             api_version: str | None = None,
             use_ssl: bool = True,
             verify: bool | str = True,
@@ -63,18 +70,18 @@ class S3(ArgRepr):
             aws_session_token: str | None = None,
             **kwargs: Any
     ) -> None:
-        self.region_name = self.__strip(region_name)
+        self.location = location.strip().lower()
         self.api_version = self.__strip(api_version)
         self.use_ssl = use_ssl
         self.verify = verify.strip() if isinstance(verify, str) else verify
         self.endpoint_url = self.__strip(endpoint_url)
-        self.__aws_account_id = aws_account_id
-        self.__aws_access_key_id = aws_access_key_id
-        self.__aws_secret_access_key = aws_secret_access_key
-        self.__aws_session_token = aws_session_token
+        self.__aws_account_id = self.__strip(aws_account_id)
+        self.__aws_access_key_id = self.__strip(aws_access_key_id)
+        self.__aws_secret_access_key = self.__strip(aws_secret_access_key)
+        self.__aws_session_token = self.__strip(aws_session_token)
         self.kwargs = kwargs
         super().__init__(
-            self.region_name,
+            self.location,
             self.api_version,
             self.use_ssl,
             self.verify,
@@ -121,7 +128,7 @@ class S3(ArgRepr):
         """New S3 client on first request, cached for subsequent requests."""
         return boto3.client(
             service_name='s3',
-            region_name=self.region_name,
+            region_name=self.location,
             api_version=self.api_version,
             use_ssl=self.use_ssl,
             verify=self.verify,
@@ -137,7 +144,7 @@ class S3(ArgRepr):
         """New S3 client on every call, ignoring any (keyword) arguments."""
         return boto3.client(
             service_name='s3',
-            region_name=self.region_name,
+            region_name=self.location,
             api_version=self.api_version,
             use_ssl=self.use_ssl,
             verify=self.verify,

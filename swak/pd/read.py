@@ -5,6 +5,7 @@ from pandas import DataFrame
 from ..misc import ArgRepr
 
 
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 class ParquetReader(ArgRepr):
     """Light wrapper around the top-level ``read_parquet`` pandas function.
 

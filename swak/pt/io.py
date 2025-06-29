@@ -13,7 +13,7 @@ __all__ = [
     'ModelLoader'
 ]
 
-
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 class StateSaver(ArgRepr):
     """Save the state of a model to file.
 

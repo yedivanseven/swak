@@ -9,11 +9,11 @@ class TestDefaultAttributes(unittest.TestCase):
     def setUp(self):
         self.s3 = S3()
 
-    def test_has_region_name(self):
-        self.assertTrue(hasattr(self.s3, 'region_name'))
+    def test_has_location(self):
+        self.assertTrue(hasattr(self.s3, 'location'))
 
-    def test_region_name(self):
-        self.assertIsNone(self.s3.region_name)
+    def test_location(self):
+        self.assertEqual('eu-west-1', self.s3.location)
 
     def test_has_api_version(self):
         self.assertTrue(hasattr(self.s3, 'api_version'))
@@ -51,7 +51,7 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.region_name = ' region  '
+        self.location = ' region  '
         self.api_version = ' api_version  '
         self.use_ssl = False
         self.verify = False
@@ -62,7 +62,7 @@ class TestAttributes(unittest.TestCase):
         self.aws_session_token = '  aws_secret_access_key '
         self.kwargs = {'three': 3}
         self.s3 = S3(
-            self.region_name,
+            self.location,
             self.api_version,
             self.use_ssl,
             self.verify,
@@ -74,8 +74,8 @@ class TestAttributes(unittest.TestCase):
             **self.kwargs
         )
 
-    def test_region_name_stripped(self):
-        self.assertEqual(self.region_name.strip(), self.s3.region_name)
+    def test_location_stripped(self):
+        self.assertEqual(self.location.strip(), self.s3.location)
 
     def test_api_version_stripped(self):
         self.assertEqual(self.api_version.strip(), self.s3.api_version)
@@ -105,7 +105,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.region_name = 'region'
+        self.location = 'region'
         self.api_version = 'api_version'
         self.use_ssl = False
         self.verify = False
@@ -116,7 +116,7 @@ class TestUsage(unittest.TestCase):
         self.aws_session_token = 'aws_secret_access_key'
         self.kwargs = {'three': 3}
         self.s3 = S3(
-            self.region_name,
+            self.location,
             self.api_version,
             self.use_ssl,
             self.verify,
@@ -143,7 +143,7 @@ class TestUsage(unittest.TestCase):
         _ = self.s3.client
         client.assert_called_once_with(
             service_name='s3',
-            region_name=self.region_name,
+            region_name=self.location,
             api_version=self.api_version,
             use_ssl=self.use_ssl,
             verify=self.verify,
@@ -173,7 +173,7 @@ class TestUsage(unittest.TestCase):
         _ = self.s3()
         client.assert_called_once_with(
             service_name='s3',
-            region_name=self.region_name,
+            region_name=self.location,
             api_version=self.api_version,
             use_ssl=self.use_ssl,
             verify=self.verify,
@@ -203,9 +203,9 @@ class TestMisc(unittest.TestCase):
         self.s3 = S3()
 
     def test_default_repr(self):
-        expected = ("S3(None, None, True, True, None, aws_account_id=None, "
-                    "aws_access_key_id=None, aws_secret_access_key=None, "
-                    "aws_session_token=None)")
+        expected = ("S3('eu-west-1', None, True, True, None, "
+                    "aws_account_id=None, aws_access_key_id=None,"
+                    " aws_secret_access_key=None, aws_session_token=None)")
         self.assertEqual(expected, repr(self.s3))
 
     def test_pickle_works(self):

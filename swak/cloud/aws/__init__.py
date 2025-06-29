@@ -19,3 +19,4 @@ __all__ = [
     'S3File2LocalFile',
     'S3ObjectDiscovery'
 ]
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
