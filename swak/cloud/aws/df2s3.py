@@ -36,8 +36,8 @@ class DataFrame2S3Parquet(ArgRepr):
         Passed on as ``Config`` to the `upload_fileobj <meth_>`__ method of
         the client. See the `docs <doc_>`__ for all `options <options_>`__.
     **kwargs
-        Additional keyword arguments are passed on to the ``to_parquet`` method
-        of the dataframe.
+        Additional keyword arguments are passed on to the ``to_parquet``
+        or ``write_parquet`` method of the dataframe.
 
 
     .. _meth: https://boto3.amazonaws.com/v1/documentation/api/latest/reference
