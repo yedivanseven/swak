@@ -21,12 +21,6 @@ gcp
    :show-inheritance:
 
 
-.. autoclass:: swak.cloud.gcp.DataFrame2GcsParquet
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-
 .. autoclass:: swak.cloud.gcp.GbqQuery
    :members:
    :special-members: __call__

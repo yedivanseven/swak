@@ -208,6 +208,7 @@ class InMemory(Checkpoint):
         return self._to_device(self.state)
 
 
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 class OnDisk(Checkpoint):
     """Checkpoint the current state of training on disk.
 

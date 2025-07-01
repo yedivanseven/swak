@@ -7,7 +7,6 @@ Specifically, data scientists tend to interact mostly with Google's BigQuery
 
 from .clients import Gcs
 from .bucket import GcsBucket
-from .df2gcs import DataFrame2GcsParquet
 from .query import GbqQuery
 from .query2gcs import GbqQuery2GcsParquet
 from .gcs2local import GcsDir2LocalDir
@@ -23,7 +22,6 @@ __all__ = [
     'Billing',
     'GbqDataset',
     'GcsBucket',
-    'DataFrame2GcsParquet',
     'GbqQuery',
     'GbqQuery2GcsParquet',
     'GcsDir2LocalDir',
