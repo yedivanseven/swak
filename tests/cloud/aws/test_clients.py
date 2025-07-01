@@ -133,7 +133,7 @@ class TestUsage(unittest.TestCase):
 
     @patch('boto3.client')
     @patch('swak.cloud.aws.clients.Config')
-    def test_has_client(self, config, client):
+    def test_has_client(self, _, __):
         self.assertTrue(hasattr(self.s3, 'client'))
 
     @patch('boto3.client')

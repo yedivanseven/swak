@@ -32,7 +32,8 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_kwargs(self):
         self.assertDictEqual({}, self.gcs.kwargs)
 
-    def test_has_client(self):
+    @patch('swak.cloud.gcp.clients.Client')
+    def test_has_client(self, _):
         self.assertTrue(hasattr(self.gcs, 'client'))
 
 
