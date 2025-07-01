@@ -18,6 +18,7 @@ polars = "*"
 pyyaml = "*"
 tqdm = "*"
 tomli-w = "*"
+fsspec = "*"
 
 [dev-packages]
 jupyter = "*"
@@ -31,6 +32,8 @@ google-cloud-storage = "*"
 google-cloud-bigquery = "*"
 pandas-gbq = "*"
 boto3 = "*"
+s3fs = "*"
+gcsfs = "*"
 
 [cpu]
 torch = {version="*", index="cpu"}
