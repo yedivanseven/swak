@@ -9,6 +9,7 @@ from ..misc import ArgRepr
 from .misc import Toml, Yaml
 
 
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 class TomlWriter(ArgRepr):
     """Partial of the ``dump`` function in the ``tomli-w`` package.
 

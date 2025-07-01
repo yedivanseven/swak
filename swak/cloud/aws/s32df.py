@@ -1,16 +1,14 @@
 from typing import Any
 from io import BytesIO
 from collections.abc import Callable
-from functools import cached_property
-from botocore.client import BaseClient
 import pandas as pd
 import polars as pl
 from ...misc import ArgRepr, Bears, LiteralBears
-from .s3 import S3
+from .clients import S3
 
 
 class S3Parquet2DataFrame[T](ArgRepr):
-    """Download a single parquet file from S3 object storage.
+    """Load a single parquet file from S3 object storage into a data frame.
 
     Type-annotate classes on instantiation with either a pandas or a polars
     dataframe so that static type checkers can infer the return type of
@@ -38,6 +36,11 @@ class S3Parquet2DataFrame[T](ArgRepr):
         Additional keyword arguments are passed on to the top-level
         ``read_parquet`` function of either pandas or polars.
 
+    Raises
+    ------
+    AttributeError
+        If `bucket`, `prefix`, or `bear` are not, in fact, strings.
+
     See Also
     --------
     S3
@@ -50,13 +53,13 @@ class S3Parquet2DataFrame[T](ArgRepr):
             s3: S3,
             bucket: str,
             prefix: str = '',
-            bear: str | Bears | LiteralBears = Bears.PANDAS,
+            bear: Bears | LiteralBears = Bears.PANDAS,
             get_kws: dict[str, Any] | None = None,
             **kwargs: Any
     ) -> None:
         self.s3 = s3
         self.bucket = bucket.strip(' /')
-        self.prefix = prefix.strip().lstrip('/')
+        self.prefix = prefix.strip(' /')
         self.bear = bear.strip().lower()
         self.get_kws = {} if get_kws is None else get_kws
         self.kwargs = kwargs
@@ -68,11 +71,6 @@ class S3Parquet2DataFrame[T](ArgRepr):
             get_kws=get_kws,
             **self.kwargs
         )
-
-    @cached_property
-    def client(self) -> BaseClient:
-        """A cached instance of a fully configured S3 client."""
-        return self.s3.client
 
     @property
     def read_parquet(self) -> Callable[[BytesIO, ...], T]:
@@ -99,13 +97,19 @@ class S3Parquet2DataFrame[T](ArgRepr):
 
         """
         stripped = path.strip(' /')
-        prepended = '/' + stripped if stripped else stripped
-        key = self.prefix + prepended
-        response = self.client.get_object(
+        seperator = '/' if (self.prefix and stripped) else ''
+        key = self.prefix + seperator + stripped
+
+        client = self.s3()
+
+        response = client.get_object(
             Key=key,
             Bucket=self.bucket,
             **self.get_kws
         )
         with BytesIO(response.get('Body').read()) as buffer:
             df = self.read_parquet(buffer, **self.kwargs)
+
+        client.close()
+
         return df

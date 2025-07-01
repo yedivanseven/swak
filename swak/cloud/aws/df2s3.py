@@ -1,14 +1,14 @@
 from typing import Any
 from io import BytesIO
-from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from boto3.s3.transfer import TransferConfig
 from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
 from ...misc import ArgRepr
-from .s3 import S3
+from .exceptions import S3Error
+from .clients import S3
 
 
-# ToDo: Add skip and overwrite. Act accordingly!
 class DataFrame2S3Parquet(ArgRepr):
     """Upload a pandas or polars dataframe to an S3 bucket.
 
@@ -23,6 +23,12 @@ class DataFrame2S3Parquet(ArgRepr):
         any number of string placeholders (i.e., pairs of curly brackets) that
         will be interpolated when instances are called.
         Defaults to an empty string.
+    overwrite: bool, optional
+        Whether to silently overwrite the destination blob on S3. Defaults
+        to ``False``, which will raise an exception if it already exists.
+    skip: bool, optional
+        Whether to silently do nothing if the destination blob on S3 already
+        exists. Defaults to ``False``.
     extra_kws: dict, optional
         Passed on as ``ExtraArgs`` to the `upload_fileobj <meth_>`__ method of
         the client. See the `docs <doc_>`__ for all options.
@@ -30,8 +36,9 @@ class DataFrame2S3Parquet(ArgRepr):
         Passed on as ``Config`` to the `upload_fileobj <meth_>`__ method of
         the client. See the `docs <doc_>`__ for all `options <options_>`__.
     **kwargs
-        Additional keyword arguments are passed on to the ``to_parquet`` method
-        of the dataframe.
+        Additional keyword arguments are passed on to the ``to_parquet``
+        or ``write_parquet`` method of the dataframe.
+
 
     .. _meth: https://boto3.amazonaws.com/v1/documentation/api/latest/reference
         /services/s3/client/upload_fileobj.html
@@ -39,6 +46,11 @@ class DataFrame2S3Parquet(ArgRepr):
         reference/customizations/s3.html#boto3.s3.transfer.TransferConfig
     .. _options: https://boto3.amazonaws.com/v1/documentation/api/latest/
         reference/services/s3/client/put_object.html
+
+    Raises
+    ------
+    AttributeError
+        If either `bucket` or `prefix` are not, in fact, strings.
 
     See Also
     --------
@@ -51,13 +63,17 @@ class DataFrame2S3Parquet(ArgRepr):
             s3: S3,
             bucket: str,
             prefix: str = '',
+            overwrite: bool = False,
+            skip: bool = False,
             extra_kws: dict[str, Any] | None = None,
             upload_kws: dict[str, Any] | None = None,
             **kwargs: Any
     ) -> None:
         self.s3 = s3
         self.bucket = bucket.strip(' /')
-        self.prefix = prefix.strip().lstrip('/')
+        self.prefix = prefix.strip(' /')
+        self.overwrite = bool(overwrite)
+        self.skip = bool(skip)
         self.extra_kws = {} if extra_kws is None else extra_kws
         self.upload_kws = {} if upload_kws is None else upload_kws
         self.kwargs = kwargs
@@ -65,15 +81,12 @@ class DataFrame2S3Parquet(ArgRepr):
             self.s3,
             self.bucket,
             self.prefix,
+            self.overwrite,
+            self.skip,
             extra_kws=extra_kws,
             upload_kws=upload_kws,
             **self.kwargs
         )
-
-    @property
-    def client(self) -> BaseClient:
-        """A cached instance of a fully configured S3 client."""
-        return self.s3.client
 
     def __call__(self, df: Pandas | Polars, *parts: str) -> tuple[()]:
         """Write a pandas or polars dataframe to S3 object storage.
@@ -93,15 +106,39 @@ class DataFrame2S3Parquet(ArgRepr):
             An empty tuple.
 
         """
-        key = self.prefix.format(*parts).strip()
+        key = self.prefix.format(*parts).strip(' /')
+
+        client = self.s3()
+
+        try:
+            _ = client.head_object(Bucket=self.bucket, Key=key)
+            object_exists = True
+        except ClientError:
+            object_exists = False
+
+        if object_exists:
+            if self.skip:
+                client.close()
+                return ()
+            if not self.overwrite:
+                client.close()
+                tmp = 'Object "{}" already exists in bucket "{}"!'
+                msg = tmp.format(key, self.bucket)
+                raise S3Error(msg)
+
+        writer = 'to_parquet' if hasattr(df, 'to_parquet') else 'write_parquet'
         with BytesIO() as buffer:
-            df.to_parquet(buffer, **self.kwargs)
+            getattr(df, writer)(buffer, **self.kwargs)
             buffer.seek(0)
-            self.client.upload_fileobj(
-                Fileobj=buffer,
-                Bucket=self.bucket,
-                Key=key,
-                ExtraArgs=self.extra_kws,
-                Config=TransferConfig(**self.upload_kws)
-            )
+            try:
+                client.upload_fileobj(
+                    Fileobj=buffer,
+                    Bucket=self.bucket,
+                    Key=key,
+                    ExtraArgs=self.extra_kws,
+                    Config=TransferConfig(**self.upload_kws)
+                )
+            finally:
+                client.close()
+
         return ()

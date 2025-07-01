@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2025-07-01
+- Added S3Bucket creation
+- Added overwrite and skip to DataFrame2S3Bucket
+- Added download S3 file to local
+- List (and filter) S3 object keys
+
+## [0.5.4] - 2025-07-01
+- Mistake. No changes.
+
 ## [0.5.3] - 2025-06-22
 - Added Fallback to funcflow
 - Homogenized funcflow behavior on functions returning one-tuples

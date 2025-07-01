@@ -3,7 +3,7 @@ import pickle
 from unittest.mock import patch, Mock
 import pandas as pd
 import polars as pl
-from swak.cloud.aws import S3Parquet2DataFrame
+from swak.cloud.aws import S3Parquet2DataFrame, S3
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -49,17 +49,6 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_kwargs(self):
         self.assertDictEqual({}, self.download.kwargs)
 
-    def test_has_client(self):
-        download = S3Parquet2DataFrame(Mock(), self.bucket)
-        self.assertTrue(hasattr(download, 'client'))
-
-    def test_client(self):
-        s3 = Mock()
-        client = Mock()
-        s3.client = client
-        download = S3Parquet2DataFrame(s3, self.bucket)
-        self.assertIs(download.client, client)
-
     def test_has_read_parquet(self):
         self.assertTrue(hasattr(self.download, 'read_parquet'))
 
@@ -71,7 +60,7 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.s3 = 's3'
-        self.bucket = ' / bucket /'
+        self.bucket = ' / bucket/ '
         self.prefix = ' /prefix / '
         self.bear = ' PoLars '
         self.get_kws = {'one': 1}
@@ -89,7 +78,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.bucket.strip(' /'), self.download.bucket)
 
     def test_prefix_stripped(self):
-        self.assertEqual(self.prefix.strip().lstrip('/'), self.download.prefix)
+        self.assertEqual(self.prefix.strip(' /'), self.download.prefix)
 
     def test_bear_stripped(self):
         self.assertEqual(self.bear.strip().lower(), self.download.bear)
@@ -104,7 +93,7 @@ class TestAttributes(unittest.TestCase):
         self.assertIs(self.download.read_parquet, pl.read_parquet)
 
     def test_repr(self):
-        expected = ("S3Parquet2DataFrame('s3', 'bucket', 'prefix /',"
+        expected = ("S3Parquet2DataFrame('s3', 'bucket', 'prefix',"
                     " 'polars', get_kws={'one': 1}, two=2)")
         self.assertEqual(expected, repr(self.download))
 
@@ -112,7 +101,9 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.s3 = Mock()
+        self.s3 = Mock(spec=S3)
+        self.client = Mock()
+        self.s3.return_value = self.client
         self.bucket = 'bucket'
         self.prefix = 'prefix'
         self.bear = 'polars'
@@ -132,10 +123,140 @@ class TestUsage(unittest.TestCase):
 
     @patch('polars.read_parquet')
     @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_client_created(self, _, __):
+        _ = self.download()
+        self.s3.assert_called_once_with()
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
     def test_get_object_called(self, _, __):
         _ = self.download()
-        self.download.s3.client.get_object.assert_called_once_with(
-            Key=self.prefix,
+        self.client.get_object.assert_called_once_with(
+            Key='prefix',
+            Bucket=self.bucket,
+            **self.get_kws
+        )
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_get_object_called_prefix_no_slash_no_path(self, _, __):
+        download = S3Parquet2DataFrame(
+            self.s3,
+            self.bucket,
+            'prefix',
+            self.bear,
+            self.get_kws,
+            **self.kwargs,
+        )
+        _ = download()
+        self.client.get_object.assert_called_once_with(
+            Key='prefix',
+            Bucket=self.bucket,
+            **self.get_kws
+        )
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_get_object_called_prefix_slash_no_path(self, _, __):
+        download = S3Parquet2DataFrame(
+            self.s3,
+            self.bucket,
+            '/prefix/',
+            self.bear,
+            self.get_kws,
+            **self.kwargs,
+        )
+        _ = download()
+        self.client.get_object.assert_called_once_with(
+            Key='prefix',
+            Bucket=self.bucket,
+            **self.get_kws
+        )
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_get_object_called_path_no_slash_no_prefix(self, _, __):
+        download = S3Parquet2DataFrame(
+            self.s3,
+            self.bucket,
+            '',
+            self.bear,
+            self.get_kws,
+            **self.kwargs,
+        )
+        _ = download('prefix')
+        self.client.get_object.assert_called_once_with(
+            Key='prefix',
+            Bucket=self.bucket,
+            **self.get_kws
+        )
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_get_object_called_path_slash_no_prefix(self, _, __):
+        download = S3Parquet2DataFrame(
+            self.s3,
+            self.bucket,
+            '',
+            self.bear,
+            self.get_kws,
+            **self.kwargs,
+        )
+        _ = download('/prefix/')
+        self.client.get_object.assert_called_once_with(
+            Key='prefix',
+            Bucket=self.bucket,
+            **self.get_kws
+        )
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_get_object_called_prefix_slash_path_no_slash(self, _, __):
+        download = S3Parquet2DataFrame(
+            self.s3,
+            self.bucket,
+            '/pre/',
+            self.bear,
+            self.get_kws,
+            **self.kwargs,
+        )
+        _ = download('fix')
+        self.client.get_object.assert_called_once_with(
+            Key='pre/fix', Bucket=self.bucket, **self.get_kws
+        )
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_get_object_called_prefix_no_slash_path_slash(self, _, __):
+        download = S3Parquet2DataFrame(
+            self.s3,
+            self.bucket,
+            'pre',
+            self.bear,
+            self.get_kws,
+            **self.kwargs,
+        )
+        _ = download('/fix/')
+        self.client.get_object.assert_called_once_with(
+            Key='pre/fix',
+            Bucket=self.bucket,
+            **self.get_kws
+        )
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_get_object_called_prefix_slash_path_slash(self, _, __):
+        download = S3Parquet2DataFrame(
+            self.s3,
+            self.bucket,
+            '/pre/',
+            self.bear,
+            self.get_kws,
+            **self.kwargs,
+        )
+        _ = download('/fix/')
+        self.client.get_object.assert_called_once_with(
+            Key='pre/fix',
             Bucket=self.bucket,
             **self.get_kws
         )
@@ -173,6 +294,12 @@ class TestUsage(unittest.TestCase):
         _ = download()
         read.assert_called_once()
         self.assertDictEqual({}, read.call_args[1])
+
+    @patch('polars.read_parquet')
+    @patch('swak.cloud.aws.s32df.BytesIO')
+    def test_client_closed(self, _, __):
+        _ = self.download()
+        self.client.close.assert_called_once_with()
 
     @patch('polars.read_parquet')
     @patch('swak.cloud.aws.s32df.BytesIO')

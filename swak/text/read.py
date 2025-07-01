@@ -11,6 +11,7 @@ from ..misc import ArgRepr, NotFound, LiteralNotFound
 from .misc import Toml, Yaml
 
 
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 class TomlReader(ArgRepr):
     """Light wrapper around the python standard library's ``tomllib.load``.
 

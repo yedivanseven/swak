@@ -4,6 +4,7 @@ from pandas import DataFrame
 from ..misc import ArgRepr
 
 
+# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 class ParquetWriter(ArgRepr):
     """Partial of the pandas dataframe ``to_parquet`` method.
 

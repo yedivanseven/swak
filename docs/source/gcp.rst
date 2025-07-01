@@ -3,6 +3,11 @@ gcp
 
 .. automodule:: swak.cloud.gcp
 
+.. autoclass:: swak.cloud.gcp.Gcs
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
 
 .. autoclass:: swak.cloud.gcp.GbqDataset
    :members:
@@ -83,22 +88,6 @@ Enums
 
    .. autoattribute:: LOGICAL
       :annotation: = LOGICAL
-
-
-.. autoclass:: swak.cloud.gcp.Storage
-   :show-inheritance:
-
-   .. autoattribute:: STANDARD
-      :annotation: = STANDARD
-
-   .. autoattribute:: NEARLINE
-      :annotation: = NEARLINE
-
-   .. autoattribute:: COLDLINE
-      :annotation: = COLDLINE
-
-   .. autoattribute:: ARCHIVE
-      :annotation: = ARCHIVE
 
 
 .. autoclass:: swak.cloud.gcp.IfExists
