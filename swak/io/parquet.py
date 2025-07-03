@@ -11,13 +11,9 @@ class DataFrame2Parquet(Writer):
     ----------
     path: str
         The absolute path to the parquet file to save the dataframe as.
-        Cannot be directly under root (e.g., "/file.parquet") because,
-        on local file system, this is not where you want to save to and,
-        on object storage, the first directory refers to the name of an
-        (existing!) bucket. May include two or more forward slashes
-        (subdirectories will be created) and string placeholders (i.e.,
-        pairs of curly brackets) that will be interpolated when instances
-        are called.
+        May include two or more forward slashes (subdirectories will be
+        created) and string placeholders (i.e., pairs of curly brackets)
+        that will be interpolated when instances are called.
     storage: str
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the `Storage` enum to avoid typos.
@@ -38,10 +34,8 @@ class DataFrame2Parquet(Writer):
     Raises
     ------
     TypeError
-        If `path` is not a string,`chunk_size`is not an integer or either
+        If `path` is not a string,`chunk_size` is not an integer or either
         `storage_kws` or `parquet_kws` are not dictionaries.
-    PermissionError
-        If `path` points to a file/object/blob directly under root ("/").
     ValueError
         If `storage` is not among the currently supported file-system
         schemes, `mode` not among the supported file-mode options, the
@@ -72,24 +66,19 @@ class DataFrame2Parquet(Writer):
             storage_kws: dict[str, Any] | None = None,
             parquet_kws: dict[str, Any] | None = None
     ) -> None:
-        self.path = self.__stripped(path)
-        self.storage = str(Storage(storage))
-        self.overwrite = bool(overwrite)
-        self.skip = bool(skip)
-        self.chunk_size = self.__valid(chunk_size)
-        self.storage_kws = {} if storage_kws is None else dict(storage_kws)
         self.parquet_kws = {} if parquet_kws is None else dict(parquet_kws)
         super().__init__(
-            self.path,
-            self.storage,
-            self.overwrite,
-            self.skip,
+            path,
+            storage,
+            overwrite,
+            skip,
             Mode.WB,
-            self.chunk_size,
-            self.storage_kws
+            chunk_size,
+            storage_kws,
+            self.parquet_kws
         )
 
-    def __call__(self, df: Pandas | Polars, *parts: str) -> tuple[()]:
+    def __call__(self, df: Pandas | Polars, *parts: Any) -> tuple[()]:
         """Write a pandas or polars dataframe to a supported file system.
 
         Parameters
@@ -108,10 +97,13 @@ class DataFrame2Parquet(Writer):
 
         Raises
         ------
+        IndexError
+            If the `path` given at instantiation has more string placeholders
+            that there are `parts`.
         FileExistsError
             If the destination file already exists, `skip` is ``False`` and
             `overwrite` is also ``False``.
-        PermissionError
+        ValueError
             If the final path is directly under root (e.g., "/file.parquet")
             because, on local file system, this is not where you want to save
             to and, on object storage, the first directory refers to the name
@@ -119,7 +111,7 @@ class DataFrame2Parquet(Writer):
 
         """
         writer = 'to_parquet' if hasattr(df, 'to_parquet') else 'write_parquet'
-        if uri := self._uri_from(parts):
+        if uri := self._uri_from(*parts):
             with self._managed(uri) as file:
                 getattr(df, writer)(file, **self.parquet_kws)
         return ()

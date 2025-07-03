@@ -7,7 +7,6 @@ pipe of callable objects.
 """
 
 from .read import ParquetReader
-from .write import ParquetWriter
 from .groupby import GroupByApply, RollingGroupByApply
 from .frame import (
     AsType,
@@ -30,7 +29,6 @@ from .frame import (
 
 __all__ = [
     'ParquetReader',
-    'ParquetWriter',
     'AsType',
     'ColumnSelector',
     'ColumnsSelector',

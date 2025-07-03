@@ -28,7 +28,7 @@ class Mode(StrEnum):
 
 
 class Writer(ArgRepr):
-    """Save a pandas or polars dataframe to any supported file system.
+    """Base class for writing objects to files or blobs on any filesystem.
 
     Parameters
     ----------
@@ -48,19 +48,23 @@ class Writer(ArgRepr):
     mode: str, optional
         The mode to open the target file/object/blob in.
         Defaults to "wb". Use the `Mode` enum to avoid typos.
-    chunk_size: int, optional
+    chunk_size: float, optional
         Chunk size to use when writing to the selected file system in MiB.
         Defaults to 32 (MiB).
     storage_kws: dict, optional
         Passed on as keywords to the constructor of the file system.
+    *args
+        Additional arguments are reflected in the representation of instances
+        but do not affect functionality in any way.
+    **kwargs
+        Additional keyword arguments are reflected in the representation of
+        instances but do not affect functionality in any way.
 
     Raises
     ------
     TypeError
-        If `path` is not a string,`chunk_size`is not an integer, or if
+        If `path` is not a string,`chunk_size`is not a float, or if
         `storage_kws` is not a dictionary.
-    PermissionError
-        If `path` points to a file/object/blob directly under root ("/").
     ValueError
         If `storage` is not among the currently supported file-system
         schemes, `mode` not among the supported file-mode options, the
@@ -83,6 +87,8 @@ class Writer(ArgRepr):
             mode: LiteralMode | Mode = Mode.WB,
             chunk_size: int = 32,
             storage_kws: dict[str, Any] | None = None,
+            *args: Any,
+            **kwargs: Any
     ) -> None:
         self.path = self.__stripped(path)
         self.storage = str(Storage(storage))
@@ -98,7 +104,9 @@ class Writer(ArgRepr):
             self.skip,
             self.mode,
             self.chunk_size,
-            self.storage_kws
+            self.storage_kws,
+            *args,
+            **kwargs
         )
 
     @property
@@ -125,20 +133,20 @@ class Writer(ArgRepr):
         return stripped
 
     @staticmethod
-    def __valid(chunk_size: Any) -> int:
+    def __valid(chunk_size: Any) -> float:
         """Try to convert chunk_size to a meaningful integer."""
         try:
-            as_int = int(chunk_size)
+            as_float = float(chunk_size)
         except (TypeError, ValueError) as error:
             cls = type(chunk_size).__name__
-            tmp = '"{}" must at least be convertible to integer, unlike {}!'
+            tmp = '"{}" must at least be convertible to a float, unlike {}!'
             msg = tmp.format('chunk_size', cls)
             raise TypeError(msg) from error
-        if as_int < 1:
+        if as_float < 1.0:
             tmp = '"{}" must be greater than (or equal to) one, unlike {}!'
-            msg = tmp.format('chunk_size', as_int)
+            msg = tmp.format('chunk_size', as_float)
             raise ValueError(msg)
-        return as_int
+        return as_float
 
     @contextmanager
     def _managed(self, uri: str) -> Generator[AbstractFileSystem]:
@@ -157,15 +165,15 @@ class Writer(ArgRepr):
         """Create a random name for a temporary target file."""
         return f'{uri}.tmp.{uuid.uuid4().hex}'
 
-    def __non_root_from(self, *parts: str) -> PurePosixPath:
+    def __non_root_from(self, *parts: Any) -> PurePosixPath:
         """Interpolate parts into the path and validate the result."""
         path = self.__stripped(self.path.format(*parts))
         if path.count('/') < 2:
             msg = 'Path "{}" cannot point to the root directory ("/")!'
-            raise PermissionError(msg.format(path))
+            raise ValueError(msg.format(path))
         return PurePosixPath(path)
 
-    def _uri_from(self, *parts: str) -> str:
+    def _uri_from(self, *parts: Any) -> str:
         """Check skip/overwrite and create parent directories."""
         uri = self.__non_root_from(*parts)
         if self.fs.exists(uri):
