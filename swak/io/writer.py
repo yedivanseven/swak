@@ -1,16 +1,14 @@
 import uuid
 import fsspec
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any
 from functools import cached_property
 from contextlib import contextmanager
 from fsspec.spec import AbstractFileSystem
 from pathlib import PurePosixPath
 from ..misc import ArgRepr
-
-type LiteralMode = Literal['wb', 'wt']
-type LiteralStorage = Literal['file', 's3', 'gcs', 'memory']
+from .types import LiteralStorage, LiteralMode
 
 
 class Storage(StrEnum):
@@ -63,7 +61,7 @@ class Writer(ArgRepr):
     Raises
     ------
     TypeError
-        If `path` is not a string,`chunk_size`is not a float, or if
+        If `path` is not a string, `chunk_size`is not a float, or if
         `storage_kws` is not a dictionary.
     ValueError
         If `storage` is not among the currently supported file-system
@@ -86,7 +84,7 @@ class Writer(ArgRepr):
             skip: bool = False,
             mode: LiteralMode | Mode = Mode.WB,
             chunk_size: int = 32,
-            storage_kws: dict[str, Any] | None = None,
+            storage_kws: Mapping[str, Any] | None = None,
             *args: Any,
             **kwargs: Any
     ) -> None:

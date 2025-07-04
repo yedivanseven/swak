@@ -10,7 +10,7 @@ from .resource import TextResourceLoader
 from .interpolate import TemplateRenderer, FormFiller
 from .read import TomlReader, YamlReader, JsonReader
 from .parse import YamlParser
-from .write import TomlWriter, YamlWriter, JsonWriter
+from .write import YamlWriter, JsonWriter
 
 __all__ = [
     'TextResourceLoader',
@@ -20,7 +20,6 @@ __all__ = [
     'YamlReader',
     'JsonReader',
     'YamlParser',
-    'TomlWriter',
     'YamlWriter',
     'JsonWriter'
 ]

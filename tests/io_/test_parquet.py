@@ -71,6 +71,7 @@ class TestUsage(unittest.TestCase):
 
     def setUp(self):
         self.path = '/path/to/file.parquet'
+        self.storage = Storage.MEMORY
         self.df = Mock()
 
     def test_callable(self):
@@ -82,7 +83,7 @@ class TestUsage(unittest.TestCase):
         uri_from.return_value = self.path
         write = DataFrame2Parquet(
             self.path,
-            storage=Storage.MEMORY,
+            storage=self.storage,
             overwrite=True
         )
         _ = write(self.df, 'foo', 42)
@@ -96,7 +97,7 @@ class TestUsage(unittest.TestCase):
         managed.return_value = mock_file.return_value
         write = DataFrame2Parquet(
             self.path,
-            storage=Storage.MEMORY,
+            storage=self.storage,
             overwrite=True
         )
         value = write(self.df, 'foo', 42)
@@ -109,7 +110,7 @@ class TestUsage(unittest.TestCase):
         uri_from.return_value = ''
         write = DataFrame2Parquet(
             self.path,
-            storage=Storage.MEMORY,
+            storage=self.storage,
             overwrite=True
         )
         value = write(self.df, 'foo', 42)
@@ -122,7 +123,7 @@ class TestUsage(unittest.TestCase):
         managed.return_value = mock_file.return_value
         write = DataFrame2Parquet(
             self.path,
-            storage=Storage.MEMORY,
+            storage=self.storage,
             overwrite=True
         )
         _ = write(self.df)
@@ -134,7 +135,7 @@ class TestUsage(unittest.TestCase):
         managed.return_value = mock_file.return_value
         write = DataFrame2Parquet(
             self.path,
-            storage=Storage.MEMORY,
+            storage=self.storage,
             overwrite=True,
             parquet_kws={'answer': 42}
         )
@@ -151,7 +152,7 @@ class TestUsage(unittest.TestCase):
         df = Mock(spec=['write_parquet'])
         write = DataFrame2Parquet(
             self.path,
-            storage=Storage.MEMORY,
+            storage=self.storage,
             overwrite=True
         )
         _ = write(df)

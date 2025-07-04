@@ -9,10 +9,12 @@ staging, and production environments.
 
 from .writer import Writer, Storage, Mode
 from .parquet import DataFrame2Parquet
+from .toml import TomlWriter
 
 __all__ = [
     'Writer',
     'Storage',
     'Mode',
-    'DataFrame2Parquet'
+    'DataFrame2Parquet',
+    'TomlWriter'
 ]

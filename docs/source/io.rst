@@ -4,15 +4,25 @@ io
 .. automodule:: swak.io
 
 
-.. autoclass:: swak.io.Writer
-   :members:
-   :private-members:
-   :show-inheritance:
-
-
 .. autoclass:: swak.io.DataFrame2Parquet
    :members:
    :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.io.TomlWriter
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+
+Base classes
+------------
+
+.. autoclass:: swak.io.Writer
+   :members:
+   :private-members: _uri_from, _managed, _tmp
    :show-inheritance:
 
 

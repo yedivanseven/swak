@@ -1,7 +1,8 @@
 from typing import Any
 from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
-from .writer import Writer, LiteralStorage, Storage, Mode
+from .writer import Writer, Storage, Mode
+from .types import LiteralStorage
 
 
 class DataFrame2Parquet(Writer):
@@ -10,7 +11,7 @@ class DataFrame2Parquet(Writer):
     Parameters
     ----------
     path: str
-        The absolute path to the parquet file to save the dataframe as.
+        The absolute path to the parquet file to save the dataframe into.
         May include two or more forward slashes (subdirectories will be
         created) and string placeholders (i.e., pairs of curly brackets)
         that will be interpolated when instances are called.
@@ -29,12 +30,16 @@ class DataFrame2Parquet(Writer):
     storage_kws: dict, optional
         Passed on as keywords to the constructor of the file system.
     parquet_kws: dict, optional
-        Passed on as keywords to the dataframe's write method.
+        Passed on as keyword arguments to the dataframe's write method. See
+        the documentation for `to_parquet <https://pandas.pydata.org/
+        pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html>`_
+        and `write_parquet <https://docs.pola.rs/api/python/stable/reference/
+        api/polars.DataFrame.write_parquet.html>`_ methods.
 
     Raises
     ------
     TypeError
-        If `path` is not a string,`chunk_size` is not an integer or either
+        If `path` is not a string, `chunk_size` is not an integer or either
         `storage_kws` or `parquet_kws` are not dictionaries.
     ValueError
         If `storage` is not among the currently supported file-system
@@ -45,7 +50,6 @@ class DataFrame2Parquet(Writer):
     See Also
     --------
     Storage
-    Mode
 
     Note
     ----
