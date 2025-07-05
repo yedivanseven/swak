@@ -10,8 +10,6 @@ from pathlib import PurePosixPath
 from ..misc import ArgRepr
 from .types import LiteralStorage, LiteralMode, LiteralCompression
 
-type OpenFile = Generator[AbstractFileSystem]
-
 
 class Storage(StrEnum):
     """Supported file systems for read/write operations."""

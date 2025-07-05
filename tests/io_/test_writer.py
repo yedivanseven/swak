@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import Mock, patch, mock_open
 from fsspec.implementations.memory import MemoryFileSystem
 from fsspec.implementations.local import LocalFileSystem
-from swak.io import Writer, Storage, Mode
+from swak.io import Writer, Storage, Mode, Compression
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -236,7 +236,7 @@ class TestMethods(unittest.TestCase):
         self.assertEqual('Hello World', text)
 
     @patch('swak.io.writer.uuid.uuid4')
-    def test_managed_open_called(self, uuid):
+    def test_managed_open_called_default(self, uuid):
         uuid.return_value = Mock(hex='hex')
         write = Writer(
             self.path,
@@ -271,6 +271,37 @@ class TestMethods(unittest.TestCase):
         )
         mock_fs.rm.assert_not_called()
 
+    @patch('swak.io.writer.uuid.uuid4')
+    def test_managed_open_called_compression(self, uuid):
+        uuid.return_value = Mock(hex='hex')
+        write = Writer(self.path, self.storage, overwrite=True)
+
+        mock_fs = Mock()
+        mock_file = mock_open()
+        mock_fs.open.return_value = mock_file.return_value
+
+        with patch.object(
+            write,
+            'fs',
+            mock_fs
+        ), write._managed(
+            '/test/file.txt',
+            Compression.BZ2
+        ):
+            pass
+
+        mock_fs.open.assert_called_once_with(
+            '/test/file.txt.tmp.hex',
+            'wb',
+            write.chunk_bytes,
+            compression='bz2'
+        )
+
+    def test_managed_open_raises_invalid_compression(self):
+        write = Writer(self.path, self.storage, overwrite=True)
+
+        with self.assertRaises(ValueError), write._managed('/a/b', 'invalid'):
+                pass
 
     @patch('swak.io.writer.uuid.uuid4')
     def test_managed_cleans_up_on_yield_error(self, uuid):
