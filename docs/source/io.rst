@@ -16,6 +16,12 @@ io
    :show-inheritance:
 
 
+.. autoclass:: swak.io.YamlWriter
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 
 Base classes
 ------------

@@ -32,20 +32,20 @@ class TomlWriter(Writer):
         Whether to silently drop non-string keys and ``None`` values from the
         dictionary-like object to save as TOML. Defaults to ``False```.
     toml_kws: dict, optional
-        Passed on as keyword arguments to the ``tomli-w.dump()`` method. See
-        the `tomli-w GitHub page <https://github.com/hukkin/tomli-w>`_ for
-        options.
+        Passed on as keyword arguments to the :func:`tomli-w.dump` function.
+        See the `tomli-w GitHub page <https://github.com/hukkin/tomli-w>`_
+        for  options.
 
     Raises
     ------
     TypeError
         If `path` is not a string, `chunk_size` is not an integer or either
-        `storage_kws` or `parquet_kws` are not dictionaries.
+        `storage_kws` or `toml_kws` are not dictionaries.
     ValueError
         If `storage` is not among the currently supported file-system
         schemes, `mode` not among the supported file-mode options, the
         `chunk_size` is smaller than 1 (MiB), or if either `storage_kws`
-        or `parquet_kws` are not dictionaries.
+        or `toml_kws` are not dictionaries.
 
     See Also
     --------
@@ -142,7 +142,7 @@ class TomlWriter(Writer):
             If the destination file already exists, `skip` is ``False`` and
             `overwrite` is also ``False``.
         ValueError
-            If the final path is directly under root (e.g., "/file.parquet")
+            If the final path is directly under root (e.g., "/file.toml")
             because, on local file system, this is not where you want to save
             to and, on object storage, the first directory refers to the name
             of an (existing!) bucket.

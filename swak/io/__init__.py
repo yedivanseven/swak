@@ -10,11 +10,13 @@ staging, and production environments.
 from .writer import Writer, Storage, Mode
 from .parquet import DataFrame2Parquet
 from .toml import TomlWriter
+from .yaml import YamlWriter
 
 __all__ = [
     'Writer',
     'Storage',
     'Mode',
     'DataFrame2Parquet',
-    'TomlWriter'
+    'TomlWriter',
+    'YamlWriter'
 ]
