@@ -22,6 +22,12 @@ io
    :show-inheritance:
 
 
+.. autoclass:: swak.io.JsonWriter
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 
 Base classes
 ------------
@@ -60,3 +66,22 @@ Enums
 
    .. autoattribute:: WT
       :annotation: = wt
+
+
+.. autoclass:: swak.io.Compression
+   :show-inheritance:
+
+   .. autoattribute:: ZIP
+      :annotation: = zip
+
+   .. autoattribute:: BZ2
+      :annotation: = bz2
+
+   .. autoattribute:: GZIP
+      :annotation: = gzip
+
+   .. autoattribute:: LZMA
+      :annotation: = lzma
+
+   .. autoattribute:: XZ
+      :annotation: = xz

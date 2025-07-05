@@ -7,16 +7,19 @@ staging, and production environments.
 
 """
 
-from .writer import Writer, Storage, Mode
+from .writer import Writer, Storage, Mode, Compression
 from .parquet import DataFrame2Parquet
 from .toml import TomlWriter
 from .yaml import YamlWriter
+from .json import JsonWriter
 
 __all__ = [
     'Writer',
     'Storage',
     'Mode',
+    'Compression',
     'DataFrame2Parquet',
     'TomlWriter',
-    'YamlWriter'
+    'YamlWriter',
+    'JsonWriter'
 ]

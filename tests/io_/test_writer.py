@@ -263,6 +263,7 @@ class TestMethods(unittest.TestCase):
             '/test/file.txt.tmp.hex',
             'wt',
             write.chunk_bytes,
+            compression=None
         )
         mock_fs.move.assert_called_once_with(
             '/test/file.txt.tmp.hex',

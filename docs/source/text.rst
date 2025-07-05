@@ -27,12 +27,6 @@ text
    :special-members: __call__
    :show-inheritance:
 
-.. autoclass:: swak.text.write.JsonWriter
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-
 .. autoclass:: swak.text.read.TomlReader
    :members:
    :special-members: __call__
@@ -46,12 +40,6 @@ text
 
 
 .. autoclass:: swak.text.parse.YamlParser
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-
-.. autoclass:: swak.text.write.YamlWriter
    :members:
    :special-members: __call__
    :show-inheritance:

@@ -149,7 +149,6 @@ class TestUsage(unittest.TestCase):
         )
 
 
-
 class TestMisc(unittest.TestCase):
 
     def setUp(self):

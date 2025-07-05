@@ -8,7 +8,9 @@ from contextlib import contextmanager
 from fsspec.spec import AbstractFileSystem
 from pathlib import PurePosixPath
 from ..misc import ArgRepr
-from .types import LiteralStorage, LiteralMode
+from .types import LiteralStorage, LiteralMode, LiteralCompression
+
+type OpenFile = Generator[AbstractFileSystem]
 
 
 class Storage(StrEnum):
@@ -23,6 +25,15 @@ class Mode(StrEnum):
     """Modes for opening files."""
     WB = 'wb'
     WT = 'wt'
+
+
+class Compression(StrEnum):
+    """Compression algorithms for file storage."""
+    ZIP = 'zip'
+    BZ2 = 'bz2'
+    GZIP = 'gzip'
+    LZMA = 'lzma'
+    XZ = 'xz'
 
 
 class Writer(ArgRepr):
@@ -147,11 +158,22 @@ class Writer(ArgRepr):
         return as_float
 
     @contextmanager
-    def _managed(self, uri: str) -> Generator[AbstractFileSystem]:
+    def _managed(
+            self,
+            uri: str,
+            compression: LiteralCompression | Compression | None = None
+    ) -> Generator[AbstractFileSystem]:
         """Context manager for atomic writes with automatic cleanup."""
+        if compression is not None:
+            compression = str(Compression(compression))
         tmp = self._tmp(uri)
         try:
-            with self.fs.open(tmp, self.mode, self.chunk_bytes) as file:
+            with self.fs.open(
+                    tmp,
+                    self.mode,
+                    self.chunk_bytes,
+                    compression=compression
+            ) as file:
                 yield file
             self.fs.move(tmp, uri)
         except Exception:
