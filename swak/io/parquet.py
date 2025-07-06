@@ -1,4 +1,5 @@
 from typing import Any
+from collections.abc import Mapping
 from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
 from .writer import Writer
@@ -67,8 +68,8 @@ class DataFrame2Parquet(Writer):
             overwrite: bool = False,
             skip: bool = False,
             chunk_size: int = 32,
-            storage_kws: dict[str, Any] | None = None,
-            parquet_kws: dict[str, Any] | None = None
+            storage_kws: Mapping[str, Any] | None = None,
+            parquet_kws: Mapping[str, Any] | None = None
     ) -> None:
         self.parquet_kws = {} if parquet_kws is None else dict(parquet_kws)
         super().__init__(

@@ -23,8 +23,8 @@ class TestInstantiation(unittest.TestCase):
             Mode.WT,
             32,
             None,
-            None,
-            {}
+            {},
+            None
         )
 
     @patch.object(Writer, '__init__')
@@ -36,8 +36,8 @@ class TestInstantiation(unittest.TestCase):
             True,
             16,
             {'foo': 'bar'},
-            False,
             {'answer': 42},
+            False
         )
         init.assert_called_once_with(
             '/sone/other/file.csv',
@@ -47,8 +47,8 @@ class TestInstantiation(unittest.TestCase):
             Mode.WT,
             16,
             {'foo': 'bar'},
-            False,
-            {'answer': 42}
+            {'answer': 42},
+            False
         )
 
 
@@ -220,13 +220,13 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         write = JsonWriter(self.path)
         expected = ("JsonWriter('/path/file.json', 'file', "
-                    "False, False, 'wt', 32.0, {}, None, {})")
+                    "False, False, 'wt', 32.0, {}, {}, None)")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = JsonWriter(self.path, gzip=False, json_kws={'answer': 42})
         expected = ("JsonWriter('/path/file.json', 'file', False, "
-                    "False, 'wt', 32.0, {}, False, {'answer': 42})")
+                    "False, 'wt', 32.0, {}, {'answer': 42}, False)")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

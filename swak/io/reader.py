@@ -1,4 +1,3 @@
-import uuid
 import fsspec
 from collections.abc import Generator, Mapping
 from typing import Any
@@ -18,31 +17,24 @@ from .types import (
 
 
 class Reader(ArgRepr):
-    """Base class for writing objects to files or blobs on any filesystem.
+    """Base class for reading objects from files or blobs on any filesystem.
 
     Parameters
     ----------
     path: str
-        The absolute path to the file to save. May contain any number of string
-        placeholders (i.e.,  pairs of curly brackets) that will be interpolated
-        when instances are called.
+        Directory under which the file is located or full path to the file. If
+        not fully specified here, it can be completed when calling instances.
     storage: str
-        The type of file system to write to ("file", "s3", etc.).
+        The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the `Storage` enum to avoid typos.
-    overwrite: bool, optional
-        Whether to silently overwrite the destination file. Defaults to
-        ``False``, which will raise an exception if it already exists.
-    skip: bool, optional
-        Whether to silently do nothing if the target file already exists.
-        Defaults to ``False``.
     mode: str, optional
-        The mode to open the target file/object/blob in.
-        Defaults to "wb". Use the `Mode` enum to avoid typos.
+        The mode to open the source file/object/blob in.
+        Defaults to "rb". Use the `Mode` enum to avoid typos.
     chunk_size: float, optional
-        Chunk size to use when writing to the selected file system in MiB.
+        Chunk size to use when reading from the selected file system in MiB.
         Defaults to 32 (MiB).
     storage_kws: dict, optional
-        Passed on as keywords to the constructor of the file system.
+        Passed on as keyword arguments to the constructor of the file system.
     *args
         Additional arguments are reflected in the representation of instances
         but do not affect functionality in any way.
@@ -53,7 +45,7 @@ class Reader(ArgRepr):
     Raises
     ------
     TypeError
-        If `path` is not a string, `chunk_size`is not a float, or if
+        If `path` is not a string, `chunk_size` is not a float, or if
         `storage_kws` is not a dictionary.
     ValueError
         If `storage` is not among the currently supported file-system
@@ -72,9 +64,7 @@ class Reader(ArgRepr):
             self,
             path: str,
             storage: LiteralStorage | Storage = Storage.FILE,
-            overwrite: bool = False,
-            skip: bool = False,
-            mode: LiteralMode | Mode = Mode.WB,
+            mode: LiteralMode | Mode = Mode.RB,
             chunk_size: int = 32,
             storage_kws: Mapping[str, Any] | None = None,
             *args: Any,
@@ -82,16 +72,12 @@ class Reader(ArgRepr):
     ) -> None:
         self.path = self.__stripped(path)
         self.storage = str(Storage(storage))
-        self.overwrite = bool(overwrite)
-        self.skip = bool(skip)
         self.mode = str(Mode(mode))
         self.chunk_size = self.__valid(chunk_size)
         self.storage_kws = {} if storage_kws is None else dict(storage_kws)
         super().__init__(
             self.path,
             self.storage,
-            self.overwrite,
-            self.skip,
             self.mode,
             self.chunk_size,
             self.storage_kws,
@@ -101,7 +87,7 @@ class Reader(ArgRepr):
 
     @property
     def chunk_bytes(self) -> int:
-        """Bytes to flush to the file system in one go."""
+        """Bytes to read from the file system in one go."""
         in_bytes = self.chunk_size * 1024 * 1024
         in_multiples_of_256kb = int(in_bytes // (256 * 1024))
         return in_multiples_of_256kb * 256 * 1024
@@ -144,44 +130,21 @@ class Reader(ArgRepr):
             uri: str,
             compression: LiteralCompression | Compression | None = None
     ) -> Generator[AbstractFileSystem]:
-        """Context manager for atomic writes with automatic cleanup."""
+        """Context manager for atomic reads from the given file system."""
         if compression is not None:
             compression = str(Compression(compression))
-        tmp = self._tmp(uri)
-        try:
-            with self.fs.open(
-                    tmp,
-                    self.mode,
-                    self.chunk_bytes,
-                    compression=compression
-            ) as file:
-                yield file
-            self.fs.move(tmp, uri)
-        except Exception:
-            self.fs.rm(tmp)
-            raise
+        with self.fs.open(
+                uri,
+                self.mode,
+                self.chunk_bytes,
+                compression=compression
+        ) as file:
+            yield file
 
-    @staticmethod
-    def _tmp(uri: str) -> str:
-        """Create a random name for a temporary target file."""
-        return f'{uri}.tmp.{uuid.uuid4().hex}'
-
-    def __non_root_from(self, *parts: Any) -> PurePosixPath:
-        """Interpolate parts into the path and validate the result."""
-        path = self.__stripped(self.path.format(*parts))
-        if path.count('/') < 2:
+    def _non_root(self, path: str) -> str:
+        """Append/replace the path given at instantiation on instance call."""
+        uri = str(PurePosixPath(self.path) / str(path).strip().rstrip('/'))
+        if uri.count('/') < 2:
             msg = 'Path "{}" cannot point to the root directory ("/")!'
-            raise ValueError(msg.format(path))
-        return PurePosixPath(path)
-
-    def _uri_from(self, *parts: Any) -> str:
-        """Check skip/overwrite and create parent directories."""
-        uri = self.__non_root_from(*parts)
-        if self.fs.exists(uri):
-            if self.skip:
-                return ''
-            if not self.overwrite:
-                msg = f'File "{uri}" already exists!'
-                raise FileExistsError(msg)
-        self.fs.makedirs(self.fs._parent(uri), exist_ok=True)
-        return str(uri)
+            raise ValueError(msg.format(uri))
+        return uri

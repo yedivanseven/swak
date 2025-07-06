@@ -42,7 +42,7 @@ class Writer(ArgRepr):
         Chunk size to use when writing to the selected file system in MiB.
         Defaults to 32 (MiB).
     storage_kws: dict, optional
-        Passed on as keywords to the constructor of the file system.
+        Passed on as keyword arguments to the constructor of the file system.
     *args
         Additional arguments are reflected in the representation of instances
         but do not affect functionality in any way.
@@ -53,7 +53,7 @@ class Writer(ArgRepr):
     Raises
     ------
     TypeError
-        If `path` is not a string, `chunk_size`is not a float, or if
+        If `path` is not a string, `chunk_size` is not a float, or if
         `storage_kws` is not a dictionary.
     ValueError
         If `storage` is not among the currently supported file-system

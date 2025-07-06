@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from collections.abc import Mapping
 from pathlib import PurePosixPath
 from .writer import Writer
 from .types import LiteralStorage, Yaml, Storage, Mode, Compression
@@ -29,15 +30,15 @@ class JsonWriter(Writer):
         Defaults to 32 (MiB).
     storage_kws: dict, optional
         Passed on as keywords to the constructor of the file system.
+    json_kws: dict, optional
+        Passed on as keyword arguments to the :func:`dump` function of
+        python's own :mod:`json` module. See the `json documentation
+        <https://docs.python.org/3/library/json.html>`_ for options.
     gzip: bool, optional
         Write the JSON to a gzip-compressed JSON file if ``True`` and a plain
         text file if ``False``. If left at ``None``, which is the default,
         file names ending in ".gz" will trigger compression whereas all other
         extensions (if any) will not.
-    json_kws: dict, optional
-        Passed on as keyword arguments to the :func:`dump` function of
-        python's own :mod:`json` module. See the `json documentation
-        <https://docs.python.org/3/library/json.html>`_ for options.
 
     Raises
     ------
@@ -63,12 +64,12 @@ class JsonWriter(Writer):
             overwrite: bool = False,
             skip: bool = False,
             chunk_size: int = 32,
-            storage_kws: dict[str, Any] | None = None,
-            gzip: bool | None = None,
-            json_kws: dict[str, Any] | None = None
+            storage_kws: Mapping[str, Any] | None = None,
+            json_kws: Mapping[str, Any] | None = None,
+            gzip: bool | None = None
     ) -> None:
-        self.gzip = None if gzip is None else bool(gzip)
         self.json_kws = {} if json_kws is None else dict(json_kws)
+        self.gzip = None if gzip is None else bool(gzip)
         super().__init__(
             path,
             storage,
@@ -77,8 +78,8 @@ class JsonWriter(Writer):
             Mode.WT,
             chunk_size,
             storage_kws,
-            self.gzip,
-            self.json_kws
+            self.json_kws,
+            self.gzip
         )
 
     def __call__(self, obj: Yaml, *parts: Any) -> tuple[()]:

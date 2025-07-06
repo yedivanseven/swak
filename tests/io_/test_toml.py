@@ -23,8 +23,32 @@ class TestInstantiation(unittest.TestCase):
             Mode.WB,
             32,
             None,
-            False,
-            {}
+            {},
+            False
+        )
+
+    @patch.object(Writer, '__init__')
+    def test_writer_init_called_custom(self, init):
+        _ = TomlWriter(
+            self.path,
+            Storage.MEMORY,
+            True,
+            True,
+            16,
+            {'storage': 'kws'},
+            {'toml': 'kws'},
+            True
+        )
+        init.assert_called_once_with(
+            self.path,
+            Storage.MEMORY,
+            True,
+            True,
+            Mode.WB,
+            16,
+            {'storage': 'kws'},
+            {'toml': 'kws'},
+            True,
         )
 
 
@@ -268,13 +292,13 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         write = TomlWriter(self.path)
         expected = ("TomlWriter('/path/file.toml', 'file', "
-                    "False, False, 'wb', 32.0, {}, False, {})")
+                    "False, False, 'wb', 32.0, {}, {}, False)")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = TomlWriter(self.path, prune=True, toml_kws={'answer': 42})
         expected = ("TomlWriter('/path/file.toml', 'file', False, "
-                    "False, 'wb', 32.0, {}, True, {'answer': 42})")
+                    "False, 'wb', 32.0, {}, {'answer': 42}, True)")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

@@ -5,6 +5,7 @@ type LiteralNotFound = Literal['ignore', 'warn', 'raise']
 type LiteralBears = Literal['pandas', 'polars']
 
 
+# ToDo: Move these to the io module!
 class NotFound(StrEnum):
     """Enum to direct read/load behaviour in case of missing files."""
     IGNORE = 'ignore'

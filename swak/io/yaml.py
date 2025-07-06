@@ -1,4 +1,5 @@
 from typing import Any
+from collections.abc import Mapping
 import yaml
 from .writer import Writer
 from .types import LiteralStorage, Yaml, Storage, Mode
@@ -57,8 +58,8 @@ class YamlWriter(Writer):
             overwrite: bool = False,
             skip: bool = False,
             chunk_size: int = 32,
-            storage_kws: dict[str, Any] | None = None,
-            yaml_kws: dict[str, Any] | None = None
+            storage_kws: Mapping[str, Any] | None = None,
+            yaml_kws: Mapping[str, Any] | None = None
     ) -> None:
         self.yaml_kws = {} if yaml_kws is None else dict(yaml_kws)
         super().__init__(

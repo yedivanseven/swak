@@ -1,7 +1,18 @@
 from typing import Any
+from collections.abc import Mapping
+import tomllib
 import tomli_w
-from .types import Toml, LiteralStorage, Storage, Mode
+import warnings
 from .writer import Writer
+from .reader import Reader
+from .types import (
+    Toml,
+    LiteralStorage,
+    Storage,
+    Mode,
+    NotFound,
+    LiteralNotFound
+)
 
 
 class TomlWriter(Writer):
@@ -60,12 +71,12 @@ class TomlWriter(Writer):
             overwrite: bool = False,
             skip: bool = False,
             chunk_size: int = 32,
-            storage_kws: dict[str, Any] | None = None,
+            storage_kws: Mapping[str, Any] | None = None,
+            toml_kws: Mapping[str, Any] | None = None,
             prune: bool = False,
-            toml_kws: dict[str, Any] | None = None,
     ) -> None:
-        self.prune = bool(prune)
         self.toml_kws = {} if toml_kws is None else dict(toml_kws)
+        self.prune = bool(prune)
         super().__init__(
             path,
             storage,
@@ -74,14 +85,13 @@ class TomlWriter(Writer):
             Mode.WB,
             chunk_size,
             storage_kws,
-            prune,
             self.toml_kws,
+            self.prune
         )
 
     @staticmethod
     def __stop_recursion_for(obj: Any) -> bool:
         """Criterion to stop the recursion into a dictionary-like object."""
-
         try:
             _ = [*obj]
         except TypeError:
@@ -156,3 +166,103 @@ class TomlWriter(Writer):
             with self._managed(uri) as file:
                 tomli_w.dump(pruned, file, **self.toml_kws)
         return ()
+
+
+class TomlReader(Reader):
+    """Read a TOML file from any supported file system.
+
+    Parameters
+    ----------
+    path: str
+        Directory under which the TOML file is located or full path to the
+        TOML file. If not fully specified here, it can be completed when
+        calling instances.
+    storage: str
+        The type of file system to read from ("file", "s3", etc.).
+        Defaults to "file". Use the `Storage` enum to avoid typos.
+    chunk_size: float, optional
+        Chunk size to use when reading from the selected file system in MiB.
+        Defaults to 32 (MiB).
+    storage_kws: dict, optional
+        Passed on as keyword arguments to the constructor of the file system.
+    toml_kws: dict, optional
+        Passed on as keyword arguments to the :func:`toml.load` function.
+    not_found: str, optional
+        What to do if the specified TOML file is not found. One of "ignore",
+        "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
+        avoid typos!
+
+    Raises
+    ------
+    TypeError
+        If `path` is not a string, `chunk_size` is not a float, or if
+        `storage_kws` is not a dictionary.
+    ValueError
+        If `storage` is not among the currently supported file-system
+        schemes, `mode` not among the supported file-mode options, the
+        `chunk_size` is smaller than 1 (MiB), or if `storage_kws` is not
+        a dictionary.
+
+    See Also
+    --------
+    Storage
+    NotFound
+
+    """
+
+    def __init__(
+            self,
+            path: str,
+            storage: LiteralStorage | Storage = Storage.FILE,
+            chunk_size: int = 32,
+            storage_kws: Mapping[str, Any] | None = None,
+            toml_kws: Mapping[str, Any] | None = None,
+            not_found: LiteralNotFound | NotFound = 'raise'
+    ) -> None:
+        self.toml_kws = {} if toml_kws is None else dict(toml_kws)
+        self.not_found = str(NotFound(not_found))
+        super().__init__(
+            path,
+            storage,
+            Mode.RB,
+            chunk_size,
+            storage_kws,
+            self.toml_kws,
+            self.not_found
+        )
+
+    def __call__(self, path: str = '') -> Toml:
+        """Read a specific TOML file.
+
+        If `not_found` is set to "warn" or "ignore" and the file cannot be
+        found, an empty dictionary is returned.
+
+        Parameters
+        ----------
+        path: str
+            Path (including file name) to the TOML file to read. If it starts
+            with a backslash, it will be interpreted as absolute, if not, as
+            relative to the `path` specified at instantiation. Defaults to an
+            empty string, which results in an unchanged `path`.
+
+        Returns
+        -------
+        dict
+            The parsed contents of the TOML file.
+
+        """
+        uri = self._non_root(path)
+        try:
+            with self._managed(uri) as file:
+                toml = tomllib.load(file, **self.toml_kws)
+        except FileNotFoundError as error:
+            match self.not_found:
+                case NotFound.WARN:
+                    msg = 'File "{}" not found!\nReturning empty TOML.'
+                    warnings.warn(msg.format(uri))
+                    toml = {}
+                case NotFound.IGNORE:
+                    toml = {}
+                case _:
+                    raise error
+        return toml
