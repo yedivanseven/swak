@@ -17,7 +17,7 @@ from .types import (
 )
 
 
-class Writer(ArgRepr):
+class Reader(ArgRepr):
     """Base class for writing objects to files or blobs on any filesystem.
 
     Parameters

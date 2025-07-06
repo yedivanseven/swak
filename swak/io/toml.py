@@ -1,7 +1,7 @@
 from typing import Any
 import tomli_w
-from .types import Toml, LiteralStorage
-from .writer import Writer, Storage, Mode
+from .types import Toml, LiteralStorage, Storage, Mode
+from .writer import Writer
 
 
 class TomlWriter(Writer):

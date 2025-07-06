@@ -1,8 +1,8 @@
 from typing import Any
 from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
-from .writer import Writer, Storage, Mode
-from .types import LiteralStorage
+from .writer import Writer
+from .types import LiteralStorage, Storage, Mode
 
 
 class DataFrame2Parquet(Writer):

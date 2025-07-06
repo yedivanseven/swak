@@ -7,7 +7,8 @@ staging, and production environments.
 
 """
 
-from .writer import Writer, Storage, Mode, Compression
+from .types import Storage, Mode, Compression
+from .writer import Writer
 from .parquet import DataFrame2Parquet
 from .toml import TomlWriter
 from .yaml import YamlWriter

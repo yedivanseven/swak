@@ -1,7 +1,7 @@
 from typing import Any
 import yaml
-from .writer import Writer, Storage, Mode
-from .types import LiteralStorage, Yaml
+from .writer import Writer
+from .types import LiteralStorage, Yaml, Storage, Mode
 
 
 class YamlWriter(Writer):
