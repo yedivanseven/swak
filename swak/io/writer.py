@@ -170,7 +170,7 @@ class Writer(ArgRepr):
         """Interpolate parts into the path and validate the result."""
         path = self.__stripped(self.path.format(*parts))
         if path.count('/') < 2:
-            msg = 'Path "{}" cannot point to the root directory ("/")!'
+            msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(path))
         return PurePosixPath(path)
 
