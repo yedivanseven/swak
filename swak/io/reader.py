@@ -141,9 +141,9 @@ class Reader(ArgRepr):
         ) as file:
             yield file
 
-    def _non_root(self, path: str) -> str:
+    def _non_root(self, path: str = '') -> str:
         """Append/replace the path given at instantiation on instance call."""
-        uri = str(PurePosixPath(self.path) / str(path).strip().rstrip('/'))
+        uri = str(PurePosixPath(self.path) / str(path).strip().rstrip(' /'))
         if uri.count('/') < 2:
             msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(uri))

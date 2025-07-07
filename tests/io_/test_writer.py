@@ -78,6 +78,14 @@ class TestAttributes(unittest.TestCase):
         self.path = '/path/to/file.txt'
         self.storage = str(Storage.MEMORY)
 
+    def test_empty_path(self):
+        write = Writer('', self.storage)
+        self.assertEqual('/', write.path)
+
+    def test_root_path(self):
+        write = Writer('/', self.storage)
+        self.assertEqual('/', write.path)
+
     def test_path(self):
         write = Writer('/path/to/another/file.txt', self.storage)
         self.assertEqual('/path/to/another/file.txt', write.path)
