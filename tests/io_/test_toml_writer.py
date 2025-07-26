@@ -48,7 +48,7 @@ class TestInstantiation(unittest.TestCase):
             16,
             {'storage': 'kws'},
             {'toml': 'kws'},
-            True,
+            True
         )
 
 
@@ -304,6 +304,7 @@ class TestMisc(unittest.TestCase):
     def test_pickle_works(self):
         write = TomlWriter(self.path)
         _ = pickle.loads(pickle.dumps(write))
+
 
 if __name__ == '__main__':
     unittest.main()
