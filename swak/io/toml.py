@@ -232,7 +232,7 @@ class TomlReader(Reader):
         )
 
     def __call__(self, path: str = '') -> Toml:
-        """Read a specific TOML file from the specified file system..
+        """Read a specific TOML file from the specified file system.
 
         If `not_found` is set to "warn" or "ignore" and the file cannot be
         found, an empty dictionary is returned.

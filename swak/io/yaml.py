@@ -1,8 +1,18 @@
 from typing import Any
 from collections.abc import Mapping
+import warnings
 import yaml
+from yaml import Loader
 from .writer import Writer
-from .types import LiteralStorage, Yaml, Storage, Mode
+from .reader import Reader
+from .types import (
+    LiteralStorage,
+    Yaml,
+    Storage,
+    Mode,
+    NotFound,
+    LiteralNotFound
+)
 
 
 class YamlWriter(Writer):
@@ -109,3 +119,103 @@ class YamlWriter(Writer):
             with self._managed(uri) as file:
                 yaml.dump(yml, file, **self.yaml_kws)
         return ()
+
+
+class YamlReader(Reader):
+    """Read a YAML file from any supported file system.
+
+    Parameters
+    ----------
+    path: str
+        Directory under which the YAML file is located or full path to the
+        YAML file. If not fully specified here, it can be completed when
+        calling instances.
+    storage: str
+        The type of file system to read from ("file", "s3", etc.).
+        Defaults to "file". Use the `Storage` enum to avoid typos.
+    chunk_size: float, optional
+        Chunk size to use when reading from the selected file system in MiB.
+        Defaults to 32 (MiB).
+    storage_kws: dict, optional
+        Passed on as keyword arguments to the constructor of the file system.
+    loader: type, optional
+        The loader class to use. Defaults to ``Loader``.
+    not_found: str, optional
+        What to do if the specified YAML file is not found. One of "ignore",
+        "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
+        avoid typos!
+
+    Raises
+    ------
+    TypeError
+        If `path` is not a string, `chunk_size` is not a float, or if
+        `storage_kws` is not a dictionary.
+    ValueError
+        If `storage` is not among the currently supported file-system
+        schemes, `mode` not among the supported file-mode options, the
+        `chunk_size` is smaller than 1 (MiB), or if `storage_kws` is not
+        a dictionary.
+
+    See Also
+    --------
+    Storage
+    NotFound
+
+    """
+
+    def __init__(
+            self,
+            path: str,
+            storage: LiteralStorage | Storage = Storage.FILE,
+            chunk_size: int = 32,
+            storage_kws: Mapping[str, Any] | None = None,
+            loader: type = Loader,
+            not_found: LiteralNotFound | NotFound = 'raise'
+    ) -> None:
+        self.loader = loader
+        self.not_found = str(NotFound(not_found))
+        super().__init__(
+            path,
+            storage,
+            Mode.RB,
+            chunk_size,
+            storage_kws,
+            loader,
+            self.not_found
+        )
+
+    def __call__(self, path: str = '') -> Yaml:
+        """Read a specific YAML file from the specified file system.
+
+        If `not_found` is set to "warn" or "ignore" and the file cannot be
+        found, an empty dictionary is returned.
+
+        Parameters
+        ----------
+        path: str
+            Path (including file name) to the YAML file to read. If it starts
+            with a backslash, it will be interpreted as absolute, if not, as
+            relative to the `path` specified at instantiation. Defaults to an
+            empty string, which results in an unchanged `path`.
+
+        Returns
+        -------
+        dict
+            The parsed contents of the TOML file.
+
+        """
+        uri = self._non_root(path)
+        try:
+            with self._managed(uri) as file:
+                yml = yaml.load(file, self.loader)
+        except FileNotFoundError as error:
+            match self.not_found:
+                case NotFound.WARN:
+                    msg = 'File "{}" not found!\nReturning empty YAML.'
+                    warnings.warn(msg.format(uri))
+                    yml = {}
+                case NotFound.IGNORE:
+                    yml = {}
+                case _:
+                    raise error
+        return yml

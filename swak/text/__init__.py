@@ -8,15 +8,13 @@ preconfigured pipe of callable objects to yield the desired result.
 
 from .resource import TextResourceLoader
 from .interpolate import TemplateRenderer, FormFiller
-from .read import TomlReader, YamlReader, JsonReader
+from .read import JsonReader
 from .parse import YamlParser
 
 __all__ = [
     'TextResourceLoader',
     'TemplateRenderer',
     'FormFiller',
-    'TomlReader',
-    'YamlReader',
     'JsonReader',
     'YamlParser'
 ]

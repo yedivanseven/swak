@@ -12,7 +12,7 @@ from .writer import Writer
 from .reader import Reader
 from .parquet import DataFrame2Parquet
 from .toml import TomlWriter, TomlReader
-from .yaml import YamlWriter
+from .yaml import YamlWriter, YamlReader
 from .json import JsonWriter
 
 __all__ = [
@@ -25,5 +25,6 @@ __all__ = [
     'TomlWriter',
     'TomlReader',
     'YamlWriter',
+    'YamlReader',
     'JsonWriter'
 ]

@@ -6,6 +6,7 @@ from .writer import Writer
 from .types import LiteralStorage, Yaml, Storage, Mode, Compression
 
 
+# ToDo: Continue here with JsonReader
 class JsonWriter(Writer):
     """Save a dictionary to a JSON file on any of the supported file systems.
 
