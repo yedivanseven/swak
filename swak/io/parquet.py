@@ -6,6 +6,7 @@ from .writer import Writer
 from .types import LiteralStorage, Storage, Mode
 
 
+# ToDo: Continue here with ParquetReader
 class DataFrame2Parquet(Writer):
     """Save a pandas or polars dataframe to any supported file system.
 
