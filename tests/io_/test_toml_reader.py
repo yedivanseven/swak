@@ -226,7 +226,7 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         read = TomlReader(self.path)
         expected = ("TomlReader('/path/file.toml', 'file',"
-                    " 'rb', 32.0, {}, {}, 'raise')")
+                    " 32.0, {}, {}, 'raise')")
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
@@ -238,7 +238,7 @@ class TestMisc(unittest.TestCase):
                 {'toml': 'kwargs'},
                 'warn'
         )
-        expected = ("TomlReader('/path/file.toml', 'memory', 'rb', 16.0,"
+        expected = ("TomlReader('/path/file.toml', 'memory', 16.0,"
                     " {'storage': 'kws'}, {'toml': 'kwargs'}, 'warn')")
         self.assertEqual(expected, repr(read))
 

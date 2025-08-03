@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from swak.text import YamlParser
+from swak.io.yaml import YamlParser
 from yaml import SafeLoader, Loader
 
 
@@ -35,19 +35,19 @@ class TestUsage(unittest.TestCase):
         y = YamlParser()
         self.assertTrue(callable(y))
 
-    @patch('swak.text.parse.yaml.load')
+    @patch('swak.io.yaml.yaml.load')
     def test_load_called(self, mock):
         y = YamlParser()
         _ = y(self.yml)
         mock.assert_called_once()
 
-    @patch('swak.text.parse.yaml.load')
+    @patch('swak.io.yaml.yaml.load')
     def test_load_called_with_defaults(self, mock):
         y = YamlParser()
         _ = y(self.yml)
         mock.assert_called_once_with(self.yml, Loader)
 
-    @patch('swak.text.parse.yaml.load')
+    @patch('swak.io.yaml.yaml.load')
     def test_load_called_with_custom(self, mock):
         y = YamlParser(SafeLoader)
         _ = y(self.yml)

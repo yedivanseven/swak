@@ -20,26 +20,3 @@ text
    :members:
    :special-members: __call__
    :show-inheritance:
-
-
-.. autoclass:: swak.text.read.JsonReader
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-.. autoclass:: swak.text.read.TomlReader
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-
-.. autoclass:: swak.text.read.YamlReader
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-
-.. autoclass:: swak.text.parse.YamlParser
-   :members:
-   :special-members: __call__
-   :show-inheritance:

@@ -78,7 +78,6 @@ class Reader(ArgRepr):
         super().__init__(
             self.path,
             self.storage,
-            self.mode,
             self.chunk_size,
             self.storage_kws,
             *args,

@@ -377,7 +377,7 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         write = Writer(self.path)
         expected = ("Writer('/path/to/file.txt', 'file', "
-                    "False, False, 'wb', 32.0, {})")
+                    "False, False, 32.0, {})")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
@@ -393,7 +393,7 @@ class TestMisc(unittest.TestCase):
             bar='baz'
         )
         expected = ("Writer('/path/to/file.txt', 'memory', True, True,"
-                    " 'wt', 16.0, {'answer': 42}, 'foo', bar='baz')")
+                    " 16.0, {'answer': 42}, 'foo', bar='baz')")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

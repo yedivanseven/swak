@@ -167,13 +167,13 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         write = DataFrame2Parquet(self.path)
         expected = ("DataFrame2Parquet('/path/file.parquet', "
-                    "'file', False, False, 'wb', 32.0, {}, {})")
+                    "'file', False, False, 32.0, {}, {})")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = DataFrame2Parquet(self.path, parquet_kws={'answer': 42})
         expected = ("DataFrame2Parquet('/path/file.parquet', "
-                    "'file', False, False, 'wb', 32.0, {}, {'answer': 42})")
+                    "'file', False, False, 32.0, {}, {'answer': 42})")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

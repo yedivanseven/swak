@@ -16,13 +16,37 @@ io
    :show-inheritance:
 
 
+.. autoclass:: swak.io.TomlReader
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.io.YamlWriter
    :members:
    :special-members: __call__
    :show-inheritance:
 
 
+.. autoclass:: swak.io.YamlReader
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.io.YamlParser
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.io.JsonWriter
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.io.JsonReader
    :members:
    :special-members: __call__
    :show-inheritance:

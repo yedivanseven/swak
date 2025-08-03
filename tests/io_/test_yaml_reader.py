@@ -69,15 +69,15 @@ class TestAttributes(unittest.TestCase):
     def setUp(self):
         self.path = '/path/to/file.yml'
 
-    def test_has_toml_kws(self):
+    def test_has_loader(self):
         read = YamlReader(self.path)
         self.assertTrue(hasattr(read, 'loader'))
 
-    def test_default_toml_kws(self):
+    def test_default_loader(self):
         read = YamlReader(self.path)
         self.assertIs(Loader, read.loader)
 
-    def test_custom_toml_kws(self):
+    def test_custom_loader(self):
         read = YamlReader(self.path, loader=SafeLoader)
         self.assertIs(SafeLoader, read.loader)
 
@@ -223,7 +223,7 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         read = YamlReader(self.path)
         expected = ("YamlReader('/path/file.yml', 'file',"
-                    " 'rb', 32.0, {}, Loader, 'raise')")
+                    " 32.0, {}, Loader, 'raise')")
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
@@ -235,7 +235,7 @@ class TestMisc(unittest.TestCase):
                 SafeLoader,
                 'warn'
         )
-        expected = ("YamlReader('/path/file.yml', 'memory', 'rb', 16.0,"
+        expected = ("YamlReader('/path/file.yml', 'memory', 16.0,"
                     " {'storage': 'kws'}, SafeLoader, 'warn')")
         self.assertEqual(expected, repr(read))
 

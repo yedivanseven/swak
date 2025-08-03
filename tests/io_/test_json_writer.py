@@ -220,13 +220,13 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         write = JsonWriter(self.path)
         expected = ("JsonWriter('/path/file.json', 'file', "
-                    "False, False, 'wt', 32.0, {}, {}, None)")
+                    "False, False, 32.0, {}, {}, None)")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = JsonWriter(self.path, gzip=False, json_kws={'answer': 42})
         expected = ("JsonWriter('/path/file.json', 'file', False, "
-                    "False, 'wt', 32.0, {}, {'answer': 42}, False)")
+                    "False, 32.0, {}, {'answer': 42}, False)")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

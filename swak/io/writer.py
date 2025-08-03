@@ -92,7 +92,6 @@ class Writer(ArgRepr):
             self.storage,
             self.overwrite,
             self.skip,
-            self.mode,
             self.chunk_size,
             self.storage_kws,
             *args,

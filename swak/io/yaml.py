@@ -3,6 +3,7 @@ from collections.abc import Mapping
 import warnings
 import yaml
 from yaml import Loader
+from ..misc import ArgRepr
 from .writer import Writer
 from .reader import Reader
 from .types import (
@@ -139,7 +140,9 @@ class YamlReader(Reader):
     storage_kws: dict, optional
         Passed on as keyword arguments to the constructor of the file system.
     loader: type, optional
-        The loader class to use. Defaults to ``Loader``.
+        The loader class to use. Defaults to ``Loader``. See the
+        `PyYaml documentation <https://pyyaml.org/wiki/PyYAMLDocumentation>`_
+        for options.
     not_found: str, optional
         What to do if the specified YAML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
@@ -219,3 +222,34 @@ class YamlReader(Reader):
                 case _:
                     raise error
         return yml
+
+
+class YamlParser(ArgRepr):
+    """Light wrapper around pyyaml's ``yaml.load`` function.
+
+    Parameters
+    ----------
+    loader: type, optional
+        The loader class to use. Defaults to ``Loader``
+
+    """
+
+    def __init__(self, loader: type = Loader) -> None:
+        self.loader = loader
+        super().__init__(loader)
+
+    def __call__(self, yml: str) -> Yaml:
+        """Parse a specific YAML string.
+
+        Parameters
+        ----------
+        yml: str
+            The YAML string to parse
+
+        Returns
+        -------
+        dict or list
+            The result of parsing the YAML string.
+
+        """
+        return yaml.load(yml, self.loader) or {}

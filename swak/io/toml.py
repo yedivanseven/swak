@@ -186,7 +186,8 @@ class TomlReader(Reader):
     storage_kws: dict, optional
         Passed on as keyword arguments to the constructor of the file system.
     toml_kws: dict, optional
-        Passed on as keyword arguments to the :func:`toml.load` function.
+        Passed on as keyword arguments to the :func:`load` function of python's
+        own `tomllib <https://docs.python.org/3/library/tomllib.html>` package.
     not_found: str, optional
         What to do if the specified TOML file is not found. One of "ignore",
         "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to

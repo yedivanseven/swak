@@ -157,13 +157,13 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         write = YamlWriter(self.path)
         expected = ("YamlWriter('/path/file.yml', "
-                    "'file', False, False, 'wt', 32.0, {}, {})")
+                    "'file', False, False, 32.0, {}, {})")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = YamlWriter(self.path, yaml_kws={'answer': 42})
         expected = ("YamlWriter('/path/file.yml', "
-                    "'file', False, False, 'wt', 32.0, {}, {'answer': 42})")
+                    "'file', False, False, 32.0, {}, {'answer': 42})")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

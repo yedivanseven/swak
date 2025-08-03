@@ -292,13 +292,13 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         write = TomlWriter(self.path)
         expected = ("TomlWriter('/path/file.toml', 'file', "
-                    "False, False, 'wb', 32.0, {}, {}, False)")
+                    "False, False, 32.0, {}, {}, False)")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = TomlWriter(self.path, prune=True, toml_kws={'answer': 42})
         expected = ("TomlWriter('/path/file.toml', 'file', False, "
-                    "False, 'wb', 32.0, {}, {'answer': 42}, True)")
+                    "False, 32.0, {}, {'answer': 42}, True)")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):

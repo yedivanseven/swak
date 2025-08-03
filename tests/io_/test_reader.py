@@ -257,7 +257,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         read = Reader(self.path)
-        expected = "Reader('/path/to/file.txt', 'file', 'rb', 32.0, {})"
+        expected = "Reader('/path/to/file.txt', 'file', 32.0, {})"
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
@@ -270,7 +270,7 @@ class TestMisc(unittest.TestCase):
             'foo',
             bar='baz'
         )
-        expected = ("Reader('/path/to/file.txt', 'memory', 'rt',"
+        expected = ("Reader('/path/to/file.txt', 'memory',"
                     " 16.0, {'answer': 42}, 'foo', bar='baz')")
         self.assertEqual(expected, repr(read))
 
