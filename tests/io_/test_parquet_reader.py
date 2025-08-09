@@ -90,13 +90,25 @@ class TestAttributes(unittest.TestCase):
         read = Parquet2DataFrame(self.path)
         self.assertEqual('pandas', read.bear)
 
-    def test_custom_not_found(self):
+    def test_custom_bear(self):
         read = Parquet2DataFrame(self.path, bear='polars')
         self.assertEqual('polars', read.bear)
 
-    def test_wrong_not_found_raises(self):
+    def test_wrong_bear_raises(self):
         with self.assertRaises(ValueError):
             _ = Parquet2DataFrame(self.path, bear='grizzly')
+
+    def test_has_read(self):
+        read = Parquet2DataFrame(self.path)
+        self.assertTrue(hasattr(read, 'read'))
+
+    def test_default_read(self):
+        read = Parquet2DataFrame(self.path)
+        self.assertIs(read.read, pd.read_parquet)
+
+    def test_custom_read(self):
+        read = Parquet2DataFrame(self.path, bear='polars')
+        self.assertIs(read.read, pl.read_parquet)
 
 
 class TestUsage(unittest.TestCase):
