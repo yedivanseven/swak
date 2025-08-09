@@ -11,7 +11,6 @@ from .reader import Reader
 from .types import LiteralStorage, Storage, Mode
 
 
-# ToDo: Continue here with ParquetReader
 class DataFrame2Parquet(Writer):
     """Save a pandas or polars dataframe to any supported file system.
 
@@ -24,7 +23,7 @@ class DataFrame2Parquet(Writer):
         that will be interpolated when instances are called.
     storage: str
         The type of file system to write to ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     overwrite: bool, optional
         Whether to silently overwrite the destination file. Defaults to
         ``False``, which will raise an exception if it already exists.
@@ -60,7 +59,7 @@ class DataFrame2Parquet(Writer):
 
     Note
     ----
-    Make sure you do a ``reset_index`` before you save a pandas dataframe!
+    Make sure you do a :meth:`reset_index` before you save a pandas dataframe!
     Otherwise, you might have unexpected extra columns in the parquet file
     and potentially undesirable (if not unpredictable) behavior when you
     load it again.
@@ -139,7 +138,7 @@ class Parquet2DataFrame(Reader):
         calling instances.
     storage: str
         The type of file system to read from ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     chunk_size: float, optional
         Chunk size to use when reading from the selected file system in MiB.
         Defaults to 32 (MiB).
@@ -153,7 +152,7 @@ class Parquet2DataFrame(Reader):
         reference/api/polars.read_parquet.html>`_ top-level functions.
     bear: str, optional
         Type of dataframe to return. Can be one of "pandas" or "polars". Use
-        the ``Bears`` enum to avoid typos. Defaults to "pandas".
+        the :class:`Bears` enum to avoid typos. Defaults to "pandas".
 
     Raises
     ------

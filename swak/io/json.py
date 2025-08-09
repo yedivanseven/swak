@@ -28,7 +28,7 @@ class JsonWriter(Writer):
         that will be interpolated when instances are called.
     storage: str
         The type of file system to write to ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     overwrite: bool, optional
         Whether to silently overwrite the destination file. Defaults to
         ``False``, which will raise an exception if it already exists.
@@ -144,7 +144,7 @@ class JsonReader(Reader):
         calling instances.
     storage: str
         The type of file system to read from ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     chunk_size: float, optional
         Chunk size to use when reading from the selected file system in MiB.
         Defaults to 32 (MiB).
@@ -156,8 +156,8 @@ class JsonReader(Reader):
         <https://docs.python.org/3/library/json.html>`_ for options.
     not_found: str, optional
         What to do if the specified JSON file is not found. One of "ignore",
-        "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
-        avoid typos!
+        "warn", or "raise". Defaults to "raise". Use the :class:`NotFound`
+        enum to avoid typos!
     gzip: bool, optional
         Read the JSON from a gzip-compressed file if ``True`` and a plain
         text file if ``False``. If left at ``None``, which is the default,
@@ -178,7 +178,7 @@ class JsonReader(Reader):
     See Also
     --------
     Storage
-    NotFound
+    ~swak.misc.NotFound
 
     """
 

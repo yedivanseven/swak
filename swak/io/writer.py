@@ -28,7 +28,7 @@ class Writer(ArgRepr):
         when instances are called.
     storage: str
         The type of file system to write to ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     overwrite: bool, optional
         Whether to silently overwrite the destination file. Defaults to
         ``False``, which will raise an exception if it already exists.

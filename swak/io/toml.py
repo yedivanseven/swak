@@ -27,7 +27,7 @@ class TomlWriter(Writer):
         when instances are called.
     storage: str
         The type of file system to write to ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     overwrite: bool, optional
         Whether to silently overwrite the destination file. Defaults to
         ``False``, which will raise an exception if it already exists.
@@ -41,7 +41,7 @@ class TomlWriter(Writer):
         Passed on as keywords to the constructor of the file system.
     prune: bool, optional
         Whether to silently drop non-string keys and ``None`` values from the
-        dictionary-like object to save as TOML. Defaults to ``False```.
+        dictionary-like object to save as TOML. Defaults to ``False``.
     toml_kws: dict, optional
         Passed on as keyword arguments to the :func:`tomli-w.dump` function.
         See the `tomli-w GitHub page <https://github.com/hukkin/tomli-w>`_
@@ -179,7 +179,7 @@ class TomlReader(Reader):
         calling instances.
     storage: str
         The type of file system to read from ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     chunk_size: float, optional
         Chunk size to use when reading from the selected file system in MiB.
         Defaults to 32 (MiB).
@@ -187,11 +187,12 @@ class TomlReader(Reader):
         Passed on as keyword arguments to the constructor of the file system.
     toml_kws: dict, optional
         Passed on as keyword arguments to the :func:`load` function of python's
-        own `tomllib <https://docs.python.org/3/library/tomllib.html>` package.
+        own `tomllib <https://docs.python.org/3/library/tomllib.html>`_
+        package.
     not_found: str, optional
         What to do if the specified TOML file is not found. One of "ignore",
-        "warn", or "raise". Defaults to "raise". Use the ``NotFound`` enum to
-        avoid typos!
+        "warn", or "raise". Defaults to "raise". Use the :class:`NotFound`
+        enum to avoid typos!
 
     Raises
     ------
@@ -207,7 +208,7 @@ class TomlReader(Reader):
     See Also
     --------
     Storage
-    NotFound
+    ~swak.misc.NotFound
 
     """
 

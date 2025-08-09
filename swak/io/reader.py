@@ -26,7 +26,7 @@ class Reader(ArgRepr):
         not fully specified here, it can be completed when calling instances.
     storage: str
         The type of file system to read from ("file", "s3", etc.).
-        Defaults to "file". Use the `Storage` enum to avoid typos.
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     mode: str, optional
         The mode to open the source file/object/blob in.
         Defaults to "rb". Use the `Mode` enum to avoid typos.
