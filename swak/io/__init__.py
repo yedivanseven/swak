@@ -10,7 +10,7 @@ staging, and production environments.
 from .types import Storage, Mode, Compression
 from .writer import Writer
 from .reader import Reader
-from .parquet import DataFrame2Parquet
+from .parquet import DataFrame2Parquet, Parquet2DataFrame
 from .toml import TomlWriter, TomlReader
 from .yaml import YamlWriter, YamlReader, YamlParser
 from .json import JsonWriter, JsonReader
@@ -22,6 +22,7 @@ __all__ = [
     'Mode',
     'Compression',
     'DataFrame2Parquet',
+    'Parquet2DataFrame',
     'TomlWriter',
     'TomlReader',
     'YamlWriter',

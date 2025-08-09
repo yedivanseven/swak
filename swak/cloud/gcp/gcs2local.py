@@ -7,6 +7,7 @@ from google.cloud import storage as gcs
 from ...misc import ArgRepr
 
 
+# ToDo: Change to fsspec move.
 class GcsDir2LocalDir(ArgRepr):
     """Download files from Google Cloud Storage to local directory.
 

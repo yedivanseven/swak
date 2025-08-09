@@ -10,6 +10,12 @@ io
    :show-inheritance:
 
 
+.. autoclass:: swak.io.Parquet2DataFrame
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.io.TomlWriter
    :members:
    :special-members: __call__
@@ -59,6 +65,12 @@ Base classes
 .. autoclass:: swak.io.Writer
    :members:
    :private-members: _uri_from, _managed, _tmp
+   :show-inheritance:
+
+
+.. autoclass:: swak.io.Reader
+   :members:
+   :private-members: _non_root, _managed
    :show-inheritance:
 
 

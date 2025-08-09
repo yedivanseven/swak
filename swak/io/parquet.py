@@ -1,8 +1,13 @@
 from typing import Any
-from collections.abc import Mapping
+from collections.abc import Mapping, Callable
+from io import BytesIO
 from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
+import pandas as pd
+import polars as pl
+from ..misc import Bears, LiteralBears
 from .writer import Writer
+from .reader import Reader
 from .types import LiteralStorage, Storage, Mode
 
 
@@ -121,3 +126,100 @@ class DataFrame2Parquet(Writer):
             with self._managed(uri) as file:
                 getattr(df, writer)(file, **self.parquet_kws)
         return ()
+
+
+class Parquet2DataFrame(Reader):
+    """Read a parquet file from anywhere into a pandas or polars dataframe.
+
+    Parameters
+    ----------
+    path: str
+        Directory under which the parquet file is located or full path to the
+        parquet file. If not fully specified here, it can be completed when
+        calling instances.
+    storage: str
+        The type of file system to read from ("file", "s3", etc.).
+        Defaults to "file". Use the `Storage` enum to avoid typos.
+    chunk_size: float, optional
+        Chunk size to use when reading from the selected file system in MiB.
+        Defaults to 32 (MiB).
+    storage_kws: dict, optional
+        Passed on as keyword arguments to the constructor of the file system.
+    parquet_kws: dict, optional
+        Passed on as keyword arguments to the dataframe's read method. See
+        the documentation for `pandas.read_parquet <https://pandas.pydata.org/
+        pandas-docs/stable/reference/api/pandas.read_parquet.html>`_
+        and `polars.read_parquet <https://docs.pola.rs/api/python/stable/
+        reference/api/polars.read_parquet.html>`_ top-level functions.
+    bear: str, optional
+        Type of dataframe to return. Can be one of "pandas" or "polars". Use
+        the ``Bears`` enum to avoid typos. Defaults to "pandas".
+
+    Raises
+    ------
+    TypeError
+        If `path` is not a string, `chunk_size` is not an integer or either
+        `storage_kws` or `parquet_kws` are not dictionaries.
+    ValueError
+        If `storage` is not among the currently supported file-system
+        schemes, `mode` not among the supported file-mode options, the
+        `chunk_size` is smaller than 1 (MiB), or if `storage_kws` is not
+        a dictionary.
+
+    See Also
+    --------
+    Storage
+    ~swak.misc.Bears
+
+    """
+
+    def __init__(
+            self,
+            path: str,
+            storage: LiteralStorage | Storage = Storage.FILE,
+            chunk_size: int = 32,
+            storage_kws: Mapping[str, Any] | None = None,
+            parquet_kws: Mapping[str, Any] | None = None,
+            bear: LiteralBears | Bears = Bears.PANDAS
+    ) -> None:
+        self.parquet_kws = {} if parquet_kws is None else dict(parquet_kws)
+        self.bear = str(Bears(bear))
+        super().__init__(
+            path,
+            storage,
+            Mode.RB,
+            chunk_size,
+            storage_kws,
+            self.parquet_kws,
+            self.bear
+        )
+
+    @property
+    def read(self) -> Callable[[BytesIO, ...], Pandas | Polars]:
+        """Top-level ``read_parquet`` function of either pandas or polars."""
+        return {
+            Bears.PANDAS: pd.read_parquet,
+            Bears.POLARS: pl.read_parquet
+        }[self.bear]
+
+    def __call__(self, path: str = '') -> Pandas | Polars:
+        """Read a specific parquet file from the specified file system.
+
+        Parameters
+        ----------
+        path: str
+            Path (including file name) to the parquet file to read. If it
+            starts with a backslash, it will be interpreted as absolute,
+            if not, as relative to the `path` specified at instantiation.
+            Defaults to an empty string, which results in an unchanged `path`.
+
+        Returns
+        -------
+        DataFrame
+            Pandas or polars dataframe.
+
+        """
+        uri = self._non_root(path)
+        with self._managed(uri) as file:
+            df = self.read(file, **self.parquet_kws)
+        return df

@@ -7,7 +7,7 @@ from google.cloud import storage as gcs
 from ...misc import ArgRepr
 
 
-# ToDo: Add pola-rs support and rename to Gcs2Pandas and Gcs2Polars!
+# ToDo: Remove once the "discover" classes are done!
 class GcsParquet2DataFrame(ArgRepr):
     """Load parquet files from Google Cloud Storage into a pandas dataframe.
 

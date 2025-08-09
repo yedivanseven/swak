@@ -14,9 +14,3 @@ aws
    :members:
    :special-members: __call__
    :show-inheritance:
-
-
-.. autoclass:: swak.cloud.aws.S3Parquet2DataFrame
-   :members:
-   :special-members: __call__
-   :show-inheritance:
