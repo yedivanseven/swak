@@ -9,21 +9,19 @@ from swak.io import Reader, Storage, Mode, Compression
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/to/file.txt'
-        self.storage = str(Storage.MEMORY)
-        self.read = Reader(self.path, Storage.MEMORY)
+        self.read = Reader()
 
     def test_has_path(self):
         self.assertTrue(hasattr(self.read, 'path'))
 
     def test_path(self):
-        self.assertEqual(self.path, self.read.path)
+        self.assertEqual('/', self.read.path)
 
     def test_has_storage(self):
         self.assertTrue(hasattr(self.read, 'storage'))
 
     def test_storage(self):
-        self.assertEqual(self.storage, self.read.storage)
+        self.assertEqual('file', self.read.storage)
 
     def test_has_mode(self):
         self.assertTrue(hasattr(self.read, 'mode'))
@@ -55,7 +53,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.read, 'fs'))
 
     def test_fs(self):
-        self.assertIsInstance(self.read.fs, MemoryFileSystem)
+        self.assertIsInstance(self.read.fs, LocalFileSystem)
 
 
 class TestAttributes(unittest.TestCase):
@@ -89,8 +87,8 @@ class TestAttributes(unittest.TestCase):
             _ = Reader(1, self.storage)
 
     def test_storage(self):
-        read = Reader(self.path, Storage.FILE)
-        self.assertEqual('file', read.storage)
+        read = Reader(self.path, Storage.MEMORY)
+        self.assertEqual('memory', read.storage)
 
     def test_storage_raises(self):
         with self.assertRaises(ValueError):
@@ -133,8 +131,8 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(68 * 256 * 1024, read.chunk_bytes)
 
     def test_fs(self):
-        write = Reader(self.path, Storage.FILE)
-        self.assertIsInstance(write.fs, LocalFileSystem)
+        write = Reader(self.path, Storage.MEMORY)
+        self.assertIsInstance(write.fs, MemoryFileSystem)
 
 
 class TestMethods(unittest.TestCase):

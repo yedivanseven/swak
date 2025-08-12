@@ -10,23 +10,20 @@ from swak.io import YamlReader, Reader, Storage, Mode
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.yml'
-
     def test_is_reader(self):
         self.assertTrue(issubclass(YamlReader, Reader))
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_defaults(self, init):
-        _ = YamlReader(self.path)
+        _ = YamlReader()
         init.assert_called_once_with(
-            self.path, Storage.FILE, Mode.RB, 32, None, Loader, 'raise'
+            '', Storage.FILE, Mode.RB, 32, None, Loader, 'raise'
         )
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_custom(self, init):
         _ = YamlReader(
-                self.path,
+                '/path/to/file.yml',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -34,7 +31,7 @@ class TestInstantiation(unittest.TestCase):
                 'warn'
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.yml',
             Storage.MEMORY,
             Mode.RB,
             16,
@@ -46,7 +43,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Reader, '__init__')
     def test_reader_init_called_enum(self, init):
         _ = YamlReader(
-            self.path,
+            '/path/to/file.yml',
             Storage.MEMORY,
             16,
             {'storage': 'kws'},
@@ -54,7 +51,7 @@ class TestInstantiation(unittest.TestCase):
             NotFound.IGNORE,
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.yml',
             Storage.MEMORY,
             Mode.RB,
             16,
@@ -66,36 +63,33 @@ class TestInstantiation(unittest.TestCase):
 
 class TestAttributes(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.yml'
-
     def test_has_loader(self):
-        read = YamlReader(self.path)
+        read = YamlReader()
         self.assertTrue(hasattr(read, 'loader'))
 
     def test_default_loader(self):
-        read = YamlReader(self.path)
+        read = YamlReader()
         self.assertIs(Loader, read.loader)
 
     def test_custom_loader(self):
-        read = YamlReader(self.path, loader=SafeLoader)
+        read = YamlReader(loader=SafeLoader)
         self.assertIs(SafeLoader, read.loader)
 
     def test_has_not_found(self):
-        read = YamlReader(self.path)
+        read = YamlReader()
         self.assertTrue(hasattr(read, 'not_found'))
 
     def test_default_not_found(self):
-        read = YamlReader(self.path)
+        read = YamlReader()
         self.assertEqual('raise', read.not_found)
 
     def test_custom_not_found(self):
-        read = YamlReader(self.path, not_found='warn')
+        read = YamlReader(not_found='warn')
         self.assertEqual('warn', read.not_found)
 
     def test_wrong_not_found_raises(self):
         with self.assertRaises(ValueError):
-            _ = YamlReader(self.path, not_found='wrong')
+            _ = YamlReader(not_found='wrong')
 
 
 class TestUsage(unittest.TestCase):
@@ -121,7 +115,7 @@ class TestUsage(unittest.TestCase):
         """).encode()
 
     def test_callable(self):
-        read = YamlReader(self.path)
+        read = YamlReader()
         self.assertTrue(callable(read))
 
     @patch.object(Reader, '_non_root')
@@ -217,18 +211,15 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.yml'
-
     def test_default_repr(self):
-        read = YamlReader(self.path)
-        expected = ("YamlReader('/path/file.yml', 'file',"
+        read = YamlReader()
+        expected = ("YamlReader('/', 'file',"
                     " 32.0, {}, Loader, 'raise')")
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
         read = YamlReader(
-                self.path,
+                '/path/file.yml',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -240,7 +231,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(read))
 
     def test_pickle_works(self):
-        read = YamlReader(self.path)
+        read = YamlReader()
         _ = pickle.loads(pickle.dumps(read))
 
 

@@ -31,3 +31,5 @@ __all__ = [
     'JsonWriter',
     'JsonReader'
 ]
+
+# ToDo: Set default path "" for init!

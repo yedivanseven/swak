@@ -11,23 +11,20 @@ from swak.io import Parquet2DataFrame, Reader, Storage, Mode
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.parquet'
-
     def test_is_reader(self):
         self.assertTrue(issubclass(Parquet2DataFrame, Reader))
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_defaults(self, init):
-        _ = Parquet2DataFrame(self.path)
+        _ = Parquet2DataFrame()
         init.assert_called_once_with(
-            self.path, Storage.FILE, Mode.RB, 32, None, {}, 'pandas'
+            '', Storage.FILE, Mode.RB, 32, None, {}, 'pandas'
         )
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_custom(self, init):
         _ = Parquet2DataFrame(
-                self.path,
+                '/path/to/file.parquet',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -35,7 +32,7 @@ class TestInstantiation(unittest.TestCase):
                 'polars'
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.parquet',
             Storage.MEMORY,
             Mode.RB,
             16,
@@ -47,7 +44,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Reader, '__init__')
     def test_reader_init_called_enum(self, init):
         _ = Parquet2DataFrame(
-            self.path,
+            '/path/to/file.parquet',
             Storage.MEMORY,
             16,
             {'storage': 'kws'},
@@ -55,7 +52,7 @@ class TestInstantiation(unittest.TestCase):
             Bears.POLARS,
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.parquet',
             Storage.MEMORY,
             Mode.RB,
             16,
@@ -67,47 +64,44 @@ class TestInstantiation(unittest.TestCase):
 
 class TestAttributes(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.parquet'
-
     def test_has_parquet_kws(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         self.assertTrue(hasattr(read, 'parquet_kws'))
 
     def test_default_parquet_kws(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         self.assertDictEqual({}, read.parquet_kws)
 
     def test_custom_parquet_kws(self):
-        read = Parquet2DataFrame(self.path, parquet_kws={'parquet': 'kws'})
+        read = Parquet2DataFrame(parquet_kws={'parquet': 'kws'})
         self.assertDictEqual({'parquet': 'kws'}, read.parquet_kws)
 
     def test_has_bear(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         self.assertTrue(hasattr(read, 'bear'))
 
     def test_default_bear(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         self.assertEqual('pandas', read.bear)
 
     def test_custom_bear(self):
-        read = Parquet2DataFrame(self.path, bear='polars')
+        read = Parquet2DataFrame(bear='polars')
         self.assertEqual('polars', read.bear)
 
     def test_wrong_bear_raises(self):
         with self.assertRaises(ValueError):
-            _ = Parquet2DataFrame(self.path, bear='grizzly')
+            _ = Parquet2DataFrame(bear='grizzly')
 
     def test_has_read(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         self.assertTrue(hasattr(read, 'read'))
 
     def test_default_read(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         self.assertIs(read.read, pd.read_parquet)
 
     def test_custom_read(self):
-        read = Parquet2DataFrame(self.path, bear='polars')
+        read = Parquet2DataFrame(bear='polars')
         self.assertIs(read.read, pl.read_parquet)
 
 
@@ -120,7 +114,7 @@ class TestUsage(unittest.TestCase):
         self.pl_df = pl.DataFrame([1, 2, 3, 4])
 
     def test_callable(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         self.assertTrue(callable(read))
 
     @patch.object(Reader, '_non_root')
@@ -236,7 +230,6 @@ class TestUsage(unittest.TestCase):
         _ = read(self.path)
         load.assert_called_once_with(parquet, parquet='kws')
 
-
     def test_raises_on_file_not_found(self):
         read = Parquet2DataFrame('/some/other/file.parquet', self.storage)
         with self.assertRaises(FileNotFoundError):
@@ -260,18 +253,15 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.parquet'
-
     def test_default_repr(self):
-        read = Parquet2DataFrame(self.path)
-        expected = ("Parquet2DataFrame('/path/file.parquet', 'file',"
+        read = Parquet2DataFrame()
+        expected = ("Parquet2DataFrame('/', 'file',"
                     " 32.0, {}, {}, 'pandas')")
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
         read = Parquet2DataFrame(
-                self.path,
+                '/path/file.parquet',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -283,7 +273,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(read))
 
     def test_pickle_works(self):
-        read = Parquet2DataFrame(self.path)
+        read = Parquet2DataFrame()
         _ = pickle.loads(pickle.dumps(read))
 
 

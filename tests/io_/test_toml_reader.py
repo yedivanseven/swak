@@ -9,23 +9,20 @@ from swak.io import TomlReader, Reader, Storage, Mode
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.toml'
-
     def test_is_reader(self):
         self.assertTrue(issubclass(TomlReader, Reader))
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_defaults(self, init):
-        _ = TomlReader(self.path)
+        _ = TomlReader()
         init.assert_called_once_with(
-            self.path, Storage.FILE, Mode.RB, 32, None, {}, 'raise'
+            '', Storage.FILE, Mode.RB, 32, None, {}, 'raise'
         )
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_custom(self, init):
         _ = TomlReader(
-                self.path,
+                '/path/to/file.toml',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -33,7 +30,7 @@ class TestInstantiation(unittest.TestCase):
                 'warn'
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.toml',
             Storage.MEMORY,
             Mode.RB,
             16,
@@ -45,7 +42,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Reader, '__init__')
     def test_reader_init_called_enum(self, init):
         _ = TomlReader(
-            self.path,
+            '/path/to/file.toml',
             Storage.MEMORY,
             16,
             {'storage': 'kws'},
@@ -53,7 +50,7 @@ class TestInstantiation(unittest.TestCase):
             NotFound.IGNORE,
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.toml',
             Storage.MEMORY,
             Mode.RB,
             16,
@@ -65,36 +62,33 @@ class TestInstantiation(unittest.TestCase):
 
 class TestAttributes(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.toml'
-
     def test_has_toml_kws(self):
-        read = TomlReader(self.path)
+        read = TomlReader()
         self.assertTrue(hasattr(read, 'toml_kws'))
 
     def test_default_toml_kws(self):
-        read = TomlReader(self.path)
+        read = TomlReader()
         self.assertDictEqual({}, read.toml_kws)
 
     def test_custom_toml_kws(self):
-        read = TomlReader(self.path, toml_kws={'toml': 'kws'})
+        read = TomlReader(toml_kws={'toml': 'kws'})
         self.assertDictEqual({'toml': 'kws'}, read.toml_kws)
 
     def test_has_not_found(self):
-        read = TomlReader(self.path)
+        read = TomlReader()
         self.assertTrue(hasattr(read, 'not_found'))
 
     def test_default_not_found(self):
-        read = TomlReader(self.path)
+        read = TomlReader()
         self.assertEqual('raise', read.not_found)
 
     def test_custom_not_found(self):
-        read = TomlReader(self.path, not_found='warn')
+        read = TomlReader(not_found='warn')
         self.assertEqual('warn', read.not_found)
 
     def test_wrong_not_found_raises(self):
         with self.assertRaises(ValueError):
-            _ = TomlReader(self.path, not_found='wrong')
+            _ = TomlReader(not_found='wrong')
 
 
 class TestUsage(unittest.TestCase):
@@ -124,7 +118,7 @@ class TestUsage(unittest.TestCase):
         """).encode()
 
     def test_callable(self):
-        read = TomlReader(self.path)
+        read = TomlReader()
         self.assertTrue(callable(read))
 
     @patch.object(Reader, '_non_root')
@@ -220,18 +214,15 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.toml'
-
     def test_default_repr(self):
-        read = TomlReader(self.path)
-        expected = ("TomlReader('/path/file.toml', 'file',"
+        read = TomlReader()
+        expected = ("TomlReader('/', 'file',"
                     " 32.0, {}, {}, 'raise')")
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
         read = TomlReader(
-                self.path,
+                '/path/file.toml',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -243,7 +234,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(read))
 
     def test_pickle_works(self):
-        read = TomlReader(self.path)
+        read = TomlReader()
         _ = pickle.loads(pickle.dumps(read))
 
 

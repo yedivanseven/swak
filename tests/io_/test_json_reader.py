@@ -9,23 +9,20 @@ from swak.io import JsonReader, Reader, Storage, Mode, Compression
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.json'
-
     def test_is_reader(self):
         self.assertTrue(issubclass(JsonReader, Reader))
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_defaults(self, init):
-        _ = JsonReader(self.path)
+        _ = JsonReader()
         init.assert_called_once_with(
-            self.path, Storage.FILE, Mode.RT, 32, None, {}, 'raise', None
+            '', Storage.FILE, Mode.RT, 32, None, {}, 'raise', None
         )
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_custom(self, init):
         _ = JsonReader(
-                self.path,
+                '/root',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -34,7 +31,7 @@ class TestInstantiation(unittest.TestCase):
                 True
         )
         init.assert_called_once_with(
-            self.path,
+            '/root',
             Storage.MEMORY,
             Mode.RT,
             16,
@@ -47,7 +44,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Reader, '__init__')
     def test_reader_init_called_enum(self, init):
         _ = JsonReader(
-            self.path,
+            '/path/to/file.txt',
             Storage.MEMORY,
             16,
             {'storage': 'kws'},
@@ -56,7 +53,7 @@ class TestInstantiation(unittest.TestCase):
             False
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.txt',
             Storage.MEMORY,
             Mode.RT,
             16,
@@ -69,47 +66,44 @@ class TestInstantiation(unittest.TestCase):
 
 class TestAttributes(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.json'
-
     def test_has_json_kws(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         self.assertTrue(hasattr(read, 'json_kws'))
 
     def test_default_json_kws(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         self.assertDictEqual({}, read.json_kws)
 
     def test_custom_json_kws(self):
-        read = JsonReader(self.path, json_kws={'json': 'kws'})
+        read = JsonReader(json_kws={'json': 'kws'})
         self.assertDictEqual({'json': 'kws'}, read.json_kws)
 
     def test_has_not_found(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         self.assertTrue(hasattr(read, 'not_found'))
 
     def test_default_not_found(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         self.assertEqual('raise', read.not_found)
 
     def test_custom_not_found(self):
-        read = JsonReader(self.path, not_found='warn')
+        read = JsonReader(not_found='warn')
         self.assertEqual('warn', read.not_found)
 
     def test_wrong_not_found_raises(self):
         with self.assertRaises(ValueError):
-            _ = JsonReader(self.path, not_found='wrong')
+            _ = JsonReader(not_found='wrong')
 
     def test_has_gzip(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         self.assertTrue(hasattr(read, 'gzip'))
 
     def test_default_gzip(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         self.assertIsNone(read.gzip)
 
     def test_custom_gzip(self):
-        read = JsonReader(self.path, gzip=True)
+        read = JsonReader(gzip=True)
         self.assertIsInstance(read.gzip, bool)
         self.assertTrue(read.gzip)
 
@@ -139,7 +133,7 @@ class TestUsage(unittest.TestCase):
         """)
 
     def test_callable(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         self.assertTrue(callable(read))
 
     @patch.object(Reader, '_non_root')
@@ -197,7 +191,7 @@ class TestUsage(unittest.TestCase):
 
     @patch.object(Reader, '_managed')
     @patch('swak.io.json.json.load')
-    def test_yaml_load_called_custom(self, load, managed):
+    def test_json_load_called_custom(self, load, managed):
         mock_file = mock_open(read_data=self.content)
         managed.return_value = mock_file.return_value
         read = JsonReader(self.path, self.storage, json_kws={'json': 'kws'})
@@ -247,18 +241,15 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.json'
-
     def test_default_repr(self):
-        read = JsonReader(self.path)
-        expected = ("JsonReader('/path/file.json', 'file',"
+        read = JsonReader()
+        expected = ("JsonReader('/', 'file',"
                     " 32.0, {}, {}, 'raise', None)")
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
         read = JsonReader(
-                self.path,
+                '/path/file.json',
                 Storage.MEMORY,
                 16,
                 {'storage': 'kws'},
@@ -271,7 +262,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(expected, repr(read))
 
     def test_pickle_works(self):
-        read = JsonReader(self.path)
+        read = JsonReader()
         _ = pickle.loads(pickle.dumps(read))
 
 

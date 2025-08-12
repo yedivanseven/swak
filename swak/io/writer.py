@@ -123,7 +123,7 @@ class Writer(ArgRepr):
 
     @staticmethod
     def __valid(chunk_size: Any) -> float:
-        """Try to convert chunk_size to a meaningful integer."""
+        """Try to convert chunk_size to a meaningful float."""
         try:
             as_float = float(chunk_size)
         except (TypeError, ValueError) as error:

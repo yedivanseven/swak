@@ -21,9 +21,10 @@ class Reader(ArgRepr):
 
     Parameters
     ----------
-    path: str
-        Directory under which the file is located or full path to the file. If
-        not fully specified here, it can be completed when calling instances.
+    path: str, optional
+        Directory under which the file is located or full path to the file.
+        Since it (or part of it) can also be provided later, when the callable
+        instance is called, it is optional here. Defaults to an empty string.
     storage: str
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -62,7 +63,7 @@ class Reader(ArgRepr):
 
     def __init__(
             self,
-            path: str,
+            path: str = '',
             storage: LiteralStorage | Storage = Storage.FILE,
             mode: LiteralMode | Mode = Mode.RB,
             chunk_size: int = 32,
@@ -109,7 +110,7 @@ class Reader(ArgRepr):
 
     @staticmethod
     def __valid(chunk_size: Any) -> float:
-        """Try to convert chunk_size to a meaningful integer."""
+        """Try to convert chunk_size to a meaningful float."""
         try:
             as_float = float(chunk_size)
         except (TypeError, ValueError) as error:
