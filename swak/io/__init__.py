@@ -14,10 +14,12 @@ from .parquet import DataFrame2Parquet, Parquet2DataFrame
 from .toml import TomlWriter, TomlReader
 from .yaml import YamlWriter, YamlReader, YamlParser
 from .json import JsonWriter, JsonReader
+from .discover import Discover
 
 __all__ = [
     'Writer',
     'Reader',
+    'Discover',
     'Storage',
     'Mode',
     'Compression',
@@ -31,5 +33,3 @@ __all__ = [
     'JsonWriter',
     'JsonReader'
 ]
-
-# ToDo: Set default path "" for init!

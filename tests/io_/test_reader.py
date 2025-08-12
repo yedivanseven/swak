@@ -115,8 +115,8 @@ class TestAttributes(unittest.TestCase):
             _ =  Reader(self.path, self.storage, chunk_size=0)
 
     def test_storage_kws(self):
-        write = Reader(self.path, self.storage, storage_kws={'answer': 42})
-        self.assertDictEqual({'answer': 42}, write.storage_kws)
+        read = Reader(self.path, self.storage, storage_kws={'answer': 42})
+        self.assertDictEqual({'answer': 42}, read.storage_kws)
 
     def test_chunk_bytes_round(self):
         read = Reader(self.path, self.storage, chunk_size=16.2)
@@ -131,8 +131,8 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(68 * 256 * 1024, read.chunk_bytes)
 
     def test_fs(self):
-        write = Reader(self.path, Storage.MEMORY)
-        self.assertIsInstance(write.fs, MemoryFileSystem)
+        read = Reader(self.path, Storage.MEMORY)
+        self.assertIsInstance(read.fs, MemoryFileSystem)
 
 
 class TestMethods(unittest.TestCase):
@@ -142,9 +142,9 @@ class TestMethods(unittest.TestCase):
         self.storage = str(Storage.MEMORY)
 
     def test_has_managed(self):
-        write = Reader(self.path, self.storage, overwrite=True)
-        self.assertTrue(hasattr(write, '_managed'))
-        self.assertTrue(callable(write._managed))
+        read = Reader(self.path, self.storage, overread=True)
+        self.assertTrue(hasattr(read, '_managed'))
+        self.assertTrue(callable(read._managed))
 
     def test_managed_read(self):
         read = Reader(self.path, self.storage, mode=Mode.RT)
@@ -162,7 +162,7 @@ class TestMethods(unittest.TestCase):
         read = Reader(
             self.path,
             self.storage,
-            overwrite=True,
+            overread=True,
             mode=Mode.RT,
             chunk_size=17
         )
@@ -217,9 +217,9 @@ class TestMethods(unittest.TestCase):
                 pass
 
     def test_has_non_root(self):
-        write = Reader(self.path, self.storage)
-        self.assertTrue(hasattr(write, '_non_root'))
-        self.assertTrue(callable(write._non_root))
+        read = Reader(self.path, self.storage)
+        self.assertTrue(hasattr(read, '_non_root'))
+        self.assertTrue(callable(read._non_root))
 
     def test_non_root_empty(self):
         read = Reader(self.path, self.storage)

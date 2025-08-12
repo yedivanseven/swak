@@ -205,7 +205,15 @@ class YamlReader(Reader):
         Returns
         -------
         dict
-            The parsed contents of the TOML file.
+            The parsed contents of the YAML file.
+
+        Raises
+        ------
+        ValueError
+            If the final path is directly under root (e.g., "/file.yml")
+            because, on local file system, this is not where you want to save
+            to and, on object storage, the first directory refers to the name
+            of an (existing!) bucket.
 
         """
         uri = self._non_root(path)

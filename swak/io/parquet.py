@@ -218,6 +218,14 @@ class Parquet2DataFrame(Reader):
         DataFrame
             Pandas or polars dataframe.
 
+        Raises
+        ------
+        ValueError
+            If the final path is directly under root (e.g., "/file.parquet")
+            because, on local file system, this is not where you want to save
+            to and, on object storage, the first directory refers to the name
+            of an (existing!) bucket.
+
         """
         uri = self._non_root(path)
         with self._managed(uri) as file:

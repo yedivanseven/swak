@@ -4,6 +4,12 @@ io
 .. automodule:: swak.io
 
 
+.. autoclass:: swak.io.Discover
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.io.DataFrame2Parquet
    :members:
    :special-members: __call__
