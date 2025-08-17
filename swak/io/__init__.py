@@ -14,12 +14,12 @@ from .parquet import DataFrame2Parquet, Parquet2DataFrame
 from .toml import TomlWriter, TomlReader
 from .yaml import YamlWriter, YamlReader, YamlParser
 from .json import JsonWriter, JsonReader
-from .discover import Discover
+from .find import Find
 
 __all__ = [
     'Writer',
     'Reader',
-    'Discover',
+    'Find',
     'Storage',
     'Mode',
     'Compression',

@@ -8,7 +8,7 @@ from .exceptions import S3Error
 from .clients import S3
 
 
-# ToDo: Change to fsspec move.
+# ToDo: Change to fsspec copy.
 class S3File2LocalFile(ArgRepr):
     """Download a single file from S3 object storage to local disk.
 

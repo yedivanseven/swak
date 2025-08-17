@@ -8,8 +8,8 @@ from ..misc import ArgRepr
 from .types import LiteralStorage, Storage
 
 
-class Discover(ArgRepr):
-    """Discover files on any supported filesystem.
+class Find(ArgRepr):
+    """List files by prefix and suffix on any supported filesystem.
 
     Parameters
     ----------
@@ -66,6 +66,14 @@ class Discover(ArgRepr):
             self.storage_kws
         )
 
+    # Filesystems that cannot handle leading slashes in paths
+    _STRIP_STORAGES = (Storage.GCS,)
+
+    @property
+    def strip(self) -> bool:
+        """Strip leading slash from path? Necessary on some fle systems."""
+        return self.storage in self._STRIP_STORAGES
+
     @cached_property
     def fs(self) -> AbstractFileSystem:
         """Fresh fsspec file system on first use, same thereafter."""
@@ -109,10 +117,10 @@ class Discover(ArgRepr):
         if uri == '/':
             msg = 'Path must not point to the root directory ("/")!'
             raise ValueError(msg)
-        return uri
+        return uri.lstrip('/') if self.strip else uri
 
     def __call__(self, path: str = '') -> list[str]:
-        """Discover files on any supported filesystem.
+        """List files matching the given criteria on any supported filesystem.
 
         Parameters
         ----------
