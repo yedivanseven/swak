@@ -14,12 +14,13 @@ from .types import Tensor
 
 __all__ = [
     'MuSigmaGamma',
-    'MuSigmaNegativeBinomial'
+    'MuSigmaNegativeBinomial',
+    'MeanStdLogNormal',
 ]
 
 
 class MuSigmaGamma(ptd.Gamma):
-    """Subclass of the PyTorch `Gamma` distribution with intuitive parameters.
+    """Subclass of the :class:`Gamma` distribution with intuitive parameters.
 
     Parameters
     ----------
@@ -33,7 +34,7 @@ class MuSigmaGamma(ptd.Gamma):
 
     See Also
     --------
-    swak.pt.losses.GammaLoss
+    ~swak.pt.losses.GammaLoss
 
     """
 
@@ -48,7 +49,7 @@ class MuSigmaGamma(ptd.Gamma):
 
 
 class MuSigmaNegativeBinomial(ptd.NegativeBinomial):
-    """Subclass of the PyTorch `NegativeBinomial` distribution.
+    """Subclass of the PyTorch :class:`NegativeBinomial` distribution.
 
     Parameters
     ----------
@@ -69,8 +70,8 @@ class MuSigmaNegativeBinomial(ptd.NegativeBinomial):
 
     See Also
     --------
-    swak.pt.losses.NegativeBinomialLoss
-    swak.pt.misc.NegativeBinomialFinalizer
+    ~swak.pt.losses.NegativeBinomialLoss
+    ~swak.pt.misc.NegativeBinomialFinalizer
 
     """
 
@@ -80,9 +81,42 @@ class MuSigmaNegativeBinomial(ptd.NegativeBinomial):
             sigma: float | Tensor,
             validate_args: bool = False
     ) -> None:
-        sigma2 = sigma**2
+        variance = sigma**2
         super().__init__(
-            mu**2 / (sigma2 - mu),
-            1.0 - mu / sigma2,
+            mu**2 / (variance - mu),
+            1.0 - mu / variance,
+            validate_args=validate_args
+        )
+
+
+class MeanStdLogNormal(ptd.LogNormal):
+    """Subclass of the PyTorch :class:`LogNormal` distribution.
+
+    Parameters
+    ----------
+    mean: Tensor
+        Mean value(s) of the Log-Normal distribution(s) in natural scale.
+    std: Tensor
+        Standard deviation(s) of Log-Normal distribution(s) in natural scale.
+    validate_args: bool, optional
+        Whether the parent class should validate the transformed parameters
+        or not. Defaults to ``False``
+
+    See Also
+    --------
+    ~swak.pt.losses.LogNormalLoss
+
+    """
+
+    def __init__(
+            self,
+            mean: Tensor,
+            std: Tensor,
+            validate_args: bool = False
+    ) -> None:
+        variance = (std.pow(2) / mean.pow(2)).log1p()
+        super().__init__(
+            mean.log() - 0.5 * variance,
+            variance.sqrt(),
             validate_args=validate_args
         )

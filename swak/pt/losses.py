@@ -11,12 +11,10 @@ probability distribution.
 from typing import Self
 from enum import StrEnum
 from typing import Literal
-import math
 import torch as pt
 import torch.nn as ptn
 import torch.special as pts
 from .types import Tensor, Module
-from .exceptions import LossError
 from .misc import identity
 
 __all__ = [
@@ -27,6 +25,7 @@ __all__ = [
     'GammaLoss',
     'StudentLoss',
     'NegativeBinomialLoss',
+    'LogNormalLoss',
     'XEntropyLoss'
 ]
 
@@ -40,6 +39,8 @@ class Reduction(StrEnum):
     NONE = 'none'
 
 
+# ToDo: Use enum to check for correct reduction string.
+# ToDo: Enhance the docstring by using :class:`MyLoss` when referring to Enum.
 class _BaseLoss(Module):
     """Base class for custom loss functions.
 
@@ -54,7 +55,8 @@ class _BaseLoss(Module):
     reduction: string, optional
         One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
         how to aggregate the tensor resulting from evaluating the point-wise
-        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
     eps: float, optional
         Many loss functions require input and/or target tensors to be bound
         by some lower and/or upper value. It is the user's responsibility to
@@ -62,6 +64,11 @@ class _BaseLoss(Module):
         interval boundary of its support might lead to numerical inaccuracies.
         To avoid these, it is often advisable to shift such values away from
         boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
 
     See Also
     --------
@@ -77,17 +84,13 @@ class _BaseLoss(Module):
 
     def __init__(
             self,
-            reduction: LiteralReduction = 'mean',
+            reduction: Reduction | LiteralReduction = 'mean',
             eps: float = 1e-6
     ) -> None:
         super().__init__()
-        self.reduction = str(reduction).strip().lower()
+        self.reduction = str(Reduction(str(reduction).strip().lower()))
         self.register_buffer('eps', pt.tensor(eps), False)
-        try:
-            self._reduce = self.__reductions[self.reduction]
-        except KeyError:
-            msg = '"reduction" must be one of "mean", "sum", or "none"!'
-            raise LossError(msg)
+        self._reduce = self.__reductions[self.reduction]
 
     def forward(self, *tensors: Tensor) -> Tensor:
         """Forward pass for custom losses. Implement in subclasses!"""
@@ -106,7 +109,8 @@ class RMSELoss(Module):
     reduction: string, optional
         One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
         how to aggregate the tensor resulting from evaluating the point-wise
-        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
     eps: float, optional
         Many loss functions require input and/or target tensors to be bound
         by some lower and/or upper value. It is the user's responsibility to
@@ -123,13 +127,13 @@ class RMSELoss(Module):
 
     def __init__(
             self,
-            reduction: LiteralReduction = 'mean',
+            reduction: Reduction | LiteralReduction = 'mean',
             eps: float = 1e-8
     ) -> None:
         super().__init__()
-        self.reduction = reduction
+        self.reduction = str(reduction).strip().lower()
         self.register_buffer('eps', pt.tensor(eps), False)
-        self.mse = ptn.MSELoss(reduction=reduction)
+        self.mse = ptn.MSELoss(reduction=self.reduction)
 
     def forward(self, y_hat: Tensor, y_true: Tensor) -> Tensor:
         """Compute RMSE loss between predicted and observed values.
@@ -148,7 +152,7 @@ class RMSELoss(Module):
         Returns
         -------
         Tensor
-            The root mean square error.
+            The root-mean-square error.
 
         """
         return self.mse(y_hat, y_true).clamp(self.eps).sqrt()
@@ -167,7 +171,8 @@ class TweedieLoss(_BaseLoss):
     reduction: string, optional
         One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
         how to aggregate the tensor resulting from evaluating the point-wise
-        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
     eps: float, optional
         Many loss functions require input and/or target tensors to be bound
         by some lower and/or upper value. It is the user's responsibility to
@@ -175,6 +180,11 @@ class TweedieLoss(_BaseLoss):
         interval boundary of its support might lead to numerical inaccuracies.
         To avoid these, it is often advisable to shift such values away from
         boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
 
     See Also
     --------
@@ -184,7 +194,7 @@ class TweedieLoss(_BaseLoss):
 
     def __init__(
             self,
-            reduction: LiteralReduction = 'mean',
+            reduction: Reduction | LiteralReduction = 'mean',
             eps: float = 1e-6
     ) -> None:
         super().__init__(reduction, eps)
@@ -236,7 +246,8 @@ class BetaBernoulliLoss(_BaseLoss):
     reduction: string, optional
         One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
         how to aggregate the tensor resulting from evaluating the point-wise
-        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
     eps: float, optional
         Many loss functions require input and/or target tensors to be bound
         by some lower and/or upper value. It is the user's responsibility to
@@ -244,6 +255,11 @@ class BetaBernoulliLoss(_BaseLoss):
         interval boundary of its support might lead to numerical inaccuracies.
         To avoid these, it is often advisable to shift such values away from
         boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
 
     See Also
     --------
@@ -253,7 +269,7 @@ class BetaBernoulliLoss(_BaseLoss):
 
     def __init__(
             self,
-            reduction: LiteralReduction = 'mean',
+            reduction: Reduction | LiteralReduction = 'mean',
             eps: float = 1e-6
     ) -> None:
         super().__init__(reduction, eps)
@@ -310,7 +326,8 @@ class GammaLoss(_BaseLoss):
     reduction: string, optional
         One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
         how to aggregate the tensor resulting from evaluating the point-wise
-        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
     eps: float, optional
         Many loss functions require input and/or target tensors to be bound
         by some lower and/or upper value. It is the user's responsibility to
@@ -318,6 +335,11 @@ class GammaLoss(_BaseLoss):
         interval boundary of its support might lead to numerical inaccuracies.
         To avoid these, it is often advisable to shift such values away from
         boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
 
     See Also
     --------
@@ -327,7 +349,7 @@ class GammaLoss(_BaseLoss):
 
     def __init__(
             self,
-            reduction: LiteralReduction = 'mean',
+            reduction: Reduction | LiteralReduction = 'mean',
             eps: float = 1e-6
     ) -> None:
         super().__init__(reduction, eps)
@@ -379,7 +401,8 @@ class StudentLoss(_BaseLoss):
     reduction: string, optional
         One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
         how to aggregate the tensor resulting from evaluating the point-wise
-        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
     eps: float, optional
         Many loss functions require input and/or target tensors to be bound
         by some lower and/or upper value. It is the user's responsibility to
@@ -387,6 +410,11 @@ class StudentLoss(_BaseLoss):
         interval boundary of its support might lead to numerical inaccuracies.
         To avoid these, it is often advisable to shift such values away from
         boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
 
     See Also
     --------
@@ -396,11 +424,11 @@ class StudentLoss(_BaseLoss):
 
     def __init__(
             self,
-            reduction: LiteralReduction = 'mean',
+            reduction: Reduction | LiteralReduction = 'mean',
             eps: float = 1e-6
     ) -> None:
         super().__init__(reduction, eps)
-        self.register_buffer('const', -0.5 * pt.tensor(math.pi).log(), False)
+        self.register_buffer('const', -0.5 * pt.tensor(pt.pi).log(), False)
 
     def forward(
             self,
@@ -459,7 +487,8 @@ class NegativeBinomialLoss(_BaseLoss):
     reduction: string, optional
         One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
         how to aggregate the tensor resulting from evaluating the point-wise
-        loss function on the input. Use the ``Reduction`` enum to avoid typos.
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
     eps: float, optional
         Many loss functions require input and/or target tensors to be bound
         by some lower and/or upper value. It is the user's responsibility to
@@ -467,6 +496,11 @@ class NegativeBinomialLoss(_BaseLoss):
         interval boundary of its support might lead to numerical inaccuracies.
         To avoid these, it is often advisable to shift such values away from
         boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
 
     Note
     ----
@@ -479,8 +513,8 @@ class NegativeBinomialLoss(_BaseLoss):
     See Also
     --------
     Reduction
-    swak.pt.misc.NegativeBinomialFinalizer
-    swak.pt.dists.MuSigmaNegativeBinomial
+    ~swak.pt.misc.NegativeBinomialFinalizer
+    ~swak.pt.dists.MuSigmaNegativeBinomial
 
     References
     ----------
@@ -492,7 +526,7 @@ class NegativeBinomialLoss(_BaseLoss):
 
     def __init__(
             self,
-            reduction: LiteralReduction = 'mean',
+            reduction: Reduction | LiteralReduction = 'mean',
             eps: float = 1e-6
     ) -> None:
         super().__init__(reduction, eps)
@@ -536,10 +570,91 @@ class NegativeBinomialLoss(_BaseLoss):
         return self._reduce(negll)
 
 
-class XEntropyLoss(ptn.CrossEntropyLoss):
-    """Subclass of PyTorch's ``CrossEntropyLoss``  with added functionality.
+class LogNormalLoss(_BaseLoss):
+    """Negative log-likelihood of a Log-Normal distribution.
 
-    When in training mode (toggled by calling the module ``train`` method
+    Potentially useful for strictly positive data. For convenience, the
+    Log-Normal distribution is parameterized in terms of mean and standard
+    deviation on its natural scale instead of its standard form (using the
+    mean and standard deviation of the underlying Gaussian).
+
+    Parameters
+    ----------
+    reduction: string, optional
+        One of "mean", "sum" or "none". Defaults to "mean". Whether and, if so,
+        how to aggregate the tensor resulting from evaluating the point-wise
+        loss function on the input. Use the :class:`Reduction` enum
+        to avoid typos.
+    eps: float, optional
+        Many loss functions require input and/or target tensors to be bound
+        by some lower and/or upper value. It is the user's responsibility to
+        ensure that they are. However, evaluating a loss function just at the
+        interval boundary of its support might lead to numerical inaccuracies.
+        To avoid these, it is often advisable to shift such values away from
+        boundaries by a small value `eps`. Defaults to 1e-6.
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
+
+    See Also
+    --------
+    Reduction
+    ~swak.pt.dists.MeanStdLogNormal
+
+    """
+
+    def __init__(
+            self,
+            reduction: Reduction | LiteralReduction = 'mean',
+            eps: float = 1e-6
+    ) -> None:
+        super().__init__(reduction, eps)
+        const = -0.5 * pt.tensor(2 * pt.pi).log()
+        self.register_buffer('const', const, False)
+
+    def forward(self, mean: Tensor, std: Tensor, y_true: Tensor) -> Tensor:
+        """Forward pass for the Log-Normal loss function.
+
+        Parameters
+        ----------
+        mean: Tensor
+            Predicted mean values. Should be greater than or equal to 0, but
+            this will not be checked for, let alone enforced. However, `eps`
+            is added to ensure numerical stability.
+        std: Tensor
+            Predicted standard deviations. Should be greater than or equal
+            to 0, but this will not be checked for, let alone enforced.
+            However, `eps` is added to ensure numerical stability.
+        y_true: Tensor
+            Actually observed values. Should be greater than or equal
+            to 0, but this will not be checked for, let alone enforced.
+            However, `eps` is added to ensure numerical stability.
+
+        Returns
+        -------
+        Tensor
+            The negative log-likelihood of a Negative-Binomial distribution.
+
+        """
+        log_ratio = (std.pow(2.0) / (mean.pow(2.0) + self.eps)).log1p()
+        y_true_log = (y_true + self.eps).log()
+        mu_log = (mean + self.eps).log()
+        enumerator = (y_true_log - mu_log + 0.5 * log_ratio).pow(2.0)
+        negll = -(
+            self.const -
+            y_true_log -
+            0.5 * pt.log(log_ratio + self.eps) -
+            enumerator / (2.0 * log_ratio + self.eps)
+        )
+        return self._reduce(negll)
+
+
+class XEntropyLoss(ptn.CrossEntropyLoss):
+    """Subclass of PyTorch :class:`CrossEntropyLoss`  with added functionality.
+
+    When in training mode (toggled by calling the module :meth:`train` method
     without argument or with ``True``), the `label_smoothing` is applied
     according to value provided at instantiation. When in evaluation mode,
     however, the `label-smoothing` is set to 0.0 to report reproducible
@@ -559,7 +674,8 @@ class XEntropyLoss(ptn.CrossEntropyLoss):
     reduction: str, optional
         Specifies the reduction to apply to the output: "none", "mean", or
         "sum". Defaults to "mean", which means the weighted mean in case a
-        valid `weight` was provided. Use the ``Reduction`` enum to avoid typos.
+        valid `weight` was provided. Use the :class:`Reduction` enum
+        to avoid typos.
     label_smoothing: float, optional
          Specifies the amount of smoothing when computing the loss. Must lie
          in the interval [0.0, 1.0] where 0.0 means no smoothing. The targets
@@ -567,6 +683,11 @@ class XEntropyLoss(ptn.CrossEntropyLoss):
          distribution as described in `Rethinking the Inception Architecture
          for Computer Vision <https://arxiv.org/abs/1512.00567>`__.
          Default to 0.0
+
+    Raises
+    ------
+    ValueError
+        If `reduction` is not one of the allowed options.
 
     Note
     ----
@@ -616,7 +737,8 @@ class XEntropyLoss(ptn.CrossEntropyLoss):
     def eval(self) -> Self:
         """Toggle evaluation mode by setting `label-smoothing` to 0.0
 
-        Calling ``eval`` is Equivalent to calling the method ``train(False)``.
+        Calling :meth:`eval` is Equivalent to calling the method
+        :meth:`train(False)`.
 
         Returns
         -------
