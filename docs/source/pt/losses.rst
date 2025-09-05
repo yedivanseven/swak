@@ -47,6 +47,11 @@ losses
    :show-inheritance:
 
 
+.. autoclass:: swak.pt.losses.LogNormalLoss
+   :members:
+   :show-inheritance:
+
+
 .. autoclass:: swak.pt.losses.XEntropyLoss
    :members:
    :show-inheritance:

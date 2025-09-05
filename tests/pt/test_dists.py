@@ -1,7 +1,11 @@
 import unittest
 from unittest.mock import patch
 import torch as pt
-from swak.pt.dists import MuSigmaGamma, MuSigmaNegativeBinomial
+from swak.pt.dists import (
+    MuSigmaGamma,
+    MuSigmaNegativeBinomial,
+    MeanStdLogNormal,
+)
 
 
 class TestMuSigmaGamma(unittest.TestCase):
@@ -110,6 +114,55 @@ class TestMuNegativeBinomial(unittest.TestCase):
         probs = 1.0 - mu / sigma**2
         _ = MuSigmaNegativeBinomial(mu, sigma, True)
         mock.assert_called_once_with(total_counts, probs, validate_args=True)
+
+
+class TestMeanStdLogNormal(unittest.TestCase):
+
+    def setUp(self):
+        self.mean = pt.tensor(5.7)
+        self.stddev = pt.tensor(3.1)
+        variance =  (self.stddev.pow(2) / self.mean.pow(2)).log1p()
+        self.mu = self.mean.log() - 0.5 * variance
+        self.sigma = variance.sqrt()
+
+    def test_mean_0d(self):
+        dist = MeanStdLogNormal(self.mean, self.stddev)
+        pt.testing.assert_close(dist.mean, self.mean)
+        pt.testing.assert_close(dist.stddev, self.stddev)
+
+    def test_mean_1d(self):
+        expected_mean = pt.ones(3) * self.mean
+        expected_stddev = pt.ones(3) * self.stddev
+        dist = MeanStdLogNormal(expected_mean, expected_stddev)
+        pt.testing.assert_close(dist.mean, expected_mean)
+        pt.testing.assert_close(dist.stddev, expected_stddev)
+
+    def test_mean_2d(self):
+        expected_mean = pt.ones(3, 4) * self.mean
+        expected_stddev = pt.ones(3, 4) * self.stddev
+        dist = MeanStdLogNormal(expected_mean, expected_stddev)
+        pt.testing.assert_close(dist.mean, expected_mean)
+        pt.testing.assert_close(dist.stddev, expected_stddev)
+
+    def test_mean_3d(self):
+        expected_mean = pt.ones(3, 4, 5) * self.mean
+        expected_stddev = pt.ones(3, 4, 5) * self.stddev
+        dist = MeanStdLogNormal(expected_mean, expected_stddev)
+        pt.testing.assert_close(dist.mean, expected_mean)
+        pt.testing.assert_close(dist.stddev, expected_stddev)
+
+    def test_mean_4d(self):
+        expected_mean = pt.ones(2, 3, 4, 5) * self.mean
+        expected_stddev = pt.ones(2, 3, 4, 5) * self.stddev
+        dist = MeanStdLogNormal(expected_mean, expected_stddev)
+        pt.testing.assert_close(dist.mean, expected_mean)
+        pt.testing.assert_close(dist.stddev, expected_stddev)
+
+    @patch('torch.distributions.LogNormal.__init__')
+    def test_args_transform(self, mock):
+        _ = MeanStdLogNormal(self.mean, self.stddev, True)
+        mock.assert_called_once_with(self.mu, self.sigma, validate_args=True)
+
 
 
 if __name__ == '__main__':

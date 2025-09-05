@@ -1,7 +1,6 @@
 import unittest
 import torch as pt
 from swak.pt.losses import _BaseLoss
-from swak.pt.exceptions import LossError
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -50,7 +49,7 @@ class TestAttributes(unittest.TestCase):
         pt.testing.assert_close(self.loss.eps, pt.tensor(1.0))
 
     def test_raises_on_wrong_reduction(self):
-        with self.assertRaises(LossError):
+        with self.assertRaises(ValueError):
             _ = _BaseLoss('hello')
 
 
