@@ -7,7 +7,6 @@ staging, and production environments.
 
 """
 
-from .types import Storage, Mode, Compression
 from .writer import Writer
 from .reader import Reader
 from .parquet import DataFrame2Parquet, Parquet2DataFrame
@@ -15,6 +14,15 @@ from .toml import TomlWriter, TomlReader
 from .yaml import YamlWriter, YamlReader, YamlParser
 from .json import JsonWriter, JsonReader
 from .find import Find
+from .types import (
+    Storage,
+    Mode,
+    Compression,
+    Bears,
+    LiteralBears,
+    NotFound,
+    LiteralNotFound
+)
 
 __all__ = [
     'Writer',
@@ -23,6 +31,10 @@ __all__ = [
     'Storage',
     'Mode',
     'Compression',
+    'Bears',
+    'LiteralBears',
+    'NotFound',
+    'LiteralNotFound',
     'DataFrame2Parquet',
     'Parquet2DataFrame',
     'TomlWriter',

@@ -1,6 +1,7 @@
 import pkgutil
 import warnings
-from ..misc import ArgRepr, NotFound, LiteralNotFound
+from ..misc import ArgRepr
+from ..io import NotFound, LiteralNotFound
 
 
 class TextResourceLoader(ArgRepr):

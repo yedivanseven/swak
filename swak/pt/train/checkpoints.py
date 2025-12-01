@@ -4,7 +4,7 @@ from typing import Any, TypedDict
 from collections import OrderedDict
 from pathlib import Path
 import torch as pt
-from ...misc import NotFound, LiteralNotFound
+from ...io import NotFound, LiteralNotFound
 from ..types import Tensor, Module, Optimizer, LRScheduler
 
 __all__ = [

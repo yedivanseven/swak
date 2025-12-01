@@ -3,7 +3,8 @@
 import warnings
 import torch as pt
 from pathlib import Path
-from ..misc import ArgRepr, NotFound, LiteralNotFound
+from ..misc import ArgRepr
+from ..io import NotFound, LiteralNotFound
 from .types import Module, Device
 
 __all__ = [

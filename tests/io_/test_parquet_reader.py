@@ -5,8 +5,8 @@ import polars as pl
 from pyarrow import ArrowInvalid
 from io import BytesIO
 from unittest.mock import patch, Mock
-from swak.misc import Bears
 from swak.io import Parquet2DataFrame, Reader, Storage, Mode
+from swak.io import Bears
 
 
 class TestInstantiation(unittest.TestCase):

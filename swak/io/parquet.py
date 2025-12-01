@@ -5,10 +5,9 @@ from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
 import pandas as pd
 import polars as pl
-from ..misc import Bears, LiteralBears
+from .types import Bears, LiteralBears, LiteralStorage, Storage, Mode
 from .writer import Writer
 from .reader import Reader
-from .types import LiteralStorage, Storage, Mode
 
 
 class DataFrame2Parquet(Writer):
@@ -169,7 +168,7 @@ class Parquet2DataFrame(Reader):
     See Also
     --------
     Storage
-    ~swak.misc.Bears
+    Bears
 
     """
 

@@ -6,6 +6,7 @@ type LiteralMode = Literal['wb', 'wt']
 type LiteralStorage = Literal['file', 's3', 'gcs', 'memory']
 type LiteralCompression = Literal['zip', 'bz2', 'gzip', 'lzma', 'xz']
 type LiteralNotFound = Literal['ignore', 'warn', 'raise']
+type LiteralBears = Literal['pandas', 'polars']
 type Toml = Mapping[str, Any]
 type Yaml = Mapping[str, Any] | list[Any]
 
@@ -40,3 +41,9 @@ class NotFound(StrEnum):
     IGNORE = 'ignore'
     WARN = 'warn'
     RAISE = 'raise'
+
+
+class Bears(StrEnum):
+    """Enum to choose pandas versus polars."""
+    PANDAS = 'pandas'
+    POLARS = 'polars'

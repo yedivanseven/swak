@@ -39,8 +39,6 @@ class Reduction(StrEnum):
     NONE = 'none'
 
 
-# ToDo: Use enum to check for correct reduction string.
-# ToDo: Enhance the docstring by using :class:`MyLoss` when referring to Enum.
 class _BaseLoss(Module):
     """Base class for custom loss functions.
 

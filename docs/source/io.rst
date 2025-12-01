@@ -4,7 +4,7 @@ io
 .. automodule:: swak.io
 
 
-.. autoclass:: swak.io.Discover
+.. autoclass:: swak.io.Find
    :members:
    :special-members: __call__
    :show-inheritance:
@@ -127,3 +127,26 @@ Enums
 
    .. autoattribute:: XZ
       :annotation: = xz
+
+
+.. autoclass:: swak.io.NotFound
+   :show-inheritance:
+
+   .. autoattribute:: IGNORE
+      :annotation: = ignore
+
+   .. autoattribute:: WARN
+      :annotation: = warn
+
+   .. autoattribute:: RAISE
+      :annotation: = raise
+
+
+.. autoclass:: swak.io.Bears
+   :show-inheritance:
+
+   .. autoattribute:: PANDAS
+      :annotation: = pandas
+
+   .. autoattribute:: POLARS
+      :annotation: = polars

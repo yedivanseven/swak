@@ -43,30 +43,3 @@ misc
    :inherited-members: _name
    :private-members: _name
    :show-inheritance:
-
-
-
-Enums
------
-
-.. autoclass:: swak.misc.NotFound
-   :show-inheritance:
-
-   .. autoattribute:: IGNORE
-      :annotation: = ignore
-
-   .. autoattribute:: WARN
-      :annotation: = warn
-
-   .. autoattribute:: RAISE
-      :annotation: = raise
-
-
-.. autoclass:: swak.misc.Bears
-   :show-inheritance:
-
-   .. autoattribute:: PANDAS
-      :annotation: = pandas
-
-   .. autoattribute:: POLARS
-      :annotation: = polars
