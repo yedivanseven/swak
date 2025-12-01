@@ -54,17 +54,6 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_non_root(self):
         self.assertTrue(callable(self.find._non_root))
 
-    def test_has_strip_storage(self):
-        self.assertTrue(hasattr(self.find, '_STRIP_STORAGES'))
-        self.assertTrue(hasattr(Find, '_STRIP_STORAGES'))
-
-    def test_has_strip(self):
-        self.assertTrue(hasattr(self.find, 'strip'))
-
-    def test_strip(self):
-        self.assertIsInstance(self.find.strip, bool)
-        self.assertFalse(self.find.strip)
-
 
 class TestAttributes(unittest.TestCase):
 
@@ -144,10 +133,6 @@ class TestAttributes(unittest.TestCase):
         find = Find(storage_kws={'answer': 42})
         self.assertDictEqual({'answer': 42}, find.storage_kws)
 
-    def test_strip(self):
-        find = Find(storage=Storage.GCS)
-        self.assertTrue(find.strip)
-
 
 class TestMethods(unittest.TestCase):
 
@@ -158,51 +143,33 @@ class TestMethods(unittest.TestCase):
         find = Find(self.path)
         path = find._non_root()
         self.assertIsInstance(path, str)
-        self.assertEqual(self.path, path)
+        self.assertEqual(find.prefix + self.path, path)
 
     def test_non_root_empty_string(self):
         find = Find(self.path)
         path = find._non_root('')
         self.assertIsInstance(path, str)
-        self.assertEqual(self.path, path)
+        self.assertEqual(find.prefix + self.path, path)
 
     def test_non_root_appends(self):
         find = Find('/path/to/')
         path = find._non_root('sub/file.txt')
-        self.assertEqual('/path/to/sub/file.txt', path)
+        self.assertEqual(find.prefix + '/path/to/sub/file.txt', path)
 
     def test_non_root_strips(self):
         find = Find('/path/to/')
         path = find._non_root(' sub/file.txt / ')
-        self.assertEqual('/path/to/sub/file.txt', path)
+        self.assertEqual(find.prefix + '/path/to/sub/file.txt', path)
 
     def test_non_root_replaces(self):
         find = Find('/path/to/file.txt')
         path = find._non_root('/another/different.txt')
-        self.assertEqual('/another/different.txt', path)
+        self.assertEqual(find.prefix + '/another/different.txt', path)
 
     def test_non_root_raises_on_root(self):
         find = Find('/')
         with self.assertRaises(ValueError):
             _ = find._non_root('/')
-
-    def test_root_strips_funky_file_systems_init(self):
-        for storage in Find._STRIP_STORAGES:
-            find = Find('/path/to', storage)
-            actual = find._non_root()
-            self.assertFalse(actual.startswith('/'))
-
-    def test_root_strips_funky_file_systems_call(self):
-        for storage in Find._STRIP_STORAGES:
-            find = Find('/path/to', storage)
-            actual = find._non_root('subdir/file.txt')
-            self.assertFalse(actual.startswith('/'))
-
-    def test_root_strips_funky_file_systems_reset(self):
-        for storage in Find._STRIP_STORAGES:
-            find = Find('/path/to', storage)
-            actual = find._non_root('/different/path')
-            self.assertFalse(actual.startswith('/'))
 
 
 class TestUsage(unittest.TestCase):

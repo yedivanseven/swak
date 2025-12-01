@@ -42,6 +42,13 @@ class Find(ArgRepr):
     --------
     Storage
 
+    Notes
+    -----
+    Avoid creating explicit "subfolders" on cloud object storage! Depending on
+    details and cloud service, these might actually be 0 bytes files with names
+    ending in a trailing slash and would, thus, be included in the results
+    of the current class.
+
     """
 
     def __init__(
@@ -65,14 +72,6 @@ class Find(ArgRepr):
             self.max_depth,
             self.storage_kws
         )
-
-    # Filesystems that cannot handle leading slashes in paths
-    _STRIP_STORAGES = (Storage.GCS,)
-
-    @property
-    def strip(self) -> bool:
-        """Strip leading slash from path? Necessary on some fle systems."""
-        return self.storage in self._STRIP_STORAGES
 
     @cached_property
     def fs(self) -> AbstractFileSystem:
@@ -117,7 +116,7 @@ class Find(ArgRepr):
         if uri == '/':
             msg = 'Path must not point to the root directory ("/")!'
             raise ValueError(msg)
-        return uri.lstrip('/') if self.strip else uri
+        return self.prefix + uri
 
     def __call__(self, path: str = '') -> list[str]:
         """List files matching the given criteria on any supported filesystem.
