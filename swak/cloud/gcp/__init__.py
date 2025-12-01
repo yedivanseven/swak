@@ -10,7 +10,6 @@ from .bucket import GcsBucket
 from .query import GbqQuery
 from .query2gcs import GbqQuery2GcsParquet
 from .gcs2local import GcsDir2LocalDir
-from .gcs2df import GcsParquet2DataFrame
 from .query2df import GbqQuery2DataFrame
 from .df2gbq import IfExists, DataFrame2Gbq
 from .dataset import Collation, Rounding, Billing, GbqDataset
@@ -25,12 +24,10 @@ __all__ = [
     'GbqQuery',
     'GbqQuery2GcsParquet',
     'GcsDir2LocalDir',
-    'GcsParquet2DataFrame',
     'GbqQuery2DataFrame',
     'IfExists',
     'DataFrame2Gbq'
 ]
 
-# ToDo: Rewrite with Saver/Loader base class so that file/s3/gcs is handled
 # ToDo: Refactor so that partial clients are created outside classes
 # ToDo: Add move single file to local
