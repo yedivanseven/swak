@@ -176,11 +176,12 @@ class Writer(ArgRepr):
     def _uri_from(self, *parts: Any) -> str:
         """Check skip/overwrite and create parent directories."""
         uri = self.__non_root_from(*parts)
+        parent = str(uri.parent)
         if self.fs.exists(uri):
             if self.skip:
                 return ''
             if not self.overwrite:
                 msg = f'File "{uri}" already exists!'
                 raise FileExistsError(msg)
-        self.fs.makedirs(self.fs._parent(uri), exist_ok=True)
+        self.fs.makedirs(parent, exist_ok=True)
         return str(uri)

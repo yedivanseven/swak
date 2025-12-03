@@ -14,6 +14,7 @@ from .toml import TomlWriter, TomlReader
 from .yaml import YamlWriter, YamlReader, YamlParser
 from .json import JsonWriter, JsonReader
 from .find import Find
+from .copy import Copy
 from .types import (
     Storage,
     Mode,
@@ -28,6 +29,7 @@ __all__ = [
     'Writer',
     'Reader',
     'Find',
+    'Copy',
     'Storage',
     'Mode',
     'Compression',

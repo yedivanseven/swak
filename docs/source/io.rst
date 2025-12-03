@@ -10,6 +10,12 @@ io
    :show-inheritance:
 
 
+.. autoclass:: swak.io.Copy
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.io.DataFrame2Parquet
    :members:
    :special-members: __call__
