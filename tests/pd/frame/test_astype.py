@@ -96,7 +96,7 @@ class TestUsage(unittest.TestCase):
         convert = AsType({0: str, 1: float})
         converted = convert(self.df)
         first, second = converted.dtypes.to_list()
-        self.assertIs(np.dtype('O'), first)
+        self.assertIsInstance(first, pd.StringDtype)
         self.assertIs(np.dtype('float64'), second)
 
     def test_arg_no_cols(self):
@@ -105,7 +105,7 @@ class TestUsage(unittest.TestCase):
         self.assertTrue(converted.empty)
 
     def test_arg_kwargs_no_cols(self):
-        convert = AsType(float, copy=True)
+        convert = AsType(float, errors='raise')
         converted = convert(self.no_cols)
         self.assertTrue(converted.empty)
 

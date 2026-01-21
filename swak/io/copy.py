@@ -9,7 +9,7 @@ from ..misc import ArgRepr
 from .types import Storage, LiteralStorage
 
 
-# ToDo: Add Docstrings and finish unit tests
+# ToDo: Cotninue here with adding docstrings
 class Copy(ArgRepr):
 
     def __init__(
@@ -81,13 +81,14 @@ class Copy(ArgRepr):
     @staticmethod
     def _non_root(path: str) -> str:
         """Check that path does not point to a file directly under root."""
-        if path.count('/') < 2:
+        path = PurePosixPath(path)
+        if str(path).count('/') < 2:
             msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(path))
-        if any(part == '..' for part in PurePosixPath(path).parts):
+        if any(part == '..' for part in path.parts):
             msg = 'Relative placeholder ".." is not permitted!'
             raise ValueError(msg)
-        return path
+        return str(path)
 
     def _src_uri_from(self, path: str) -> str:
         """Normalize path and merge with source URI."""
@@ -126,7 +127,7 @@ class Copy(ArgRepr):
         """Fresh fsspec target file system on first use, same thereafter."""
         return fsspec.filesystem(self.tgt_storage, **self.tgt_kws)
 
-    def __call__(self, path: str) -> str:
+    def __call__(self, path: str = '') -> str:
         """
 
         Parameters

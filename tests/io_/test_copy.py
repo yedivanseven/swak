@@ -1,6 +1,8 @@
-# import pickle
+import pickle
 import unittest
 from unittest.mock import patch, Mock
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+from pathlib import Path
 from fsspec.implementations.memory import MemoryFileSystem
 from fsspec.implementations.local import LocalFileSystem
 from swak.io import Copy, Storage
@@ -310,18 +312,148 @@ class TestUsage(unittest.TestCase):
         expected = self.path + '.tmp.hex'
         self.assertEqual(expected, actual)
 
-    # ToDo: Continue here
-    # Test exists/skip(overwrite logic
-    # Test parents are created on target
-    # Test tmp called
-    # Test temporary file created
-    # Test temporary file moved
-    # Test temporary file removed
-    # Test return value
+    def test_exist_skip(self):
+        with NamedTemporaryFile('wb') as tgt:
+            copy = Copy('made/up/file.name', tgt_base=tgt.name, skip=True)
+            actual = copy()
+            self.assertEqual(tgt.name, actual)
+
+    def test_exist_overwrite_raises(self):
+        with NamedTemporaryFile('wb') as tgt:
+            copy = Copy('made/up/file.name', tgt_base=tgt.name, skip=False)
+            with self.assertRaises(FileExistsError):
+                _ = copy()
+
+    def test_exist_overwrite_ok(self):
+        with NamedTemporaryFile('wb') as src, NamedTemporaryFile('wb') as tgt:
+            src.write(b'src content')
+            src.flush()
+
+            tgt.write(b'tgt content')
+            tgt.flush()
+
+            copy = Copy(
+                src_base=src.name,
+                tgt_base=tgt.name,
+                skip=False,
+                overwrite=True
+            )
+            _ = copy()
+
+            with Path(tgt.name).open('rb') as f:
+                actual = f.read()
+
+            self.assertEqual(b'src content', actual)
+
+    def test_new_parents_created(self):
+        with TemporaryDirectory() as tmp:
+            src = Path(tmp) / 'src.file'
+            tgt = Path(tmp) / 'dir' / 'to' / 'create' / 'tgt.file'
+
+            src.write_bytes(b'src content')
+
+            copy = Copy(str(src), str(tgt))
+
+            _ = copy()
+
+            self.assertTrue(tgt.parent.exists())
+            self.assertTrue(tgt.parent.is_dir())
+
+    def test_existing_parents_created(self):
+        with TemporaryDirectory() as tmp:
+            src = Path(tmp) / 'src.file'
+            tgt = Path(tmp) / 'dir' / 'to' / 'create' / 'tgt.file'
+            tgt.parent.mkdir(parents=True)
+
+            src.write_bytes(b'src content')
+
+            copy = Copy(str(src), str(tgt))
+
+            _ = copy()
+
+            self.assertTrue(tgt.parent.exists())
+            self.assertTrue(tgt.parent.is_dir())
+
+    @patch('swak.io.writer.uuid.uuid4')
+    def test_tmp_file_removed_on_success(self, uuid):
+        uuid.return_value = Mock(hex='hex')
+
+        with TemporaryDirectory() as tmp_dir:
+            src = Path(tmp_dir) / 'src.txt'
+            tgt = Path(tmp_dir) / 'dir' / 'tgt.txt'
+            src.write_bytes(b'src content')
+
+            copy = Copy(str(src), str(tgt))
+            tmp_file = Path(copy._tmp(str(tgt)))
+            actual = copy()
+
+            self.assertTrue(tgt.exists())
+            self.assertEqual(tgt.read_bytes(), b'src content')
+            self.assertFalse(tmp_file.exists())
+            self.assertEqual(actual, str(tgt))
+
+    @patch('swak.io.writer.uuid.uuid4')
+    def test_tmp_file_removed_on_failure(self, uuid):
+        uuid.return_value = Mock(hex='hex')
+
+        with TemporaryDirectory() as tmp_dir:
+            src = Path(tmp_dir) / 'src.txt'
+            tgt = Path(tmp_dir) / 'dir' / 'tgt.txt'
+            src.write_bytes(b'src content')
+
+            copy = Copy(str(src), str(tgt))
+            tmp_file = Path(copy._tmp(str(tgt)))
+
+            with (
+                patch.object(copy.tgt_fs, 'mv', side_effect=RuntimeError),
+                self.assertRaises(RuntimeError)
+            ):
+                    _ = copy()
+
+            self.assertFalse(tgt.exists())
+            self.assertFalse(tmp_file.exists())
 
     def test_callable(self):
         copy = Copy()
         self.assertTrue(callable(copy))
+
+
+class TestMisc(unittest.TestCase):
+
+    def test_default_repr(self):
+        copy = Copy()
+        expected = "Copy('/', '/', 'file', 'file', False, False, 32.0, {}, {})"
+        self.assertEqual(expected, repr(copy))
+
+    def test_custom_repr(self):
+        copy = Copy(
+            '/src/dir',
+            '/tgt/dir',
+            'memory',
+            'memory',
+            True,
+            True,
+            16,
+            {'src': 'kws'},
+            {'tgt': 'kws'}
+        )
+        expected = ("Copy('/src/dir', '/tgt/dir', 'memory', 'memory', "
+                    "True, True, 16.0, {'src': 'kws'}, {'tgt': 'kws'})")
+        self.assertEqual(expected, repr(copy))
+
+    def test_pickle_works(self):
+        copy = Copy(
+            '/src/dir',
+            '/tgt/dir',
+            'memory',
+            'memory',
+            True,
+            True,
+            16,
+            {'src': 'kws'},
+            {'tgt': 'kws'}
+        )
+        _ = pickle.loads(pickle.dumps(copy))
 
 
 if __name__ == '__main__':

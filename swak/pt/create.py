@@ -122,7 +122,7 @@ def from_dataframe(df: DataFrame) -> Tensor:
         A PyTorch tensor sharing the memory with the dataframe's data.
 
     """
-    return pt.from_numpy(df.values)
+    return pt.from_numpy(df.to_numpy(copy=True))
 
 
 
