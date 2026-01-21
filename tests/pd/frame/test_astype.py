@@ -92,11 +92,20 @@ class TestUsage(unittest.TestCase):
         self.assertIs(np.dtype('float64'), first)
         self.assertIs(np.dtype('int64'), second)
 
-    def test_all_columns(self):
+    @unittest.skipIf(pd.__version__.startswith('2'), 'Needs pandas >= 3')
+    def test_all_columns_pandas_3(self):
         convert = AsType({0: str, 1: float})
         converted = convert(self.df)
         first, second = converted.dtypes.to_list()
         self.assertIsInstance(first, pd.StringDtype)
+        self.assertIs(np.dtype('float64'), second)
+
+    @unittest.skipUnless(pd.__version__.startswith('2'), 'Needs pandas < 3')
+    def test_all_columns_pandas_2(self):
+        convert = AsType({0: str, 1: float})
+        converted = convert(self.df)
+        first, second = converted.dtypes.to_list()
+        self.assertIs(np.dtype('O'), first)
         self.assertIs(np.dtype('float64'), second)
 
     def test_arg_no_cols(self):
