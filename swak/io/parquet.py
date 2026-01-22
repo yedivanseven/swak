@@ -20,7 +20,7 @@ class DataFrame2Parquet(Writer):
         May include two or more forward slashes (subdirectories will be
         created) and string placeholders (i.e., pairs of curly brackets)
         that will be interpolated when instances are called.
-    storage: str
+    storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     overwrite: bool, optional
@@ -136,7 +136,7 @@ class Parquet2DataFrame(Reader):
         parquet file. Since it (or part of it) can also be provided later,
         when the callable instance is called, it is optional here.
         Defaults to an empty string.
-    storage: str
+    storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     chunk_size: float, optional

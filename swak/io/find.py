@@ -17,7 +17,7 @@ class Find(ArgRepr):
         Directory under which files should be discovered. Since it (or part of
         it) can also be provided later, when the callable instance is called,
         it is optional here. Defaults to an empty string.
-    storage: str
+    storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     suffix: str, optional

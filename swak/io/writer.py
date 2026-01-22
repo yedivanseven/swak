@@ -26,7 +26,7 @@ class Writer(ArgRepr):
         The absolute path to the file to save. May contain any number of string
         placeholders (i.e.,  pairs of curly brackets) that will be interpolated
         when instances are called.
-    storage: str
+    storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     overwrite: bool, optional

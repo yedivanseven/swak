@@ -11,6 +11,54 @@ from .types import Storage, LiteralStorage
 
 # ToDo: Cotninue here with adding docstrings
 class Copy(ArgRepr):
+    """Efficiently copy a file from one location/filesystem to another.
+
+    Parameters
+    ----------
+    src_base: str, optional
+        Base folder or bucket of the file to read or indeed the full, absolute
+        path to the file to read. Because it (or part of it) can also be given
+        later at call time, it defaults to an empty string here.
+    tgt_base: str, optional
+        Base folder or bucket of the file to write or indeed the full, absolute
+        path to the file to write. Defaults to ``None``, which will be resolved
+        to `src_base`.
+    src_storage: str, optional
+        The type of file system to read from ("file", "s3", etc.).
+        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
+    tgt_storage: str, optional
+        The type of file system to read from ("file", "s3", etc.).
+        Defaults to `src_storage` if not set.
+        Use the :class:`Storage` enum to avoid typos.
+    overwrite: bool, optional
+        Whether to silently overwrite the destination file. Defaults to
+        ``False``, which will raise an exception if it already exists.
+    skip: bool, optional
+        Whether to silently do nothing if the target file already exists.
+        Defaults to ``False``.
+    chunk_size: int, optional
+        Chunk size to use when streaming the selected file in MiB.
+        Defaults to 32 (MiB).
+    src_kws: dict, optional
+        Passed on as keywords to the constructor of the source file system.
+    tgt_kws: dict, optional
+        Passed on as keywords to the constructor of the target file system.
+
+    Raises
+    ------
+    TypeError
+        If `path` is not a string, `chunk_size` is not an integer or either
+        `src_kws` or `tgt_kws` are not dictionaries.
+    ValueError
+        If `storage` is not among the currently supported file-system
+        schemes, the `chunk_size` is smaller than 1 (MiB), or if either
+        `src_kws` or `tgt_kws` are not dictionaries.
+
+    See Also
+    --------
+    Storage
+
+    """
 
     def __init__(
             self,
@@ -128,17 +176,29 @@ class Copy(ArgRepr):
         return fsspec.filesystem(self.tgt_storage, **self.tgt_kws)
 
     def __call__(self, path: str = '') -> str:
-        """
+        """Efficiently copy a single file between file systems.
 
         Parameters
         ----------
-        path: str
-            Full path to source.
+        path: str, optional
+            Full path or sub-folder relative to `src_base` and `tgt_base`
+            of the file to copy.
 
         Returns
         -------
         str
-            Full path to target file.
+            Full path to the target file.
+
+        Raises
+        ------
+        FileExistsError
+            If the destination file already exists, `skip` is ``False`` and
+            `overwrite` is also ``False``.
+        ValueError
+            If the final path is directly under root (e.g., "/file.txt")
+            because, on local file system, this is not where you want to save
+            to and, on object storage, the first directory refers to the name
+            of an (existing!) bucket.
 
         """
         src_uri = self._src_uri_from(path)

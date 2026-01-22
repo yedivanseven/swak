@@ -37,7 +37,7 @@ class Compression(StrEnum):
 
 
 class NotFound(StrEnum):
-    """Enum to direct read/load behaviour in case of missing files."""
+    """Enum to direct read/load behavior in case of missing files."""
     IGNORE = 'ignore'
     WARN = 'warn'
     RAISE = 'raise'

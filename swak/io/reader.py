@@ -25,7 +25,7 @@ class Reader(ArgRepr):
         Directory under which the file is located or full path to the file.
         Since it (or part of it) can also be provided later, when the callable
         instance is called, it is optional here. Defaults to an empty string.
-    storage: str
+    storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     mode: str, optional
