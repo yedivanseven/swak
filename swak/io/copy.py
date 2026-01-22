@@ -9,7 +9,6 @@ from ..misc import ArgRepr
 from .types import Storage, LiteralStorage
 
 
-# ToDo: Cotninue here with adding docstrings
 class Copy(ArgRepr):
     """Efficiently copy a file from one location/filesystem to another.
 
