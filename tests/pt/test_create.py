@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, Mock
 import torch as pt
 import pandas as pd
+import polars as pl
 import numpy as np
 from swak.pt.create import Create, AsTensor, from_dataframe, To
 
@@ -137,6 +138,20 @@ class TestFromDataFrame(unittest.TestCase):
 
     def test_callable(self):
         self.assertTrue(callable(from_dataframe))
+
+    @patch('pandas.DataFrame.to_numpy')
+    def test_to_numpy_called_pandas(self, mock):
+        mock.return_value = np.array([1.0, 2.0, 3.0])
+        df = pd.DataFrame([1, 2, 3])
+        _ = from_dataframe(df)
+        mock.assert_called_once_with(copy=True)
+
+    @patch('polars.DataFrame.to_numpy')
+    def test_to_numpy_called_polars(self, mock):
+        mock.return_value = np.array([1.0, 2.0, 3.0])
+        df = pl.DataFrame([1, 2, 3])
+        _ = from_dataframe(df)
+        mock.assert_called_once_with(writable=True)
 
     @patch('torch.from_numpy')
     def test_from_numpy_called(self, mock):

@@ -2,8 +2,10 @@
 
 from typing import Any, overload
 import torch as pt
+from pandas import DataFrame as Pandas
+from polars import DataFrame as Polars
 from ..misc import ArgRepr
-from .types import Tensor, Module, Dtype, Device, DataFrame
+from .types import Tensor, Module, Dtype, Device
 
 __all__ = [
     'Create',
@@ -105,25 +107,25 @@ class AsTensor(ArgRepr):
         return pt.as_tensor(data, dtype=self.dtype, device=self.device)
 
 
-def from_dataframe(df: DataFrame) -> Tensor:
-    """Convert a pandas dataframe to a PyTorch tensor.
+def from_dataframe(df: Pandas | Polars) -> Tensor:
+    """Convert a pandas or polars dataframe to a PyTorch tensor.
 
     This is simply wrapper around the top-level PyTorch function ``from_numpy``
-    function called on the dataframe's ``values`` attribute.
+    function called on the result of the dataframe's ``to_numpy`` method..
 
     Parameters
     ----------
     df: DataFrame
-        The pandas dataframe to convert.
+        The pandas or polars dataframe to convert.
 
     Returns
     -------
     Tensor
-        A PyTorch tensor sharing the memory with the dataframe's data.
+        A PyTorch tensor with a copy of the dataframe's data.
 
     """
-    return pt.from_numpy(df.to_numpy(copy=True))
-
+    kwarg = {'copy': True} if isinstance(df, Pandas) else {'writable': True}
+    return pt.from_numpy(df.to_numpy(**kwarg))
 
 
 class To(ArgRepr):
