@@ -32,7 +32,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_kwargs(self):
         self.assertDictEqual({}, self.gcs.kwargs)
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_has_client(self, _):
         self.assertTrue(hasattr(self.gcs, 'client'))
 
@@ -59,13 +59,13 @@ class TestUsage(unittest.TestCase):
         gcs = Gcs('project')
         self.assertTrue(callable(gcs))
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_on_call(self, client):
         gcs = Gcs('project')
         _ = gcs()
         client.assert_called_once_with('project')
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_on_call_with_args_kwargs(self, client):
         gcs = Gcs('project', 'foo', 42, foo='bar', answer=42)
         _ = gcs()
@@ -77,7 +77,7 @@ class TestUsage(unittest.TestCase):
             answer=42
         )
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_args_kwargs_ignored_on_call(self, client):
         gcs = Gcs('project', 'foo', 42, foo='bar', answer=42)
         _ = gcs('bar', 123, baz='foo', reply=123)
@@ -89,7 +89,7 @@ class TestUsage(unittest.TestCase):
             answer=42
         )
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_on_each_call(self, client):
         gcs = Gcs('project')
         _ = gcs()
@@ -97,13 +97,13 @@ class TestUsage(unittest.TestCase):
         _ = gcs()
         self.assertEqual(3, client.call_count)
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_on_property(self, client):
         gcs = Gcs('project')
         _ = gcs.client
         client.assert_called_once_with('project')
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_on_property_with_args_kwargs(self, client):
         gcs = Gcs('project', 'foo', 42, foo='bar', answer=42)
         _ = gcs.client
@@ -115,7 +115,7 @@ class TestUsage(unittest.TestCase):
             answer=42
         )
 
-    @patch('swak.cloud.gcp.clients.Client')
+    @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_once_with_property(self, client):
         gcs = Gcs('project')
         _ = gcs.client

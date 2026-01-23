@@ -88,7 +88,7 @@ class GcsBucket(ArgRepr):
         return {'action': {'type': 'Delete'}, 'condition': {'age': self.age}}
 
     def __call__(self, *parts: str) -> tuple[str, bool]:
-        """Create/retrieve and configure a bucket on/from GCS..
+        """Create/retrieve and configure a bucket on/from GCS.
 
         Parameters
         ----------

@@ -3,7 +3,14 @@ gcp
 
 .. automodule:: swak.cloud.gcp
 
+
 .. autoclass:: swak.cloud.gcp.Gcs
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.cloud.gcp.Gbq
    :members:
    :special-members: __call__
    :show-inheritance:
