@@ -6,10 +6,8 @@ Specifically, data scientists tend to interact heavily with S3 object storage.
 
 from .clients import S3
 from .bucket import S3Bucket
-from .s32local import S3File2LocalFile
 
 __all__ = [
     'S3',
-    'S3Bucket',
-    'S3File2LocalFile'
+    'S3Bucket'
 ]

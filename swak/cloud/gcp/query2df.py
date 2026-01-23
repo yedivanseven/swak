@@ -23,7 +23,6 @@ class GbqQuery2DataFrame(ArgRepr):
     --------
     GbqQuery2GcsParquet
     GcsParquet2DataFrame
-    GcsDir2LocalDir
 
     """
 

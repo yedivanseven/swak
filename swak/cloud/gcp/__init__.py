@@ -9,7 +9,6 @@ from .clients import Gcs
 from .bucket import GcsBucket
 from .query import GbqQuery
 from .query2gcs import GbqQuery2GcsParquet
-from .gcs2local import GcsDir2LocalDir
 from .query2df import GbqQuery2DataFrame
 from .df2gbq import IfExists, DataFrame2Gbq
 from .dataset import Collation, Rounding, Billing, GbqDataset
@@ -23,11 +22,9 @@ __all__ = [
     'GcsBucket',
     'GbqQuery',
     'GbqQuery2GcsParquet',
-    'GcsDir2LocalDir',
     'GbqQuery2DataFrame',
     'IfExists',
     'DataFrame2Gbq'
 ]
 
 # ToDo: Refactor so that partial clients are created outside classes
-# ToDo: Add move single file to local
