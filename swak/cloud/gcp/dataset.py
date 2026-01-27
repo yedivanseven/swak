@@ -1,9 +1,11 @@
 import json
 from enum import StrEnum
 from typing import Any, overload, Literal
-from google.cloud.bigquery import Client, Dataset
+from google.cloud.bigquery import Dataset
 from google.cloud.exceptions import NotFound
-from google.api_core.retry import Retry
+from .clients import Gbq
+from .exceptions import GbqError
+
 
 type LiteralCollation = Literal['', 'und:ci']
 type LiteralRounding = Literal['ROUND_HALF_AWAY_FROM_ZERO', 'ROUND_HALF_EVEN']
@@ -33,17 +35,20 @@ class GbqDataset:
 
     Parameters
     ----------
-    project: str
-        The project to create the dataset in.
+    gbq: Gbq
+         An instance of a wrapped GBQ client.
     dataset: str
         The identifier of the dataset to create. Only letters, numbers, and
-        underscored are permitted.
-    location: str
+        underscores are permitted.
+    location: str, optional
         The physical datacenter location to create the dataset in. See the
-        Google Cloud Platform `documentation <https://cloud.google.com/
-        bigquery/docs/locations>`__ for options.
+        Google Cloud Platform `documentation <https://docs.cloud.google.com
+        bigquery/docs/locations>`__ for options. Defaults to "europe-north1".
+    exists_ok: bool, optional
+        Whether to quietly return the requested dataset if it exists or raise
+        an exception. Defaults to ``False``.
     name: str, optional
-        A human-readable name of the dataset. Defaults to the `dataset` it.
+        A human-readable name of the dataset. Defaults to the `dataset`.
     description: str, optional
         A short description of the dataset. Defaults to ``None``.
     table_expire_days: int, optional
@@ -54,7 +59,8 @@ class GbqDataset:
         dropped. Defaults to ``None``, which results in partitions never
         being dropped.
     labels: dict, optional
-        Any number of string-valued labels of the dataset. Defaults to none.
+        Any number of string-valued labels of the dataset.
+        Defaults to ``None``.
     access: list of dict, optional
         Fined-grained access rights to the dataset (see the Google Cloud
         Platform `documentation <https://cloud.google.com/bigquery/docs/
@@ -81,11 +87,18 @@ class GbqDataset:
     tags: dict, optional
         Associate globally defined tags with this dataset. Defaults to
         ``None``, which result in no tags to be associated.
-    **kwargs
-        Additional keyword arguments are passed to the constructor of the
-        Google BigQuery ``Client`` (see `documentation <https://cloud.google.
-        com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
-        client.Client#parameters>`__ for options).
+
+    Raises
+    ------
+    AttributeError
+        If `dataset`, `location`, `name`, or `description` are not strings.
+    TypeError
+        If any of `table_expire_days`, `partition_expire_days`, or
+        `max_travel_time_hours` cannot be cast to an integer.
+    ValueError
+        If any of `table_expire_days`, `partition_expire_days`, or
+        `max_travel_time_hours` are less than one and if any of `collation`,
+        `rounding` or `billing` are not allowed options.
 
     Note
     ----
@@ -103,9 +116,10 @@ class GbqDataset:
 
     def __init__(
             self,
-            project: str,
+            gbq: Gbq,
             dataset: str,
-            location: str,
+            location: str = 'europe-north1',
+            exists_ok: bool = False,
             name: str | None = None,
             description: str | None = None,
             table_expire_days: int | None = None,
@@ -117,25 +131,42 @@ class GbqDataset:
             rounding: Rounding | LiteralRounding | None = None,
             max_travel_time_hours: int = 168,
             billing: Billing | LiteralBilling | None = None,
-            tags: dict[str, str] | None = None,
-            **kwargs: Any
+            tags: dict[str, str] | None = None
     ) -> None:
-        self.project = project.strip().strip(' /.')
+        self.gbq = gbq
         self.dataset = dataset.strip().strip(' /.')
         self.location = location.strip().lower()
+        self.exists_ok = bool(exists_ok)
         self.name = self.dataset if name is None else name.strip()
-        self.description = description
-        self.table_expire_days = table_expire_days
-        self.partition_expire_days = partition_expire_days
-        self.labels = {} if labels is None else labels
+        self.description = None if description is None else description.strip()
+        self.table_expire_days = self.__valid(
+            table_expire_days,
+            'table_expire_days'
+        )
+        self.partition_expire_days = self.__valid(
+            partition_expire_days,
+            'partition_expire_days'
+        )
+        self.labels = {} if labels is None else dict(labels)
         self.access = access
-        self.case_sensitive = case_sensitive
-        self.collation = collation
-        self.rounding = rounding
-        self.max_travel_time_hours = max_travel_time_hours
-        self.billing = billing
-        self.tags = {} if tags is None else tags
-        self.kwargs = kwargs
+        self.case_sensitive = bool(case_sensitive)
+        if collation is None:
+            self.collation = None
+        else:
+            self.collation = str(Collation(collation))
+        if rounding is None:
+            self.rounding = None
+        else:
+            self.rounding = str(Rounding(rounding))
+        self.max_travel_time_hours = self.__valid(
+            max_travel_time_hours,
+            'max_travel_time_hours'
+        )
+        if billing is None:
+            self.billing = None
+        else:
+            self.billing = str(Billing(billing))
+        self.tags = {} if tags is None else dict(tags)
 
     @staticmethod
     @overload
@@ -144,7 +175,7 @@ class GbqDataset:
 
     @staticmethod
     @overload
-    def to_ms(days: int) -> int:
+    def to_ms(days: int) -> str:
         ...
 
     @staticmethod
@@ -157,7 +188,7 @@ class GbqDataset:
         """Payload for the API call to the Google Cloud Platform."""
         return {
             'datasetReference': {
-                'projectId': self.project,
+                'projectId': self.gbq.project,
                 'datasetId': self.dataset
             },
             'friendlyName': self.name,
@@ -180,53 +211,59 @@ class GbqDataset:
     def __repr__(self) -> str:
         return json.dumps(self.api_repr, indent=4)
 
-    def __call__(
-            self,
-            exists_ok: bool = True,
-            retry: Retry | None = None,
-            timeout: float | tuple[float, float] | None = None,
-    ) -> tuple[Dataset, bool]:
+    def __call__(self, *_: Any, **__: Any) -> tuple[str, bool]:
         """Create a Google BigQuery dataset in a Google Cloud Platform project.
 
-        Parameters
-        ----------
-        exists_ok: bool, optional
-            Whether to raise a ``Conflict`` exception if the targeted dataset
-            already exists or not. Defaults to ``True``.
-        retry: Retry, optional
-            Retry policy for the request. Defaults to ``None``, which disables
-            retries. See the Google Cloud Platform `guide
-            <https://cloud.google.com/python/docs/reference/storage/1.39.0/
-            retry_timeout#configuring-retries>`__ and `reference
-            <https://googleapis.dev/python/google-api-core/latest/retry.html>`__
-            for options.
-        timeout: float, optional
-            The number of seconds to wait for the HTTP response to the API call
-            before using `retry` or a tuple with separate values for connection
-            and request timeouts. Defaults to ``None``, meaning wait forever.
+        If the dataset already exists and `exists_ok` is ``True``, it is
+        returned unchanged, that is, none of the specified options are applied.
 
         Raises
         ------
-        Conflict
+        GbqError
             If `exists_ok` is set to ``False`` and the dataset already exists.
 
         Returns
         -------
-        Dataset
-            The existing or newly created dataset. If existing, then the
-            dataset is returned unchanged, that is, none of the specified
-            options are applied.
+        str
+            The name of the existing or newly created dataset.
         bool
             ``True`` if the requested dataset is newly created and ``False``
             if an existing dataset is returned.
 
         """
         dataset = Dataset.from_api_repr(self.api_repr)
-        client = Client(self.project, location=self.location, **self.kwargs)
+        client = self.gbq()
         try:
-            _ = client.get_dataset(dataset.reference, retry, timeout)
+            _ = client.get_dataset(dataset.reference)
         except NotFound:
-            exist = False
+            exists = False
         else:
-            exist = True
-        return client.create_dataset(dataset, exists_ok, retry, timeout), exist
+            exists = True
+
+        if exists:
+            if not self.exists_ok:
+                tmp = 'Dataset "{}" already exists in location "{}"!'
+                msg = tmp.format(self.dataset, self.location)
+                raise GbqError(msg)
+        else:
+            _ = client.create_dataset(dataset, self.exists_ok)
+
+        return self.dataset, not exists
+
+    @staticmethod
+    def __valid(age: Any, name: str) -> int | None:
+        """Try to convert time specification to a meaningful integer."""
+        if age is None:
+            return age
+        try:
+            as_int = int(age)
+        except (TypeError, ValueError) as error:
+            cls = type(age).__name__
+            tmp = '"{}" must at least be convertible to integer, unlike {}!'
+            msg = tmp.format(name, cls)
+            raise TypeError(msg) from error
+        if as_int < 1:
+            tmp = '"{}" must be greater than (or equal to) one, unlike {}!'
+            msg = tmp.format(name, as_int)
+            raise ValueError(msg)
+        return as_int

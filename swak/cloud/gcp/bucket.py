@@ -18,8 +18,8 @@ class GcsBucket(ArgRepr):
         interpolated when instances are called.
     location: str, optional
         The physical datacenter location to create the bucket in. See the
-        Google Cloud Platform `documentation <https://cloud.google.com/storage/
-        docs/locations>`_ for options. Defaults to "EUROPE-NORTH1".
+        Google Cloud Platform `documentation <https://docs.cloud.google.com/
+        storage/docs/locations>`_ for options. Defaults to "EUROPE-NORTH1".
     exists_ok: bool, optional
         Whether quietly return the requested bucket if it exists or raise an.
         exception. Defaults to ``False``.
