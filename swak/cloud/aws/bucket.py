@@ -52,7 +52,7 @@ class S3Bucket(ArgRepr):
             age: int | None = None
     ) -> None:
         self.s3 = s3
-        self.bucket = bucket.strip(' /')
+        self.bucket = bucket.strip().strip(' /')
         self.location = location.strip().lower()
         self.exists_ok = bool(exists_ok)
         self.age = self.__valid(age)

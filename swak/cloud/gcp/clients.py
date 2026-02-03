@@ -26,7 +26,7 @@ class Gcs(ArgRepr):
     """
 
     def __init__(self, project: str, *args: Any, **kwargs: Any) -> None:
-        self.project = project.strip(' /.')
+        self.project = project.strip().strip(' /.')
         self.args = args
         self.kwargs = kwargs
         super().__init__(self.project, *self.args, **self.kwargs)
@@ -62,7 +62,7 @@ class Gbq(ArgRepr):
     """
 
     def __init__(self, project: str, *args: Any, **kwargs: Any) -> None:
-        self.project = project.strip(' /.')
+        self.project = project.strip().strip(' /.')
         self.args = args
         self.kwargs = kwargs
         super().__init__(self.project, *self.args, **self.kwargs)

@@ -10,7 +10,7 @@ from .bucket import GcsBucket
 from .query import GbqQuery
 from .query2gcs import GbqQuery2GcsParquet
 from .query2df import GbqQuery2DataFrame
-from .df2gbq import IfExists, DataFrame2Gbq
+from .df2gbq import ParquetLoadJobConfig, DataFrame2Gbq
 from .dataset import Collation, Rounding, Billing, GbqDataset
 
 __all__ = [
@@ -24,7 +24,7 @@ __all__ = [
     'GbqQuery',
     'GbqQuery2GcsParquet',
     'GbqQuery2DataFrame',
-    'IfExists',
+    'ParquetLoadJobConfig',
     'DataFrame2Gbq'
 ]
 

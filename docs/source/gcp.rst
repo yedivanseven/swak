@@ -16,6 +16,12 @@ gcp
    :show-inheritance:
 
 
+.. autoclass:: swak.cloud.gcp.ParquetLoadJobConfig
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.cloud.gcp.GbqDataset
    :members:
    :special-members: __call__
@@ -83,16 +89,3 @@ Enums
 
    .. autoattribute:: LOGICAL
       :annotation: = LOGICAL
-
-
-.. autoclass:: swak.cloud.gcp.IfExists
-   :show-inheritance:
-
-   .. autoattribute:: FAIL
-      :annotation: = fail
-
-   .. autoattribute:: REPLACE
-      :annotation: = replace
-
-   .. autoattribute:: APPEND
-      :annotation: = append

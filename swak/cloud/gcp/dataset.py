@@ -108,6 +108,7 @@ class GbqDataset:
 
     See Also
     --------
+    Gbq
     Collation
     Rounding
     Billing
