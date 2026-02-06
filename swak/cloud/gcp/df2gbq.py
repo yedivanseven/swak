@@ -10,7 +10,6 @@ from .clients import Gbq
 from ...misc import ArgRepr
 
 
-# ToDo: Write unittests
 class ParquetLoadJobConfig(ArgRepr):
     """A LoadJobConfig with source format locked to PARQUET.
 
@@ -63,10 +62,6 @@ class DataFrame2Gbq(ArgRepr):
         locked to ``PARQUET``. All other load job options can be set freely
         via that wrapper. If ``None`` (the default), a default config with
         only ``source_format`` set will be used.
-    chunk_size: int, optional
-        Chunk size (in MiB) to use when uploading. If ``None`` (the default)
-        or large, resumable upload will be used. Otherwise, multipart upload
-        of chunks with the given size will be used.
     polling_interval: int, optional
         Job completion is going to be checked for every `polling_interval`
         seconds. Defaults to 5 (seconds).
@@ -79,11 +74,11 @@ class DataFrame2Gbq(ArgRepr):
     AttributeError
         If `location` is not a string.
     TypeError
-        If `dataset` or `table` are not strings or if `chunk_size` or
-        `polling_interval` cannot be cast to ``float``.
+        If `dataset` or `table` are not strings or if `polling_interval`
+        cannot be cast to ``float``.
     ValueError
-        If either `dataset` or `table` are emtpy strings or if either of
-        `chunk_size` or `polling_interval` are smaller than 1.
+        If either `dataset` or `table` are emtpy strings or if
+        `polling_interval` is smaller than 1.
 
     See Also
     --------
@@ -99,7 +94,6 @@ class DataFrame2Gbq(ArgRepr):
             table: str = '{}',
             location: str = 'europe-north1',
             config: ParquetLoadJobConfig | None = None,
-            chunk_size: int | None = None,
             polling_interval: int = 5,
             **kwargs: Any
     ) -> None:
@@ -108,18 +102,14 @@ class DataFrame2Gbq(ArgRepr):
         self.table = self.__strip(table, 'table')
         self.location = location.strip().lower()
         self.config = config or ParquetLoadJobConfig()
-        self.chunk_size = self.__valid(chunk_size, 'chunk_size')
-        self.polling_interval = self.__valid(
-            polling_interval, 'polling_interval'
-        )
-        self.kwargs = dict(kwargs)
+        self.polling_interval = self.__valid(polling_interval)
+        self.kwargs = kwargs
         super().__init__(
             self.gbq,
             self.dataset,
             self.table,
             self.location,
             self.config,
-            self.chunk_size,
             self.polling_interval,
             **self.kwargs
         )
@@ -128,12 +118,13 @@ class DataFrame2Gbq(ArgRepr):
     def __strip(value: Any, name: str) -> str:
         """Get the last dot-separated segment and strip surrounding noise."""
         try:
-            result = value.split('.')[-1].strip().strip(' ./')
+            last = value.strip().strip(' ./')
         except AttributeError as error:
             cls = type(value).__name__
             tmp = '"{}" must be a string, unlike {}!'
             msg = tmp.format(name, cls)
             raise TypeError(msg) from error
+        result = last.split('.')[-1].strip().strip(' ./')
         if not result:
             tmp = '"{}" must not be empty after sanitization!'
             msg = tmp.format(name)
@@ -141,8 +132,8 @@ class DataFrame2Gbq(ArgRepr):
         return result
 
     @staticmethod
-    def __valid(value: Any, name: str) -> float | None:
-        """Try to convert chunk_size/polling interval to meaningful floats."""
+    def __valid(value: Any) -> float | None:
+        """Try to convert polling interval to a meaningful float."""
         if value is None:
             return value
         try:
@@ -150,22 +141,13 @@ class DataFrame2Gbq(ArgRepr):
         except (TypeError, ValueError) as error:
             cls = type(value).__name__
             tmp = '"{}" must at least be convertible to a float, unlike {}!'
-            msg = tmp.format(name, cls)
+            msg = tmp.format('polling_interval', cls)
             raise TypeError(msg) from error
         if as_float < 1.0:
             tmp = '"{}" must be greater than (or equal to) one, unlike {}!'
-            msg = tmp.format(name, as_float)
+            msg = tmp.format('polling_interval', as_float)
             raise ValueError(msg)
         return as_float
-
-    @property
-    def chunk_bytes(self) -> int | None:
-        """Number of bytes to upload per part."""
-        if self.chunk_size is None:
-            return self.chunk_size
-        in_bytes = self.chunk_size * 1024 * 1024
-        in_multiples_of_256kb = int(in_bytes // (256 * 1024))
-        return in_multiples_of_256kb * 256 * 1024
 
     def __call__(self, df: Pandas | Polars, *parts: Any) -> tuple[()]:
         """Write a pandas DataFrame to a Google BigQuery table.
@@ -206,7 +188,6 @@ class DataFrame2Gbq(ArgRepr):
                 file_obj=stream,
                 destination=destination,
                 rewind=True,
-                size=self.chunk_bytes,
                 location=location,
                 job_config=self.config()
             )
