@@ -43,9 +43,8 @@ class GbqQuery2DataFrame(ArgRepr):
     See Also
     --------
     Gbq
-    Bears
+    ~swak.io.types.Bears
     GbqQuery2GcsParquet
-    GcsParquet2DataFrame
 
     """
 

@@ -1,69 +1,81 @@
 import time
 from typing import Any
-from google.cloud.bigquery import Client, QueryJobConfig
+from google.cloud.bigquery import QueryJobConfig
 from ...misc import ArgRepr
+from .clients import Gbq
 from .exceptions import GbqError
 
 
 class GbqQuery(ArgRepr):
     """Run a SQL query that does not return anything on Google BigQuery.
 
+    Suitable for DDL statements (CREATE, ALTER, DROP) and DML statements
+    (INSERT, UPDATE, DELETE) where the result set is not needed.
+
     Parameters
     ----------
-    project: str
-        The name of the Google billing project.
+    gbq: Gbq
+        An instance of a wrapped GBQ client.
+    config: QueryJobConfig | None, optional
+        An instance of ``QueryJobConfig`` (see the `documentation
+        <https://docs.cloud.google.com/python/docs/reference/bigquery/
+        latest/google.cloud.bigquery.job.QueryJobConfig>`_). If ``None``
+        (the default), the default config will be used.
     polling_interval: int, optional
         Job completion is going to be checked for every `polling_interval`
         seconds. Defaults to 5 (seconds).
-    priority: str, optional
-        Priority the query job should be run as. Can be either "BATCH" or
-        "INTERACTIVE". Defaults to "BATCH". Use the `QueryPriority
-        <https://cloud.google.com/python/docs/reference/bigquery/latest/
-        google.cloud.bigquery.job.QueryPriority>`__ enum to avoid typos.
-    **kwargs
-        Additional keyword arguments are passed to the constructor of the
-        Google BigQuery ``Client`` (see `documentation <https://cloud.google.
-        com/python/docs/reference/bigquery/latest/google.cloud.bigquery.
-        client.Client#parameters>`__ for options).
 
-    Note
-    ----
-    Typical use cases would be to create, move, alter, or delete tables.
-    As such, the possibility to route the output of the query into a
-    destination table is not foreseen.
+    Raises
+    ------
+    TypeError
+        Iif `polling_interval` cannot be cast to ``float``.
+    ValueError
+        If `polling_interval` is smaller than 1.
+
+    See Also
+    --------
+    Gbq
 
     """
 
     def __init__(
             self,
-            project: str,
-            polling_interval: int = 5,
-            priority: str = 'BATCH',
-            **kwargs: Any
+            gbq: Gbq,
+            config: QueryJobConfig | None = None,
+            polling_interval: int = 5
     ) -> None:
-        self.project = project.strip().strip(' /.')
-        self.polling_interval = polling_interval
-        self.priority = priority.strip().upper()
-        self.kwargs = kwargs
+        self.gbq = gbq
+        self.config = config
+        self.polling_interval = self.__valid(polling_interval)
         super().__init__(
-            self.project,
-            self.polling_interval,
-            self.priority,
-            **kwargs
+            self.gbq,
+            self.config,
+            self.polling_interval
         )
 
-    def __call__(self, query: str, **kwargs: Any) -> tuple[()]:
+    @staticmethod
+    def __valid(value: Any) -> float:
+        """Try to convert polling interval to a meaningful float."""
+        try:
+            as_float = float(value)
+        except (TypeError, ValueError) as error:
+            cls = type(value).__name__
+            tmp = '"{}" must at least be convertible to a float, unlike {}!'
+            msg = tmp.format('polling_interval', cls)
+            raise TypeError(msg) from error
+        if as_float < 1.0:
+            tmp = '"{}" must be greater than (or equal to) one, unlike {}!'
+            msg = tmp.format('polling_interval', as_float)
+            raise ValueError(msg)
+        return as_float
+
+    def __call__(self, query: str) -> tuple[()]:
         """Run a query that does not return anything on Google BigQuery.
 
         Parameters
         ----------
         query: str
-            The SQL query to fire using the pre-configured client.
-        **kwargs
-            Additional keyword arguments are passed to the constructor of the
-            Google BigQuery ``QueryJobConfig``. See `documentation
-            <https://cloud.google.com/python/docs/reference/bigquery/latest/
-            google.cloud.bigquery.job.QueryJobConfig>`__ for options.
+            The SQL query to execute against BigQuery (typically DDL or DML).
 
         Returns
         -------
@@ -73,14 +85,14 @@ class GbqQuery(ArgRepr):
         Raises
         ------
         GbqError
-            If the ``QueryJob`` finishes and returns and error.
+            If the query execution failed for some reason.
 
         """
-        client = Client(self.project, **self.kwargs)
-        config = QueryJobConfig(priority=self.priority, **kwargs)
-        job = client.query(query, config)
+        client = self.gbq()
+        job = client.query(query, self.config)
         while job.running():
             time.sleep(self.polling_interval)
         if error := job.error_result:
-            raise GbqError(f"\n{error['reason'].upper()}: {error['message']}")
+            raise GbqError(
+                f"\n{error['reason'].upper()}: {error['message']}")
         return ()
