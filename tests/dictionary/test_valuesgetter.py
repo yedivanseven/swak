@@ -313,7 +313,7 @@ class TestMisc(unittest.TestCase):
         _ = pickle.loads(pickle.dumps(getter))
 
     def test_pickle_raised_lambda(self):
-        values_from = ValuesGetter(2, 3, wrapper=lambda x: list(x))
+        values_from = ValuesGetter(2, 3, wrapper=lambda x: list(x))  #noqa
         actual = values_from(self.d)
         self.assertListEqual([self.d[2], self.d[3]], actual)
         with self.assertRaises(AttributeError):

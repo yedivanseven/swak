@@ -485,12 +485,12 @@ class TestMisc(unittest.TestCase):
         _ = pickle.loads(pickle.dumps(m))
 
     def test_wrapper_pickle_raises_lambda(self):
-        m = ThreadMap(plus_2, lambda x: tuple(x))
+        m = ThreadMap(plus_2, lambda x: tuple(x))  #noqa
         with self.assertRaises(AttributeError):
             _ = pickle.loads(pickle.dumps(m))
 
     def test_pickle_raises_with_lambda(self):
-        m = ThreadMap(lambda x: x + 2, lambda x: tuple(x))
+        m = ThreadMap(lambda x: x + 2, lambda x: tuple(x))  #noqa
         with self.assertRaises(AttributeError):
             _ = pickle.loads(pickle.dumps(m))
 

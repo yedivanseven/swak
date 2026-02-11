@@ -196,8 +196,8 @@ class JsonObjects[T]:
         """Parse input into a list of something."""
         # Define parsers for converting input into a list of items.
         parsers = (
-            lambda x: json.loads(x),                # JSON string
-            lambda x: literal_eval(x),              # Some other string
+            json.loads,                             # JSON string
+            literal_eval,                           # Some other string
             lambda x: x.to_dict(orient='records'),  # Dataframe
             lambda x: [] if x is None else x        # None or some other object
         )

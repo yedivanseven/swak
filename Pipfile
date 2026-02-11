@@ -30,7 +30,6 @@ build = "*"
 [cloud]
 google-cloud-storage = "*"
 google-cloud-bigquery = "*"
-pandas-gbq = "*"
 boto3 = "*"
 s3fs = "*"
 gcsfs = "*"

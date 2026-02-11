@@ -251,6 +251,15 @@ class TestUsage(unittest.TestCase):
         )
 
 
+    def test_client_created(self):
+        write = DataFrame2Gbq(
+            self.gbq,
+            self.dataset,
+            polling_interval=1
+        )
+        _ = write(self.pandas, 'table')
+        self.gbq.assert_called_once_with()
+
     def test_table_interpolated_and_stripped(self):
         write = DataFrame2Gbq(
             self.gbq,

@@ -132,10 +132,8 @@ class DataFrame2Gbq(ArgRepr):
         return result
 
     @staticmethod
-    def __valid(value: Any) -> float | None:
+    def __valid(value: Any) -> float:
         """Try to convert polling interval to a meaningful float."""
-        if value is None:
-            return value
         try:
             as_float = float(value)
         except (TypeError, ValueError) as error:

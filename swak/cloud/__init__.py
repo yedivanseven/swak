@@ -10,7 +10,6 @@ from importlib.util import find_spec
 required = (
     'google_cloud_bigquery',
     'google_cloud_storage',
-    'pandas_gbq',
     'boto3'
 )
 
