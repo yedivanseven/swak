@@ -137,6 +137,11 @@ class GbqQuery2GcsParquet(ArgRepr):
             'client_options': self.gbq.kwargs.get('client_options')
         } | self.kwargs
 
+    @property
+    def flag(self) -> str:
+        """Stringified version of the otherwise boolean `overwrite` option."""
+        return str(self.overwrite).lower()
+
     def __call__(self, query: str, *parts: Any) -> str:
         """Export the results of a SQL query to Google Cloud Storage.
 
@@ -158,17 +163,20 @@ class GbqQuery2GcsParquet(ArgRepr):
         Raises
         ------
         ValueError
-            If `path` is empty after interpolating `parts`.
+            If `query` is empty of if `path` is empty after inserting `parts`.
+        FileExistsError
+            If `overwrite` is set to `True` and files with the given prefix
+            already exists in the given bucket.
         GbqError
             If the submitted ``QueryJob`` finishes and returns and error.
 
         """
-        path = self.__strip(self.path.format(*parts))
-        bucket, prefix, header = self._render(path)
-        client = self.gbq()
+        bucket, prefix = self._normalize(*parts)
         if self._skip_query_for(bucket, prefix):
             return f'{bucket}/{prefix}/'
+        header = self._render(bucket, prefix)
         scripts, main = self._split(query)
+        client = self.gbq()
         job = client.query('\n'.join([scripts, header, main]), self.config)
         while job.running():
             time.sleep(self.polling_interval)
@@ -176,29 +184,41 @@ class GbqQuery2GcsParquet(ArgRepr):
             raise GbqError(f"\n{error['reason'].upper()}: {error['message']}")
         return f'{bucket}/{prefix}/'
 
+    def _normalize(self, *parts: Any) -> tuple[str, str]:
+        """Sanitize interpolated path and split into bucket and prefix."""
+        path = self.__strip(self.path.format(*parts))
+        parts = path.split('/')
+        bucket = parts[0]
+        prefix = '/'.join(filter(None, parts[1:])) or str(uuid.uuid4())
+        return bucket, prefix
+
     def _skip_query_for(self, bucket: str, prefix: str) -> bool:
         """Do blobs with prefix exist on Google Storage? Overwrite them?"""
         client = GcsClient(**self.options)
         blobs = list(client.list_blobs(bucket, prefix=prefix))
-        if blobs and self.skip:
+        if not blobs:
+            return False
+        if self.skip:
             return True
-        if blobs and self.overwrite:
+        if self.overwrite:
             client.get_bucket(bucket).delete_blobs(blobs)
-        return False
+            return False
+        tmp = '"{}/{}/" is not empty! Set either skip=True or overwrite=True.'
+        msg = tmp.format(bucket, prefix)
+        raise FileExistsError(msg)
 
-    def _render(self, path: str) -> tuple[str, str, str]:
+    def _render(self, bucket: str, prefix: str) -> str:
         """Render the EXPORT header template with the given parameters."""
-        parts = path.split('/')
-        bucket = parts[0]
-        prefix = '/'.join(filter(None, parts[1:])) or str(uuid.uuid4())
-        overwrite = str(self.overwrite).lower()
-        header = self._TEMPLATE.format(bucket, prefix, overwrite)
-        return bucket, prefix, header
+        return self._TEMPLATE.format(bucket, prefix, self.flag)
 
     @staticmethod
     def _split(query: str) -> tuple[str, str]:
         """Split query into scripts (before last semicolon) and main part."""
-        split = query.split(';')
-        separator = ';\n' if len(split) > 1 else ''
-        scripts = ';'.join(split[:-1]) + separator
-        return scripts, split[-1]
+        stripped = query.strip().strip(' ;')
+        if not stripped:
+            raise ValueError('The query must not be empty!')
+        parts = stripped.split(';')
+        if len(parts) < 2:
+            return '', parts[0]
+        scripts = ';\n'.join(parts[:-1]) + ';\n'
+        return scripts, parts[-1]
