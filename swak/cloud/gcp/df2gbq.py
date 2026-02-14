@@ -118,18 +118,18 @@ class DataFrame2Gbq(ArgRepr):
     def __strip(value: Any, name: str) -> str:
         """Get the last dot-separated segment and strip surrounding noise."""
         try:
-            last = value.strip().strip(' ./')
+            stripped = value.strip().strip(' ./')
         except AttributeError as error:
             cls = type(value).__name__
             tmp = '"{}" must be a string, unlike {}!'
             msg = tmp.format(name, cls)
             raise TypeError(msg) from error
-        result = last.split('.')[-1].strip().strip(' ./')
-        if not result:
+        last = stripped.split('.')[-1].strip().strip(' ./')
+        if not last:
             tmp = '"{}" must not be empty after sanitization!'
             msg = tmp.format(name)
             raise ValueError(msg)
-        return result
+        return last
 
     @staticmethod
     def __valid(value: Any) -> float:

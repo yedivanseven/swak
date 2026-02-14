@@ -71,7 +71,7 @@ class Reader(ArgRepr):
             *args: Any,
             **kwargs: Any
     ) -> None:
-        self.path = self.__stripped(path)
+        self.path = self.__strip(path)
         self.storage = str(Storage(storage))
         self.mode = str(Mode(mode))
         self.chunk_size = self.__valid(chunk_size)
@@ -98,7 +98,7 @@ class Reader(ArgRepr):
         return fsspec.filesystem(self.storage, **self.storage_kws)
 
     @staticmethod
-    def __stripped(path: Any) -> str:
+    def __strip(path: Any) -> str:
         """Try to normalize the path."""
         try:
             stripped = '/' + path.strip(' /')

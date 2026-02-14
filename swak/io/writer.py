@@ -80,7 +80,7 @@ class Writer(ArgRepr):
             *args: Any,
             **kwargs: Any
     ) -> None:
-        self.path = self.__stripped(path)
+        self.path = self.__strip(path)
         self.storage = str(Storage(storage))
         self.overwrite = bool(overwrite)
         self.skip = bool(skip)
@@ -111,7 +111,7 @@ class Writer(ArgRepr):
         return fsspec.filesystem(self.storage, **self.storage_kws)
 
     @staticmethod
-    def __stripped(path: Any) -> str:
+    def __strip(path: Any) -> str:
         """Try to normalize the path."""
         try:
             stripped = '/' + path.strip(' /')
@@ -167,7 +167,7 @@ class Writer(ArgRepr):
 
     def __non_root_from(self, *parts: Any) -> PurePosixPath:
         """Interpolate parts into the path and validate the result."""
-        path = self.__stripped(self.path.format(*parts))
+        path = self.__strip(self.path.format(*parts))
         if path.count('/') < 2:
             msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(path))

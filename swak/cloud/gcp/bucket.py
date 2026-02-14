@@ -68,7 +68,7 @@ class GcsBucket(ArgRepr):
         self.location = location.strip().upper()
         self.exists_ok = bool(exists_ok)
         self.age = self.__valid(age)
-        self.user_project = self.__stripped(user_project) or self.gcs.project
+        self.user_project = self.__strip(user_project) or self.gcs.project
         self.requester_pays = bool(requester_pays)
         self.kwargs = kwargs
         super().__init__(
@@ -169,7 +169,7 @@ class GcsBucket(ArgRepr):
         return as_int
 
     @staticmethod
-    def __stripped(project: str | None) -> str:
+    def __strip(project: str | None) -> str:
         """None-tolerant string strip for cleaning GCP projects."""
         return '' if project is None else project.strip(' /.')
 

@@ -59,9 +59,9 @@ class Find(ArgRepr):
             max_depth: int | None = 1,
             storage_kws: Mapping[str, Any] | None = None,
     ) -> None:
-        self.path = '/' + self.__stripped(path, 'path', ' /')
+        self.path = '/' + self.__strip(path, 'path', ' /')
         self.storage = str(Storage(storage))
-        self.suffix = self.__stripped(suffix, 'suffix', ' .')
+        self.suffix = self.__strip(suffix, 'suffix', ' .')
         self.suffix = '.' + self.suffix if self.suffix else self.suffix
         self.max_depth = None if max_depth is None else self.__valid(max_depth)
         self.storage_kws = {} if storage_kws is None else dict(storage_kws)
@@ -84,7 +84,7 @@ class Find(ArgRepr):
         return f'{self.storage}:/'
 
     @staticmethod
-    def __stripped(obj: Any, name: str, chars: str) -> str:
+    def __strip(obj: Any, name: str, chars: str) -> str:
         """Try to normalize a string argument."""
         try:
             stripped = obj.strip(chars)

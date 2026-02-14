@@ -1,10 +1,10 @@
 import time
 import uuid
-import os
 from typing import Any
-from google.cloud import bigquery as gbq
-from google.cloud import storage as gcs
+from google.cloud.bigquery import QueryJobConfig
+from google.cloud.storage import Client as GcsClient
 from .exceptions import GbqError
+from .clients import Gbq
 from ...misc import ArgRepr
 
 
@@ -20,17 +20,15 @@ class GbqQuery2GcsParquet(ArgRepr):
 
     Parameters
     ----------
-    project: str
-        The name of the Google BigQuery billing project.
-    bucket: str
-        The Google Cloud Storage bucket to export to. Note that, unless you
-        have set up some different "wiring" yourself, the project of the
-        bucket is the same as `project`.
-    prefix: str, optional
-        Prefix of the blob location, where parquet files will reside. If
-        none is given here, one can be provided on calling the instance.
-        If both are given, they will be concatenated and, if neither
-        is given, a UUID will be generated. Defaults to an empty string.
+    gbq: Gbq
+        An instance of a wrapped GBQ client.
+    path: str, optional
+        The path to the cloud storage "directory", where parquet files will
+        reside in "bucket/prefix/" form. May contain any number of string
+        placeholders (i.e.,  pairs of curly brackets) that will be interpolated
+        when instances are called. If the prefix part is empty after
+        interpolation, a randomly generated UUID will be used.
+        Defaults to "{}".
     overwrite: bool, optional
         Blobs with the given bucket/prefix combination may already exist on
         Google Cloud Storage. If ``True`` these are overwritten, else an
@@ -39,25 +37,31 @@ class GbqQuery2GcsParquet(ArgRepr):
         Blobs with the given bucket/prefix combination may already exist on
         Google Cloud Storage. If that is the case, and `skip` is ``True``,
         nothing will be done at all. Defaults to ``False``
+    config: QueryJobConfig | None, optional
+        An instance of ``QueryJobConfig`` (see the `documentation
+        <https://docs.cloud.google.com/python/docs/reference/bigquery/
+        latest/google.cloud.bigquery.job.QueryJobConfig>`_). If ``None``
+        (the default), the default config will be used.
     polling_interval: int, optional
         Job completion is going to be checked for every `polling_interval`
         seconds. Defaults to 5 (seconds).
-    priority: str, optional
-        Priority the query job should be run as. Can be either "BATCH" or
-        "INTERACTIVE". Defaults to "BATCH". Use the `QueryPriority
-        <https://cloud.google.com/python/docs/reference/bigquery/latest/
-        google.cloud.bigquery.job.QueryPriority>`__ enum to avoid typos.
-    gbq_kws: dict, optional
-        Additional keyword arguments to passed to the Google BigQuery client.
-        Defaults to ``None``, which results in an empty dictionary.
-    gcs_kws: dict, optional
-        Additional keyword arguments to passed to the Google Storage client.
-        Defaults to ``None``, which results in an empty dictionary.
+    **kwargs:
+        Additional keyword arguments are passed to the constructor of the
+        Google Cloud Storage (GCS) client, overwriting common options that
+        are plucked from the Google BigQuery client.
+
+    Raises
+    ------
+    TypeError
+        If `path` is not a string or `polling_interval` cannot be cast to
+        `float`.
+    ValueError
+        If `path` is empty after sanitation or `polling_interval` is < 1.
 
     """
 
-    _template = """    EXPORT DATA OPTIONS(
-        uri="gs://{}/{}*.parquet"
+    _TEMPLATE = """    EXPORT DATA OPTIONS(
+        uri="gs://{}/{}/*.parquet"
       , format="PARQUET"
       , compression="SNAPPY"
       , overwrite={}
@@ -65,54 +69,85 @@ class GbqQuery2GcsParquet(ArgRepr):
 
     def __init__(
             self,
-            project: str,
-            bucket: str,
-            prefix: str = '',
+            gbq: Gbq,
+            path: str= '{}',
             overwrite: bool = False,
             skip: bool = False,
+            config: QueryJobConfig | None = None,
             polling_interval: int = 5,
-            priority: str = 'BATCH',
-            gbq_kws: dict[str, Any] | None = None,
-            gcs_kws: dict[str, Any] | None = None,
+            **kwargs: Any
     ) -> None:
-        self.project = project.strip().strip(' /.')
-        self.bucket = bucket.strip().strip(' /.')
-        self.prefix = prefix.strip().strip(' /.')
-        self.overwrite = overwrite
-        self.skip = skip
-        self.polling_interval = polling_interval
-        self.priority = priority.strip().upper()
-        self.gbq_kws = {} if gbq_kws is None else gbq_kws
-        self.gcs_kws = {} if gcs_kws is None else gcs_kws
+        self.gbq = gbq
+        self.path = self.__strip(path)
+        self.overwrite = bool(overwrite)
+        self.skip = bool(skip)
+        self.config = config
+        self.polling_interval = self.__valid(polling_interval)
+        self.kwargs = kwargs
         super().__init__(
-            self.project,
-            self.bucket,
-            self.prefix,
+            self.gbq,
+            self.path,
             self.overwrite,
             self.skip,
+            self.config,
             self.polling_interval,
-            self.priority,
-            self.gbq_kws,
-            self.gcs_kws,
+            **self.kwargs
         )
 
-    def __call__(self, query: str, prefix: str = '', **kwargs: Any) -> str:
+    @staticmethod
+    def __strip(path: str) -> str:
+        """Make sure that the path is a non-empty string."""
+        try:
+            stripped = path.strip().strip(' /.')
+        except AttributeError as error:
+            cls = type(path).__name__
+            tmp = '"{}" must be a string, unlike {}!'
+            msg = tmp.format('path', cls)
+            raise TypeError(msg) from error
+        if not stripped:
+            tmp = '"{}" must not be empty after sanitization!'
+            msg = tmp.format('path')
+            raise ValueError(msg)
+        return stripped
+
+    @staticmethod
+    def __valid(value: Any) -> float:
+        """Try to convert polling interval to a meaningful float."""
+        try:
+            as_float = float(value)
+        except (TypeError, ValueError) as error:
+            cls = type(value).__name__
+            tmp = '"{}" must at least be convertible to a float, unlike {}!'
+            msg = tmp.format('polling_interval', cls)
+            raise TypeError(msg) from error
+        if as_float < 1.0:
+            tmp = '"{}" must be greater than (or equal to) one, unlike {}!'
+            msg = tmp.format('polling_interval', as_float)
+            raise ValueError(msg)
+        return as_float
+
+    @property
+    def options(self) -> dict[str, Any]:
+        """Options used for the Google Cloud Storage client."""
+        return {
+            'project': self.gbq.project,
+            'credentials': self.gbq.kwargs.get('credentials'),
+            '_http': self.gbq.kwargs.get('_http'),
+            'client_info': self.gbq.kwargs.get('client_info'),
+            'client_options': self.gbq.kwargs.get('client_options')
+        } | self.kwargs
+
+    def __call__(self, query: str, *parts: Any) -> str:
         """Export the results of a SQL query to Google Cloud Storage.
 
         Parameters
         ----------
         query: str
             The SQL query to fire using the pre-configured client.
-        prefix: str, optional
-            Prefix of the blob location, where parquet files will reside. If
-            none is given, the prefix specified at instantiation will be used.
-            If both are given, they will be concatenated and, if neither
-            is given, a UUID will be generated. Defaults to an empty string.
-        **kwargs
-            Additional keyword arguments are passed to the constructor of the
-            Google BigQuery ``QueryJobConfig``. See `documentation
-            <https://cloud.google.com/python/docs/reference/bigquery/latest/
-            google.cloud.bigquery.job.QueryJobConfig>`__ for options.
+       *parts: str
+            Fragments that will be interpolated into the `path` given at
+            instantiation. Obviously, there must be at least as many as
+            there are placeholders in the `path`.
 
         Returns
         -------
@@ -122,48 +157,46 @@ class GbqQuery2GcsParquet(ArgRepr):
 
         Raises
         ------
+        ValueError
+            If `path` is empty after interpolating `parts`.
         GbqError
             If the submitted ``QueryJob`` finishes and returns and error.
 
         """
-        scripts, main = self.__split(query)
-        prefix, header = self.__render(prefix.strip().strip(' /.'))
-        if self.__skip_query_for(prefix):
-            return prefix
-        client = gbq.Client(self.project, **self.gbq_kws)
-        config = gbq.QueryJobConfig(priority=self.priority, **kwargs)
-        job = client.query('\n'.join([scripts, header, main]), config)
+        path = self.__strip(self.path.format(*parts))
+        bucket, prefix, header = self._render(path)
+        client = self.gbq()
+        if self._skip_query_for(bucket, prefix):
+            return f'{bucket}/{prefix}/'
+        scripts, main = self._split(query)
+        job = client.query('\n'.join([scripts, header, main]), self.config)
         while job.running():
             time.sleep(self.polling_interval)
         if error := job.error_result:
             raise GbqError(f"\n{error['reason'].upper()}: {error['message']}")
-        return prefix
+        return f'{bucket}/{prefix}/'
 
-    def __skip_query_for(self, prefix: str) -> bool:
+    def _skip_query_for(self, bucket: str, prefix: str) -> bool:
         """Do blobs with prefix exist on Google Storage? Overwrite them?"""
-        client = gcs.Client(self.project, **self.gcs_kws)
-        blobs = list(client.list_blobs(self.bucket, prefix=prefix))
+        client = GcsClient(**self.options)
+        blobs = list(client.list_blobs(bucket, prefix=prefix))
         if blobs and self.skip:
             return True
         if blobs and self.overwrite:
-            bucket = client.get_bucket(self.bucket)
-            bucket.delete_blobs(blobs)
+            client.get_bucket(bucket).delete_blobs(blobs)
         return False
 
-    def __render(self, prefix: str) -> tuple[str, str]:
+    def _render(self, path: str) -> tuple[str, str, str]:
         """Render the EXPORT header template with the given parameters."""
-        prefix = os.path.join(self.prefix, prefix) if prefix else self.prefix  # noqa: PTH118
-        prefix = prefix or str(uuid.uuid4())
-        prefix = prefix + '/' if prefix else ''
-        header = self._template.format(
-            self.bucket,
-            prefix,
-            str(self.overwrite).lower()
-        )
-        return prefix, header
+        parts = path.split('/')
+        bucket = parts[0]
+        prefix = '/'.join(filter(None, parts[1:])) or str(uuid.uuid4())
+        overwrite = str(self.overwrite).lower()
+        header = self._TEMPLATE.format(bucket, prefix, overwrite)
+        return bucket, prefix, header
 
     @staticmethod
-    def __split(query: str) -> tuple[str, str]:
+    def _split(query: str) -> tuple[str, str]:
         """Split query into scripts (before last semicolon) and main part."""
         split = query.split(';')
         separator = ';\n' if len(split) > 1 else ''

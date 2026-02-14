@@ -71,11 +71,11 @@ class Copy(ArgRepr):
             src_kws: Mapping[str, Any] | None = None,
             tgt_kws: Mapping[str, Any] | None = None
     ) -> None:
-        self.src_base = self.__stripped(src_base)
+        self.src_base = self.__strip(src_base)
         if tgt_base is None:
             self.tgt_base = self.src_base
         else:
-            self.tgt_base = self.__stripped(tgt_base)
+            self.tgt_base = self.__strip(tgt_base)
         self.src_storage = str(Storage(src_storage))
         if tgt_storage is None:
             self.tgt_storage = self.src_storage
@@ -99,7 +99,7 @@ class Copy(ArgRepr):
         )
 
     @staticmethod
-    def __stripped(path: Any) -> str:
+    def __strip(path: Any) -> str:
         """Try to normalize the path."""
         try:
             stripped = '/' + path.strip(' /')
