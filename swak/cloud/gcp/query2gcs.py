@@ -149,7 +149,7 @@ class GbqQuery2GcsParquet(ArgRepr):
         ----------
         query: str
             The SQL query to fire using the pre-configured client.
-       *parts: str
+        *parts: str
             Fragments that will be interpolated into the `path` given at
             instantiation. Obviously, there must be at least as many as
             there are placeholders in the `path`.

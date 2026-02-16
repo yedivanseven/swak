@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 import pandas as pd
 import datetime as dt
 from swak.jsonobject.fields import FlexiTime, FlexiDate
@@ -47,6 +48,11 @@ class TestAttributes(unittest.TestCase):
         ft = FlexiTime(ts)
         self.assertEqual('2021-01-23 12:23:12', str(ft))
 
+    def test_numpy(self):
+        ts = np.datetime64('2021-01-23 12:23:12')
+        ft = FlexiTime(ts)
+        self.assertEqual('2021-01-23 12:23:12', str(ft))
+
     def test_self(self):
         f = FlexiTime('2021-01-23 12:23:12')
         ft = FlexiTime(f)
@@ -70,6 +76,22 @@ class TestMembers(unittest.TestCase):
         self.assertEqual(
             dt.datetime.fromisoformat(self.time),
             self.ft.as_datetime
+        )
+
+    def test_as_date(self):
+        self.assertTrue(hasattr(self.ft, 'as_date'))
+        self.assertIsInstance(self.ft.as_date, dt.date)
+        self.assertEqual(
+            dt.datetime.fromisoformat(self.time).date(),
+            self.ft.as_date
+        )
+
+    def test_as_np(self):
+        self.assertTrue(hasattr(self.ft, 'as_np'))
+        self.assertIsInstance(self.ft.as_np, np.datetime64)
+        self.assertEqual(
+            np.datetime64(self.time),
+            self.ft.as_np
         )
 
     def test_as_json(self):
@@ -104,6 +126,7 @@ class TestMagic(unittest.TestCase):
         )
         self.assertLess(self.ft, FlexiTime('2021-01-23 12:24:13'))
         self.assertLess(self.ft, FlexiDate('2021-01-24'))
+        self.assertLess(self.ft, np.datetime64('2021-01-23 12:24:13'))
 
     def test_le(self):
         self.assertLessEqual(self.ft, '2021-01-23 12:24:13')
@@ -115,6 +138,7 @@ class TestMagic(unittest.TestCase):
         )
         self.assertLessEqual(self.ft, FlexiTime('2021-01-23 12:24:13'))
         self.assertLessEqual(self.ft, FlexiDate('2021-01-24'))
+        self.assertLessEqual(self.ft, np.datetime64('2021-01-23 12:24:13'))
 
     def test_gt(self):
         self.assertGreater(self.ft, '2021-01-23 10:24:13')
@@ -126,6 +150,7 @@ class TestMagic(unittest.TestCase):
         )
         self.assertGreater(self.ft, FlexiTime('2021-01-23 10:24:13'))
         self.assertGreater(self.ft, FlexiDate('2021-01-22'))
+        self.assertGreater(self.ft, np.datetime64('2021-01-23 10:24:13'))
 
     def test_ge(self):
         self.assertGreaterEqual(self.ft, '2021-01-23 10:24:13')
@@ -137,6 +162,7 @@ class TestMagic(unittest.TestCase):
         )
         self.assertGreaterEqual(self.ft, FlexiTime('2021-01-23 10:24:13'))
         self.assertGreaterEqual(self.ft, FlexiDate('2021-01-22'))
+        self.assertGreaterEqual(self.ft, np.datetime64('2021-01-23 10:24:13'))
 
     def test_eq(self):
         ft = FlexiTime('2021-01-23')
@@ -146,6 +172,7 @@ class TestMagic(unittest.TestCase):
         self.assertEqual(ft, dt.datetime.fromisoformat('2021-01-23'))
         self.assertEqual(ft, FlexiTime('2021-01-23'))
         self.assertEqual(ft, FlexiDate('2021-01-23'))
+        self.assertEqual(ft, np.datetime64('2021-01-23'))
 
     def test_ne(self):
         self.assertNotEqual(self.ft, '2021-01-24')
@@ -154,12 +181,16 @@ class TestMagic(unittest.TestCase):
         self.assertNotEqual(self.ft, dt.datetime.fromisoformat('2021-01-24'))
         self.assertNotEqual(self.ft, FlexiTime('2021-01-24'))
         self.assertNotEqual(self.ft, FlexiDate('2021-01-23'))
+        self.assertNotEqual(self.ft, np.datetime64('2021-01-23'))
 
     def test_add(self):
         added = self.ft + self.delta
         self.assertIsInstance(added, FlexiTime)
         self.assertEqual('2021-01-25 11:24:13', str(added))
         added = self.ft + pd.to_timedelta(self.delta)
+        self.assertIsInstance(added, FlexiTime)
+        self.assertEqual('2021-01-25 11:24:13', str(added))
+        added = self.ft + np.timedelta64(self.delta)
         self.assertIsInstance(added, FlexiTime)
         self.assertEqual('2021-01-25 11:24:13', str(added))
 
@@ -170,12 +201,18 @@ class TestMagic(unittest.TestCase):
         added = pd.to_timedelta(self.delta) + self.ft
         self.assertIsInstance(added, FlexiTime)
         self.assertEqual('2021-01-25 11:24:13', str(added))
+        added = np.timedelta64(self.delta) + self.ft
+        self.assertIsInstance(added, FlexiTime)
+        self.assertEqual('2021-01-25 11:24:13', str(added))
 
     def test_sub(self):
         added = self.ft - self.delta
         self.assertIsInstance(added, FlexiTime)
         self.assertEqual('2021-01-21 11:24:13', str(added))
         added = self.ft - pd.to_timedelta(self.delta)
+        self.assertIsInstance(added, FlexiTime)
+        self.assertEqual('2021-01-21 11:24:13', str(added))
+        added = self.ft - np.timedelta64(self.delta)
         self.assertIsInstance(added, FlexiTime)
         self.assertEqual('2021-01-21 11:24:13', str(added))
 

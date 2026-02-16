@@ -5,7 +5,7 @@ from .flexidate import FlexiDate
 from .flexitime import FlexiTime
 from .custom import CustomField
 from .resolve import resolve
-from .normalizers import Lower
+from .normalizers import Lower, Strip
 
 __all__ = [
     'Maybe',
@@ -13,5 +13,6 @@ __all__ = [
     'FlexiTime',
     'CustomField',
     'Lower',
+    'Strip',
     'resolve',
 ]

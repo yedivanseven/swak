@@ -27,5 +27,3 @@ __all__ = [
     'ParquetLoadJobConfig',
     'DataFrame2Gbq'
 ]
-
-# ToDo: Refactor so that partial clients are created outside classes

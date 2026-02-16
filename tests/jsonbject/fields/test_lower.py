@@ -81,7 +81,6 @@ class TestUsage(unittest.TestCase):
         self.assertEqual(' * hello world!/ ', actual)
 
 
-
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):

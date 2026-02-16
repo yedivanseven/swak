@@ -1,23 +1,23 @@
 from typing import Any, Self
 import datetime as dt
+import numpy as np
 import pandas as pd
 from pandas import Timestamp, Timedelta
 
-Time = str | dt.date | dt.datetime | Timestamp
-Delta = dt.timedelta | Timedelta
+Time = str | dt.date | dt.datetime | Timestamp | np.datetime64
+Delta = dt.timedelta | Timedelta | np.timedelta64
 
 
-# ToDo: Add as_np and try to convert from numpy datetime64
 # ToDo: Add polars support
-# Todo: Add as_date
 class FlexiTime:
     """Flexible wrapper around python's own ``datetime.datetime`` object.
 
     Parameters
     ----------
     time
-        Can be an ISO string of a date or datetime, a ``datetime.date`` or
-        a ``datetime.datetime`` object, or a ``pandas.Timestamp``.
+        Can be an ISO string of a date or datetime, a ``datetime.date``,
+        a ``datetime.datetime`` object, a ``np.datetime64`` object,
+        a ``pandas.Timestamp``, or a :class:`FlexiDate` object.
 
     """
 
@@ -62,6 +62,16 @@ class FlexiTime:
 
     def __hash__(self) -> int:
         return self.as_datetime.__hash__()
+
+    @property
+    def as_np(self) -> np.datetime64:
+        """Representation a numpy datetime object."""
+        return np.datetime64(self.as_datetime)
+
+    @property
+    def as_date(self) -> dt.date:
+        """Date part as datetime.date object."""
+        return self.as_datetime.date()
 
     @property
     def as_json(self) -> str:

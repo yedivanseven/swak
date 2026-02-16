@@ -1,13 +1,13 @@
 from typing import Any, Self
 import datetime as dt
+import numpy as np
 import pandas as pd
 from pandas import Timestamp, Timedelta
 
-Date = str | dt.date | dt.datetime | Timestamp
-Delta = dt.timedelta | Timedelta
+Date = str | dt.date | dt.datetime | Timestamp | np.datetime64
+Delta = dt.timedelta | Timedelta | np.timedelta64
 
 
-# ToDo: Add as_np and try to convert from numpy datetime64
 # ToDo: Add polars support
 class FlexiDate:
     """Flexible wrapper around python's own ``datetime.date`` object.
@@ -15,8 +15,9 @@ class FlexiDate:
     Parameters
     ----------
     date
-        Can be an ISO string of a date or datetime, a ``datetime.date`` or
-        a ``datetime.datetime`` object, or a ``pandas.Timestamp``.
+        Can be an ISO string of a date or datetime, a ``datetime.date``,
+        a ``datetime.datetime`` object, a ``np.datetime64`` object,
+        a ``pandas.Timestamp`` or a :class:`FlexiTime` object.
 
     """
 
@@ -70,6 +71,11 @@ class FlexiDate:
             self.as_date.month,
             self.as_date.day
         )
+
+    @property
+    def as_np(self) -> np.datetime64:
+        """Representation a numpy datetime object."""
+        return np.datetime64(self.as_date)
 
     @property
     def as_json(self) -> str:
