@@ -1,7 +1,9 @@
 import pickle
 import unittest
-from unittest.mock import patch, mock_open
 import textwrap
+from unittest.mock import patch
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from json import JSONDecodeError
 from swak.io import JsonReader, Reader, Storage, Mode, Compression, NotFound
 
@@ -110,7 +112,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.storage = Storage.MEMORY
+        self.storage = Storage.FILE
         self.json = {
             'foo': 'bar',
             'baz': {'answer': 42},
@@ -119,7 +121,9 @@ class TestUsage(unittest.TestCase):
                 {'name': 'World'},
             ],
         }
-        self.path = '/path/to/file.json'
+        self.dir = TemporaryDirectory()
+        self.file = self.dir.name + '/file.json'
+        self.path = Path(self.file)
         self.content = textwrap.dedent("""
             {
                 "foo": "bar",
@@ -130,6 +134,11 @@ class TestUsage(unittest.TestCase):
                 ]
             }
         """)
+        with self.path.open('wt') as file:
+            file.write(self.content)
+
+    def tearDown(self):
+        self.dir.cleanup()
 
     def test_callable(self):
         read = JsonReader()
@@ -137,67 +146,53 @@ class TestUsage(unittest.TestCase):
 
     @patch.object(Reader, '_non_root')
     def test_non_root_called_default(self, non_root):
-        non_root.return_value = self.path
-        read = JsonReader('/some/other/file.json', self.storage)
-        with read.fs.open(self.path, 'wt') as file:
-            file.write(self.content)
+        non_root.return_value = self.file
+        read = JsonReader(self.file, self.storage)
         _ = read()
         non_root.assert_called_once_with('')
 
     @patch.object(Reader, '_non_root')
     def test_non_root_called_custom(self, non_root):
-        non_root.return_value = self.path
-        read = JsonReader(self.path, self.storage)
-        with read.fs.open(self.path, 'wt') as file:
-            file.write(self.content)
+        non_root.return_value = self.file
+        read = JsonReader(self.file, self.storage)
         _ = read('/some/other/file.json')
         non_root.assert_called_once_with('/some/other/file.json')
 
-    @patch.object(Reader, '_non_root')
     @patch.object(Reader, '_managed')
-    def test_managed_called_default(self, managed, non_root):
-        non_root.return_value = self.path
-        mock_file = mock_open(read_data=self.content)
-        managed.return_value = mock_file.return_value
-        read = JsonReader('/some/other/file.json', self.storage)
-        with read.fs.open(self.path, 'wt') as file:
-            file.write(self.content)
-        _ = read()
-        managed.assert_called_once_with(self.path, None)
+    def test_managed_called_default(self, managed):
+        read = JsonReader(self.file, self.storage)
+        with self.path.open('rt') as file:
+            managed.return_value = file
+            _ = read()
+            managed.assert_called_once_with(self.file, None)
 
-    @patch.object(Reader, '_non_root')
     @patch.object(Reader, '_managed')
-    def test_managed_called_custom(self, managed, non_root):
-        non_root.return_value = self.path
-        mock_file = mock_open(read_data=self.content)
-        managed.return_value = mock_file.return_value
-        read = JsonReader('/some/other/file.json', self.storage, gzip=True)
-        with read.fs.open(self.path, 'wt') as file:
-            file.write(self.content)
-        _ = read()
-        managed.assert_called_once_with(self.path, Compression.GZIP)
+    def test_managed_called_custom(self, managed):
+        read = JsonReader(self.file, self.storage, gzip=True)
+        with self.path.open('rt') as file:
+            managed.return_value = file
+            _ = read()
+            managed.assert_called_once_with(self.file, Compression.GZIP)
 
     @patch.object(Reader, '_managed')
     @patch('swak.io.json.json.load')
     def test_json_load_called_defaults(self, load, managed):
-        mock_file = mock_open(read_data=self.content)
-        managed.return_value = mock_file.return_value
-        read = JsonReader(self.path, self.storage)
-        with read.fs.open(self.path, 'wt') as file:
-            file.write(self.content)
-        _ = read(self.path)
-        load.assert_called_once_with(mock_file.return_value)
+        read = JsonReader(self.file, self.storage)
+        with self.path.open('rt') as file:
+            managed.return_value = file
+            load.return_value = self.json
+            _ = read()
+            load.assert_called_once_with(file)
 
     @patch.object(Reader, '_managed')
     @patch('swak.io.json.json.load')
     def test_json_load_called_custom(self, load, managed):
-        mock_file = mock_open(read_data=self.content)
-        managed.return_value = mock_file.return_value
-        read = JsonReader(self.path, self.storage, json_kws={'json': 'kws'})
-        with read.fs.open(self.path, 'wt') as file:
-            file.write(self.content)
-        _ = read(self.path)
-        load.assert_called_once_with(mock_file.return_value, json='kws')
+        read = JsonReader(self.file, self.storage, json_kws={'json': 'kws'})
+        with self.path.open('rt') as file:
+            managed.return_value = file
+            load.return_value = self.json
+            _ = read()
+            load.assert_called_once_with(file, json='kws')
 
     def test_raises_on_file_not_found(self):
         read = JsonReader('/some/other/file.json', self.storage)
@@ -223,18 +218,16 @@ class TestUsage(unittest.TestCase):
         self.assertDictEqual({}, actual)
 
     def test_invalid_json_raises(self):
-        read = JsonReader(self.path, self.storage)
+        read = JsonReader(self.file, self.storage)
         invalid = "{'key': 'value'}"
-        with read.fs.open(self.path, 'wt') as file:
+        with self.path.open('wt') as file:
             file.write(invalid)
         with self.assertRaises(JSONDecodeError):
-            _ = read(self.path)
+            _ = read()
 
     def test_return_value(self):
-        read = JsonReader(self.path, self.storage)
-        with read.fs.open(self.path, 'wt') as file:
-            file.write(self.content)
-        actual = read(self.path)
+        read = JsonReader(self.file, self.storage)
+        actual = read()
         self.assertDictEqual(self.json, actual)
 
 

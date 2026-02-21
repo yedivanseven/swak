@@ -1,7 +1,9 @@
 import pickle
 import unittest
-from unittest.mock import patch, mock_open
 import textwrap
+from unittest.mock import patch
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from tomllib import TOMLDecodeError
 from swak.io import TomlReader, Reader, Storage, Mode, NotFound
 
@@ -93,7 +95,7 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.storage = Storage.MEMORY
+        self.storage = Storage.FILE
         self.toml = {
             'foo': 'bar',
             'baz': {'answer': 42},
@@ -102,7 +104,9 @@ class TestUsage(unittest.TestCase):
                 {'name': 'World'},
             ],
         }
-        self.path = '/path/to/file.toml'
+        self.dir = TemporaryDirectory()
+        self.file = self.dir.name + '/file.toml'
+        self.path = Path(self.file)
         self.content = textwrap.dedent("""
             foo = "bar"
 
@@ -115,6 +119,11 @@ class TestUsage(unittest.TestCase):
             [[greet]]
             name = "World"
         """).encode()
+        with self.path.open('wb') as file:
+            file.write(self.content)
+
+    def tearDown(self):
+        self.dir.cleanup()
 
     def test_callable(self):
         read = TomlReader()
@@ -122,55 +131,45 @@ class TestUsage(unittest.TestCase):
 
     @patch.object(Reader, '_non_root')
     def test_non_root_called_default(self, non_root):
-        non_root.return_value = self.path
-        read = TomlReader('/some/other/file.toml', self.storage)
-        with read.fs.open(self.path, 'wb') as file:
-            file.write(self.content)
+        non_root.return_value = self.file
+        read = TomlReader(self.file, self.storage)
         _ = read()
         non_root.assert_called_once_with('')
 
     @patch.object(Reader, '_non_root')
     def test_non_root_called_custom(self, non_root):
-        non_root.return_value = self.path
-        read = TomlReader(self.path, self.storage)
-        with read.fs.open(self.path, 'wb') as file:
-            file.write(self.content)
+        non_root.return_value = self.file
+        read = TomlReader(self.file, self.storage)
         _ = read('/some/other/file.toml')
         non_root.assert_called_once_with('/some/other/file.toml')
 
-    @patch.object(Reader, '_non_root')
     @patch.object(Reader, '_managed')
-    def test_managed_called(self, managed, non_root):
-        non_root.return_value = self.path
-        mock_file = mock_open(read_data=self.content)
-        managed.return_value = mock_file.return_value
-        read = TomlReader('/some/other/file.toml', self.storage)
-        with read.fs.open(self.path, 'wb') as file:
-            file.write(self.content)
-        _ = read()
-        managed.assert_called_once_with(self.path)
+    def test_managed_called(self, managed):
+        read = TomlReader(self.file, self.storage)
+        with self.path.open('rb') as file:
+            managed.return_value = file
+            _ = read()
+            managed.assert_called_once_with(self.file)
 
     @patch.object(Reader, '_managed')
     @patch('swak.io.toml.tomllib.load')
     def test_tomlib_called_defaults(self, load, managed):
-        mock_file = mock_open(read_data=self.content)
-        managed.return_value = mock_file.return_value
-        read = TomlReader(self.path, self.storage)
-        with read.fs.open(self.path, 'wb') as file:
-            file.write(self.content)
-        _ = read(self.path)
-        load.assert_called_once_with(mock_file.return_value)
+        read = TomlReader(self.file, self.storage)
+        with self.path.open('rb') as file:
+            managed.return_value = file
+            load.return_value = self.toml
+            _ = read()
+            load.assert_called_once_with(file)
 
     @patch.object(Reader, '_managed')
     @patch('swak.io.toml.tomllib.load')
     def test_tomlib_called_custom(self, load, managed):
-        mock_file = mock_open(read_data=self.content)
-        managed.return_value = mock_file.return_value
-        read = TomlReader(self.path, self.storage, toml_kws={'toml': 'kws'})
-        with read.fs.open(self.path, 'wb') as file:
-            file.write(self.content)
-        _ = read(self.path)
-        load.assert_called_once_with(mock_file.return_value, toml='kws')
+        read = TomlReader(self.file, self.storage, toml_kws={'toml': 'kws'})
+        with self.path.open('rt') as file:
+            managed.return_value = file
+            load.return_value = self.toml
+            _ = read()
+            load.assert_called_once_with(file, toml='kws')
 
     def test_raises_on_file_not_found(self):
         read = TomlReader('/some/other/file.toml', self.storage)
@@ -196,18 +195,16 @@ class TestUsage(unittest.TestCase):
         self.assertDictEqual({}, actual)
 
     def test_invalid_toml_raises(self):
-        read = TomlReader(self.path, self.storage)
+        read = TomlReader(self.file, self.storage)
         invalid = b'invalid = [unclosed'
-        with read.fs.open(self.path, 'wb') as file:
+        with self.path.open('wb') as file:
             file.write(invalid)
         with self.assertRaises(TOMLDecodeError):
-            _ = read(self.path)
+            _ = read()
 
     def test_return_value(self):
-        read = TomlReader(self.path, self.storage)
-        with read.fs.open(self.path, 'wb') as file:
-            file.write(self.content)
-        actual = read(self.path)
+        read = TomlReader(self.file, self.storage)
+        actual = read()
         self.assertDictEqual(self.toml, actual)
 
 

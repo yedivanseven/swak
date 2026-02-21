@@ -1,6 +1,9 @@
+import json
 import pickle
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from swak.io import JsonWriter, Writer, Storage, Mode, Compression
 
 
@@ -86,130 +89,117 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/to/file.json'
-        self.storage = Storage.MEMORY
+        self.storage = Storage.FILE
+        self.dir = TemporaryDirectory()
+        self.file = self.dir.name + '/file.json'
+        self.path = Path(self.file)
         self.json = {'hello': 'world', 'foo': {'bar': 'baz'}, 'answer': 42}
 
+    def tearDown(self):
+        self.dir.cleanup()
+
     def test_callable(self):
-        write = JsonWriter(self.path)
+        write = JsonWriter(self.file)
         self.assertTrue(callable(write))
 
     @patch.object(Writer, '_uri_from')
     def test_uri_from_called(self, uri_from):
-        uri_from.return_value = self.path
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
+        uri_from.return_value = self.file
+        write = JsonWriter(self.file, self.storage)
         _ = write(self.json, 'foo', 42)
         uri_from.assert_called_once_with('foo', 42)
 
     @patch.object(Writer, '_managed')
-    @patch.object(Writer, '_uri_from')
-    def test_managed_called_default(self, uri_from, managed):
-        uri_from.return_value = 'generated uri'
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        value = write(self.json, 'foo', 42)
-        managed.assert_called_once_with('generated uri', None)
-        self.assertTupleEqual((), value)
+    def test_managed_called_default(self, managed):
+        with self.path.open('wt') as file:
+            managed.return_value = file
+            write = JsonWriter(self.file, self.storage, overwrite=True)
+            _ = write(self.json, 'foo', 42)
+        managed.assert_called_once_with(self.file, None)
 
     @patch.object(Writer, '_managed')
-    @patch.object(Writer, '_uri_from')
-    def test_managed_called_gzip_suffix(self, uri_from, managed):
-        uri_from.return_value = 'generated_uri.gz'
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        value = write(self.json, 'foo', 42)
-        managed.assert_called_once_with('generated_uri.gz', Compression.GZIP)
-        self.assertTupleEqual((), value)
+    def test_managed_called_gzip_suffix(self, managed):
+        zipped = self.file + '.gz'
+        with Path(zipped).open('wt') as file:
+            managed.return_value = file
+            write = JsonWriter(zipped, self.storage, overwrite=True)
+            _ = write(self.json, 'foo', 42)
+        managed.assert_called_once_with(zipped, Compression.GZIP)
 
     @patch.object(Writer, '_managed')
-    @patch.object(Writer, '_uri_from')
-    def test_managed_called_gzip_false(self, uri_from, managed):
-        uri_from.return_value = 'generated_uri.gz'
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            gzip=False
-        )
-        value = write(self.json, 'foo', 42)
-        managed.assert_called_once_with('generated_uri.gz', None)
-        self.assertTupleEqual((), value)
+    def test_managed_called_gzip_false(self, managed):
+        zipped = self.file + '.gz'
+        with Path(zipped).open('wt') as file:
+            managed.return_value = file
+            write = JsonWriter(
+                zipped,
+                storage=self.storage,
+                overwrite=True,
+                gzip=False
+            )
+            _ = write(self.json, 'foo', 42)
+        managed.assert_called_once_with(zipped, None)
 
     @patch.object(Writer, '_managed')
-    @patch.object(Writer, '_uri_from')
-    def test_managed_called_gzip_true(self, uri_from, managed):
-        uri_from.return_value = 'generated uri'
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            gzip=True
-        )
-        value = write(self.json, 'foo', 42)
-        managed.assert_called_once_with('generated uri', Compression.GZIP)
-        self.assertTupleEqual((), value)
+    def test_managed_called_gzip_true(self, managed):
+        zipped = self.file + '.gz'
+        with Path(zipped).open('wt') as file:
+            managed.return_value = file
+            write = JsonWriter(
+                zipped,
+                storage=self.storage,
+                overwrite=True,
+                gzip=True
+            )
+            _ = write(self.json, 'foo', 42)
+        managed.assert_called_once_with(zipped, Compression.GZIP)
 
     @patch.object(Writer, '_managed')
     @patch.object(Writer, '_uri_from')
     def test_managed_not_called(self, uri_from, managed):
         uri_from.return_value = ''
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        value = write(self.json, 'foo', 42)
+        write = JsonWriter(self.file, self.storage)
+        _ = write(self.json, 'foo', 42)
         managed.assert_not_called()
-        self.assertTupleEqual((), value)
 
     @patch('swak.io.json.json.dump')
     @patch.object(Writer, '_managed')
     def test_dump_called_defaults(self, managed, dump):
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        _ = write(self.json)
-        dump.assert_called_once_with(self.json, mock_file.return_value)
+        with self.path.open('wt') as file:
+            managed.return_value = file
+            write = JsonWriter(self.file, self.storage, overwrite=True)
+            _ = write(self.json)
+            dump.assert_called_once_with(self.json, file)
 
     @patch('swak.io.json.json.dump')
     @patch.object(Writer, '_managed')
     def test_dump_called_custom(self, managed, dump):
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = JsonWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            json_kws={'answer': 42}
-        )
+        with self.path.open('wt') as file:
+            managed.return_value = file
+            write = JsonWriter(
+                self.file,
+                storage=self.storage,
+                overwrite=True,
+                json_kws={'answer': 42}
+            )
+            _ = write(self.json)
+            dump.assert_called_once_with(
+                self.json,
+                file,
+                answer=42
+            )
+
+    def test_return_value(self):
+        write = JsonWriter(self.file, self.storage)
+        actual = write(self.json)
+        self.assertTupleEqual((), actual)
+
+    def test_actually_saves(self):
+        write = JsonWriter(self.file, self.storage)
         _ = write(self.json)
-        dump.assert_called_once_with(
-            self.json,
-            mock_file.return_value,
-            answer=42
-        )
+        with self.path.open('rt') as file:
+            actual = json.load(file)
+        self.assertDictEqual(actual, self.json)
 
 
 class TestMisc(unittest.TestCase):

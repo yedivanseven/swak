@@ -1,4 +1,4 @@
-"""Save and load (the state of) PyTorch models to and from disk."""
+"""Save and load (the state of) PyTorch models to and from any filesystem."""
 
 import warnings
 import torch as pt

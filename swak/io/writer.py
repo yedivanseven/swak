@@ -24,7 +24,7 @@ class Writer(ArgRepr):
     ----------
     path: str
         The absolute path to the file to save. May contain any number of string
-        placeholders (i.e.,  pairs of curly brackets) that will be interpolated
+        placeholders (i.e., pairs of curly brackets) that will be interpolated
         when instances are called.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).

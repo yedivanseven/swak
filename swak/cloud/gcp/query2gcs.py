@@ -70,7 +70,7 @@ class GbqQuery2GcsParquet(ArgRepr):
     def __init__(
             self,
             gbq: Gbq,
-            path: str= '{}',
+            path: str = '{}',
             overwrite: bool = False,
             skip: bool = False,
             config: QueryJobConfig | None = None,

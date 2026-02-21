@@ -1,6 +1,9 @@
 import pickle
 import unittest
-from unittest.mock import patch, mock_open
+import tomllib
+from unittest.mock import patch
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from swak.io import TomlWriter, Writer, Storage, Mode
 
 
@@ -136,8 +139,10 @@ class TestPrune(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/to/file.toml'
-        self.storage = Storage.MEMORY
+        self.storage = Storage.FILE
+        self.dir = TemporaryDirectory()
+        self.file = self.dir.name + '/file.toml'
+        self.path = Path(self.file)
         self.toml = {
             'foo': 'bar',
             'baz': {'answer': 42},
@@ -147,89 +152,58 @@ class TestUsage(unittest.TestCase):
             ]
         }
 
+    def tearDown(self):
+        self.dir.cleanup()
+
     def test_callable(self):
-        write = TomlWriter(self.path)
+        write = TomlWriter(self.file)
         self.assertTrue(callable(write))
 
     @patch.object(Writer, '_uri_from')
     def test_uri_from_called(self, uri_from):
-        uri_from.return_value = self.path
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
+        uri_from.return_value = self.file
+        write = TomlWriter(self.file, self.storage)
         _ = write(self.toml, 'foo', 42)
         uri_from.assert_called_once_with('foo', 42)
 
     @patch.object(Writer, '_managed')
-    @patch.object(Writer, '_uri_from')
-    def test_managed_called(self, uri_from, managed):
-        uri_from.return_value = 'generated uri'
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        value = write(self.toml, 'foo', 42)
-        managed.assert_called_once_with('generated uri')
-        self.assertTupleEqual((), value)
+    def test_managed_called(self, managed):
+        with self.path.open('wb') as file:
+            managed.return_value = file
+            write = TomlWriter(self.file, self.storage, overwrite=True)
+            _ = write(self.toml, 'foo', 42)
+        managed.assert_called_once_with(self.file)
 
     @patch.object(Writer, '_managed')
     @patch.object(Writer, '_uri_from')
     def test_managed_not_called(self, uri_from, managed):
         uri_from.return_value = ''
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        value = write(self.toml, 'foo', 42)
+        write = TomlWriter(self.file, self.storage)
+        _ = write(self.toml, 'foo', 42)
         managed.assert_not_called()
-        self.assertTupleEqual((), value)
 
     @patch.object(TomlWriter, '_pruned')
     @patch.object(Writer, '_uri_from')
     def test_prune_not_called_on_skip(self, uri_from, pruned):
         uri_from.return_value = ''
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            prune=True
-        )
+        write = TomlWriter(self.file, self.storage, prune=True)
         _ = write(self.toml, 'foo', 42)
         pruned.assert_not_called()
 
     @patch.object(TomlWriter, '_pruned')
     def test_prune_not_called_on_prune_false(self, pruned):
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
+        write = TomlWriter(self.file, self.storage, prune=False)
         _ = write(self.toml, 'foo', 42)
         pruned.assert_not_called()
 
     @patch.object(TomlWriter, '_pruned')
     def test_prune_called_on_prune_true(self, pruned):
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            prune=True
-        )
+        write = TomlWriter(self.file, self.storage, prune=True)
         _ = write(self.toml, 'foo', 42)
-        pruned.assert_called()
+        pruned.assert_called_once_with(self.toml)
 
     def test_raises_if_prune_false(self):
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
+        write = TomlWriter(self.file, self.storage, prune=False)
         toml = {
             1: 'bar',
             'baz': {'answer': 42},
@@ -239,12 +213,7 @@ class TestUsage(unittest.TestCase):
             _ = write(toml, 'foo', 42)
 
     def test_works_if_prune_true(self):
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            prune=True
-        )
+        write = TomlWriter(self.file, self.storage, prune=True)
         toml = {
             1: 'bar',
             'baz': {'answer': 42},
@@ -255,33 +224,41 @@ class TestUsage(unittest.TestCase):
     @patch('swak.io.toml.tomli_w.dump')
     @patch.object(Writer, '_managed')
     def test_dump_called_defaults(self, managed, dump):
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        _ = write(self.toml)
-        dump.assert_called_once_with(self.toml, mock_file.return_value)
+        with self.path.open('wb') as file:
+            managed.return_value = file
+            write = TomlWriter(self.file, self.storage, overwrite=True)
+            _ = write(self.toml)
+            dump.assert_called_once_with(self.toml, file)
 
     @patch('swak.io.toml.tomli_w.dump')
     @patch.object(Writer, '_managed')
     def test_dump_called_custom(self, managed, dump):
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = TomlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            toml_kws={'answer': 42}
-        )
+        with self.path.open('wb') as file:
+            managed.return_value = file
+            write = TomlWriter(
+                self.file,
+                storage=self.storage,
+                overwrite=True,
+                toml_kws={'answer': 42}
+            )
+            _ = write(self.toml)
+            dump.assert_called_once_with(
+                self.toml,
+                file,
+                answer=42
+            )
+
+    def test_return_value(self):
+        write = TomlWriter(self.file, self.storage)
+        actual = write(self.toml)
+        self.assertTupleEqual((), actual)
+
+    def test_actually_saves(self):
+        write = TomlWriter(self.file, self.storage)
         _ = write(self.toml)
-        dump.assert_called_once_with(
-            self.toml,
-            mock_file.return_value,
-            answer=42
-        )
+        with self.path.open('rb') as file:
+            actual = tomllib.load(file)
+        self.assertDictEqual(actual, self.toml)
 
 
 class TestMisc(unittest.TestCase):

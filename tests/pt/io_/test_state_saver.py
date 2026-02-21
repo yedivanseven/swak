@@ -58,7 +58,7 @@ class TestUsage(unittest.TestCase):
         self.model = Mock()
         self.model.state_dict.return_value = self.state_dict
         self.dir = TemporaryDirectory()
-        self.file = self.dir.name + 'file.pt'
+        self.file = self.dir.name + '/file.pt'
         self.path = Path(self.file)
 
     def tearDown(self):

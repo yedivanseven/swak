@@ -1,6 +1,9 @@
 import pickle
 import unittest
-from unittest.mock import patch, mock_open
+import yaml
+from unittest.mock import patch
+from tempfile import TemporaryDirectory
+from pathlib import Path
 from swak.io import YamlWriter, Writer, Storage, Mode
 
 
@@ -70,83 +73,80 @@ class TestAttributes(unittest.TestCase):
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/to/file.yml'
-        self.storage = Storage.MEMORY
+        self.storage = Storage.FILE
+        self.dir = TemporaryDirectory()
+        self.file = self.dir.name + '/file.yml'
+        self.path = Path(self.file)
         self.yml = {'hello': 'world', 'foo': {'bar': 'baz'}, 'answer': 42}
 
     def test_callable(self):
-        write = YamlWriter(self.path)
+        write = YamlWriter(self.file)
         self.assertTrue(callable(write))
+
+    def tearDown(self):
+        self.dir.cleanup()
 
     @patch.object(Writer, '_uri_from')
     def test_uri_from_called(self, uri_from):
-        uri_from.return_value = self.path
-        write = YamlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
+        uri_from.return_value = self.file
+        write = YamlWriter(self.file, self.storage)
         _ = write(self.yml, 'foo', 42)
         uri_from.assert_called_once_with('foo', 42)
 
     @patch.object(Writer, '_managed')
-    @patch.object(Writer, '_uri_from')
-    def test_managed_called(self, uri_from, managed):
-        uri_from.return_value = 'generated uri'
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = YamlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        value = write(self.yml, 'foo', 42)
-        managed.assert_called_once_with('generated uri')
-        self.assertTupleEqual((), value)
+    def test_managed_called(self, managed):
+        with self.path.open('wt') as file:
+            managed.return_value = file
+            write = YamlWriter(self.file, self.storage, overwrite=True)
+            _ = write(self.yml, 'foo', 42)
+        managed.assert_called_once_with(self.file)
 
     @patch.object(Writer, '_managed')
     @patch.object(Writer, '_uri_from')
     def test_managed_not_called(self, uri_from, managed):
         uri_from.return_value = ''
-        write = YamlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        value = write(self.yml, 'foo', 42)
+        write = YamlWriter(self.file, self.storage)
+        _ = write(self.yml, 'foo', 42)
         managed.assert_not_called()
-        self.assertTupleEqual((), value)
 
     @patch('swak.io.yaml.yaml.dump')
     @patch.object(Writer, '_managed')
     def test_dump_called_defaults(self, managed, dump):
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = YamlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True
-        )
-        _ = write(self.yml)
-        dump.assert_called_once_with(self.yml, mock_file.return_value)
+        with self.path.open('wt') as file:
+            managed.return_value = file
+            write = YamlWriter(self.file, self.storage, overwrite=True)
+            _ = write(self.yml)
+            dump.assert_called_once_with(self.yml, file)
 
     @patch('swak.io.yaml.yaml.dump')
     @patch.object(Writer, '_managed')
     def test_dump_called_custom(self, managed, dump):
-        mock_file = mock_open()
-        managed.return_value = mock_file.return_value
-        write = YamlWriter(
-            self.path,
-            storage=self.storage,
-            overwrite=True,
-            yaml_kws={'answer': 42}
-        )
+        with self.path.open('wt') as file:
+            managed.return_value = file
+            write = YamlWriter(
+                self.file,
+                storage=self.storage,
+                overwrite=True,
+                yaml_kws={'answer': 42}
+            )
+            _ = write(self.yml)
+            dump.assert_called_once_with(
+                self.yml,
+                file,
+                answer=42
+            )
+
+    def test_return_value(self):
+        write = YamlWriter(self.file, self.storage)
+        actual = write(self.yml)
+        self.assertTupleEqual((), actual)
+
+    def test_actually_saves(self):
+        write = YamlWriter(self.file, self.storage)
         _ = write(self.yml)
-        dump.assert_called_once_with(
-            self.yml,
-            mock_file.return_value,
-            answer=42
-        )
+        with self.path.open('rt') as file:
+            actual = yaml.load(file, yaml.Loader)
+        self.assertDictEqual(actual, self.yml)
 
 
 class TestMisc(unittest.TestCase):

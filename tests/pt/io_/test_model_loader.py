@@ -60,7 +60,7 @@ class TestUsage(unittest.TestCase):
         self.storage = Storage.FILE
         self.model = pt.nn.Linear(2, 3, device='cpu')
         self.dir = TemporaryDirectory()
-        self.file = self.dir.name + 'file.pt'
+        self.file = self.dir.name + '/file.pt'
         self.path = Path(self.file)
         pt.save(self.model, self.file)
 
