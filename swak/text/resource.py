@@ -18,14 +18,14 @@ class TextResourceLoader(ArgRepr):
         Defaults to "resources".
     not_found: str, optional
         What to do if the specified file is not found. One of "ignore", "warn",
-        or "raise". Defaults to "raise". Use the ``NotFound`` enum
+        or "raise". Defaults to "raise". Use the :class:`NotFound` enum
         to avoid typos!
     encoding: str, optional
         Encoding of the text file. Defaults to "utf-8".
 
     See Also
     --------
-    ~swak.misc.NotFound
+    ~swak.io.NotFound
 
     """
 

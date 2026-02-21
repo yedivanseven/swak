@@ -222,11 +222,11 @@ class OnDisk(Checkpoint):
     not_found: str, optional
         What to do if a checkpoint is loaded from the specified `path`
         but none is there yet. One of "ignore", "warn", or "raise".
-        Defaults to "raise". Use the ``NotFound`` enum to avoid typos!
+        Defaults to "raise". Use the :class:`NotFound` enum to avoid typos!
 
     See Also
     --------
-    ~swak.misc.NotFound
+    ~swak.io.NotFound
 
     """
 

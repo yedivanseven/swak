@@ -131,7 +131,7 @@ class Parquet2DataFrame(Reader):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         Directory under which the parquet file is located or full path to the
         parquet file. Since it (or part of it) can also be provided later,
         when the callable instance is called, it is optional here.

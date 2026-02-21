@@ -3,8 +3,7 @@ import unittest
 from unittest.mock import patch, mock_open
 import textwrap
 from json import JSONDecodeError
-from swak.io.types import NotFound
-from swak.io import JsonReader, Reader, Storage, Mode, Compression
+from swak.io import JsonReader, Reader, Storage, Mode, Compression, NotFound
 
 
 class TestInstantiation(unittest.TestCase):
@@ -44,7 +43,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Reader, '__init__')
     def test_reader_init_called_enum(self, init):
         _ = JsonReader(
-            '/path/to/file.txt',
+            '/path/to/file.json',
             Storage.MEMORY,
             16,
             {'storage': 'kws'},
@@ -53,7 +52,7 @@ class TestInstantiation(unittest.TestCase):
             False
         )
         init.assert_called_once_with(
-            '/path/to/file.txt',
+            '/path/to/file.json',
             Storage.MEMORY,
             Mode.RT,
             16,

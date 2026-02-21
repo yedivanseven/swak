@@ -3,8 +3,7 @@ import unittest
 from unittest.mock import patch, mock_open
 import textwrap
 from tomllib import TOMLDecodeError
-from swak.io.types import NotFound
-from swak.io import TomlReader, Reader, Storage, Mode
+from swak.io import TomlReader, Reader, Storage, Mode, NotFound
 
 
 class TestInstantiation(unittest.TestCase):

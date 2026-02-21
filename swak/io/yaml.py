@@ -127,7 +127,7 @@ class YamlReader(Reader):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         Directory under which the YAML file is located or full path to the
         YAML file. Since it (or part of it) can also be provided later,
         when the callable instance is called, it is optional here.
@@ -163,7 +163,7 @@ class YamlReader(Reader):
     See Also
     --------
     Storage
-    ~swak.misc.NotFound
+    ~swak.io.NotFound
 
     """
 

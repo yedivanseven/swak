@@ -30,7 +30,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Writer, '__init__')
     def test_writer_init_called_custom(self, init):
         _ = JsonWriter(
-            '/sone/other/file.csv',
+            '/some/other/file.json',
             Storage.MEMORY,
             True,
             True,
@@ -40,7 +40,7 @@ class TestInstantiation(unittest.TestCase):
             False
         )
         init.assert_called_once_with(
-            '/sone/other/file.csv',
+            '/some/other/file.json',
             Storage.MEMORY,
             True,
             True,

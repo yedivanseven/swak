@@ -4,8 +4,7 @@ from unittest.mock import patch, mock_open
 import textwrap
 from yaml import Loader, SafeLoader
 from yaml.scanner import ScannerError
-from swak.io.types import NotFound
-from swak.io import YamlReader, Reader, Storage, Mode
+from swak.io import YamlReader, Reader, Storage, Mode, NotFound
 
 
 class TestInstantiation(unittest.TestCase):
@@ -23,12 +22,12 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Reader, '__init__')
     def test_reader_init_called_custom(self, init):
         _ = YamlReader(
-                '/path/to/file.yml',
-                Storage.MEMORY,
-                16,
-                {'storage': 'kws'},
-                SafeLoader,
-                'warn'
+            '/path/to/file.yml',
+            Storage.MEMORY,
+            16,
+            {'storage': 'kws'},
+            SafeLoader,
+            'warn'
         )
         init.assert_called_once_with(
             '/path/to/file.yml',

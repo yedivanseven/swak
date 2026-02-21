@@ -17,6 +17,7 @@ from .find import Find
 from .copy import Copy
 from .types import (
     Storage,
+    LiteralStorage,
     Mode,
     Compression,
     Bears,
@@ -31,6 +32,7 @@ __all__ = [
     'Find',
     'Copy',
     'Storage',
+    'LiteralStorage',
     'Mode',
     'Compression',
     'Bears',
