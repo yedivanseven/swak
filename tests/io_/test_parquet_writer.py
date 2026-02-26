@@ -162,6 +162,24 @@ class TestUsage(unittest.TestCase):
             actual = pl.read_parquet(file)
         pl_assert_frame_equal(actual, df)
 
+    def test_subdirectory_created_file(self):
+        df = pd.DataFrame([{'foo': 42}, {'bar': 43}])
+        path = self.dir.name + '/sub/folder/file.parquet'
+        write = DataFrame2Parquet(path, self.storage)
+        _ = write(df)
+        with write.fs.open(path, 'rb') as file:
+            actual = pd.read_parquet(file)
+        pd.testing.assert_frame_equal(actual, df)
+
+    def test_subdirectory_created_memory(self):
+        df = pd.DataFrame([{'foo': 42}, {'bar': 43}])
+        path = self.dir.name + '/sub/folder/file.parquet'
+        write = DataFrame2Parquet(path, 'memory')
+        _ = write(df)
+        with write.fs.open(path, 'rb') as file:
+            actual = pd.read_parquet(file)
+        pd.testing.assert_frame_equal(actual, df)
+
 
 class TestMisc(unittest.TestCase):
 

@@ -22,6 +22,7 @@ from .data import TestDataBase, TrainDataBase
 __all__ = ['Trainer']
 
 
+# ToDo: Remove per-episode scheduling?
 class Trainer(ArgRepr):
     """Train and, optionally, evaluate a model with early stopping.
 

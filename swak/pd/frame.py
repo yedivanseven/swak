@@ -29,7 +29,7 @@ type GroupKeys = list[GroupKey]
 type Func = Callable[[Series], float] | str
 type Funcs = list[Func] | dict[str, Func] | dict[str, list[Func]]
 
-
+# ToDo: Add AsFreq, Explode, Transform, amd FillNA
 class AsType(ReprName):
     """Partial of a pandas dataframe or series ``astype`` method.
 
@@ -633,6 +633,7 @@ class DropNA(ArgRepr):
         """
         return df.dropna(
             axis=self.axis,
+            # ToDo: Check behavior for explicit thresh=None versus no thresh.
             **({'how': self.how} if self.how else {'thresh': self.thresh}),
             subset=self.subset,
             inplace=False,
@@ -640,6 +641,7 @@ class DropNA(ArgRepr):
         )
 
 
+# ToDo: Make this work like col, *cols!
 class SortValues(ArgRepr):
     """Partial of the pandas dataframe ``sort_values`` method.
 
@@ -685,6 +687,7 @@ class SortValues(ArgRepr):
         return df.sort_values(self.by, inplace=False, **self.kwargs)
 
 
+# ToDo: Make key, keys work like col, *cols?
 class SetIndex(ArgRepr):
     """Simple partial of a pandas dataframe's ``set_index`` method.
 

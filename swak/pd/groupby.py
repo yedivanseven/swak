@@ -9,7 +9,7 @@ from ..misc import ArgRepr
 type GroupBy = SeriesGroupBy | DataFrameGroupBy
 type Pandas = Series | DataFrame
 
-
+# ToDo. Make these work for Series and DataFrame as well!
 class RollingGroupByApply(ArgRepr):
     """Partial for calling a rolling-grouped dataframe's ``apply`` method.
 

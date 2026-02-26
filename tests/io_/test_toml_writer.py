@@ -260,6 +260,22 @@ class TestUsage(unittest.TestCase):
             actual = tomllib.load(file)
         self.assertDictEqual(actual, self.toml)
 
+    def test_subdirectory_created_file(self):
+        path = self.dir.name + '/sub/folder/file.json'
+        write = TomlWriter(path, self.storage)
+        _ = write(self.toml)
+        with write.fs.open(path, 'rb') as file:
+            actual = tomllib.load(file)
+        self.assertDictEqual(actual, self.toml)
+
+    def test_subdirectory_created_memory(self):
+        path = self.dir.name + '/sub/folder/file.json'
+        write = TomlWriter(path, 'memory')
+        _ = write(self.toml)
+        with write.fs.open(path, 'rb') as file:
+            actual = tomllib.load(file)
+        self.assertDictEqual(actual, self.toml)
+
 
 class TestMisc(unittest.TestCase):
 

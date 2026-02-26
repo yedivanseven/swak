@@ -25,7 +25,7 @@ class GbqQuery2GcsParquet(ArgRepr):
     path: str, optional
         The path to the cloud storage "directory", where parquet files will
         reside in "bucket/prefix/" form. May contain any number of string
-        placeholders (i.e.,  pairs of curly brackets) that will be interpolated
+        placeholders (i.e., pairs of curly brackets) that will be interpolated
         when instances are called. If the prefix part is empty after
         interpolation, a randomly generated UUID will be used.
         Defaults to "{}".

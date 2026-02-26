@@ -201,6 +201,22 @@ class TestUsage(unittest.TestCase):
             actual = json.load(file)
         self.assertDictEqual(actual, self.json)
 
+    def test_subdirectory_created_file(self):
+        path = self.dir.name + '/sub/folder/file.json'
+        write = JsonWriter(path, self.storage)
+        _ = write(self.json)
+        with write.fs.open(path, 'rt') as file:
+            actual = json.load(file)
+        self.assertDictEqual(actual, self.json)
+
+    def test_subdirectory_created_memory(self):
+        path = self.dir.name + '/sub/folder/file.json'
+        write = JsonWriter(path, 'memory')
+        _ = write(self.json)
+        with write.fs.open(path, 'rt') as file:
+            actual = json.load(file)
+        self.assertDictEqual(actual, self.json)
+
 
 class TestMisc(unittest.TestCase):
 

@@ -148,6 +148,22 @@ class TestUsage(unittest.TestCase):
             actual = yaml.load(file, yaml.Loader)
         self.assertDictEqual(actual, self.yml)
 
+    def test_subdirectory_created_file(self):
+        path = self.dir.name + '/sub/folder/file.json'
+        write = YamlWriter(path, self.storage)
+        _ = write(self.yml)
+        with write.fs.open(path, 'rb') as file:
+            actual = yaml.load(file, yaml.Loader)
+        self.assertDictEqual(actual, self.yml)
+
+    def test_subdirectory_created_memory(self):
+        path = self.dir.name + '/sub/folder/file.json'
+        write = YamlWriter(path, 'memory')
+        _ = write(self.yml)
+        with write.fs.open(path, 'rb') as file:
+            actual = yaml.load(file, yaml.Loader)
+        self.assertDictEqual(actual, self.yml)
+
 
 class TestMisc(unittest.TestCase):
 

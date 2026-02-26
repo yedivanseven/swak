@@ -112,6 +112,26 @@ class TestUsage(unittest.TestCase):
         for p1, p2 in zip(self.model.parameters(), actual.parameters()):
             self.assertTrue(pt.allclose(p1, p2))
 
+    def test_subdirectory_created_file(self):
+        path = self.dir.name + '/sub/folder/file.pt'
+        write = ModelSaver(path, self.storage)
+        _ = write(self.model)
+        with write.fs.open(path, 'rb') as file:
+            actual = pt.load(file, weights_only=False)
+        self.assertIsInstance(actual, type(self.model))
+        for p1, p2 in zip(self.model.parameters(), actual.parameters()):
+            self.assertTrue(pt.allclose(p1, p2))
+
+    def test_subdirectory_created_memory(self):
+        path = self.dir.name + '/sub/folder/file.pt'
+        write = ModelSaver(path, 'memory')
+        _ = write(self.model)
+        with write.fs.open(path, 'rb') as file:
+            actual = pt.load(file, weights_only=False)
+        self.assertIsInstance(actual, type(self.model))
+        for p1, p2 in zip(self.model.parameters(), actual.parameters()):
+            self.assertTrue(pt.allclose(p1, p2))
+
 
 class TestMisc(unittest.TestCase):
 
