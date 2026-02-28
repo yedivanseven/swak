@@ -55,6 +55,11 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_fs(self):
         self.assertIsInstance(self.read.fs, LocalFileSystem)
 
+    @patch('swak.io.reader.fsspec.filesystem')
+    def test_filesystem_called_with_defaults(self, fs):
+        _ = self.read.fs
+        fs.assert_called_once_with('file')
+
 
 class TestAttributes(unittest.TestCase):
 
@@ -133,6 +138,12 @@ class TestAttributes(unittest.TestCase):
     def test_fs(self):
         read = Reader(self.path, Storage.MEMORY)
         self.assertIsInstance(read.fs, MemoryFileSystem)
+
+    @patch('swak.io.reader.fsspec.filesystem')
+    def test_filesystem_called_with_custom(self, fs):
+        check = Reader(self.path, Storage.MEMORY, storage_kws={'foo': 'bar'})
+        _ = check.fs
+        fs.assert_called_once_with('memory', foo='bar')
 
 
 class TestMethods(unittest.TestCase):

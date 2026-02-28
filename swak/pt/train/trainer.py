@@ -15,7 +15,7 @@ from .callbacks import (
     TrainCallback,
     TrainPrinter
 )
-from .checkpoints import Checkpoint, InMemory
+from .checkpoint import Checkpoint
 from .schedulers import NoSchedule
 from .data import TestDataBase, TrainDataBase
 
@@ -76,7 +76,7 @@ class Trainer(ArgRepr):
     checkpoint: Checkpoint, optional
         Whenever the train (or test) loss after an epoch is smaller than the
         loss after the last, a new snapshot of the model state is saved by
-        calling the `save` method of the `checkpoint` instance. Defaults to
+        calling the `save` method of the `Checkpoint` instance. Defaults to
         ``InMemory``.
     show_progress: bool, optional
         Whether to provide visual feedback to the console while training an
@@ -137,7 +137,7 @@ class Trainer(ArgRepr):
             max_n: int | None = None,
             step_freq: int = 1,
             clip_grad: float = 1.0,
-            checkpoint: Checkpoint = InMemory(),
+            checkpoint: Checkpoint = Checkpoint(),
             show_progress: bool = True,
             step_cbs: Iterable[StepCallback] = (),
             cb_freq: int = 1,

@@ -10,7 +10,7 @@ loop are also provided.
 
 from .data import TestDataBase, TrainDataBase
 from .trainer import Trainer
-from .checkpoints import Checkpoint, InMemory, OnDisk, State
+from .checkpoint import Checkpoint, State
 from .schedulers import LinearInverse, LinearExponential, LinearCosine
 from .callbacks import (
     StepPrinter,
@@ -24,8 +24,6 @@ from .callbacks import (
 
 __all__ = [
     'Trainer',
-    'InMemory',
-    'OnDisk',
     'StepPrinter',
     'EpochPrinter',
     'TrainPrinter',

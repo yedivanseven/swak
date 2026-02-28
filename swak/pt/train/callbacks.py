@@ -16,6 +16,7 @@ __all__ = [
 ]
 
 
+# ToDo: Put __iter__ with type Self into base classes
 class History(TypedDict):
     """Summary of metrics passed to the callback when training is finished."""
     train_loss: list[float]  #: List of losses evaluated on train data.

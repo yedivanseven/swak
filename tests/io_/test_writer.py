@@ -10,8 +10,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
         self.path = '/path/to/file.txt'
-        self.storage = str(Storage.MEMORY)
-        self.write = Writer(self.path, Storage.MEMORY)
+        self.write = Writer(self.path)
 
     def test_has_path(self):
         self.assertTrue(hasattr(self.write, 'path'))
@@ -23,7 +22,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.write, 'storage'))
 
     def test_storage(self):
-        self.assertEqual(self.storage, self.write.storage)
+        self.assertEqual('file', self.write.storage)
 
     def test_has_overwrite(self):
         self.assertTrue(hasattr(self.write, 'overwrite'))
@@ -69,7 +68,12 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.write, 'fs'))
 
     def test_fs(self):
-        self.assertIsInstance(self.write.fs, MemoryFileSystem)
+        self.assertIsInstance(self.write.fs, LocalFileSystem)
+
+    @patch('swak.io.writer.fsspec.filesystem')
+    def test_filesystem_called_with_defaults(self, fs):
+        _ = self.write.fs
+        fs.assert_called_once_with('file')
 
 
 class TestAttributes(unittest.TestCase):
@@ -155,8 +159,14 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(68 * 256 * 1024, write.chunk_bytes)
 
     def test_fs(self):
-        write = Writer(self.path, Storage.FILE)
-        self.assertIsInstance(write.fs, LocalFileSystem)
+        write = Writer(self.path, self.storage)
+        self.assertIsInstance(write.fs, MemoryFileSystem)
+
+    @patch('swak.io.writer.fsspec.filesystem')
+    def test_filesystem_called_with_custom(self, fs):
+        check = Writer(self.path, Storage.MEMORY, storage_kws={'foo': 'bar'})
+        _ = check.fs
+        fs.assert_called_once_with('memory', foo='bar')
 
 
 class TestMethods(unittest.TestCase):
@@ -337,7 +347,7 @@ class TestMethods(unittest.TestCase):
             pass
 
         mock_fs.move.assert_not_called()
-        mock_fs.rm_assert_not_called()
+        mock_fs.rm.assert_called_once_with('/test/file.txt.tmp.hex')
 
     @patch('swak.io.writer.uuid.uuid4')
     def test_managed_cleans_up_on_write_error(self, uuid):
