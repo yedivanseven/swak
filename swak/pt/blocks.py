@@ -24,7 +24,8 @@ __all__ = [
 ]
 
 
-# ToDo: Rethink resetting parameters in "new"
+# ToDo: Homogenize call signature (with "bias", "device", and "dtype"?)
+# ToDo: Add "device" and "dtype" properties.
 class ActivatedBlock(Block):
     """A single, non-linearly activated layer.
 

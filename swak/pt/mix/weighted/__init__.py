@@ -19,3 +19,5 @@ __all__ = [
     'GatedSumMixer',
     'GatedResidualSumMixer'
 ]
+
+# ToDo: Remove arguments to new() method. Inherit from Block instead.

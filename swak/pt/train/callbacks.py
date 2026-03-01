@@ -1,4 +1,4 @@
-from typing import TypedDict, Any
+from typing import TypedDict, Any, Self
 from collections.abc import Iterator
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -16,16 +16,19 @@ __all__ = [
 ]
 
 
-# ToDo: Put __iter__ with type Self into base classes
 class History(TypedDict):
     """Summary of metrics passed to the callback when training is finished."""
-    train_loss: list[float]  #: List of losses evaluated on train data.
+    train_loss: list[float]        #: List of losses evaluated on train data.
     test_loss: list[float | None]  #: List of losses evaluated on test data.
-    lr: list[float]  #: List of learning rates.
+    lr: list[float]                #: List of learning rates.
 
 
 class StepCallback(ABC):
     """Base class to inherit from when implementing custom step callbacks."""
+
+    def __iter__(self) -> Iterator[Self]:
+        """Enable individual callbacks to be looped over."""
+        return iter([self])
 
     @abstractmethod
     def __call__(
@@ -42,32 +45,34 @@ class StepCallback(ABC):
             The training loss on the current batch.
         learning_rate: float
             The learning rate used in the current optimization step.
-        gradient_norm: float
+        gradient_norm: float, optional
             Norm of the current gradients.
 
         """
-        ...
 
     @abstractmethod
     def close(self) -> None:
         """Called at the end of training to be compatible with TensorBoard."""
-        ...
 
 
 class EpochCallback(ABC):
     """Base class to inherit from when implementing custom epoch callbacks."""
 
+    def __iter__(self) -> Iterator[Self]:
+        """Enable individual callbacks to be looped over."""
+        return iter([self])
+
     @abstractmethod
     def __call__(
             self,
             epoch: int,
-            train_loss: int,
-            test_loss: int,
+            train_loss: float,
+            test_loss: float,
             learning_rate: float,
             model: Module,
             data: Batches,
     ) -> None:
-        """Called after each epoch to print, log, or otherwise analyse metrics.
+        """Called after each epoch to print, log, or otherwise analyze metrics.
 
         Parameters
         ----------
@@ -89,16 +94,18 @@ class EpochCallback(ABC):
             present and from the train data otherwise.
 
         """
-        ...
 
     @abstractmethod
     def close(self) -> None:
         """Called at the end of training to be compatible with TensorBoard."""
-        ...
 
 
 class TrainCallback(ABC):
     """Base class to inherit from when implementing custom train callbacks."""
+
+    def __iter__(self) -> Iterator[Self]:
+        """Enable individual callbacks to be looped over."""
+        return iter([self])
 
     @abstractmethod
     def __call__(
@@ -126,7 +133,6 @@ class TrainCallback(ABC):
             rates.
 
         """
-        ...
 
 
 class StepPrinter(ArgRepr, StepCallback):
@@ -139,7 +145,7 @@ class StepPrinter(ArgRepr, StepCallback):
         builtin ``print`` function, but could also be a logging command.
     sep: str, optional
         The items concatenated into a one-line message will be separated by
-        this string. Default to " ".
+        this string. Default to ", ".
 
     """
 
@@ -151,9 +157,6 @@ class StepPrinter(ArgRepr, StepCallback):
         super().__init__(printer, sep)
         self.printer = printer
         self.sep = sep
-
-    def __iter__(self) -> Iterator['StepPrinter']:
-        return iter([self])
 
     def __call__(
             self,
@@ -188,9 +191,6 @@ class EpochPrinter(ArgRepr, EpochCallback):
         super().__init__(printer)
         self.printer = printer
 
-    def __iter__(self) -> Iterator['EpochPrinter']:
-        return iter([self])
-
     def __call__(
             self,
             epoch: int,
@@ -222,9 +222,6 @@ class TrainPrinter(ArgRepr, TrainCallback):
     def __init__(self, printer: Callable[[str], Any] = print) -> None:
         super().__init__(printer)
         self.printer = printer
-
-    def __iter__(self) -> Iterator['TrainPrinter']:
-        return iter([self])
 
     def __call__(
             self,

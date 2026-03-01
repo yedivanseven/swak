@@ -23,3 +23,5 @@ __all__ = [
     'CategoricalEmbedder',
     'FeatureEmbedder'
 ]
+
+# ToDo: Remove arguments to new() method. Inherit from Block instead.
