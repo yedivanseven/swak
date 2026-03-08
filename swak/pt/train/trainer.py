@@ -22,7 +22,6 @@ from .data import TestDataBase, TrainDataBase
 __all__ = ['Trainer']
 
 
-# ToDo: Remove per-episode scheduling?
 class Trainer(ArgRepr):
     """Train and, optionally, evaluate a model with early stopping.
 
@@ -43,19 +42,13 @@ class Trainer(ArgRepr):
     max_epochs: int, optional
         Maximum number of epochs to train for. Defaults to 100.
     scheduler: Curry[LRScheduler], optional
-        A curry of a PyTorch learning-rate scheduler (or some other custom
-        construct) that returns a fully configured learning-rate scheduler
-        when called with a PyTorch optimizer. Defaults to never changing the
-        learning rate at all.
-    warmup: int, optional
-        In the beginning of training, the learning-rate `scheduler` will be
-        stepped after every optimizer step for this many times. Afterward, it
-        will only be stepped at the end of each epoch. Defaults to 0, which
-        results in no warmup and the learning-rate `scheduler` being stepped
-        at the end of the first epoch for the first time.
+        A curry of a PyTorch learning-rate scheduler, returning a fully
+        configured learning-rate scheduler when called with a PyTorch
+        optimizer. Defaults to a ``LambdaLR`` scheduler with a ``lambda``
+        that always return 1.0, that is, no scheduling at all.
     batch_step: bool, optional
         Whether to step the learning-rate `scheduler` after each batch or after
-        each epoch once the `warmup` period is over. Default to ``False``.
+        each epoch. Default to ``False``.
     patience: int, optional
         If patience is not ``None`` and smaller than `max_epochs`, early
         stopping is active. A snapshot of the model's state is taken after
@@ -105,9 +98,8 @@ class Trainer(ArgRepr):
         Because the (partial) optimizer will simply be completed with
         ``model.parameters()``, parameter groups are not supported.
     scheduler
-        During `warmup`, the scheduler is called after each optimizer step and,
-        afterward, at the end of each epoch. The scheduler thus needs to be
-        aware of the `warmup` settings and act accordingly.
+        For the same reason, learning rate scheduler may only act on a single
+        parameter group.
     step_freq
         If the ``reduction`` of the `loss` is "mean", the loss of each batch is
         divided by this number before performing the backward pass. Strictly
@@ -117,7 +109,7 @@ class Trainer(ArgRepr):
 
     See Also
     --------
-    InMemory
+    Checkpoint
     EpochCallback
     EpochPrinter
     TrainPrinter
@@ -130,8 +122,7 @@ class Trainer(ArgRepr):
             optimizer: Curry[Optimizer] = Curry[AdamW](AdamW),
             batch_size: int = 64,
             max_epochs: int = 100,
-            scheduler: Curry[LRScheduler] = Curry[NoSchedule](NoSchedule),
-            warmup: int = 0,
+            scheduler: Curry[LRScheduler] = NoSchedule,
             batch_step: bool = False,
             patience: int | None = None,
             max_n: int | None = None,
@@ -149,7 +140,6 @@ class Trainer(ArgRepr):
         self.batch_size = batch_size
         self.max_epochs = max_epochs
         self.scheduler = scheduler
-        self.warmup = warmup
         self.batch_step = batch_step
         self.patience = max_epochs if patience is None else patience
         self.max_n = max_n
@@ -167,7 +157,6 @@ class Trainer(ArgRepr):
             batch_size,
             max_epochs,
             scheduler,
-            warmup,
             batch_step,
             patience,
             max_n,
@@ -331,8 +320,8 @@ class Trainer(ArgRepr):
                 if batch_index % self.step_freq == 0:
                     optimizer.step()
                     optimizer.zero_grad(set_to_none=True)
-                    # Step the scheduler during warmup and maybe also afterward
-                    if scheduler.last_epoch < self.warmup or self.batch_step:
+                    # Step the scheduler if we do so per batch
+                    if self.batch_step:
                         scheduler.step()
                 # Call the step callback with current loss and learning rate
                 if batch_index % self.cb_freq == 0:
@@ -420,8 +409,8 @@ class Trainer(ArgRepr):
                     sample
                 )
 
-            # After warmup, step the scheduler each epoch if not set otherwise.
-            if scheduler.last_epoch >= self.warmup and not self.batch_step:
+            # Step the scheduler each epoch if so chosen
+            if not self.batch_step:
                 scheduler.step()
 
             # Check if the loss improved within our patience.

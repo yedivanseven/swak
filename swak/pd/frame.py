@@ -29,7 +29,7 @@ type GroupKeys = list[GroupKey]
 type Func = Callable[[Series], float] | str
 type Funcs = list[Func] | dict[str, Func] | dict[str, list[Func]]
 
-# ToDo: Add AsFreq, Explode, Transform, amd FillNA
+# ToDo: Add AsFreq, Explode, Transform, Copy, and FillNA
 class AsType(ReprName):
     """Partial of a pandas dataframe or series ``astype`` method.
 
