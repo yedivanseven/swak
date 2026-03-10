@@ -30,6 +30,13 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_gate(self):
         self.assertIsInstance(self.embed.gate, Sigmoid)
 
+    def test_has_bias(self):
+        self.assertTrue(hasattr(self.embed, 'bias'))
+
+    def test_bias(self):
+        self.assertIsInstance(self.embed.bias, bool)
+        self.assertTrue(self.embed.bias)
+
     def test_has_drop(self):
         self.assertTrue(hasattr(self.embed, 'drop'))
 
@@ -43,11 +50,17 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.embed.inp_dim, int)
         self.assertEqual(1, self.embed.inp_dim)
 
-    def test_has_kwargs(self):
-        self.assertTrue(hasattr(self.embed, 'kwargs'))
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.embed, 'device'))
 
-    def test_kwargs(self):
-        self.assertDictEqual({}, self.embed.kwargs)
+    def test_device(self):
+        self.assertEqual(pt.device('cpu'), self.embed.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.embed, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.embed.dtype, pt.float)
 
     def test_has_project(self):
         self.assertTrue(hasattr(self.embed, 'project'))
@@ -65,8 +78,8 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_linear_called(self, mock):
         _ = GatedResidualEmbedder(4)
         args_1, args_2 = mock.call_args_list
-        self.assertTupleEqual((1, 4), args_1[0])
-        self.assertTupleEqual((4, 8), args_2[0])
+        self.assertTupleEqual((1, 4, True, 'cpu', pt.float), args_1[0])
+        self.assertTupleEqual((4, 8, True, 'cpu', pt.float), args_2[0])
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.embed, 'reset_parameters'))
@@ -82,6 +95,28 @@ class TestDefaultAttributes(unittest.TestCase):
             _ = GatedResidualEmbedder(4, activate, gate)
             self.assertEqual(2, mock.call_count)
             self.assertEqual(2, linear.call_count)
+
+    def test_activate_to_called_on_instantiation(self):
+        activate = PReLU()
+        with patch('torch.nn.PReLU.to') as mock:
+            _ = GatedResidualEmbedder(
+                4,
+                activate,
+                device='cpu',
+                dtype=pt.float64
+            )
+            mock.assert_called_once_with(device='cpu', dtype=pt.float64)
+
+    def test_gate_to_called_on_instantiation(self):
+        gate = PReLU()
+        with patch('torch.nn.PReLU.to') as mock:
+            _ = GatedResidualEmbedder(
+                4,
+                gate=gate,
+                device='cpu',
+                dtype=pt.float64
+            )
+            mock.assert_called_once_with(device='cpu', dtype=pt.float64)
 
     @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
@@ -108,7 +143,9 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIs(new.gate, self.embed.gate)
         self.assertIs(new.drop, self.embed.drop)
         self.assertEqual(self.embed.inp_dim, new.inp_dim)
-        self.assertDictEqual(self.embed.kwargs, new.kwargs)
+        self.assertEqual(self.embed.bias, new.bias)
+        self.assertEqual(self.embed.dtype, new.dtype)
+        self.assertEqual(self.embed.device, new.device)
 
 
 class TestAttributes(unittest.TestCase):
@@ -118,9 +155,10 @@ class TestAttributes(unittest.TestCase):
             4,
             GELU(),
             ELU(),
+            False,
             AlphaDropout(),
             2,
-            bias=False
+            dtype=pt.float64
         )
 
     def test_activate(self):
@@ -129,6 +167,10 @@ class TestAttributes(unittest.TestCase):
     def test_gate(self):
         self.assertIsInstance(self.embed.gate, ELU)
 
+    def test_bias(self):
+        self.assertIsInstance(self.embed.bias, bool)
+        self.assertFalse(self.embed.bias)
+
     def test_drop(self):
         self.assertIsInstance(self.embed.drop, AlphaDropout)
 
@@ -136,27 +178,12 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(self.embed.inp_dim, int)
         self.assertEqual(2, self.embed.inp_dim)
 
-    def test_kwargs(self):
-        self.assertDictEqual({'bias': False}, self.embed.kwargs)
-
     @patch('torch.nn.Linear')
     def test_linear_called(self, mock):
-        _ = GatedResidualEmbedder(4, inp_dim=2, bias=False)
+        _ = GatedResidualEmbedder(4, inp_dim=2, bias=False, dtype=pt.float64)
         args_1, args_2 = mock.call_args_list
-        self.assertTupleEqual((2, 4), args_1[0])
-        self.assertTupleEqual((4, 8), args_2[0])
-        self.assertDictEqual({'bias': False}, args_1[1])
-        self.assertDictEqual({'bias': False}, args_2[1])
-
-    def test_call_new(self):
-        new = self.embed.new(8, GELU(), ELU(), AlphaDropout(), 2, bias=False)
-        self.assertIsInstance(new, GatedResidualEmbedder)
-        self.assertEqual(8, new.mod_dim)
-        self.assertIsInstance(new.activate, GELU)
-        self.assertIsInstance(new.gate, ELU)
-        self.assertIsInstance(new.drop, AlphaDropout)
-        self.assertEqual(2, new.inp_dim)
-        self.assertDictEqual({'bias': False}, new.kwargs)
+        self.assertTupleEqual((2, 4, False, 'cpu', pt.float64), args_1[0])
+        self.assertTupleEqual((4, 8, False, 'cpu', pt.float64), args_2[0])
 
 
 class TestUsageSingleFeature(unittest.TestCase):

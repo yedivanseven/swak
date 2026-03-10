@@ -1,9 +1,10 @@
-from typing import Any, Self
+from typing import Self
+import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional, Drop, Resettable
+from ..types import Tensor, Module, Functional, Drop, Block
 
 
-class GatedResidualEmbedder(Resettable):
+class GatedResidualEmbedder(Block):
     """Gated Residual Network (GRN) for embedding numerical features.
 
     Parameters
@@ -24,13 +25,19 @@ class GatedResidualEmbedder(Resettable):
         ``torch.nn`` or a function from ``torch.nn.functional``, depending
         on whether it needs to be further parameterized or not.
         Defaults to a sigmoid.
+    bias: bool, optional
+        Whether to add a learnable bias vector in the projection.
+        Defaults to ``True``.
     drop: Module, optional
         Typically an instance of ``Dropout`` or ``AlphaDropout``. Defaults to
         ``Dropout(p=0.0)``, resulting in no dropout being applied.
     inp_dim: int, optional
         The number of features to embed together. Defaults to 1.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layers.
+    device: str or pt.device, optional
+        Torch device to first create the embedder on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the embedder in.
+        Defaults to ``torch.float``.
 
     Note
     ----
@@ -60,24 +67,40 @@ class GatedResidualEmbedder(Resettable):
             mod_dim: int,
             activate: Module | Functional = ptn.ELU(),
             gate: Module | Functional = ptn.Sigmoid(),
+            bias: bool = True,
             drop: Drop = ptn.Dropout(0.0),
             inp_dim: int = 1,
-            **kwargs: Any
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
         if hasattr(activate, 'reset_parameters'):
             activate.reset_parameters()
+            self.activate = activate.to(device=device, dtype=dtype)
+        else:
+            self.activate = activate
         if hasattr(gate, 'reset_parameters'):
             gate.reset_parameters()
-        self.activate = activate
-        self.gate = gate
+            self.gate = gate.to(device=device, dtype=dtype)
+        else:
+            self.gate = gate
+        self.bias = bias
         self.drop = drop
         self.inp_dim = inp_dim
-        self.kwargs = kwargs
-        self.project = ptn.Linear(inp_dim, mod_dim, **kwargs)
-        self.widen =  ptn.Linear(mod_dim, 2 * mod_dim, **kwargs)
+        self.project = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
+        self.widen = ptn.Linear(mod_dim, 2 * mod_dim, bias, device, dtype)
+
+    @property
+    def device(self) -> pt.device:
+        """The device of all weights, biases, activations, etc. reside on."""
+        return self.project.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.project.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Embed a numerical feature through a Gated Residual Network (GRN).
@@ -113,48 +136,8 @@ class GatedResidualEmbedder(Resettable):
         if hasattr(self.gate, 'reset_parameters'):
             self.gate.reset_parameters()
 
-    def new(
-            self,
-            mod_dim: int | None = None,
-            activate: Module | Functional | None = None,
-            gate: Module | Functional | None = None,
-            drop: Drop | None = None,
-            inp_dim: int | None = None,
-            **kwargs: Any
-    ) -> Self:
-        """Return a fresh instance with the same or updated parameters.
-
-        Parameters
-        ----------
-        mod_dim: int, optional
-            Desired embedding size. Will become the size of the last dimension
-            of the output tensor. Overwrites the `mod_dim` of the current
-            instance if given. Defaults to ``None``.
-        activate: Module or function, optional
-            The activation function to be applied after (linear) projection
-            into embedding space, but prior to gating. Must be a callable that
-            accepts a tensor as sole argument, like a module from ``torch.nn``
-            or a function from `torch.nn.functional``, depending on whether it
-            needs to be further parameterized or not. Overwrites the `activate`
-            of the current instance if given. Defaults to ``None``.
-        gate: Module or function, optional
-            The activation function to be applied to half of the (non-linearly)
-            projected input before multiplying with the other half. Must be
-            a callable that accepts a tensor as sole argument, like a module
-            from ``torch.nn`` or a function from ``torch.nn.functional``.
-            Overwrites the `gate` of the current instance if given.
-            Defaults to ``None``.
-        drop: Module, optional
-            Typically an instance of ``Dropout`` or ``AlphaDropout``.
-            Overwrites the `drop` of the current instance if given.
-            Defaults to ``None``.
-        inp_dim: int, optional
-            The number of features to embed together. Overwrites the `inp_dim`
-            of the current instance if given. Defaults to ``None``.
-        **kwargs
-            Additional keyword arguments are merged into the keyword arguments
-            of the current instance and are then passed through to the linear
-            layers together.
+    def new(self) -> Self:
+        """A fresh, new, re-initialized instance with identical parameters.
 
         Returns
         -------
@@ -163,10 +146,12 @@ class GatedResidualEmbedder(Resettable):
 
         """
         return self.__class__(
-            self.mod_dim if mod_dim is None else mod_dim,
-            self.activate if activate is None else activate,
-            self.gate if gate is None else gate,
-            self.drop if drop is None else drop,
-            self.inp_dim if inp_dim is None else inp_dim,
-            **(self.kwargs | kwargs)
+            self.mod_dim,
+            self.activate,
+            self.gate,
+            self.bias,
+            self.drop,
+            self.inp_dim,
+            self.device,
+            self.dtype
         )

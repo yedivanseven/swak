@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import torch as pt
 from swak.pt.exceptions import EmbeddingError
 from swak.pt.embed import (
@@ -29,6 +29,22 @@ class TestAttributes(unittest.TestCase):
 
     def test_embed_cat(self):
         self.assertIs(self.embed.embed_cat, self.embed_cat)
+
+    def test_to_called(self):
+        num = Mock()
+        num.mod_dim = 4
+        cat = Mock()
+        cat.mod_dim = 4
+        _ = FeatureEmbedder(num, cat, device='foo', dtype='bar')
+        num.to.assert_called_once_with(device='foo', dtype='bar')
+        cat.to.assert_called_once_with(device='foo', dtype='bar')
+
+    def test_has_mod_dim(self):
+        self.assertTrue(hasattr(self.embed, 'mod_dim'))
+
+    def test_moddim(self):
+        self.assertIsInstance(self.embed.mod_dim, int)
+        self.assertEqual(4, self.embed.mod_dim)
 
     def test_has_n_num(self):
         self.assertTrue(hasattr(self.embed, 'n_num'))
@@ -80,61 +96,66 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(4, new.embed_cat.mod_dim)
         self.assertTupleEqual((6, 7, 8), new.embed_cat.cat_counts)
 
-    def test_call_new_update(self):
-        embed_num = NumericalEmbedder(4, 2, GatedEmbedder)
-        embed_cat = CategoricalEmbedder(4, 6, 7, 8)
-        new = self.embed.new(embed_num, embed_cat)
-        self.assertIs(new.embed_num, embed_num)
-        self.assertIs(new.embed_cat, embed_cat)
-
 
 class TestUsage(unittest.TestCase):
 
     def setUp(self):
-        self.embed_num = NumericalEmbedder(4, 2, ActivatedEmbedder)
-        self.embed_cat = CategoricalEmbedder(4, 6, 7, 8)
-        self.embed = FeatureEmbedder(self.embed_num, self.embed_cat)
+        self.embed_num = NumericalEmbedder(
+            4,
+            2,
+            ActivatedEmbedder
+        )
+        self.embed_cat = CategoricalEmbedder(
+            4,
+            6,
+            7,
+            8
+        )
+        self.embed = FeatureEmbedder(
+            self.embed_num,
+            self.embed_cat
+        )
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
 
     def test_1d(self):
-        inp = pt.ones(5)
+        inp = pt.ones(5, device='cpu')
         actual = self.embed(inp)
         self.assertIsInstance(actual, pt.Tensor)
         self.assertEqual(pt.Size([5, 4]), actual.shape)
 
     def test_2d(self):
-        inp = pt.ones(3, 5)
+        inp = pt.ones(3, 5, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([3, 5, 4]), actual.shape)
 
     def test_3d(self):
-        inp = pt.ones(2, 3, 5)
+        inp = pt.ones(2, 3, 5, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([2, 3, 5, 4]), actual.shape)
 
     def test_4d(self):
-        inp = pt.ones(1, 2, 3, 5)
+        inp = pt.ones(1, 2, 3, 5, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([1, 2, 3, 5, 4]), actual.shape)
 
     def test_no_num_features(self):
         embed_num = NumericalEmbedder(4, 0, GatedEmbedder)
         embed = FeatureEmbedder(embed_num, self.embed_cat)
-        inp = pt.ones(1, 2, 3)
+        inp = pt.ones(1, 2, 3, device='cpu')
         actual = embed(inp)
         self.assertEqual(pt.Size([1, 2, 3, 4]), actual.shape)
 
     def test_no_cat_features(self):
         embed_cat = CategoricalEmbedder(4, [])
         embed = FeatureEmbedder(self.embed_num, embed_cat)
-        inp = pt.ones(5, 3, 2)
+        inp = pt.ones(5, 3, 2, device='cpu')
         actual = embed(inp)
         self.assertEqual(pt.Size([5, 3, 2, 4]), actual.shape)
 
     def test_empty_features(self):
-        inp = pt.ones(2, 0, 5)
+        inp = pt.ones(2, 0, 5, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([2, 0, 5, 4]), actual.shape)
 

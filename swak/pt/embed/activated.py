@@ -1,10 +1,11 @@
-from typing import Any, Self
+from typing import Self
+import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional, Resettable
 from ..misc import identity
+from ..types import Tensor, Module, Functional, Block
 
 
-class ActivatedEmbedder(Resettable):
+class ActivatedEmbedder(Block):
     """Simple linear projection of an individual feature into embedding space.
 
     Parameters
@@ -19,10 +20,16 @@ class ActivatedEmbedder(Resettable):
         `torch.nn.functional``, depending on whether it needs to be further
         parameterized or not. Defaults to ``identity``, resulting in no
         non-linear activation whatsoever.
+    bias: bool, optional
+        Whether to add a learnable bias vector in the projection.
+        Defaults to ``True``.
     inp_dim: int, optional
         The number of features to embed together. Defaults to 1.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layer.
+    device: str or pt.device, optional
+        Torch device to first create the embedder on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the embedder in.
+        Defaults to ``torch.float``.
 
     """
 
@@ -30,18 +37,32 @@ class ActivatedEmbedder(Resettable):
             self,
             mod_dim: int,
             activate: Module | Functional = identity,
+            bias: bool = True,
             inp_dim: int = 1,
-            **kwargs: Any
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
         if hasattr(activate, 'reset_parameters'):
             activate.reset_parameters()
-        self.activate = activate
+            self.activate = activate.to(device=device, dtype=dtype)
+        else:
+            self.activate = activate
+        self.bias = bias
         self.inp_dim = inp_dim
-        self.kwargs = kwargs
-        self.embed = ptn.Linear(inp_dim, mod_dim, **kwargs)
+        self.embed = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
+
+    @property
+    def device(self) -> pt.device:
+        """The device of all weights, biases, activations, etc. reside on."""
+        return self.embed.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.embed.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Embed a single numerical feature through a (non-)linear projection.
@@ -71,35 +92,8 @@ class ActivatedEmbedder(Resettable):
         if hasattr(self.activate, 'reset_parameters'):
             self.activate.reset_parameters()
 
-    def new(
-            self,
-            mod_dim: int | None = None,
-            activate: Module | Functional | None = None,
-            inp_dim: int | None = None,
-            **kwargs: Any
-    ) -> Self:
-        """Return a fresh instance with the same or updated parameters.
-
-        Parameters
-        ----------
-        mod_dim: int, optional
-            Desired embedding size. Will become the size of the last dimension
-            of the output tensor. Overwrites the `mod_dim` of the current
-            instance if given. Defaults to ``None``.
-        activate: Module or function, optional
-            The activation function to be applied after (linear) projection
-            into embedding space. Must be a callable that accepts a tensor as
-            sole argument, like a module from ``torch.nn`` or a function from
-            `torch.nn.functional``, depending on whether it needs to be further
-            parameterized or not. Overwrites the `activate` of the current
-            instance if given. Defaults to ``None``.
-        inp_dim: int, optional
-            The number of features to embed together. Overwrites the `inp_dim`
-            of the current instance if given. Defaults to ``None``.
-        **kwargs
-            Additional keyword arguments are merged into the keyword arguments
-            of the current instance and are then passed through to the linear
-            layer together.
+    def new(self) -> Self:
+        """A fresh, new, re-initialized instance with identical parameters.
 
         Returns
         -------
@@ -108,8 +102,10 @@ class ActivatedEmbedder(Resettable):
 
         """
         return self.__class__(
-            self.mod_dim if mod_dim is None else mod_dim,
-            self.activate if activate is None else activate,
-            self.inp_dim if inp_dim is None else inp_dim,
-            **(self.kwargs | kwargs)
+            self.mod_dim,
+            self.activate,
+            self.bias,
+            self.inp_dim,
+            self.device,
+            self.dtype
         )

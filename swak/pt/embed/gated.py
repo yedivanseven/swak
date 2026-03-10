@@ -1,9 +1,10 @@
-from typing import Any, Self
+from typing import Self
+import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Module, Resettable, Functional
+from ..types import Tensor, Module, Block, Functional
 
 
-class GatedEmbedder(Resettable):
+class GatedEmbedder(Block):
     """Flexible Gated Linear Unit (GLU) for embedding a numerical feature.
 
     Parameters
@@ -18,10 +19,16 @@ class GatedEmbedder(Resettable):
         ``torch.nn`` or a function from ``torch.nn.functional``, depending
         on whether it needs to be further parameterized or not.
         Defaults to a sigmoid.
+    bias: bool, optional
+        Whether to add a learnable bias vector in the projection.
+        Defaults to ``True``.
     inp_dim: int, optional
         The number of features to embed together. Defaults to 1.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layer.
+    device: str or pt.device, optional
+        Torch device to first create the embedder on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the embedder in.
+        Defaults to ``torch.float``.
 
     """
 
@@ -29,18 +36,32 @@ class GatedEmbedder(Resettable):
             self,
             mod_dim: int,
             gate: Module | Functional = ptn.Sigmoid(),
+            bias: bool = True,
             inp_dim: int = 1,
-            **kwargs: Any
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
         if hasattr(gate, 'reset_parameters'):
             gate.reset_parameters()
-        self.gate = gate
+            self.gate = gate.to(device=device, dtype=dtype)
+        else:
+            self.gate = gate
+        self.bias = bias
         self.inp_dim = inp_dim
-        self.kwargs = kwargs
-        self.embed = ptn.Linear(inp_dim, 2 * mod_dim, **kwargs)
+        self.embed = ptn.Linear(inp_dim, 2 * mod_dim, bias, device, dtype)
+
+    @property
+    def device(self) -> pt.device:
+        """The device of all weights, biases, activations, etc. reside on."""
+        return self.embed.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.embed.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Embed a single numerical feature through a Gated Linear Unit (GLU).
@@ -71,35 +92,8 @@ class GatedEmbedder(Resettable):
         if hasattr(self.gate, 'reset_parameters'):
             self.gate.reset_parameters()
 
-    def new(
-            self,
-            mod_dim: int | None = None,
-            gate: Module | Functional | None = None,
-            inp_dim: int | None = None,
-            **kwargs: Any
-    ) -> Self:
-        """Return a fresh instance with the same or updated parameters.
-
-        Parameters
-        ----------
-        mod_dim: int, optional
-            Desired embedding size. Will become the size of the last dimension
-            of the output tensor. Overwrites the `mod_dim` of the current
-            instance if given. Defaults to ``None``.
-        gate: Module or function, optional
-            The activation function to be applied to half of the (linearly)
-            projected input before multiplying with the other half. Must be
-            a callable that accepts a tensor as sole argument, like a module
-            from ``torch.nn`` or a function from ``torch.nn.functional``.
-            Overwrites the `gate` of the current instance if given.
-            Defaults to ``None``.
-        inp_dim: int, optional
-            The number of features to embed together. Overwrites the `inp_dim`
-            of the current instance if given. Defaults to ``None``.
-        **kwargs
-            Additional keyword arguments are merged into the keyword arguments
-            of the current instance and are then passed through to the linear
-            layer together.
+    def new(self) -> Self:
+        """A fresh, new, re-initialized instance with identical parameters.
 
         Returns
         -------
@@ -108,8 +102,10 @@ class GatedEmbedder(Resettable):
 
         """
         return self.__class__(
-            self.mod_dim if mod_dim is None else mod_dim,
-            self.gate if gate is None else gate,
-            self.inp_dim if inp_dim is None else inp_dim,
-            **(self.kwargs | kwargs)
+            self.mod_dim,
+            self.gate,
+            self.bias,
+            self.inp_dim,
+            self.device,
+            self.dtype
         )

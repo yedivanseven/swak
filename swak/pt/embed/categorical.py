@@ -3,10 +3,10 @@ from collections.abc import Iterable
 from functools import cached_property
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Resettable
+from ..types import Tensor, Block
 
 
-class CategoricalEmbedder(Resettable):
+class CategoricalEmbedder(Block):
     """Embed one or more categorical features as numerical vectors.
 
     Parameters
@@ -22,6 +22,11 @@ class CategoricalEmbedder(Resettable):
         Category counts for additional features. Together with the `cat_count`,
         the total number of category counts, i.e., the total number of features
         to embed must match the size of the last dimension of the input tensor.
+    device: str or pt.device, optional
+        Torch device to first create the embedder on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the embedder in.
+        Defaults to ``torch.float``.
     **kwargs
         Keyword arguments are forwarded to the PyTorch ``Embedding`` class.
 
@@ -39,6 +44,8 @@ class CategoricalEmbedder(Resettable):
             mod_dim: int,
             cat_count: int | Iterable[int] = (),
             *cat_counts: int,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float,
             **kwargs: Any
     ) -> None:
         super().__init__()
@@ -49,7 +56,7 @@ class CategoricalEmbedder(Resettable):
         self.embed = ptn.ModuleList([
             ptn.Embedding(count, mod_dim, **kwargs)
             for count in self.cat_counts
-        ])
+        ]).to(device=device, dtype=dtype)
 
     @property
     def n_features(self) -> int:
@@ -87,41 +94,17 @@ class CategoricalEmbedder(Resettable):
 
         """
         emb = [self.embed[cat](inp[..., cat]) for cat in self.features]
-        return pt.stack(emb or self.mod_dim * [pt.zeros(*inp.shape)], self.dim)
+        return pt.stack(emb or self.mod_dim * [
+            pt.zeros(*inp.shape, device=inp.device, dtype=inp.dtype)
+        ], self.dim)
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         for emb in self.embed:
             emb.reset_parameters()
 
-    def new(
-            self,
-            mod_dim: int | None = None,
-            cat_count: int | Iterable[int] | None = None,
-            *cat_counts: int,
-            **kwargs: Any
-    ) -> Self:
-        """Return a fresh instance with the same or updated parameters.
-
-        Parameters
-        ----------
-        mod_dim: int, optional
-            Desired embedding size. Will become the size of the last dimension
-            of the output tensor. Overwrites the `mod_dim` of the current
-            instance if given. Defaults to ``None``.
-        cat_count: int or iterable of int, optional
-            One integer or an iterable (e.g., tuple or list) of integers, each
-            specifying the number of categories in the respective feature.
-            Overwrites the `cat_count` of the current instance if given.
-            Defaults to ``None``.
-        *cat_counts: int
-            Category counts for additional features. Together with the
-            `cat_count`, the total number of category counts must match the
-            size of the last dimension of the input tensor.
-        **kwargs
-            Additional keyword arguments are merged into the keyword arguments
-            of the current instance and are then used together for
-            instantiating the PyTorch ``Embedding`` class.
+    def new(self) -> Self:
+        """A fresh, new, re-initialized instance with identical parameters.
 
         Returns
         -------
@@ -130,10 +113,9 @@ class CategoricalEmbedder(Resettable):
 
         """
         return self.__class__(
-            self.mod_dim if mod_dim is None else mod_dim,
-            self.cat_counts if cat_count is None else cat_count,
-            *cat_counts,
-            **(self.kwargs | kwargs)
+            self.mod_dim,
+            self.cat_counts,
+            **self.kwargs
         )
 
     @staticmethod

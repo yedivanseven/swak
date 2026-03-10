@@ -13,7 +13,7 @@ from ..io import (
     Storage,
     LiteralStorage
 )
-from .types import Module, Device
+from .types import Module
 
 __all__ = [
     'StateSaver',
@@ -186,7 +186,7 @@ class StateLoader(Reader):
             storage: LiteralStorage | Storage = Storage.FILE,
             chunk_size: int = 32,
             storage_kws: Mapping[str, Any] | None = None,
-            map_location: Device | str | None = None,
+            map_location: pt.device | str | None = None,
             merge: bool = True,
             not_found: NotFound | LiteralNotFound = NotFound.RAISE
     ) -> None:
@@ -400,7 +400,7 @@ class ModelLoader(Reader):
             storage: LiteralStorage | Storage = Storage.FILE,
             chunk_size: int = 32,
             storage_kws: Mapping[str, Any] | None = None,
-            map_location: Device | str | None = None,
+            map_location: pt.device | str | None = None,
     ) -> None:
         self.map_location = map_location
         super().__init__(

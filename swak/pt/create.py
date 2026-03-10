@@ -5,7 +5,7 @@ import torch as pt
 from pandas import DataFrame as Pandas
 from polars import DataFrame as Polars
 from ..misc import ArgRepr
-from .types import Tensor, Module, Dtype, Device
+from .types import Tensor, Module
 
 __all__ = [
     'Create',
@@ -20,9 +20,9 @@ class Create(ArgRepr):
 
     Parameters
     ----------
-    dtype: dtype, optional
+    dtype: pt.dtype, optional
         Torch dtype of the tensor to create. Defaults to ``None``
-    device: device, optional
+    device: pt.device, optional
         Torch device to create the tensor on. Defaults to ``None``
     requires_grad: bool, optional
         If autograd should record operations on the returned tensor.
@@ -35,8 +35,8 @@ class Create(ArgRepr):
 
     def __init__(
             self,
-            dtype: Dtype | None = None,
-            device: Device | str | None = None,
+            dtype: pt.dtype | None = None,
+            device: pt.device | str | None = None,
             requires_grad: bool = False,
             pin_memory: bool = False
     ) -> None:
@@ -74,17 +74,17 @@ class AsTensor(ArgRepr):
 
     Parameters
     ----------
-    dtype: dtype, optional
+    dtype: pt.dtype, optional
         Torch dtype of the tensor to create. Defaults to ``None``
-    device: device, optional
+    device: pt.device, optional
         Torch device to create the tensor on. Defaults to ``None``
 
     """
 
     def __init__(
             self,
-            dtype: Dtype | None = None,
-            device: Device | str | None = None
+            dtype: pt.dtype | None = None,
+            device: pt.device | str | None = None
     ) -> None:
         super().__init__(dtype, device)
         self.dtype = dtype
@@ -136,7 +136,7 @@ class To(ArgRepr):
 
     Parameters
     ----------
-    target: device or dtype
+    target: pt.device or pt.dtype
         The device or dtype to move the tensor or module to.
     *args
         Additional argument to pass to the `to` method.
@@ -147,7 +147,7 @@ class To(ArgRepr):
 
     def __init__(
             self,
-            target: str | Device | Dtype,
+            target: str | pt.device | pt.dtype,
             *args: Any,
             **kwargs: Any
     ) -> None:

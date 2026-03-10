@@ -119,6 +119,17 @@ class TestAttributes(unittest.TestCase):
         self.embed.reset_parameters()
         self.assertEqual(2, mock.call_count)
 
+    @patch('torch.nn.ModuleList.to')
+    def test_to_called(self, to):
+        _ = NumericalEmbedder(
+            4,
+            3,
+            ActivatedEmbedder,
+            device='foo',
+            dtype='bar'
+        )
+        to.assert_called_once_with(device='foo', dtype='bar')
+
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))
 
@@ -132,17 +143,8 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertEqual(self.embed.n_features, new.n_features)
         self.assertIs(new.emb_cls, self.embed.emb_cls)
-        self.assertTupleEqual((), new.args)
+        self.assertTupleEqual(self.embed.args, new.args)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
-
-    def test_call_new_update(self):
-        new = self.embed.new(8, 5, NewEmbCls, 'answer', foo=42, bar='baz')
-        self.assertIsInstance(new, NumericalEmbedder)
-        self.assertEqual(8, new.mod_dim)
-        self.assertEqual(5, new.n_features)
-        self.assertIs(new.emb_cls, NewEmbCls)
-        self.assertTupleEqual(('answer',), new.args)
-        self.assertDictEqual({'foo': 42, 'bar': 'baz'}, new.kwargs)
 
 
 class TestUsage(unittest.TestCase):
@@ -165,28 +167,28 @@ class TestUsage(unittest.TestCase):
         pt.testing.assert_close(arg2, 2 * pt.ones(5, 3, 1))
 
     def test_1d(self):
-        inp = pt.ones(2)
+        inp = pt.ones(2, device='cpu')
         actual = self.embed(inp)
         self.assertIsInstance(actual, pt.Tensor)
         self.assertEqual(pt.Size([2, 4]), actual.shape)
 
     def test_2d(self):
-        inp = pt.ones(3, 2)
+        inp = pt.ones(3, 2, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([3, 2, 4]), actual.shape)
 
     def test_3d(self):
-        inp = pt.ones(1, 3, 2)
+        inp = pt.ones(1, 3, 2, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([1, 3, 2, 4]), actual.shape)
 
     def test_4d(self):
-        inp = pt.ones(5, 1, 3, 2)
+        inp = pt.ones(5, 1, 3, 2, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([5, 1, 3, 2, 4]), actual.shape)
 
     def test_empty_features(self):
-        inp = pt.ones(5, 0, 2)
+        inp = pt.ones(5, 0, 2, device='cpu')
         actual = self.embed(inp)
         self.assertEqual(pt.Size([5, 0, 2, 4]), actual.shape)
 

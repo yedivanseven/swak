@@ -12,8 +12,6 @@ from .types import (
     Module,
     Tensors,
     Tensors2T,
-    Dtype,
-    Device,
     Block,
     Resettable
 )
@@ -560,12 +558,12 @@ class LazyCatDim0:
 
 
     @property
-    def dtype(self) -> Dtype:
+    def dtype(self) -> pt.dtype:
         """The common dtype of all cached tensors."""
         return self.__tensors[0].dtype
 
     @property
-    def device(self) -> Device:
+    def device(self) -> pt.device:
         """The common device of all cached tensors."""
         return self.__tensors[0].device
 
