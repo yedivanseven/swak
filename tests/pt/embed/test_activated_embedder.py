@@ -68,29 +68,9 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.embed.reset_parameters))
 
     @patch('torch.nn.Linear.reset_parameters')
-    def test_reset_parameters_called_on_instantiation(self, linear):
-        activate = ptn.PReLU()
-        with patch('torch.nn.PReLU.reset_parameters') as mock:
-            _ = ActivatedEmbedder(4, activate)
-            self.assertEqual(1, mock.call_count)
-            self.assertEqual(1, linear.call_count)
-
-    def test_to_called_on_instantiation(self):
-        activate = ptn.PReLU()
-        with patch('torch.nn.PReLU.to') as mock:
-            _ = ActivatedEmbedder(4, activate, device='cpu', dtype=pt.float64)
-            mock.assert_called_once_with(device='cpu', dtype=pt.float64)
-
-    @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
         self.embed.reset_parameters()
         mock.assert_called_once_with()
-
-    def test_reset_parameters_called_on_activation(self):
-        embed = ActivatedEmbedder(4, ptn.PReLU())
-        with patch('torch.nn.PReLU.reset_parameters') as activate:
-            embed.reset_parameters()
-            self.assertEqual(1, activate.call_count)
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))
@@ -135,6 +115,42 @@ class TestAttributes(unittest.TestCase):
     def test_linear_called(self, mock):
         _ = ActivatedEmbedder(4, bias=False, dtype=pt.float64)
         mock.assert_called_once_with(1, 4, False, 'cpu', pt.float64)
+
+    def test_reset_parameters_called_on_instantiation(self):
+        activate = ptn.PReLU()
+        with patch.object(activate, 'reset_parameters') as mock:
+            _ = ActivatedEmbedder(4, activate)
+            mock.assert_called_once_with()
+
+    def test_reset_parameters_not_called_on_instantiation(self):
+        activate = ptn.functional.relu
+        _ = ActivatedEmbedder(4, activate)
+
+    def test_to_called_on_instantiation(self):
+        activate = ptn.ReLU()
+        with patch.object(activate, 'to') as mock:
+            _ = ActivatedEmbedder(4, activate, device='cpu', dtype=pt.float64)
+            mock.assert_called_once_with(
+                device=pt.device('cpu'),
+                dtype=pt.float64
+            )
+
+    def test_reset_parameters_called_on_activation(self):
+        activate = ptn.PReLU()
+        embed = ActivatedEmbedder(4, activate)
+        with patch.object(activate, 'reset_parameters') as mock:
+            embed.reset_parameters()
+            mock.assert_called_once_with()
+
+    def test_to_called_on_activation(self):
+        activate = ptn.ReLU()
+        embed = ActivatedEmbedder(4, activate, dtype=pt.float64)
+        with patch.object(activate, 'to', return_value=activate) as mock:
+            embed.reset_parameters()
+            mock.assert_called_once_with(
+                device=pt.device('cpu'),
+                dtype=pt.float64
+            )
 
 
 class TestUsageSingleFeature(unittest.TestCase):

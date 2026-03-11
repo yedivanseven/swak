@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any, Self, overload
 from collections.abc import Callable, Iterator
 from abc import ABC, abstractmethod
 from pandas import DataFrame
@@ -56,6 +56,25 @@ class Block(Resettable):
     dimensions and sizes!
 
     """
+
+    @overload
+    @staticmethod
+    def _reset(module: Module, device, dtype) -> Module:
+        ...
+
+    @overload
+    @staticmethod
+    def _reset(function: Functional, device, dtype) -> Functional:
+        ...
+
+    @staticmethod
+    def _reset(obj, device, dtype):
+        """Reset parameters of activations if they have any."""
+        if isinstance(obj, Module):
+            if hasattr(obj, 'reset_parameters'):
+                obj.reset_parameters()
+            return obj.to(device=device, dtype=dtype)
+        return obj
 
     @abstractmethod
     def new(self) -> Self:

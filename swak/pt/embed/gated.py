@@ -43,15 +43,11 @@ class GatedEmbedder(Block):
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
-        # Although few, some activation functions have learnable parameters
-        if hasattr(gate, 'reset_parameters'):
-            gate.reset_parameters()
-            self.gate = gate.to(device=device, dtype=dtype)
-        else:
-            self.gate = gate
         self.bias = bias
         self.inp_dim = inp_dim
         self.embed = ptn.Linear(inp_dim, 2 * mod_dim, bias, device, dtype)
+        # Although few, some activation functions have learnable parameters
+        self.gate = self._reset(gate, self.device, self.dtype)
 
     @property
     def device(self) -> pt.device:
@@ -89,8 +85,7 @@ class GatedEmbedder(Block):
         """Re-initialize all internal parameters."""
         self.embed.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.gate, 'reset_parameters'):
-            self.gate.reset_parameters()
+        self.gate = self._reset(self.gate, self.device, self.dtype)
 
     def new(self) -> Self:
         """A fresh, new, re-initialized instance with identical parameters.

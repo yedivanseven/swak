@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
 import torch as pt
-from torch.nn import Sigmoid, Linear, GELU, PReLU
+from torch.nn import Sigmoid, Linear, GELU
 from swak.pt.misc import identity
 from swak.pt.embed import GatedEmbedder
 
@@ -56,10 +56,18 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_embed(self):
         self.assertIsInstance(self.embed.embed, Linear)
 
-    @patch('torch.nn.Linear')
+    @patch('torch.nn.Linear', return_value=pt.nn.Linear(1, 8))
     def test_linear_called(self, mock):
         _ = GatedEmbedder(4)
         mock.assert_called_once_with(1, 8, True, 'cpu', pt.float)
+
+    @patch('torch.nn.Sigmoid.to')
+    def test_to_called_on_instantiation(self, mock):
+        _ = GatedEmbedder(4)
+        mock.assert_called_once_with(
+            device=pt.device('cpu'),
+            dtype=pt.float32
+        )
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.embed, 'reset_parameters'))
@@ -68,29 +76,17 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.embed.reset_parameters))
 
     @patch('torch.nn.Linear.reset_parameters')
-    def test_reset_parameters_called_on_instantiation(self, linear):
-        gate = PReLU()
-        with patch('torch.nn.PReLU.reset_parameters') as mock:
-            _ = GatedEmbedder(4, gate)
-            self.assertEqual(1, mock.call_count)
-            self.assertEqual(1, linear.call_count)
-
-    def test_to_called_on_instantiation(self):
-        gate = PReLU()
-        with patch('torch.nn.PReLU.to') as mock:
-            _ = GatedEmbedder(4, gate, device='cpu', dtype=pt.float64)
-            mock.assert_called_once_with(device='cpu', dtype=pt.float64)
-
-    @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
         self.embed.reset_parameters()
         mock.assert_called_once_with()
 
-    def test_reset_parameters_called_on_gate(self):
-        embed = GatedEmbedder(4, PReLU())
-        with patch('torch.nn.PReLU.reset_parameters') as gate:
-            embed.reset_parameters()
-            self.assertEqual(1, gate.call_count)
+    @patch('torch.nn.Sigmoid.to', return_value=pt.nn.Sigmoid())
+    def test_to_called_on_gate(self, mock):
+        self.embed.reset_parameters()
+        mock.assert_called_once_with(
+            device=pt.device('cpu'),
+            dtype=pt.float32
+        )
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.embed, 'new'))
@@ -125,10 +121,46 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(self.embed.bias, bool)
         self.assertFalse(self.embed.bias)
 
-    @patch('torch.nn.Linear')
+    @patch('torch.nn.Linear', return_value=pt.nn.Linear(1, 8))
     def test_linear_called(self, mock):
         _ = GatedEmbedder(4, GELU(), bias=False, dtype=pt.float64)
         mock.assert_called_once_with(1, 8, False, 'cpu', pt.float64)
+
+    def test_reset_parameters_called_on_instantiation(self):
+        gate = pt.nn.PReLU()
+        with patch.object(gate, 'reset_parameters') as mock:
+            _ = GatedEmbedder(4, gate)
+            mock.assert_called_once_with()
+
+    def test_reset_parameters_not_called_on_instantiation(self):
+        gate = pt.nn.functional.relu
+        _ = GatedEmbedder(4, gate)
+
+    def test_to_called_on_instantiation(self):
+        gate = pt.nn.ReLU()
+        with patch.object(gate, 'to') as mock:
+            _ = GatedEmbedder(4, gate, device='cpu', dtype=pt.float64)
+            mock.assert_called_once_with(
+                device=pt.device('cpu'),
+                dtype=pt.float64
+            )
+
+    def test_reset_parameters_called_on_activation(self):
+        gate = pt.nn.PReLU()
+        embed = GatedEmbedder(4, gate)
+        with patch.object(gate, 'reset_parameters') as mock:
+            embed.reset_parameters()
+            mock.assert_called_once_with()
+
+    def test_to_called_on_activation(self):
+        gate = pt.nn.ReLU()
+        embed = GatedEmbedder(4, gate, dtype=pt.float64)
+        with patch.object(gate, 'to', return_value=gate) as mock:
+            embed.reset_parameters()
+            mock.assert_called_once_with(
+                device=pt.device('cpu'),
+                dtype=pt.float64
+            )
 
 
 class TestUsageSingleFeature(unittest.TestCase):

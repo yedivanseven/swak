@@ -75,22 +75,14 @@ class GatedResidualEmbedder(Block):
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
-        # Although few, some activation functions have learnable parameters
-        if hasattr(activate, 'reset_parameters'):
-            activate.reset_parameters()
-            self.activate = activate.to(device=device, dtype=dtype)
-        else:
-            self.activate = activate
-        if hasattr(gate, 'reset_parameters'):
-            gate.reset_parameters()
-            self.gate = gate.to(device=device, dtype=dtype)
-        else:
-            self.gate = gate
         self.bias = bias
         self.drop = drop
         self.inp_dim = inp_dim
         self.project = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
         self.widen = ptn.Linear(mod_dim, 2 * mod_dim, bias, device, dtype)
+        # Although few, some activation functions have learnable parameters
+        self.activate = self._reset(activate, self.device, self.dtype)
+        self.gate = self._reset(gate, self.device, self.dtype)
 
     @property
     def device(self) -> pt.device:
@@ -131,10 +123,8 @@ class GatedResidualEmbedder(Block):
         self.project.reset_parameters()
         self.widen.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.activate, 'reset_parameters'):
-            self.activate.reset_parameters()
-        if hasattr(self.gate, 'reset_parameters'):
-            self.gate.reset_parameters()
+        self.activate = self._reset(self.activate, self.device, self.dtype)
+        self.gate = self._reset(self.gate, self.device, self.dtype)
 
     def new(self) -> Self:
         """A fresh, new, re-initialized instance with identical parameters.

@@ -44,15 +44,11 @@ class ActivatedEmbedder(Block):
     ) -> None:
         super().__init__()
         self.mod_dim = mod_dim
-        # Although few, some activation functions have learnable parameters
-        if hasattr(activate, 'reset_parameters'):
-            activate.reset_parameters()
-            self.activate = activate.to(device=device, dtype=dtype)
-        else:
-            self.activate = activate
         self.bias = bias
         self.inp_dim = inp_dim
         self.embed = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
+        # Although few, some activation functions have learnable parameters
+        self.activate = self._reset(activate, self.device, self.dtype)
 
     @property
     def device(self) -> pt.device:
@@ -89,8 +85,7 @@ class ActivatedEmbedder(Block):
         """Re-initialize all internal parameters."""
         self.embed.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.activate, 'reset_parameters'):
-            self.activate.reset_parameters()
+        self.activate = self._reset(self.activate, self.device, self.dtype)
 
     def new(self) -> Self:
         """A fresh, new, re-initialized instance with identical parameters.
