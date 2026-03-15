@@ -44,6 +44,26 @@ class TestAttributes(unittest.TestCase):
         embed = CategoricalEmbedder(2, 3, 4)
         self.assertTupleEqual((3, 4), embed.cat_counts)
 
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.embed, 'device'))
+
+    def test_device(self):
+        self.assertEqual(self.embed.device, pt.device('cpu'))
+
+    def test_device_zero_features(self):
+        embed = CategoricalEmbedder(4, device='cpu')
+        self.assertIsNone(embed.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.embed, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.embed.dtype, pt.float)
+
+    def test_dtype_zero_features(self):
+        embed = CategoricalEmbedder(4, dtype=pt.float64)
+        self.assertIsNone(embed.dtype)
+
     def test_has_kwargs(self):
         self.assertTrue(hasattr(self.embed, 'kwargs'))
 
@@ -62,8 +82,8 @@ class TestAttributes(unittest.TestCase):
 
     @patch('torch.nn.ModuleList.to')
     def test_to_called(self, to):
-        _ = CategoricalEmbedder(4, [3], device='foo', dtype='bar')
-        to.assert_called_once_with(device='foo', dtype='bar')
+        _ = CategoricalEmbedder(4, [3], dtype='bar')
+        to.assert_called_once_with(device='cpu', dtype='bar')
 
     def test_embed(self):
         self.assertIsInstance(self.embed.embed, ptn.ModuleList)
@@ -112,6 +132,13 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(embed.dim, int)
         self.assertEqual(-1, embed.dim)
 
+    def test_bool_non_zero_features(self):
+        self.assertTrue(self.embed)
+
+    def test_bool_zero_features(self):
+        embed = CategoricalEmbedder(2)
+        self.assertFalse(embed)
+
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.embed, 'reset_parameters'))
 
@@ -129,13 +156,26 @@ class TestAttributes(unittest.TestCase):
     def test_new(self):
         self.assertTrue(callable(self.embed.new))
 
-    def test_call_new_defaults(self):
+    def test_call_new(self):
         new = self.embed.new()
         self.assertIsInstance(new, CategoricalEmbedder)
         self.assertIsNot(new, self.embed)
+        self.assertEqual(self.embed.device, new.device)
+        self.assertEqual(self.embed.dtype, new.dtype)
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertTupleEqual(self.embed.cat_counts, new.cat_counts)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
+
+    def test_call_new_no_features(self):
+        embed = CategoricalEmbedder(2)
+        new = embed.new()
+        self.assertIsInstance(new, CategoricalEmbedder)
+        self.assertIsNot(new, embed)
+        self.assertEqual(embed.device, new.device)
+        self.assertEqual(embed.dtype, new.dtype)
+        self.assertEqual(embed.mod_dim, new.mod_dim)
+        self.assertTupleEqual(embed.cat_counts, new.cat_counts)
+        self.assertDictEqual(embed.kwargs, new.kwargs)
 
 
 class TestUsage(unittest.TestCase):

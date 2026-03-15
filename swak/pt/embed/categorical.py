@@ -58,6 +58,19 @@ class CategoricalEmbedder(Block):
             for count in self.cat_counts
         ]).to(device=device, dtype=dtype)
 
+    def __bool__(self) -> bool:
+        return bool(self.embed)
+
+    @property
+    def device(self) -> pt.device | None:
+        """The device the embeddings live on, or None if there aren't any."""
+        return self.embed[0].weight.device if self else None
+
+    @property
+    def dtype(self) -> pt.dtype | None:
+        """The dtype of the embeddings, or None if there aren't any."""
+        return self.embed[0].weight.dtype if self else None
+
     @property
     def n_features(self) -> int:
         """Number of features to embed."""
@@ -115,6 +128,8 @@ class CategoricalEmbedder(Block):
         return self.__class__(
             self.mod_dim,
             self.cat_counts,
+            device=self.device,
+            dtype=self.dtype,
             **self.kwargs
         )
 

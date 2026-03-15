@@ -21,16 +21,16 @@ class FeatureEmbedder(Block):
     embed_cat: CategoricalEmbedder
         A fully configured instance of :class:`CategoricalEmbedder`.
     device: str or pt.device, optional
-        Torch device to first create the embedder on. Defaults to "cpu".
+        Torch device to first create the embedders on. Defaults to "cpu".
     dtype: pt.dtype, optional
-        Torch dtype to first create the embedder in.
+        Torch dtype to first create the embedders in.
         Defaults to ``torch.float``.
 
     Raises
     ------
     EmbeddingError
-        If the embedding dimension of the numerical and the categorical
-        embedders do not match.
+        If the embedding dimension, devices, or dtypes of the numerical and
+        the categorical embedders do not match (provided they are even set).
 
     See Also
     --------
@@ -47,12 +47,30 @@ class FeatureEmbedder(Block):
             dtype: pt.dtype = pt.float,
     ) -> None:
         super().__init__()
-        if embed_num.mod_dim != embed_cat.mod_dim:
-            msg = (f'Numerical ({embed_num.mod_dim}) and categorical ('
-                   f'{embed_cat.mod_dim}) embedding dimensions must match!')
-            raise EmbeddingError(msg)
         self.embed_num = embed_num.to(device=device, dtype=dtype)
         self.embed_cat = embed_cat.to(device=device, dtype=dtype)
+        self.__raise_on_incompatible()
+
+    def __raise_on_incompatible(self) -> None:
+        """Raise if mod_dim, device, or dtype are different but not None."""
+        for attribute in ('mod_dim', 'device', 'dtype'):
+            num = getattr(self.embed_num, attribute)
+            cat = getattr(self.embed_cat, attribute)
+            if num is not None and cat is not None and num != cat:
+                tmp = ('The "{}" of the numerical ({}) and categorical '
+                       '({}) embedders does not match!')
+                msg = tmp.format(attribute, num, cat)
+                raise EmbeddingError(msg)
+
+    @property
+    def device(self) -> pt.device | None:
+        """The device the embedders live on, or None if there aren't any."""
+        return self.embed_num.device or self.embed_cat.device or None
+
+    @property
+    def dtype(self) -> pt.dtype | None:
+        """The dtype of the embedders, or None if there aren't any."""
+        return self.embed_num.dtype or self.embed_cat.dtype or None
 
     @property
     def mod_dim(self) -> int:

@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 import torch as pt
 from swak.pt.exceptions import EmbeddingError
 from swak.pt.embed import (
@@ -31,18 +31,67 @@ class TestAttributes(unittest.TestCase):
         self.assertIs(self.embed.embed_cat, self.embed_cat)
 
     def test_to_called(self):
-        num = Mock()
-        num.mod_dim = 4
-        cat = Mock()
-        cat.mod_dim = 4
-        _ = FeatureEmbedder(num, cat, device='foo', dtype='bar')
-        num.to.assert_called_once_with(device='foo', dtype='bar')
-        cat.to.assert_called_once_with(device='foo', dtype='bar')
+        with patch.object(
+                self.embed_num, 'to', return_value=self.embed_num
+        ) as num_to, patch.object(
+                self.embed_cat, 'to', return_value=self.embed_cat
+        ) as cat_to:
+            _ = FeatureEmbedder(self.embed_num, self.embed_cat, dtype='bar')
+            num_to.assert_called_once_with(device='cpu', dtype='bar')
+            cat_to.assert_called_once_with(device='cpu', dtype='bar')
+
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.embed, 'device'))
+
+    def test_device(self):
+        self.assertEqual(self.embed.device, pt.device('cpu'))
+
+    def test_device_no_num_features(self):
+        num = NumericalEmbedder(4, 0, ActivatedEmbedder)
+        cat = CategoricalEmbedder(4, 6, 7, 8)
+        embed = FeatureEmbedder(num, cat)
+        self.assertEqual(pt.device('cpu'), embed.device)
+
+    def test_device_no_cat_features(self):
+        num = NumericalEmbedder(4, 2, ActivatedEmbedder)
+        cat = CategoricalEmbedder(4)
+        embed = FeatureEmbedder(num, cat)
+        self.assertEqual(pt.device('cpu'), embed.device)
+
+    def test_device_no_features(self):
+        num = NumericalEmbedder(4, 0, ActivatedEmbedder)
+        cat = CategoricalEmbedder(4)
+        embed = FeatureEmbedder(num, cat)
+        self.assertIsNone(embed.dtype)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.embed, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.embed.dtype, pt.float)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.embed, 'mod_dim'))
 
-    def test_moddim(self):
+    def test_dtype_no_num_features(self):
+        num = NumericalEmbedder(4, 0, ActivatedEmbedder, dtype=pt.float64)
+        cat = CategoricalEmbedder(4, 6, 7, 8, dtype=pt.float16)
+        embed = FeatureEmbedder(num, cat)
+        self.assertIs(embed.dtype, pt.float)
+
+    def test_dtype_no_cat_features(self):
+        num = NumericalEmbedder(4, 2, ActivatedEmbedder, dtype=pt.float64)
+        cat = CategoricalEmbedder(4, dtype=pt.float64)
+        embed = FeatureEmbedder(num, cat)
+        self.assertIs(embed.dtype, pt.float)
+
+    def test_dtype_no_features(self):
+        num = NumericalEmbedder(4, 0, ActivatedEmbedder, dtype=pt.float64)
+        cat = CategoricalEmbedder(4, dtype=pt.float16)
+        embed = FeatureEmbedder(num, cat)
+        self.assertIsNone(embed.dtype)
+
+    def test_mod_dim(self):
         self.assertIsInstance(self.embed.mod_dim, int)
         self.assertEqual(4, self.embed.mod_dim)
 

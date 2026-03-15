@@ -11,23 +11,14 @@ class EmbCls(ptn.Module):
         super().__init__()
         self.args = args
         self.kwargs = kwargs
+        self.device = 'cpu'
+        self.dtype = pt.float
 
     def forward(self, *args):
         return args[0] if len(args) == 1 else args
 
     def reset_parameters(self):
         pass
-
-
-class NewEmbCls(ptn.Module):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-        self.args = args
-        self.kwargs = kwargs
-
-    def forward(self, *args):
-        return args[0] if len(args) == 1 else args
 
 
 class TestAttributes(unittest.TestCase):
@@ -89,6 +80,22 @@ class TestAttributes(unittest.TestCase):
         self.assertDictEqual({'foo': 'bar'}, e1.kwargs)
         self.assertDictEqual({'foo': 'bar'}, e2.kwargs)
 
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.embed, 'device'))
+
+    def test_device(self):
+        self.assertEqual('cpu', self.embed.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.embed, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.embed.dtype, pt.float)
+
+    def test_dtype_zero_features(self):
+        embed = NumericalEmbedder(4, 0, EmbCls)
+        self.assertIsNone(embed.dtype)
+
     def test_has_features(self):
         self.assertTrue(hasattr(self.embed, 'features'))
 
@@ -107,6 +114,13 @@ class TestAttributes(unittest.TestCase):
         embed = NumericalEmbedder(4, 0, EmbCls, foo='bar')
         self.assertIsInstance(embed.dim, int)
         self.assertEqual(-1, embed.dim)
+
+    def test_bool_non_zero_features(self):
+        self.assertTrue(self.embed)
+
+    def test_bool_zero_features(self):
+        embed = NumericalEmbedder(4, 0, EmbCls, foo='bar')
+        self.assertFalse(embed)
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.embed, 'reset_parameters'))
@@ -136,15 +150,30 @@ class TestAttributes(unittest.TestCase):
     def test_new(self):
         self.assertTrue(callable(self.embed.new))
 
-    def test_call_new_defaults(self):
+    def test_call_new(self):
         new = self.embed.new()
         self.assertIsInstance(new, NumericalEmbedder)
         self.assertIsNot(new, self.embed)
+        self.assertEqual(self.embed.device, new.device)
+        self.assertEqual(self.embed.dtype, new.dtype)
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertEqual(self.embed.n_features, new.n_features)
         self.assertIs(new.emb_cls, self.embed.emb_cls)
         self.assertTupleEqual(self.embed.args, new.args)
         self.assertDictEqual(self.embed.kwargs, new.kwargs)
+
+    def test_call_new_no_features(self):
+        embed = NumericalEmbedder(4, 0, EmbCls, foo='bar')
+        new = embed.new()
+        self.assertIsInstance(new, NumericalEmbedder)
+        self.assertIsNot(new, embed)
+        self.assertEqual(embed.device, new.device)
+        self.assertEqual(embed.dtype, new.dtype)
+        self.assertEqual(embed.mod_dim, new.mod_dim)
+        self.assertEqual(embed.n_features, new.n_features)
+        self.assertIs(new.emb_cls, embed.emb_cls)
+        self.assertTupleEqual(embed.args, new.args)
+        self.assertDictEqual(embed.kwargs, new.kwargs)
 
 
 class TestUsage(unittest.TestCase):

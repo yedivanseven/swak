@@ -76,7 +76,17 @@ class Block(Resettable):
             return obj.to(device=device, dtype=dtype)
         return obj
 
+    # ToDo: Comment out once everything is a block!
+    # @property
+    # @abstractmethod
+    # def device(self) -> torch.device | None:
+    #     """Return the device that parameters/weights live on, if possible."""
+    #
+    # @property
+    # @abstractmethod
+    # def dtype(self) -> torch.dtype | None:
+    #     """Return the dtype of parameters/weight, if possible."""
+
     @abstractmethod
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters."""
-        ...

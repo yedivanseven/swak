@@ -63,6 +63,23 @@ class NumericalEmbedder(Block):
             [emb_cls(mod_dim, *args, **kwargs) for _ in self.features]
         ).to(device=device, dtype=dtype)
 
+    def __bool__(self) -> bool:
+        return bool(self.embed)
+
+    @property
+    def device(self) -> pt.device | None:
+        """The device the embedders live on, or None if there aren't any."""
+        if not self:
+            return None
+        return getattr(self.embed[0], 'weight', self.embed[0]).device
+
+    @property
+    def dtype(self) -> pt.dtype | None:
+        """The dtype of the embedders, or None if there aren't any."""
+        if not self:
+            return None
+        return getattr(self.embed[0], 'weight', self.embed[0]).dtype
+
     @cached_property
     def features(self) -> range:
         """Range of feature indices."""
@@ -115,5 +132,7 @@ class NumericalEmbedder(Block):
             self.n_features,
             self.emb_cls,
             *self.args,
+            device=self.device,
+            dtype=self.dtype,
             **self.kwargs
         )
