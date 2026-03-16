@@ -35,7 +35,12 @@ applications. In abstracting away boiler-plate code, it thus saves time and effo
 in particular Google BigQuery and Google Cloud Storage, install
 _extra_ dependencies with:
   ```shell
-  pip install swak[cloud]
+  pip install swak[gcp]
+  ```
+* Likewise, If you need support for interacting with Amazon AWS,
+in particular with S3, install _extra_ dependencies with:
+  ```shell
+  pip install swak[aws]
   ```
 * In order to use the subpackage `swak.pt`, you need to have [PyTorch](https://pytorch.org/) installed.
 Because there is no way of knowing whether you want to run it on CPU only or also on GPU and, if so,

@@ -36,7 +36,7 @@ jobs:
       - name: Install sphinx
         run: pipenv install --dev sphinx sphinx-rtd-theme
       - name: Install package
-        run: pipenv run pip install .[cloud]
+        run: pipenv run pip install .[aws,gcp]
       - name: Build the docs
         run: |
           cd docs

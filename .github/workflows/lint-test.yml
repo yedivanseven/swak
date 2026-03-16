@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.12", "3.13" ]
+        python-version: [ "3.12", "3.13" , "3.14" ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ "3.12", "3.13" ]
+        python-version: [ "3.12", "3.13", "3.14" ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,6 +46,6 @@ jobs:
       - name: Sync PyTorch CPU
         run: pipenv sync --categories=cpu
       - name: Install package
-        run: pipenv run pip install .[cloud]
+        run: pipenv run pip install .[aws,gcp]
       - name: Run unittest
         run: pipenv run python -m unittest

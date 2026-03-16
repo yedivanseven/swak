@@ -27,12 +27,14 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 build = "*"
 
-[cloud]
+[gcp]
 google-cloud-storage = "*"
 google-cloud-bigquery = "*"
+gcsfs = "*"
+
+[aws]
 boto3 = "*"
 s3fs = "*"
-gcsfs = "*"
 
 [cpu]
 torch = {version="*", index="cpu"}
