@@ -28,7 +28,7 @@ class FlexiDate:
         return getattr(self.as_date, attribute)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}('{str(self)}')"
+        return f"{self.__class__.__name__}('{self!s}')"
 
     def __str__(self) -> str:
         return str(self.as_date)

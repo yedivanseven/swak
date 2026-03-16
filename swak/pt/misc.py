@@ -62,7 +62,7 @@ class Identity(Block):
 
     """
 
-    def __init__(self, *_, **__) -> None:
+    def __init__(self, *_: Any, **__: Any) -> None:
         super().__init__()
 
     def forward(self, tensor: Tensor, **_: Any) -> Tensor:
@@ -84,7 +84,7 @@ class Identity(Block):
     def reset_parameters(self) -> None:
         """Does nothing because there are no internal parameters to reset."""
 
-    def new(self, *_, **__) -> Self:
+    def new(self, *_: Any, **__: Any) -> Self:
         """Return a fresh, new instance.
 
         Providing any number of (keyword) arguments is permitted, but they will
@@ -365,7 +365,7 @@ class Compile:
     def __repr__(self) -> str:
         cls = self.__class__.__name__
         model = None if self.model is None else 'model'
-        kwargs = (f'{k}={str(v)}' for k, v in self.kwargs.items())
+        kwargs = (f'{k}={v!s}' for k, v in self.kwargs.items())
         kwargs = ', '.join(kwargs)
         sep = ', ' if kwargs else ''
         return f'{cls}({self.inplace}, {model}{sep}{kwargs})'

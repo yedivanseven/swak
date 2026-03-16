@@ -30,6 +30,7 @@ type Predicate = (
 )
 
 
+# ToDo: Add Cast, DropNulls, Rename, Pivot, VStack
 class Select(ArgRepr):
     """Partial of the polars dataframe `select <select_>`__ method.
 

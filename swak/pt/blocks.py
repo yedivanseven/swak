@@ -26,6 +26,7 @@ __all__ = [
 
 # ToDo: Homogenize call signature (with "bias", "device", and "dtype"?)
 # ToDo: Add "device" and "dtype" properties.
+# ToDo: remove round from mod_dim!
 class ActivatedBlock(Block):
     """A single, non-linearly activated layer.
 
@@ -592,8 +593,8 @@ class SkipConnection(Block):
             drop: Drop = ptn.Dropout(0.0),
             norm_first: bool = True,
             norm_cls: type[Module] = Identity,
-            *args,
-            **kwargs
+            *args: Any,
+            **kwargs: Any
     ) -> None:
         super().__init__()
         self.block = block

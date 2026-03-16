@@ -1,7 +1,7 @@
 import uuid
 import fsspec
 import torch as pt
-from typing import Any
+from typing import Any, ClassVar
 from collections import OrderedDict
 from collections.abc import Mapping
 from functools import cached_property
@@ -51,7 +51,7 @@ class Checkpoint(ArgRepr):
 
     """
 
-    _EMPTY: State = {
+    _EMPTY: ClassVar = {
         'epoch': 0,
         'loss': float('inf'),
         'model': OrderedDict(),

@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-NoSchedule = Curry[LambdaLR](LambdaLR, lambda step: 1.0)
+NoSchedule = Curry[LambdaLR](LambdaLR, lambda _: 1.0)
 
 
 class LinearInverse(ArgRepr):

@@ -269,7 +269,7 @@ class PassThroughFileLogger[**P](ArgRepr):
     def handler_exists(self) -> bool:
         """Does a Logger with a Handler of the specified file already exist?"""
         root = logging.getLogger()
-        candidates = [root] + list(root.manager.loggerDict.values())
+        candidates = [root, *root.manager.loggerDict.values()]
         loggers = filter(lambda obj: isinstance(obj, Logger), candidates)
         return any(
             any(self.__handles_file(handler) for handler in logger.handlers)

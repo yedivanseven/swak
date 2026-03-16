@@ -72,7 +72,7 @@ class SafeError(Exception):
         super().__init__(self.message)
 
     @property
-    def message(self):
+    def message(self) -> str:
         """The error message displayed if the exception is actually raised."""
         msg = '\nCaught {} calling\n{}\nwith arguments\n{}\n{}'
         err_cls = self.error.__class__.__name__

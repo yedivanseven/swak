@@ -65,7 +65,7 @@ line-length = 79
 quote-style = "single"
 
 [tool.ruff.lint]
-ignore = ["PLR", "A005"]
+ignore = ["A005"]
 select = [
     "A",
     "F",
@@ -77,7 +77,8 @@ select = [
     "YTT",
     "ASYNC",
     "C4",
-    "T100",
+    "T10",
+    "T20",
     "EXE",
     "ISC",
     "ICN",
@@ -88,8 +89,9 @@ select = [
     "SIM",
     "INT",
     "PTH",
-    "PL",
+    "PLE",
+    "PLW",
     "NPY",
     "PERF",
-    "FURB"
+    "FURB",
 ]

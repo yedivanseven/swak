@@ -4,6 +4,14 @@ Specifically, data scientists tend to interact mostly with Google's BigQuery
 (GBQ) data-warehouse solution and the Google Cloud Storage (GCS).
 
 """
+# ruff: noqa: E402
+from importlib.util import find_spec
+
+required = 'google.cloud.bigquery', 'google.cloud.storage'
+
+if any(find_spec(package) is None for package in required):
+    msg = 'Install {} with the [gcp] extra to unlock this subpackage!'
+    raise ImportError(msg.format(__package__.split('.')[0]))
 
 from .clients import Gcs, Gbq
 from .bucket import GcsBucket

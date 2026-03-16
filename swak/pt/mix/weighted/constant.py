@@ -16,7 +16,7 @@ class ConstantSumMixer(Resettable):
 
     """
 
-    def __init__(self, n_features: int):
+    def __init__(self, n_features: int) -> None:
         super().__init__()
         self.n_features = n_features
         self.register_buffer('coeffs', pt.tensor(1.0 / n_features))

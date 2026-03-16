@@ -49,7 +49,7 @@ class SchemaMeta(type):
     __respect_none__ = False
 
     def __new__(
-            mcs,  # noqa: N804
+            mcs,
             name: str,
             bases: Types,
             attrs: Json,

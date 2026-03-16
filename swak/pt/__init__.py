@@ -16,9 +16,9 @@ data. Image processing is not currently the main focus.
 
 try:
     import torch as pt
-except ModuleNotFoundError:
+except ModuleNotFoundError as error:
     msg = 'Install the "torch" package to unlock the PyTorch utilities!'
-    raise ImportError(msg)
+    raise ImportError(msg) from error
 
 __all__ = ['DEVICE']
 

@@ -112,5 +112,4 @@ class GbqQuery2DataFrame(ArgRepr):
         arrow = rows.to_arrow()
         if self.bears == Bears.PANDAS:
             return arrow.to_pandas()
-        else:
-            return pl_from_arrow(arrow)
+        return pl_from_arrow(arrow)

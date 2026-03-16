@@ -8,7 +8,7 @@ probability distribution.
 
 """
 
-from typing import Self
+from typing import Self, ClassVar
 from enum import StrEnum
 from typing import Literal
 import torch as pt
@@ -74,7 +74,7 @@ class _BaseLoss(Module):
 
     """
 
-    __reductions = {
+    __reductions: ClassVar = {
         'mean': pt.mean,
         'sum': pt.sum,
         'none': identity

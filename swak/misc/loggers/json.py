@@ -1,7 +1,7 @@
 import sys
 import json
 import logging
-from typing import Any, Literal
+from typing import Any, Literal, ClassVar
 from collections.abc import Iterable, Mapping
 from functools import cached_property
 from datetime import datetime
@@ -41,7 +41,7 @@ class JsonStreamHandler(StreamHandler):
 
     """
 
-    __whitelist__ = {
+    __whitelist__: ClassVar = {
         'asctime',
         'created',
         'filename',
@@ -96,9 +96,8 @@ class JsonStreamHandler(StreamHandler):
         """Ensure that every requested field is on the whitelist."""
         if field in self.__whitelist__:
             return field
-        else:
-            tmp = '"{}" is not a valid log-record attribute'
-            raise ValueError(tmp.format(field))
+        tmp = '"{}" is not a valid log-record attribute'
+        raise ValueError(tmp.format(field))
 
     @property
     def basics(self) -> set[str]:
