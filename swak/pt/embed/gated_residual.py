@@ -47,9 +47,9 @@ class GatedResidualEmbedder(Block):
     happens inside the present module. Secondly, this embedding vector is not
     transformed again (as Eq. 4 seems to imply) and there is no option to add
     a `context vector`. Thirdly, the intermediate linear layer (Eq. 3) is
-    eliminated and dropout is applied directly to the activations after the
-    first layer. Finally, the layer norm (Eq. 2) is replaced by simply
-    dividing the sum of (linearly projected) input and gated signal by 2.
+    eliminated and dropout is applied to the activations after gating.
+    Finally, the layer norm (Eq. 2) is replaced by simply dividing the sum of
+    (linearly projected and activated) input and gated signal by 2.
     Should additional normalization be desired, it can be performed
     independently on the output of this module.
 
@@ -74,7 +74,7 @@ class GatedResidualEmbedder(Block):
             dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.__mod_dim = mod_dim
         self.bias = bias
         self.drop = drop
         self.inp_dim = inp_dim
@@ -83,6 +83,11 @@ class GatedResidualEmbedder(Block):
         # Although few, some activation functions have learnable parameters
         self.activate = self._reset(activate, self.device, self.dtype)
         self.gate = self._reset(gate, self.device, self.dtype)
+
+    @property
+    def mod_dim(self) -> int:
+        """The embedding size."""
+        return self.__mod_dim
 
     @property
     def device(self) -> pt.device:
@@ -113,10 +118,10 @@ class GatedResidualEmbedder(Block):
             the size of the last dimension changed to the specified `mod_dim`.
 
         """
-        projected = self.project(inp)
-        wide = self.widen(self.drop(self.activate(projected)))
+        activated = self.activate(self.project(inp))
+        wide = self.widen(activated)
         gated = wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
-        return 0.5 * (projected + gated)
+        return 0.5 * (activated + self.drop(gated))
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""

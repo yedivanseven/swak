@@ -3,10 +3,10 @@ from collections.abc import Iterable
 from functools import cached_property
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Block
+from ..types import Tensor, Bag
 
 
-class CategoricalEmbedder(Block):
+class CategoricalEmbedder(Bag):
     """Embed one or more categorical features as numerical vectors.
 
     Parameters
@@ -49,7 +49,7 @@ class CategoricalEmbedder(Block):
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.__mod_dim = mod_dim
         cat_count = self.__valid(cat_count)
         self.cat_counts: tuple[int, ...] = cat_count + self.__valid(cat_counts)
         self.kwargs = kwargs
@@ -60,6 +60,11 @@ class CategoricalEmbedder(Block):
 
     def __bool__(self) -> bool:
         return bool(self.embed)
+
+    @property
+    def mod_dim(self) -> int:
+        """The embedding size."""
+        return self.__mod_dim
 
     @property
     def device(self) -> pt.device | None:

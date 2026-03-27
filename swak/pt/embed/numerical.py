@@ -2,15 +2,10 @@ from typing import Any, Self
 from functools import cached_property
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Block
-from .activated import ActivatedEmbedder
-from .gated import GatedEmbedder
-from .gated_residual import GatedResidualEmbedder
-
-type EmbCls = type[ActivatedEmbedder | GatedEmbedder | GatedResidualEmbedder]
+from ..types import Tensor, Bag, Block
 
 
-class NumericalEmbedder(Block):
+class NumericalEmbedder(Bag):
     """Transform (scalar) numerical features into embedding vectors.
 
     Parameters
@@ -47,15 +42,15 @@ class NumericalEmbedder(Block):
             self,
             mod_dim: int,
             n_features: int,
-            emb_cls: EmbCls,
+            emb_cls: type[Block],
             *args: Any,
             device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float,
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
-        self.n_features = n_features
+        self.__mod_dim = mod_dim
+        self.__n_features = n_features
         self.emb_cls = emb_cls
         self.args = args
         self.kwargs = kwargs
@@ -65,6 +60,16 @@ class NumericalEmbedder(Block):
 
     def __bool__(self) -> bool:
         return bool(self.embed)
+
+    @property
+    def mod_dim(self) -> int:
+        """The embedding size."""
+        return self.__mod_dim
+
+    @property
+    def n_features(self) -> int:
+        """The number of features in the bag."""
+        return self.__n_features
 
     @property
     def device(self) -> pt.device | None:

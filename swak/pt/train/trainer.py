@@ -22,6 +22,8 @@ from .data import TestDataBase, TrainDataBase
 __all__ = ['Trainer']
 
 
+# ToDo: Add EMA model averaging?
+# ToDo: Review early stopping logic. What if patience is None?
 class Trainer(ArgRepr):
     """Train and, optionally, evaluate a model with early stopping.
 
@@ -45,7 +47,7 @@ class Trainer(ArgRepr):
         A curry of a PyTorch learning-rate scheduler, returning a fully
         configured learning-rate scheduler when called with a PyTorch
         optimizer. Defaults to a ``LambdaLR`` scheduler with a ``lambda``
-        that always return 1.0, that is, no scheduling at all.
+        that always returns 1.0, that is, no scheduling at all.
     batch_step: bool, optional
         Whether to step the learning-rate `scheduler` after each batch or after
         each epoch. Default to ``False``.
@@ -68,9 +70,9 @@ class Trainer(ArgRepr):
         value. Defaults to 1.0
     checkpoint: Checkpoint, optional
         Whenever the train (or test) loss after an epoch is smaller than the
-        loss after the last, a new snapshot of the model state is saved by
-        calling the `save` method of the `Checkpoint` instance. Defaults to
-        ``InMemory``.
+        loss after the last, a new snapshot of the model state is saved.
+        Defaults to a :class:`Checkpoint` instance that writes to in-memory
+        file-system.
     show_progress: bool, optional
         Whether to provide visual feedback to the console while training an
         epoch in the form of a progress bar. Defaults to ``True``
@@ -84,13 +86,13 @@ class Trainer(ArgRepr):
     epoch_cbs: iterable of EpochCallback, optional
         All epoch callbacks will be called after each epoch with epoch, train
         loss, test loss, and current learning rate. Defaults to a single
-        ``EpochPrinter``.
+        :class:`EpochPrinter`.
     train_cbs: iterable of TrainCallback, optional
         All train callbacks will be called after training finished with last
         epoch, epoch with the best loss, the best loss itself, whether
         `max_epochs` was exhausted, and with the training history in the form
         of a dictionary of lists with train loss, test loss and learning rate.
-        Defaults to a single ``TrainPrinter``.
+        Defaults to a single :class:`TrainPrinter`.
 
     Important
     ---------
@@ -112,6 +114,7 @@ class Trainer(ArgRepr):
     Checkpoint
     EpochCallback
     EpochPrinter
+    TrainCallback
     TrainPrinter
 
     """

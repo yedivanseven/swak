@@ -33,7 +33,8 @@ __all__ = [
     'Batch',
     'Batches',
     'Resettable',
-    'Block'
+    'Block',
+    'Bag'
 ]
 
 
@@ -50,12 +51,7 @@ class Resettable(Module, ABC):
 
 
 class Block(Resettable):
-    """Abstract base class for stackable/repeatable neural-network components.
-
-    The input and output tensors of such components must have the same
-    dimensions and sizes!
-
-    """
+    """Abstract base class for neural-network components."""
 
     @overload
     @staticmethod
@@ -79,6 +75,11 @@ class Block(Resettable):
     # ToDo: Comment out once everything is a block!
     # @property
     # @abstractmethod
+    # def mod_dim(self) -> int:
+    #     """Return the embedding dimension of the module."""
+    #
+    # @property
+    # @abstractmethod
     # def device(self) -> torch.device | None:
     #     """Return the device that parameters/weights live on, if possible."""
     #
@@ -90,3 +91,14 @@ class Block(Resettable):
     @abstractmethod
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters."""
+
+
+class Bag(Block):
+
+    @property
+    @abstractmethod
+    def n_features(self) -> int:
+        """Return the number of features in the bag."""
+
+
+# ToDo: Make Embedder und mixer base classes!

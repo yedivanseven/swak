@@ -1,12 +1,12 @@
 from typing import Self
 import torch as pt
-from ..types import Tensor, Block
+from ..types import Tensor, Bag
 from ..exceptions import EmbeddingError
 from .numerical import NumericalEmbedder
 from .categorical import CategoricalEmbedder
 
 
-class FeatureEmbedder(Block):
+class FeatureEmbedder(Bag):
     """Jointly embed numerical and categorical features into stacked vectors.
 
     Given a float tensor where both, numerical and categorical features
@@ -16,9 +16,9 @@ class FeatureEmbedder(Block):
 
     Parameters
     ----------
-    embed_num: NumericalEmbedder
+    num: NumericalEmbedder
         A fully configured instance of :class:`NumericalEmbedder`.
-    embed_cat: CategoricalEmbedder
+    cat: CategoricalEmbedder
         A fully configured instance of :class:`CategoricalEmbedder`.
     device: str or pt.device, optional
         Torch device to first create the embedders on. Defaults to "cpu".
@@ -39,23 +39,22 @@ class FeatureEmbedder(Block):
 
     """
 
-    def __init__(
-            self,
-            embed_num: NumericalEmbedder,
-            embed_cat: CategoricalEmbedder,
+    def __init__(self,
+            num: NumericalEmbedder,
+            cat: CategoricalEmbedder,
             device: pt.device = 'cpu',
             dtype: pt.dtype = pt.float,
     ) -> None:
         super().__init__()
-        self.embed_num = embed_num.to(device=device, dtype=dtype)
-        self.embed_cat = embed_cat.to(device=device, dtype=dtype)
+        self.num = num.to(device=device, dtype=dtype)
+        self.cat = cat.to(device=device, dtype=dtype)
         self.__raise_on_incompatible()
 
     def __raise_on_incompatible(self) -> None:
         """Raise if mod_dim, device, or dtype are different but not None."""
         for attribute in ('mod_dim', 'device', 'dtype'):
-            num = getattr(self.embed_num, attribute)
-            cat = getattr(self.embed_cat, attribute)
+            num = getattr(self.num, attribute)
+            cat = getattr(self.cat, attribute)
             if num is not None and cat is not None and num != cat:
                 tmp = ('The "{}" of the numerical ({}) and categorical '
                        '({}) embedders does not match!')
@@ -65,27 +64,27 @@ class FeatureEmbedder(Block):
     @property
     def device(self) -> pt.device | None:
         """The device the embedders live on, or None if there aren't any."""
-        return self.embed_num.device or self.embed_cat.device or None
+        return self.num.device or self.cat.device or None
 
     @property
     def dtype(self) -> pt.dtype | None:
         """The dtype of the embedders, or None if there aren't any."""
-        return self.embed_num.dtype or self.embed_cat.dtype or None
+        return self.num.dtype or self.cat.dtype or None
 
     @property
     def mod_dim(self) -> int:
         """The dimension of the embedding vectors."""
-        return self.embed_num.mod_dim
+        return self.num.mod_dim
 
     @property
     def n_num(self) -> int:
         """Number of numerical features."""
-        return self.embed_num.n_features
+        return self.num.n_features
 
     @property
     def n_cat(self) -> int:
         """Number of categorical features."""
-        return self.embed_cat.n_features
+        return self.cat.n_features
 
     @property
     def n_features(self) -> int:
@@ -112,14 +111,14 @@ class FeatureEmbedder(Block):
 
         """
         return pt.cat([
-            self.embed_num(inp[..., :self.n_num]),
-            self.embed_cat(inp[..., self.n_num:].long())
+            self.num(inp[..., :self.n_num]),
+            self.cat(inp[..., self.n_num:].long())
         ], dim=-2)
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
-        self.embed_num.reset_parameters()
-        self.embed_cat.reset_parameters()
+        self.num.reset_parameters()
+        self.cat.reset_parameters()
 
     def new(self) -> Self:
         """A fresh, new, re-initialized instance with identical parameters.
@@ -130,4 +129,4 @@ class FeatureEmbedder(Block):
             A fresh, new instance of itself.
 
         """
-        return self.__class__(self.embed_num.new(), self.embed_cat.new())
+        return self.__class__(self.num.new(), self.cat.new())

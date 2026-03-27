@@ -33,7 +33,7 @@ __all__ = [
     'LazyCatDim0'
 ]
 
-
+# ToDo. Try torch scripting! Can it handle **kwargs?
 def identity(tensor: Tensor, **_: Any) -> Tensor:
     """Simply pass through the argument and ignore keyword arguments.
 

@@ -19,16 +19,16 @@ class TestAttributes(unittest.TestCase):
         self.embed = FeatureEmbedder(self.embed_num, self.embed_cat)
 
     def test_has_embed_num(self):
-        self.assertTrue(hasattr(self.embed, 'embed_num'))
+        self.assertTrue(hasattr(self.embed, 'num'))
 
     def test_embed_num(self):
-        self.assertIs(self.embed.embed_num, self.embed_num)
+        self.assertIs(self.embed.num, self.embed_num)
 
     def test_has_embed_cat(self):
-        self.assertTrue(hasattr(self.embed, 'embed_cat'))
+        self.assertTrue(hasattr(self.embed, 'cat'))
 
     def test_embed_cat(self):
-        self.assertIs(self.embed.embed_cat, self.embed_cat)
+        self.assertIs(self.embed.cat, self.embed_cat)
 
     def test_to_called(self):
         with patch.object(
@@ -135,15 +135,15 @@ class TestAttributes(unittest.TestCase):
         new = self.embed.new()
         self.assertIsInstance(new, FeatureEmbedder)
         self.assertIsNot(new, self.embed)
-        self.assertIsInstance(new.embed_num, NumericalEmbedder)
-        self.assertIsNot(new.embed_num, self.embed_num)
-        self.assertIsInstance(new.embed_cat, CategoricalEmbedder)
-        self.assertIsNot(new.embed_cat, self.embed_cat)
-        self.assertEqual(4, new.embed_num.mod_dim)
-        self.assertEqual(2, new.embed_num.n_features)
-        self.assertIs(new.embed_num.emb_cls, ActivatedEmbedder)
-        self.assertEqual(4, new.embed_cat.mod_dim)
-        self.assertTupleEqual((6, 7, 8), new.embed_cat.cat_counts)
+        self.assertIsInstance(new.num, NumericalEmbedder)
+        self.assertIsNot(new.num, self.embed_num)
+        self.assertIsInstance(new.cat, CategoricalEmbedder)
+        self.assertIsNot(new.cat, self.embed_cat)
+        self.assertEqual(4, new.num.mod_dim)
+        self.assertEqual(2, new.num.n_features)
+        self.assertIs(new.num.emb_cls, ActivatedEmbedder)
+        self.assertEqual(4, new.cat.mod_dim)
+        self.assertTupleEqual((6, 7, 8), new.cat.cat_counts)
 
 
 class TestUsage(unittest.TestCase):

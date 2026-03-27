@@ -21,3 +21,7 @@ __all__ = [
 ]
 
 # ToDo: Remove arguments to new() method. Inherit from Block instead.
+# ToDo: remove Concat mixer
+# ToDo: Add skip connection, sqeuuez and stack arguments!
+# ToDo: Add attention-based mixer!
+# ToDo: Remove concat mixers
