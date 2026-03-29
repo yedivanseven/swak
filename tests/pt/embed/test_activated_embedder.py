@@ -131,7 +131,7 @@ class TestAttributes(unittest.TestCase):
         with patch.object(activate, 'to') as mock:
             _ = ActivatedEmbedder(4, activate, device='cpu', dtype=pt.float64)
             mock.assert_called_once_with(
-                device=pt.device('cpu'),
+                device='cpu',
                 dtype=pt.float64
             )
 
@@ -151,6 +151,11 @@ class TestAttributes(unittest.TestCase):
                 device=pt.device('cpu'),
                 dtype=pt.float64
             )
+
+    def test_dtype(self):
+        self.assertIs(self.embed.dtype, pt.float64)
+        embed = self.embed.to(pt.float16)
+        self.assertIs(embed.dtype, pt.float16)
 
 
 class TestUsageSingleFeature(unittest.TestCase):

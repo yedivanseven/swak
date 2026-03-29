@@ -34,7 +34,8 @@ __all__ = [
     'Batches',
     'Resettable',
     'Block',
-    'Bag'
+    'Bag',
+    'Mixer'
 ]
 
 
@@ -43,15 +44,6 @@ class Resettable(Module, ABC):
 
     def __init__(self, *_: Any, **__: Any) -> None:
         super().__init__()
-
-    @abstractmethod
-    def reset_parameters(self) -> None:
-        """Subclasses implement in-place reset of all internal parameters."""
-        ...
-
-
-class Block(Resettable):
-    """Abstract base class for neural-network components."""
 
     @overload
     @staticmethod
@@ -71,6 +63,15 @@ class Block(Resettable):
                 obj.reset_parameters()
             return obj.to(device=device, dtype=dtype)
         return obj
+
+    @abstractmethod
+    def reset_parameters(self) -> None:
+        """Subclasses implement in-place reset of all internal parameters."""
+        ...
+
+
+class Block(Resettable):
+    """Abstract base class for neural-network components."""
 
     # ToDo: Comment out once everything is a block!
     # @property
@@ -101,4 +102,8 @@ class Bag(Block):
         """Return the number of features in the bag."""
 
 
-# ToDo: Make Embedder und mixer base classes!
+class Mixer(Block):
+
+    @abstractmethod
+    def importance(self, inp: Tensor, mask: Tensor | None = None) -> Tensor:
+        """Return per-instance feature importance."""

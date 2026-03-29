@@ -47,7 +47,7 @@ class GatedEmbedder(Block):
         self.inp_dim = inp_dim
         self.embed = ptn.Linear(inp_dim, 2 * mod_dim, bias, device, dtype)
         # Although few, some activation functions have learnable parameters
-        self.gate = self._reset(gate, self.device, self.dtype)
+        self.gate = self._reset(gate, device, dtype)
 
     @property
     def mod_dim(self) -> int:

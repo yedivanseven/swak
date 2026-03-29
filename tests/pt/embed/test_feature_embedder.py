@@ -70,6 +70,10 @@ class TestAttributes(unittest.TestCase):
     def test_dtype(self):
         self.assertIs(self.embed.dtype, pt.float)
 
+    def test_type_changes(self):
+        embed = self.embed.to(pt.float64)
+        self.assertIs(embed.dtype, pt.float64)
+
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.embed, 'mod_dim'))
 

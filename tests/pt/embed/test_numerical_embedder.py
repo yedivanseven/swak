@@ -86,6 +86,10 @@ class TestAttributes(unittest.TestCase):
     def test_device(self):
         self.assertEqual('cpu', self.embed.device)
 
+    def test_device_zero_features(self):
+        embed = NumericalEmbedder(4, 0, EmbCls)
+        self.assertIsNone(embed.device)
+
     def test_has_dtype(self):
         self.assertTrue(hasattr(self.embed, 'dtype'))
 

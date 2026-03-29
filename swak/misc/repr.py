@@ -1,5 +1,6 @@
 from typing import Any
 from collections.abc import Callable, Sequence
+from polars.expr import Expr
 
 
 class ReprName:
@@ -7,7 +8,11 @@ class ReprName:
 
     def _repr(self, obj: Any, _: int = 0) -> str:
         """Representation for any object."""
-        return self._name(obj) if callable(obj) else repr(obj)
+        if callable(obj):
+            return self._name(obj)
+        elif isinstance(obj, Expr):
+            return 'PolarsExpr'
+        return repr(obj)
 
     @staticmethod
     def _name(obj: None | type | Callable) -> str:

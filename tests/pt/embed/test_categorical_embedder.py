@@ -64,6 +64,10 @@ class TestAttributes(unittest.TestCase):
         embed = CategoricalEmbedder(4, dtype=pt.float64)
         self.assertIsNone(embed.dtype)
 
+    def test_dtype_changes(self):
+        embed = self.embed.to(pt.float64)
+        self.assertIs(embed.dtype, pt.float64)
+
     def test_has_kwargs(self):
         self.assertTrue(hasattr(self.embed, 'kwargs'))
 

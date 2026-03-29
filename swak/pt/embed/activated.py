@@ -48,7 +48,7 @@ class ActivatedEmbedder(Block):
         self.inp_dim = inp_dim
         self.embed = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
         # Although few, some activation functions have learnable parameters
-        self.activate = self._reset(activate, self.device, self.dtype)
+        self.activate = self._reset(activate, device, dtype)
 
     @property
     def mod_dim(self) -> int:

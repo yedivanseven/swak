@@ -86,11 +86,11 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_to_called_on_instantiation(self, activate, gate):
         _ = GatedResidualEmbedder(4)
         activate.assert_called_once_with(
-            device=pt.device('cpu'),
+            device='cpu',
             dtype=pt.float32
         )
         gate.assert_called_once_with(
-            device=pt.device('cpu'),
+            device='cpu',
             dtype=pt.float32
         )
 
@@ -204,11 +204,11 @@ class TestAttributes(unittest.TestCase):
         ) as mock_gate:
             _ = GatedResidualEmbedder(4, activation, gate, dtype=pt.float64)
             mock_activation.assert_called_once_with(
-                device=pt.device('cpu'),
+                device='cpu',
                 dtype=pt.float64
             )
             mock_gate.assert_called_once_with(
-                device=pt.device('cpu'),
+                device='cpu',
                 dtype=pt.float64
             )
 
@@ -243,6 +243,11 @@ class TestAttributes(unittest.TestCase):
                 device=pt.device('cpu'),
                 dtype=pt.float64
             )
+
+    def test_dtype(self):
+        self.assertIs(self.embed.dtype, pt.float64)
+        embed = self.embed.to(pt.float16)
+        self.assertIs(embed.dtype, pt.float16)
 
 
 class TestUsageSingleFeature(unittest.TestCase):

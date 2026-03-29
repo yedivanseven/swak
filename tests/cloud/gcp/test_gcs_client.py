@@ -63,30 +63,30 @@ class TestUsage(unittest.TestCase):
     def test_client_called_on_call(self, client):
         gcs = Gcs('project')
         _ = gcs()
-        client.assert_called_once_with('project')
+        client.assert_called_once_with('project', api_key=None)
 
     @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_on_call_with_args_kwargs(self, client):
-        gcs = Gcs('project', 'foo', 42, foo='bar', answer=42)
+        gcs = Gcs('project', 'foo', 42, foo='bar', api_key=42)
         _ = gcs()
         client.assert_called_once_with(
             'project',
             'foo',
             42,
             foo='bar',
-            answer=42
+            api_key=42
         )
 
     @patch('swak.cloud.gcp.clients.GcsClient')
     def test_args_kwargs_ignored_on_call(self, client):
-        gcs = Gcs('project', 'foo', 42, foo='bar', answer=42)
+        gcs = Gcs('project', 'foo', 42, foo='bar', api_key=42)
         _ = gcs('bar', 123, baz='foo', reply=123)
         client.assert_called_once_with(
             'project',
             'foo',
             42,
             foo='bar',
-            answer=42
+            api_key=42
         )
 
     @patch('swak.cloud.gcp.clients.GcsClient')
@@ -101,18 +101,18 @@ class TestUsage(unittest.TestCase):
     def test_client_called_on_property(self, client):
         gcs = Gcs('project')
         _ = gcs.client
-        client.assert_called_once_with('project')
+        client.assert_called_once_with('project', api_key=None)
 
     @patch('swak.cloud.gcp.clients.GcsClient')
     def test_client_called_on_property_with_args_kwargs(self, client):
-        gcs = Gcs('project', 'foo', 42, foo='bar', answer=42)
+        gcs = Gcs('project', 'foo', 42, foo='bar', api_key=42)
         _ = gcs.client
         client.assert_called_once_with(
             'project',
             'foo',
             42,
             foo='bar',
-            answer=42
+            api_key=42
         )
 
     @patch('swak.cloud.gcp.clients.GcsClient')
@@ -121,7 +121,7 @@ class TestUsage(unittest.TestCase):
         _ = gcs.client
         _ = gcs.client
         _ = gcs.client
-        client.assert_called_once_with('project')
+        client.assert_called_once_with('project', api_key=None)
 
 
 class TestMisc(unittest.TestCase):
@@ -133,6 +133,11 @@ class TestMisc(unittest.TestCase):
     def test_custom_repr(self):
         gcs = Gcs('project', 'foo', 42, foo='bar', answer=42)
         expected = "Gcs('project', 'foo', 42, foo='bar', answer=42)"
+        self.assertEqual(expected, repr(gcs))
+
+    def test_api_key_hidden(self):
+        gcs = Gcs('project', 'foo', 42, foo='bar', api_key=42)
+        expected = "Gcs('project', 'foo', 42, foo='bar', api_key='****')"
         self.assertEqual(expected, repr(gcs))
 
     def test_pickle_works(self):

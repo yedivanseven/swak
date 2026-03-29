@@ -1,27 +1,15 @@
 """Combine your embedded features into vectors of size model-dimension.
 
-Two ways of doing this are provided here. One is to form a (weighted) sum
-of the feature embeddings. When these weights are learnable themselves, they
-can be interpreted as feature importance. The other is to concatenate the
-embedding vectors of all features into a single, wide vector and to then
-project it down again into a space with the same dimensions of the embedding
-space.
+For interpretability, feature importance is available in all mixer flavors.
 
 """
 
-from .activated import ActivatedConcatMixer
-from .gated import GatedConcatMixer
-from .gated_residual import GatedResidualConcatMixer
-
+from .weights import GlobalWeightsMixer, InstanceWeightsMixer
+from .attention import CrossAttentionMixer, SelfAttentionMixer
 
 __all__ = [
-    'ActivatedConcatMixer',
-    'GatedConcatMixer',
-    'GatedResidualConcatMixer'
+    'GlobalWeightsMixer',
+    'InstanceWeightsMixer',
+    'CrossAttentionMixer',
+    'SelfAttentionMixer',
 ]
-
-# ToDo: Remove arguments to new() method. Inherit from Block instead.
-# ToDo: remove Concat mixer
-# ToDo: Add skip connection, sqeuuez and stack arguments!
-# ToDo: Add attention-based mixer!
-# ToDo: Remove concat mixers

@@ -1,5 +1,6 @@
 import unittest
 import pickle
+import polars as pl
 from swak.misc import ArgRepr, IndentRepr
 
 
@@ -274,6 +275,16 @@ class TestArgumentTypes(unittest.TestCase):
         self.assertEqual("Test(a='1')", repr(test))
         test = self.Test(a="1")
         self.assertEqual("Test(a='1')", repr(test))
+
+    def test_polars_arg(self):
+        expr = pl.col('foo').alias('bar')
+        test = self.Test(expr)
+        self.assertEqual("Test(PolarsExpr)", repr(test))
+
+    def test_polars_kwarg(self):
+        expr = pl.col('foo').alias('bar')
+        test = self.Test(a=expr)
+        self.assertEqual("Test(a=PolarsExpr)", repr(test))
 
 
 class TestCallables(unittest.TestCase):

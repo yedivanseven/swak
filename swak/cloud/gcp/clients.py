@@ -5,7 +5,6 @@ from google.cloud.bigquery import Client as GbqClient
 from ...misc import ArgRepr
 
 
-
 class Gcs(ArgRepr):
     """Wraps a Google Cloud Storage (GCS) client for delayed instantiation.
 
@@ -28,17 +27,33 @@ class Gcs(ArgRepr):
     def __init__(self, project: str, *args: Any, **kwargs: Any) -> None:
         self.project = project.strip().strip(' /.')
         self.args = args
+        self.__api_key = kwargs.pop('api_key', None)
         self.kwargs = kwargs
-        super().__init__(self.project, *self.args, **self.kwargs)
+        super().__init__(
+            self.project,
+            *self.args,
+            **self.kwargs,
+            **({'api_key': '****'} if self.__api_key else {})
+        )
 
     @cached_property
     def client(self) -> GcsClient:
         """New GCS client on first request, cached for subsequent requests."""
-        return GcsClient(self.project, *self.args, **self.kwargs)
+        return GcsClient(
+            self.project,
+            *self.args,
+            **self.kwargs,
+            api_key=self.__api_key
+        )
 
     def __call__(self, *_: Any, **__: Any) -> GcsClient:
         """New GCS client on every call, ignoring any (keyword) arguments."""
-        return GcsClient(self.project, *self.args, **self.kwargs)
+        return GcsClient(
+            self.project,
+            *self.args,
+            **self.kwargs,
+            api_key=self.__api_key
+        )
 
 
 class Gbq(ArgRepr):

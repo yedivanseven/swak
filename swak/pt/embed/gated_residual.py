@@ -3,7 +3,7 @@ import torch as pt
 import torch.nn as ptn
 from ..types import Tensor, Module, Functional, Drop, Block
 
-
+# ToDo: Replace drop with dropout
 class GatedResidualEmbedder(Block):
     """Gated Residual Network (GRN) for embedding numerical features.
 
@@ -81,8 +81,8 @@ class GatedResidualEmbedder(Block):
         self.project = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
         self.widen = ptn.Linear(mod_dim, 2 * mod_dim, bias, device, dtype)
         # Although few, some activation functions have learnable parameters
-        self.activate = self._reset(activate, self.device, self.dtype)
-        self.gate = self._reset(gate, self.device, self.dtype)
+        self.activate = self._reset(activate, device, dtype)
+        self.gate = self._reset(gate, device, dtype)
 
     @property
     def mod_dim(self) -> int:
