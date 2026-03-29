@@ -31,6 +31,8 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Utilities",
     "License :: OSI Approved :: MIT License",
 ]
@@ -42,12 +44,13 @@ Issues = "https://github.com/yedivanseven/swak/issues"
 Changelog = "https://github.com/yedivanseven/swak/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-cloud = [
-    "google-cloud-bigquery>=3.25",
-    "google-cloud-storage>=2.18",
-    "pandas-gbq>=0.23",
+aws = [
     "boto3>=1.37.9",
     "s3fs>=2025.5.1",
+]
+gcp = [
+    "google-cloud-bigquery>=3.25",
+    "google-cloud-storage>=2.18",
     "gcsfs>=2025.5.1"
 ]
 

@@ -8,13 +8,14 @@ _Swiss army knife for functional data-science projects._
 This package is a collection of small, modular, and composable building
 blocks implementing frequently occurring operations in typical data-science
 applications. In abstracting away boiler-plate code, it thus saves time and effort.
-* Consolidate all ways to configure your project (command-line arguments,
-  environment variables, and config files) with the `cli` and `text`
+* Consolidate all the ways to configure your project (command-line arguments,
+  environment variables, and config files) with the `cli` and `io`
   packages, respectively.
 * Wrap the project config into a versatile `jsonobject`.
 * Focus on writing small, configurable, modular, reusable, and testable 
   building blocks. Then use the flow controls in `funcflow` to compose them
   into arbitrarily complex workflows, that are still easy to maintain and to expand.
+* Use the provided `pandas` and `polars` building blocks to get you started.
 * Quickly set up projects on Google BigQuery and Google Cloud as well as AWS object Storage, and
   efficiently download lots of data in parallel with the `cloud` sub-package.
 * Build powerful neural-network architectures from the elements in `pt` and
