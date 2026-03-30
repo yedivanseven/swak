@@ -13,7 +13,7 @@ type Tensors2T = tuple[Tensor, Tensor]
 type Tensors3T = tuple[Tensor, Tensor, Tensor]
 type Tensors4T = tuple[Tensor, Tensor, Tensor, Tensor]
 type Tensors = tuple[Tensor, ...]
-type Drop = Dropout | AlphaDropout
+type Drop = Dropout | AlphaDropout  # ToDo: Remove when no longer needed!
 type Batch = tuple[tuple[Any, ...], Tensor]
 type Batches = Iterator[Batch]
 

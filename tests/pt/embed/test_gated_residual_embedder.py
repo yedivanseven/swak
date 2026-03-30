@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import patch, Mock
 import torch as pt
-from torch.nn import Sigmoid, Linear, GELU, ELU, Dropout, AlphaDropout
+from torch.nn import Sigmoid, Linear, GELU, ELU, Dropout
 from swak.pt.misc import identity
 from swak.pt.embed import GatedResidualEmbedder
 
-
+# ToDo: Test for drop!
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
@@ -37,6 +37,13 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.embed.bias, bool)
         self.assertTrue(self.embed.bias)
 
+    def test_has_dropout(self):
+        self.assertTrue(hasattr(self.embed, 'dropout'))
+
+    def test_dropout(self):
+        self.assertIsInstance(self.embed.dropout, float)
+        self.assertEqual(self.embed.dropout, 0.0)
+
     def test_has_drop(self):
         self.assertTrue(hasattr(self.embed, 'drop'))
 
@@ -62,11 +69,11 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_dtype(self):
         self.assertIs(self.embed.dtype, pt.float)
 
-    def test_has_project(self):
-        self.assertTrue(hasattr(self.embed, 'project'))
+    def test_has_embed(self):
+        self.assertTrue(hasattr(self.embed, 'embed'))
 
-    def test_project(self):
-        self.assertIsInstance(self.embed.project, Linear)
+    def test_embed(self):
+        self.assertIsInstance(self.embed.embed, Linear)
 
     def test_has_widen(self):
         self.assertTrue(hasattr(self.embed, 'widen'))
@@ -133,7 +140,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(self.embed.mod_dim, new.mod_dim)
         self.assertIs(new.activate, self.embed.activate)
         self.assertIs(new.gate, self.embed.gate)
-        self.assertIs(new.drop, self.embed.drop)
+        self.assertEqual(new.dropout, self.embed.dropout)
         self.assertEqual(self.embed.inp_dim, new.inp_dim)
         self.assertEqual(self.embed.bias, new.bias)
         self.assertEqual(self.embed.dtype, new.dtype)
@@ -148,7 +155,7 @@ class TestAttributes(unittest.TestCase):
             GELU(),
             ELU(),
             False,
-            AlphaDropout(),
+            0.1,
             2,
             dtype=pt.float64
         )
@@ -163,8 +170,8 @@ class TestAttributes(unittest.TestCase):
         self.assertIsInstance(self.embed.bias, bool)
         self.assertFalse(self.embed.bias)
 
-    def test_drop(self):
-        self.assertIsInstance(self.embed.drop, AlphaDropout)
+    def test_dropout(self):
+        self.assertEqual(self.embed.dropout, 0.1)
 
     def test_inp_dim(self):
         self.assertIsInstance(self.embed.inp_dim, int)
@@ -254,8 +261,8 @@ class TestUsageSingleFeature(unittest.TestCase):
 
     def setUp(self):
         self.embed = GatedResidualEmbedder(4, identity, identity, bias=False)
-        self.embed.project.weight.data = pt.ones(4, 1)
-        self.embed.widen.weight.data = pt.ones(8, 4) / 4
+        self.embed.embed.weight.data = pt.ones(4, 1)
+        self.embed.widen.weight.data = pt.ones(8, 4)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -263,36 +270,36 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_1d(self):
         inp = pt.ones(1)
         actual = self.embed(inp)
-        expected = pt.ones(4)
+        expected = pt.ones(4) * 16 + 1
         pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 1)
         actual = self.embed(inp)
-        expected = pt.ones(3, 4)
+        expected = pt.ones(3, 4) * 16 + 1
         pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 1)
         actual = self.embed(inp)
-        expected = pt.ones(2, 3, 4)
+        expected = pt.ones(2, 3, 4) * 16 + 1
         pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 1)
         actual = self.embed(inp)
-        expected = pt.ones(1, 2, 3, 4)
+        expected = pt.ones(1, 2, 3, 4) * 16 + 1
         pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 1)
         actual = self.embed(inp)
-        expected = pt.ones(3, 0, 4)
+        expected = pt.ones(3, 0, 4) * 16 + 1
         pt.testing.assert_close(actual, expected)
 
-    def test_project_called(self):
+    def test_embed_called(self):
         mock = Mock(return_value=pt.ones(3, 4))
-        self.embed.project.forward = mock
+        self.embed.embed.forward = mock
         inp = pt.ones(3, 1)
         _ = self.embed(inp)
         mock.assert_called_once_with(inp)
@@ -308,12 +315,12 @@ class TestUsageSingleFeature(unittest.TestCase):
 
     @patch('torch.nn.Dropout.forward', return_value=pt.ones(3, 4))
     def test_drop_called(self, drop):
-        project = Mock(return_value=pt.ones(3, 4))
-        self.embed.project.forward = project
+        embed = Mock(return_value=pt.ones(3, 4))
+        self.embed.embed.forward = embed
         inp = pt.ones(3, 1)
         _ = self.embed(inp)
         actual = drop.call_args[0][0]
-        expected = pt.ones(3, 4)
+        expected = pt.ones(3, 4) * 16
         pt.testing.assert_close(actual, expected)
 
     def test_widen_called(self):
@@ -331,18 +338,7 @@ class TestUsageSingleFeature(unittest.TestCase):
         inp = pt.ones(3, 1)
         _ = self.embed(inp)
         actual = mock.call_args[0][0]
-        expected = pt.ones(3, 4)
-        pt.testing.assert_close(actual, expected)
-
-    @patch('torch.nn.Sigmoid.forward', return_value=pt.ones(3, 4))
-    def test_return_value(self, gate):
-        project = Mock(return_value=pt.ones(3, 4))
-        expand = Mock(return_value=pt.ones(3, 8))
-        self.embed.project.forward = project
-        self.embed.widen.forward = expand
-        inp = pt.ones(3, 1)
-        actual = self.embed(inp)
-        expected = pt.ones(3, 4)
+        expected = pt.ones(3, 4) * 4
         pt.testing.assert_close(actual, expected)
 
 
@@ -356,31 +352,31 @@ class TestUsageMultiFeature(unittest.TestCase):
             inp_dim=2,
             bias=False
         )
-        self.embed.project.weight.data = pt.ones(4, 2) / 2
+        self.embed.embed.weight.data = pt.ones(4, 2) / 2
         self.embed.widen.weight.data = pt.ones(8, 4) / 4
 
     def test_1d(self):
         inp = pt.ones(2)
         actual = self.embed(inp)
-        expected = pt.ones(4)
+        expected = pt.ones(4) * 2
         pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 2)
         actual = self.embed(inp)
-        expected = pt.ones(3, 4)
+        expected = pt.ones(3, 4) * 2
         pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 2)
         actual = self.embed(inp)
-        expected = pt.ones(2, 3, 4)
+        expected = pt.ones(2, 3, 4) * 2
         pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 2)
         actual = self.embed(inp)
-        expected = pt.ones(1, 2, 3, 4)
+        expected = pt.ones(1, 2, 3, 4) * 2
         pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
@@ -389,9 +385,9 @@ class TestUsageMultiFeature(unittest.TestCase):
         expected = pt.ones(3, 0, 4)
         pt.testing.assert_close(actual, expected)
 
-    def test_project_called(self):
+    def test_embed_called(self):
         mock = Mock(return_value=pt.ones(3, 4))
-        self.embed.project.forward = mock
+        self.embed.embed.forward = mock
         inp = pt.ones(3, 2)
         _ = self.embed(inp)
         mock.assert_called_once_with(inp)
@@ -399,6 +395,34 @@ class TestUsageMultiFeature(unittest.TestCase):
     def test_activate_called(self):
         mock = Mock(return_value=pt.ones(3, 4))
         self.embed.activate = mock
+        inp = pt.ones(3, 2)
+        _ = self.embed(inp)
+        actual = mock.call_args[0][0]
+        expected = pt.ones(3, 4)
+        pt.testing.assert_close(actual, expected)
+
+    @patch('torch.nn.Dropout.forward', return_value=pt.ones(3, 4))
+    def test_drop_called(self, drop):
+        embed = Mock(return_value=pt.ones(3, 4))
+        self.embed.embed.forward = embed
+        inp = pt.ones(3, 2)
+        _ = self.embed(inp)
+        actual = drop.call_args[0][0]
+        expected = pt.ones(3, 4)
+        pt.testing.assert_close(actual, expected)
+
+    def test_widen_called(self):
+        mock = Mock(return_value=pt.ones(3, 8))
+        self.embed.widen.forward = mock
+        inp = pt.ones(3, 2)
+        _ = self.embed(inp)
+        actual = mock.call_args[0][0]
+        expected = pt.ones(3, 4)
+        pt.testing.assert_close(actual, expected)
+
+    def test_gate_called(self):
+        mock = Mock(return_value=pt.ones(3, 4))
+        self.embed.gate = mock
         inp = pt.ones(3, 2)
         _ = self.embed(inp)
         actual = mock.call_args[0][0]

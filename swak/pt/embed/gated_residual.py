@@ -1,9 +1,9 @@
 from typing import Self
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Module, Functional, Drop, Block
+from ..types import Tensor, Module, Functional, Block
 
-# ToDo: Replace drop with dropout
+
 class GatedResidualEmbedder(Block):
     """Gated Residual Network (GRN) for embedding numerical features.
 
@@ -28,9 +28,9 @@ class GatedResidualEmbedder(Block):
     bias: bool, optional
         Whether to add a learnable bias vector in the projection.
         Defaults to ``True``.
-    drop: Module, optional
-        Typically an instance of ``Dropout`` or ``AlphaDropout``. Defaults to
-        ``Dropout(p=0.0)``, resulting in no dropout being applied.
+    dropout: float, optional
+        The amount of dropout to apply to the gated signal before adding it
+        to the activated residual. Defaults to 0.
     inp_dim: int, optional
         The number of features to embed together. Defaults to 1.
     device: str or pt.device, optional
@@ -48,10 +48,8 @@ class GatedResidualEmbedder(Block):
     transformed again (as Eq. 4 seems to imply) and there is no option to add
     a `context vector`. Thirdly, the intermediate linear layer (Eq. 3) is
     eliminated and dropout is applied to the activations after gating.
-    Finally, the layer norm (Eq. 2) is replaced by simply dividing the sum of
-    (linearly projected and activated) input and gated signal by 2.
-    Should additional normalization be desired, it can be performed
-    independently on the output of this module.
+    Finally, there is no layer norm (Eq. 2). Should additional normalization
+    be desired, it can be performed independently on the output of this module.
 
     References
     ----------
@@ -68,7 +66,7 @@ class GatedResidualEmbedder(Block):
             activate: Module | Functional = ptn.ELU(),
             gate: Module | Functional = ptn.Sigmoid(),
             bias: bool = True,
-            drop: Drop = ptn.Dropout(0.0),
+            dropout: float = 0.0,
             inp_dim: int = 1,
             device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float
@@ -76,9 +74,10 @@ class GatedResidualEmbedder(Block):
         super().__init__()
         self.__mod_dim = mod_dim
         self.bias = bias
-        self.drop = drop
+        self.dropout = dropout
+        self.drop = ptn.Dropout(dropout)
         self.inp_dim = inp_dim
-        self.project = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
+        self.embed = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
         self.widen = ptn.Linear(mod_dim, 2 * mod_dim, bias, device, dtype)
         # Although few, some activation functions have learnable parameters
         self.activate = self._reset(activate, device, dtype)
@@ -92,12 +91,12 @@ class GatedResidualEmbedder(Block):
     @property
     def device(self) -> pt.device:
         """The device of all weights, biases, activations, etc. reside on."""
-        return self.project.weight.device
+        return self.embed.weight.device
 
     @property
     def dtype(self) -> pt.dtype:
         """The dtype of all weights, biases, activations, and parameters."""
-        return self.project.weight.dtype
+        return self.embed.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Embed a numerical feature through a Gated Residual Network (GRN).
@@ -118,14 +117,14 @@ class GatedResidualEmbedder(Block):
             the size of the last dimension changed to the specified `mod_dim`.
 
         """
-        activated = self.activate(self.project(inp))
+        activated = self.activate(self.embed(inp))
         wide = self.widen(activated)
         gated = wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
-        return 0.5 * (activated + self.drop(gated))
+        return activated + self.drop(gated)
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
-        self.project.reset_parameters()
+        self.embed.reset_parameters()
         self.widen.reset_parameters()
         # Although few, some activation functions have learnable parameters
         self.activate = self._reset(self.activate, self.device, self.dtype)
@@ -145,7 +144,7 @@ class GatedResidualEmbedder(Block):
             self.activate,
             self.gate,
             self.bias,
-            self.drop,
+            self.dropout,
             self.inp_dim,
             self.device,
             self.dtype
