@@ -182,172 +182,189 @@ class TestAttributes(unittest.TestCase):
             dtype=pt.float16
         )
 
-# ToDo: Continue here!
-# class TestUsage(unittest.TestCase):
-#
-#     def setUp(self):
-#         self.mix = CrossAttentionMixer(4, 2, bias=False, skip=False)
-#         self.mix.project.weight.data = pt.ones(2, 8)
-#
-#     def test_2d(self):
-#         inp = pt.ones(2, 4)
-#         actual = self.mix(inp)
-#         expected = pt.ones(4)
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_3d(self):
-#         inp = pt.ones(5, 2, 4)
-#         actual = self.mix(inp)
-#         expected = pt.ones(5, 4)
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_4d(self):
-#         inp = pt.ones(3, 5, 2, 4)
-#         actual = self.mix(inp)
-#         expected = pt.ones(3, 5, 4)
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_5d(self):
-#         inp = pt.ones(1, 3, 5, 2, 4)
-#         actual = self.mix(inp)
-#         expected = pt.ones(1, 3, 5, 4)
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_empty_dims(self):
-#         inp = pt.ones(3, 0, 2, 4)
-#         actual = self.mix(inp)
-#         expected = pt.ones(3, 0, 4)
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_skip(self):
-#         mix = CrossAttentionMixer(4, 2, bias=False, skip=True)
-#         mix.project.weight.data = pt.ones(2, 8)
-#         inp = pt.ones(3, 2, 4)
-#         actual = mix(inp)
-#         expected = pt.ones(3, 4) * 2
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_keep_dim(self):
-#         mix = CrossAttentionMixer(4, 2, bias=False, keep_dim=True)
-#         mix.project.weight.data = pt.ones(2, 8)
-#         inp = pt.ones(3, 2, 4)
-#         actual = mix(inp)
-#         expected = pt.ones(3, 1, 4) * 2
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_no_features_skip_false_keep_dim_false(self):
-#         mix = CrossAttentionMixer(4, 0, skip=False, keep_dim=False)
-#         inp = pt.ones(3, 0, 4, device='cpu')
-#         actual = mix(inp)
-#         expected = pt.zeros(3, 4, device='cpu')
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_no_features_skip_false_keep_dim_true(self):
-#         mix = CrossAttentionMixer(4, 0, skip=False, keep_dim=True)
-#         inp = pt.ones(3, 0, 4, device='cpu')
-#         actual = mix(inp)
-#         expected = pt.zeros(3, 0, 4, device='cpu')
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_no_features_skip_true_keep_dim_false(self):
-#         mix = CrossAttentionMixer(4, 0, skip=True, keep_dim=False)
-#         inp = pt.ones(3, 0, 4, device='cpu')
-#         actual = mix(inp)
-#         expected = pt.zeros(3, 4, device='cpu')
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_no_features_skip_true_keep_dim_true(self):
-#         mix = CrossAttentionMixer(4, 0, skip=True, keep_dim=True)
-#         inp = pt.ones(3, 0, 4, device='cpu')
-#         actual = mix(inp)
-#         expected = pt.zeros(3, 0, 4, device='cpu')
-#         pt.testing.assert_close(actual, expected)
-#
-#     @patch('torch.nn.Linear.forward', return_value=pt.ones(3, 2))
-#     def test_linear_called(self, mock):
-#         inp = pt.ones(3, 2, 4)
-#         _ = self.mix(inp)
-#         actual = mock.call_args[0][0]
-#         expected = pt.ones(3, 8)
-#         pt.testing.assert_close(actual, expected)
-#
-#     @patch('torch.nn.Softmax.forward')
-#     def test_norm_called(self, mock):
-#         mock.return_value = pt.ones(3, 2)
-#         inp = pt.ones(3, 2, 4)
-#         _ = self.mix(inp)
-#         actual = mock.call_args[0][0]
-#         expected = pt.ones(3, 2) * 8
-#         pt.testing.assert_close(actual, expected)
-#
-#     @patch('torch.nn.Dropout.forward')
-#     def test_drop_called(self, mock):
-#         mock.return_value = pt.ones(3, 2)
-#         inp = pt.ones(3, 2, 4)
-#         _ = self.mix(inp)
-#         actual = mock.call_args[0][0]
-#         expected = pt.ones(3, 1, 4)
-#         pt.testing.assert_close(actual, expected)
-#
-#
-# class TestImportance(unittest.TestCase):
-#
-#     def setUp(self):
-#         self.mix = CrossAttentionMixer(4, 2, bias=False)
-#         self.mix.project.weight.data = pt.ones(2, 8, device='cpu')
-#
-#     def test_2d(self):
-#         inp = pt.ones(2, 4, device='cpu')
-#         actual = self.mix.importance(inp)
-#         expected = pt.ones(2, device='cpu') * 0.5
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_3d(self):
-#         inp = pt.ones(3, 2, 4, device='cpu')
-#         actual = self.mix.importance(inp)
-#         expected = pt.ones(3, 2, device='cpu') * 0.5
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_4d(self):
-#         inp = pt.ones(5, 3, 2, 4, device='cpu')
-#         actual = self.mix.importance(inp)
-#         expected = pt.ones(5, 3, 2, device='cpu') * 0.5
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_accepts_mask(self):
-#         inp = pt.ones(3, 2, 4, device='cpu')
-#         actual = self.mix.importance(inp, mask='foo')
-#         expected = pt.ones(3, 2, device='cpu') * 0.5
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_empty_dims(self):
-#         inp = pt.ones(5, 0, 2, 4, device='cpu')
-#         actual = self.mix.importance(inp)
-#         expected = pt.ones(5, 0, 2, device='cpu') * 0.5
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_no_feature(self):
-#         mix = CrossAttentionMixer(4, 0)
-#         inp = pt.ones(3, 0, 4, device='cpu')
-#         actual = mix.importance(inp)
-#         expected = pt.ones(3, 0, device='cpu')
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_1_feature(self):
-#         mix = CrossAttentionMixer(4, 1, bias=False)
-#         mix.project.weight.data = pt.ones(1, 4, device='cpu')
-#         inp = pt.ones(3, 1, 4, device='cpu')
-#         actual = mix.importance(inp)
-#         expected = pt.ones(3, 1, device='cpu')
-#         pt.testing.assert_close(actual, expected)
-#
-#     def test_5_features(self):
-#         mix = CrossAttentionMixer(4, 5, bias=False)
-#         mix.project.weight.data = pt.ones(5, 20, device='cpu')
-#         inp = pt.ones(3, 5, 4, device='cpu')
-#         actual = mix.importance(inp)
-#         expected = pt.ones(3, 5, device='cpu') * 0.2
-#         pt.testing.assert_close(actual, expected)
+class TestUsage(unittest.TestCase):
+
+    def setUp(self):
+        self.mix = CrossAttentionMixer(4, bias=False, skip=False)
+        self.mix.query.data = pt.ones(1, 4)
+        self.mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        self.mix.attention.out_proj.weight.data = pt.ones(4, 4)
+
+    def test_2d(self):
+        inp = pt.ones(2, 4)
+        actual = self.mix(inp)
+        expected = pt.ones(4) * 16
+        pt.testing.assert_close(actual, expected)
+
+    def test_3d(self):
+        inp = pt.ones(5, 2, 4)
+        actual = self.mix(inp)
+        expected = pt.ones(5, 4) * 16
+        pt.testing.assert_close(actual, expected)
+
+    def test_4d(self):
+        inp = pt.ones(3, 5, 2, 4)
+        with self.assertRaises(AssertionError):
+            _ = self.mix(inp)
+
+    def test_empty_dims(self):
+        inp = pt.ones(0, 2, 4)
+        actual = self.mix(inp)
+        expected = pt.ones(0, 4)
+        pt.testing.assert_close(actual, expected)
+
+    def test_skip(self):
+        mix = CrossAttentionMixer(4, bias=False, skip=True)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        inp = pt.ones(3, 2, 4)
+        actual = mix(inp)
+        expected = pt.ones(3, 4) * 16 + 1
+        pt.testing.assert_close(actual, expected)
+
+    def test_keep_dim(self):
+        mix = CrossAttentionMixer(4, bias=False, keep_dim=True)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        inp = pt.ones(3, 2, 4)
+        actual = mix(inp)
+        expected = pt.ones(3, 1, 4) * 16 + 1
+        pt.testing.assert_close(actual, expected)
+
+    def test_no_features_skip_false_keep_dim_false(self):
+        mix = CrossAttentionMixer(4, skip=False, keep_dim=False, bias=False)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        inp = pt.ones(3, 0, 4)
+        actual = mix(inp)
+        expected = pt.zeros(3, 4)
+        pt.testing.assert_close(actual, expected)
+
+    def test_no_features_skip_false_keep_dim_true(self):
+        mix = CrossAttentionMixer(4, skip=False, keep_dim=True, bias=False)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        inp = pt.ones(3, 0, 4)
+        actual = mix(inp)
+        expected = pt.zeros(3, 0, 4)
+        pt.testing.assert_close(actual, expected)
+
+    def test_no_features_skip_true_keep_dim_false(self):
+        mix = CrossAttentionMixer(4, skip=True, keep_dim=False, bias=False)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        inp = pt.ones(3, 0, 4)
+        actual = mix(inp)
+        expected = pt.zeros(3, 4)
+        pt.testing.assert_close(actual, expected)
+
+    def test_no_features_skip_true_keep_dim_true(self):
+        mix = CrossAttentionMixer(4, skip=True, keep_dim=True, bias=False)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        inp = pt.ones(3, 0, 4)
+        actual = mix(inp)
+        expected = pt.zeros(3, 0, 4)
+        pt.testing.assert_close(actual, expected)
+
+    @patch(
+        'torch.nn.MultiheadAttention.forward',
+        return_value=(pt.ones(3, 2), None)
+    )
+    def test_attention_called(self, mock):
+        inp = pt.ones(3, 2, 4)
+        _ = self.mix(inp, mask='mask')
+        query, key, value = mock.call_args[0]
+        pt.testing.assert_close(query, self.mix.query.expand(3, 1, 4))
+        pt.testing.assert_close(key, inp)
+        pt.testing.assert_close(value, inp)
+        self.assertDictEqual(
+        {'key_padding_mask': 'mask', 'need_weights': False},
+        mock.call_args[1]
+        )
+
+    @patch('torch.nn.Dropout.forward')
+    def test_drop_called(self, mock):
+        mix = CrossAttentionMixer(4, skip=True, keep_dim=True, bias=False)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        mock.return_value = pt.ones(3, 2)
+        inp = pt.ones(3, 2, 4)
+        _ = self.mix(inp)
+        actual = mock.call_args[0][0]
+        expected = pt.ones(3, 1, 4) * 16
+        pt.testing.assert_close(actual, expected)
+
+
+class TestImportance(unittest.TestCase):
+
+    def setUp(self):
+        self.mix = CrossAttentionMixer(4, 2, bias=False)
+        self.mix.query.data = pt.ones(1, 4)
+        self.mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        self.mix.attention.out_proj.weight.data = pt.ones(4, 4)
+
+    def test_2d(self):
+        inp = pt.ones(2, 4)
+        actual = self.mix.importance(inp)
+        expected = pt.ones(2) * 0.5
+        pt.testing.assert_close(actual, expected)
+
+    def test_3d(self):
+        inp = pt.ones(3, 2, 4)
+        actual = self.mix.importance(inp)
+        expected = pt.ones(3, 2) * 0.5
+        pt.testing.assert_close(actual, expected)
+
+    def test_accepts_mask(self):
+        inp = pt.ones(3, 2, 4)
+        mask = pt.tensor([
+            [True, False],
+            [False, True],
+            [True, False]
+        ])
+        actual = self.mix.importance(inp, mask=mask)
+        expected = pt.tensor([
+            [0., 1.],
+            [1., 0.],
+            [0., 1.]
+        ])
+        pt.testing.assert_close(actual, expected)
+
+    def test_empty_dims(self):
+        inp = pt.ones(0, 2, 4)
+        actual = self.mix.importance(inp)
+        expected = pt.ones(0, 2) * 0.5
+        pt.testing.assert_close(actual, expected)
+
+    def test_no_feature(self):
+        mix = CrossAttentionMixer(4, skip=True, bias=False)
+        mix.query.data = pt.ones(1, 4)
+        mix.attention.in_proj_weight.data = pt.ones(12, 4)
+        mix.attention.out_proj.weight.data = pt.ones(4, 4)
+        inp = pt.ones(3, 0, 4)
+        actual = mix.importance(inp)
+        expected = pt.ones(3, 0)
+        pt.testing.assert_close(actual, expected)
+
+    def test_1_feature(self):
+        inp = pt.ones(3, 1, 4)
+        actual = self.mix.importance(inp)
+        expected = pt.ones(3, 1)
+        pt.testing.assert_close(actual, expected)
+
+    def test_5_features(self):
+        inp = pt.ones(3, 5, 4)
+        actual = self.mix.importance(inp)
+        expected = pt.ones(3, 5) * 0.2
+        pt.testing.assert_close(actual, expected)
 
 
 if __name__ == '__main__':

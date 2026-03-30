@@ -123,7 +123,6 @@ class CrossAttentionMixer(Mixer):
             need_weights=True,
             average_attn_weights=True
         )
-        # scores: (..., 1, n_features) -> drop the single query dimension
         return scores.squeeze(dim=-2)
 
     def forward(self, inp: Tensor, mask: Tensor | None = None) -> Tensor:
@@ -153,7 +152,7 @@ class CrossAttentionMixer(Mixer):
             vectors.
 
         """
-        if self.n_features == 0:
+        if inp.size(-2) == 0:
             return inp if self.keep_dim else inp.sum(dim=-2)
         query = self.query.expand(*inp.shape[:-2], -1, -1)
         mixed, _ = self.attention(
@@ -161,7 +160,6 @@ class CrossAttentionMixer(Mixer):
             key_padding_mask=mask,
             need_weights=False
         )
-        # mixed: (..., 1, mod_dim) — single query dim already correct for skip logic
         out = self.drop(mixed)
         if self.skip:
             out += inp.mean(dim=-2, keepdim=True)
@@ -333,7 +331,7 @@ class SelfAttentionMixer(Mixer):
             contains the attention-pooled combination of all feature vectors.
 
         """
-        if self.n_features == 0:
+        if inp.size(-2) == 0:
             return inp if self.keep_dim else inp.sum(dim=-2)
         mixed, _ = self.attention(
             inp, inp, inp,

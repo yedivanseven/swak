@@ -280,59 +280,60 @@ class TestImportance(unittest.TestCase):
 
     def setUp(self):
         self.mix = InstanceWeightsMixer(4, 2, bias=False)
-        self.mix.project.weight.data = pt.ones(2, 8, device='cpu')
+        self.mix.project.weight.data = pt.ones(2, 8)
 
     def test_2d(self):
-        inp = pt.ones(2, 4, device='cpu')
+        inp = pt.ones(2, 4)
         actual = self.mix.importance(inp)
-        expected = pt.ones(2, device='cpu') * 0.5
+        expected = pt.ones(2) * 0.5
         pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
-        inp = pt.ones(3, 2, 4, device='cpu')
+        inp = pt.ones(3, 2, 4)
         actual = self.mix.importance(inp)
-        expected = pt.ones(3, 2, device='cpu') * 0.5
+        expected = pt.ones(3, 2) * 0.5
         pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
-        inp = pt.ones(5, 3, 2, 4, device='cpu')
+        inp = pt.ones(5, 3, 2, 4)
         actual = self.mix.importance(inp)
-        expected = pt.ones(5, 3, 2, device='cpu') * 0.5
+        expected = pt.ones(5, 3, 2,) * 0.5
         pt.testing.assert_close(actual, expected)
 
     def test_accepts_mask(self):
-        inp = pt.ones(3, 2, 4, device='cpu')
+        inp = pt.ones(3, 2, 4)
         actual = self.mix.importance(inp, mask='foo')
-        expected = pt.ones(3, 2, device='cpu') * 0.5
+        expected = pt.ones(3, 2) * 0.5
         pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
-        inp = pt.ones(5, 0, 2, 4, device='cpu')
+        inp = pt.ones(5, 0, 2, 4)
         actual = self.mix.importance(inp)
-        expected = pt.ones(5, 0, 2, device='cpu') * 0.5
+        expected = pt.ones(5, 0, 2) * 0.5
         pt.testing.assert_close(actual, expected)
 
     def test_no_feature(self):
-        mix = InstanceWeightsMixer(4, 0)
-        inp = pt.ones(3, 0, 4, device='cpu')
+        mix = InstanceWeightsMixer(4, 0, bias=False)
+        mix.project.weight.data = pt.ones(0, 0)
+        inp = pt.ones(3, 0, 4)
         actual = mix.importance(inp)
-        expected = pt.ones(3, 0, device='cpu')
+        expected = pt.ones(3, 0)
         pt.testing.assert_close(actual, expected)
 
     def test_1_feature(self):
         mix = InstanceWeightsMixer(4, 1, bias=False)
-        mix.project.weight.data = pt.ones(1, 4, device='cpu')
-        inp = pt.ones(3, 1, 4, device='cpu')
+        mix.project.weight.data = pt.ones(1, 4)
+        inp = pt.ones(3, 1, 4)
         actual = mix.importance(inp)
-        expected = pt.ones(3, 1, device='cpu')
+        expected = pt.ones(3, 1)
         pt.testing.assert_close(actual, expected)
 
     def test_5_features(self):
         mix = InstanceWeightsMixer(4, 5, bias=False)
-        mix.project.weight.data = pt.ones(5, 20, device='cpu')
-        inp = pt.ones(3, 5, 4, device='cpu')
+        mix.project.weight.data = pt.ones(5, 20)
+        inp = pt.ones(3, 5, 4)
         actual = mix.importance(inp)
-        expected = pt.ones(3, 5, device='cpu') * 0.2
+        expected = pt.ones(3, 5) * 0.2
         pt.testing.assert_close(actual, expected)
 
 
