@@ -744,7 +744,7 @@ class Repeat(Block):
     TypeError
         If `n_layers` is not an integer.
     ValueError
-        If `n_layers` is smaller than 2.
+        If `n_layers` is smaller than 1.
 
     Notes
     -----
@@ -786,8 +786,8 @@ class Repeat(Block):
             tmp = '"{}" must at least be convertible to an int, unlike {}'
             msg = tmp.format('n_layers', cls)
             raise TypeError(msg) from error
-        if as_int < 2:
-            tmp = '"{}" must be greater than (or equal to) two, unlike {}!'
+        if as_int < 1:
+            tmp = '"{}" must be greater than (or equal to) 1, unlike {}!'
             msg = tmp.format('n_layers', as_int)
             raise ValueError(msg)
         return as_int
