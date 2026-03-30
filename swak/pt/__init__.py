@@ -30,4 +30,4 @@ else:
     pt.set_float32_matmul_precision('medium')
 
 # ToDo: Implement tools for packed & padded sequences
-# ToDo: Add positional encodings and, potentially, x-former classes
+# ToDo: Add positional encodings, self-attention, and encoder-layer

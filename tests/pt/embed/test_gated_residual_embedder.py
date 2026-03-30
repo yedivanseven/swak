@@ -5,7 +5,7 @@ from torch.nn import Sigmoid, Linear, GELU, ELU, Dropout
 from swak.pt.misc import identity
 from swak.pt.embed import GatedResidualEmbedder
 
-# ToDo: Test for drop!
+
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
