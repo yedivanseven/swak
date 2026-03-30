@@ -8,25 +8,22 @@ residual (or skip) connections between them.
 """
 
 from typing import Any, Self
+import torch as pt
 import torch.nn as ptn
-from .types import Module, Tensor, Functional, Drop, Block
-from .misc import Identity
+from .types import Module, Tensor, Functional, Block
+from .misc import ResetIdentity
 
 __all__ = [
     'ActivatedBlock',
     'ActivatedHiddenBlock',
     'GatedBlock',
     'GatedHiddenBlock',
-    'ActivatedGatedBlock',
     'GatedResidualBlock',
     'SkipConnection',
     'Repeat'
 ]
 
 
-# ToDo: Homogenize call signature (with "bias", "device", and "dtype"?)
-# ToDo: Add "device" and "dtype" properties.
-# ToDo: remove round from mod_dim!
 class ActivatedBlock(Block):
     """A single, non-linearly activated layer.
 
@@ -37,13 +34,18 @@ class ActivatedBlock(Block):
         size in its last dimension and the output will again have this size in
         its last dimension.
     activate: Module or function, optional
-        The activation function to be applied after the affine transformation.
-        Must be a callable that accepts a tensor as sole argument, like a
-        module from ``torch.nn`` or a function from ``torch.nn.functional``,
-        depending on whether it needs to be further parameterized or not.
-        Defaults to ``ELU()``.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layers.
+        The activation function to be applied after projecting into higher-
+        dimensional space. Must be a callable that accepts a tensor as sole
+        argument, like a module from ``torch.nn`` or a function from
+        ``torch.nn.functional``, depending on whether it needs to be further
+        parameterized or not. Defaults to ``ELU()``.
+    bias: bool, optional
+        Whether to add a learnable bias vector in to the projections.
+        Defaults to ``True``.
+    device: str or pt.device, optional
+        Torch device to first create the block on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
 
@@ -51,24 +53,45 @@ class ActivatedBlock(Block):
             self,
             mod_dim: int,
             activate: Module | Functional = ptn.ELU(),
-            **kwargs: Any
+            bias: bool = True,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.mod_dim = round(mod_dim)
+        self.__mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
-        if hasattr(activate, 'reset_parameters'):
-            activate.reset_parameters()
-        self.activate = activate
-        self.kwargs = kwargs
-        self.project = ptn.Linear(self.mod_dim, self.mod_dim, **kwargs)
+        self.activate = self._reset(activate, device, dtype)
+        self.bias = bias
+        self.project = ptn.Linear(
+            in_features=mod_dim,
+            out_features=mod_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.project.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.project.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
-        """Forward pass through a single, non-linearly activated layer.
+        """Forward pass through a single, non-linearly activated hidden layer.
 
         Parameters
         ----------
         inp: Tensor
-            The size of the last dimension is expected to be ``mod_dim``.
+            The size of the last dimension is expected to be `mod_dim`.
 
         Returns
         -------
@@ -79,18 +102,26 @@ class ActivatedBlock(Block):
         return self.activate(self.project(inp))
 
     def reset_parameters(self) -> None:
-        """Re-initialize the internal parameters of the linear projections."""
+        """Re-initialize the internal parameters of the block."""
         self.project.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.activate, 'reset_parameters'):
-            self.activate.reset_parameters()
+        self.activate = self._reset(self.activate, self.device, self.dtype)
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        ActivatedBlock
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.mod_dim,
             self.activate,
-            **self.kwargs
+            self.bias,
+            self.device,
+            self.dtype
         )
 
 
@@ -109,15 +140,16 @@ class ActivatedHiddenBlock(Block):
         argument, like a module from ``torch.nn`` or a function from
         ``torch.nn.functional``, depending on whether it needs to be further
         parameterized or not. Defaults to ``ELU()``.
-    drop: Module, optional
-        Dropout to be applied after activation. Typically an instance of
-        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
-        resulting in no dropout being applied.
-    hidden_factor: int, optional
+    factor: int, optional
         The size of the hidden layer is this integer factor times `mod_dim`.
         Defaults to 4.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layers.
+    bias: bool, optional
+        Whether to add a learnable bias vector in to the projections.
+        Defaults to ``True``.
+    device: str or pt.device, optional
+        Torch device to first create the block on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
 
@@ -125,29 +157,46 @@ class ActivatedHiddenBlock(Block):
             self,
             mod_dim: int,
             activate: Module | Functional = ptn.ELU(),
-            drop: Drop = ptn.Dropout(0.0),
-            hidden_factor: int = 4,
-            **kwargs: Any
+            factor: int = 4,
+            bias: bool = True,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.mod_dim = round(mod_dim)
+        self.__mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
-        if hasattr(activate, 'reset_parameters'):
-            activate.reset_parameters()
-        self.activate = activate
-        self.drop = drop
-        self.hidden_factor = round(hidden_factor)
-        self.kwargs = kwargs
+        self.activate = self._reset(activate, device, dtype)
+        self.factor = factor
+        self.bias = bias
         self.widen = ptn.Linear(
-            in_features=self.mod_dim,
-            out_features=round(hidden_factor * mod_dim),
-            **kwargs
+            in_features=mod_dim,
+            out_features=factor * mod_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
         )
         self.shrink = ptn.Linear(
-            in_features=round(hidden_factor * mod_dim),
-            out_features=self.mod_dim,
-            **kwargs
+            in_features=factor * mod_dim,
+            out_features=mod_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
         )
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.widen.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.widen.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single, non-linearly activated hidden layer.
@@ -155,7 +204,7 @@ class ActivatedHiddenBlock(Block):
         Parameters
         ----------
         inp: Tensor
-            The size of the last dimension is expected to be ``mod_dim``.
+            The size of the last dimension is expected to be `mod_dim`.
 
         Returns
         -------
@@ -163,24 +212,31 @@ class ActivatedHiddenBlock(Block):
             Same dimensions and sizes as the input tensor.
 
         """
-        return self.shrink(self.drop(self.activate(self.widen(inp))))
+        return self.shrink(self.activate(self.widen(inp)))
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the block."""
         self.widen.reset_parameters()
         self.shrink.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.activate, 'reset_parameters'):
-            self.activate.reset_parameters()
+        self.activate = self._reset(self.activate, self.device, self.dtype)
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        ActivatedHiddenBlock
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.mod_dim,
             self.activate,
-            self.drop,
-            self.hidden_factor,
-            **self.kwargs
+            self.factor,
+            self.bias,
+            self.device,
+            self.dtype
         )
 
 
@@ -200,8 +256,13 @@ class GatedBlock(Block):
         ``torch.nn`` or a function from ``torch.nn.functional``, depending
         on whether it needs to be further parameterized or not.
         Defaults to a sigmoid.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layers.
+    bias: bool, optional
+        Whether to add a learnable bias vector in to the projections.
+        Defaults to ``True``.
+    device: str or pt.device, optional
+        Torch device to first create the block on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
 
@@ -209,16 +270,37 @@ class GatedBlock(Block):
             self,
             mod_dim: int,
             gate: Module | Functional = ptn.Sigmoid(),
-            **kwargs: Any
+            bias: bool = True,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.mod_dim = round(mod_dim)
+        self.__mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
-        if hasattr(gate, 'reset_parameters'):
-            gate.reset_parameters()
-        self.gate = gate
-        self.kwargs = kwargs
-        self.widen = ptn.Linear(self.mod_dim, 2 * self.mod_dim, **kwargs)
+        self.gate = self._reset(gate, device, dtype)
+        self.bias = bias
+        self.widen = ptn.Linear(
+            in_features=mod_dim,
+            out_features=2 * mod_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.widen.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.widen.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single gated linear unit (GLU).
@@ -226,7 +308,7 @@ class GatedBlock(Block):
         Parameters
         ----------
         inp: Tensor
-            The size of the last dimension is expected to be ``mod_dim``.
+            The size of the last dimension is expected to be `mod_dim`.
 
         Returns
         -------
@@ -241,15 +323,23 @@ class GatedBlock(Block):
         """Re-initialize the internal parameters of the block."""
         self.widen.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.gate, 'reset_parameters'):
-            self.gate.reset_parameters()
+        self.gate = self._reset(self.gate, self.device, self.dtype)
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        GatedBlock
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.mod_dim,
             self.gate,
-            **self.kwargs
+            self.bias,
+            self.device,
+            self.dtype
         )
 
 
@@ -269,15 +359,16 @@ class GatedHiddenBlock(Block):
         ``torch.nn`` or a function from ``torch.nn.functional``, depending
         on whether it needs to be further parameterized or not.
         Defaults to a sigmoid.
-    drop: Module, optional
-        Dropout to be applied after gating. Typically an instance of
-        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
-        resulting in no dropout being applied.
-    hidden_factor: int, optional
-        The size of the hidden layer *before* reducing by two through gating
-        is this integer factor times `mod_dim`. Defaults to 4.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layers.
+    factor: int, optional
+        The size of the hidden layer is this integer factor times `mod_dim`.
+        Defaults to 4.
+    bias: bool, optional
+        Whether to add a learnable bias vector in to the projections.
+        Defaults to ``True``.
+    device: str or pt.device, optional
+        Torch device to first create the block on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
 
@@ -285,26 +376,51 @@ class GatedHiddenBlock(Block):
             self,
             mod_dim: int,
             gate: Module | Functional = ptn.Sigmoid(),
-            drop: Drop = ptn.Dropout(0.0),
-            hidden_factor: int = 4,
-            **kwargs: Any
+            factor: int = 4,
+            bias: bool = True,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.mod_dim = round(mod_dim)
+        self.__mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
-        if hasattr(gate, 'reset_parameters'):
-            gate.reset_parameters()
-        self.gate = gate
-        self.drop = drop
-        self.hidden_factor = round(hidden_factor)
-        self.kwargs = kwargs
-        self.widen = ptn.Linear(self.mod_dim, self.dim * 2, **kwargs)
-        self.shrink = ptn.Linear(self.dim, self.mod_dim, **kwargs)
+        self.gate = self._reset(gate, device, dtype)
+        self.factor = factor
+        self.bias = bias
+        self.widen = ptn.Linear(
+            in_features=mod_dim,
+            out_features=2 * self.dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
+        self.shrink = ptn.Linear(
+            in_features=self.dim,
+            out_features=mod_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.widen.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.widen.weight.dtype
 
     @property
     def dim(self) -> int:
         """The hidden dimension after gating."""
-        return (self.hidden_factor * self.mod_dim) // 2
+        return (self.factor * self.mod_dim) // 2
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a gated linear unit (GLU) with a hidden layer.
@@ -312,7 +428,7 @@ class GatedHiddenBlock(Block):
         Parameters
         ----------
         inp: Tensor
-            The size of the last dimension is expected to be ``mod_dim``.
+            The size of the last dimension is expected to be `mod_dim`.
 
         Returns
         -------
@@ -322,128 +438,31 @@ class GatedHiddenBlock(Block):
         """
         widened = self.widen(inp)
         gated = widened[..., :self.dim] * self.gate(widened[..., self.dim:])
-        return self.shrink(self.drop(gated))
+        return self.shrink(gated)
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the block."""
         self.widen.reset_parameters()
         self.shrink.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.gate, 'reset_parameters'):
-            self.gate.reset_parameters()
+        self.gate = self._reset(self.gate, self.device, self.dtype)
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
-        return self.__class__(
-            self.mod_dim,
-            self.gate,
-            self.drop,
-            self.hidden_factor,
-            **self.kwargs
-        )
-
-
-class ActivatedGatedBlock(Block):
-    """An activated, hidden layer, followed by a gated linear unit (GLU).
-
-    Parameters
-    ----------
-    mod_dim: int
-        Size of the feature space. The input tensor is expected to be of that
-        size in its last dimension and the output will again have this size in
-        its last dimension.
-    activate: Module or function, optional
-        The activation function to be applied after (linear) projection, but
-        prior to gating. Must be a callable that accepts a tensor as sole
-        argument, like a module from ``torch.nn`` or a function from
-        `torch.nn.functional``, depending on whether it needs to be further
-        parameterized or not. Defaults to an ``ELU`` activation.
-    gate: Module or function, optional
-        The activation function to be applied to half of the (non-linearly)
-        projected input before multiplying with the other half. Must be
-        a callable that accepts a tensor as sole argument, like a module from
-        ``torch.nn`` or a function from ``torch.nn.functional``, depending
-        on whether it needs to be further parameterized or not.
-        Defaults to a sigmoid.
-    drop: Module, optional
-        Dropout to be applied before gating. Typically an instance of
-        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
-        resulting in no dropout being applied.
-    hidden_factor: int, optional
-        The size of the hidden layer is this integer factor times `mod_dim`.
-        Defaults to 4.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layers.
-
-    """
-
-    def __init__(
-            self,
-            mod_dim: int,
-            activate: Module | Functional = ptn.ELU(),
-            gate: Module | Functional = ptn.Sigmoid(),
-            drop: Drop = ptn.Dropout(0.0),
-            hidden_factor: int = 4,
-            **kwargs: Any
-    ) -> None:
-        super().__init__()
-        self.mod_dim = round(mod_dim)
-        # Although few, some activation functions have learnable parameters
-        if hasattr(activate, 'reset_parameters'):
-            activate.reset_parameters()
-        if hasattr(gate, 'reset_parameters'):
-            gate.reset_parameters()
-        self.activate = activate
-        self.gate = gate
-        self.drop = drop
-        self.hidden_factor = round(hidden_factor)
-        self.kwargs = kwargs
-        self.widen = ptn.Linear(
-            in_features=self.mod_dim,
-            out_features=round(hidden_factor * mod_dim),
-            **kwargs
-        )
-        self.shrink = ptn.Linear(
-            in_features=round(hidden_factor * mod_dim),
-            out_features=2 * self.mod_dim,
-            **kwargs
-        )
-
-    def forward(self, inp: Tensor) -> Tensor:
-        """Forward pass through a activated, hidden layer followed by a GLU.
-
-        Parameters
-        ----------
-        inp: Tensor
-            The size of the last dimension is expected to be ``mod_dim``.
+        """Return a fresh, new instance with exactly the same parameters.
 
         Returns
         -------
-        Tensor
-            Same dimensions and sizes as the input tensor.
+        GatedHiddenBlock
+            A fresh, new instance of itself.
 
         """
-        slim = self.shrink(self.drop(self.activate(self.widen(inp))))
-        return slim[..., :self.mod_dim] * self.gate(slim[..., self.mod_dim:])
-
-    def reset_parameters(self) -> None:
-        """Re-initialize the internal parameters of the block."""
-        self.widen.reset_parameters()
-        self.shrink.reset_parameters()
-        # Although few, some activation functions have learnable parameters
-        if hasattr(self.activate, 'reset_parameters'):
-            self.activate.reset_parameters()
-        if hasattr(self.gate, 'reset_parameters'):
-            self.gate.reset_parameters()
-
-    def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
         return self.__class__(
             self.mod_dim,
-            self.activate,
             self.gate,
-            self.drop,
-            **self.kwargs
+            self.factor,
+            self.bias,
+            self.device,
+            self.dtype
         )
 
 
@@ -460,7 +479,7 @@ class GatedResidualBlock(Block):
         The activation function to be applied after (linear) projection, but
         prior to gating. Must be a callable that accepts a tensor as sole
         argument, like a module from ``torch.nn`` or a function from
-        `torch.nn.functional``, depending on whether it needs to be further
+        ``torch.nn.functional``, depending on whether it needs to be further
         parameterized or not. Defaults to an ``ELU`` activation.
     gate: Module or function, optional
         The activation function to be applied to half of the (non-linearly)
@@ -469,22 +488,25 @@ class GatedResidualBlock(Block):
         ``torch.nn`` or a function from ``torch.nn.functional``, depending
         on whether it needs to be further parameterized or not.
         Defaults to a sigmoid.
-    drop: Module, optional
-        Dropout to be applied within the GRN. Typically an instance of
-        ``Dropout`` or ``AlphaDropout``. Defaults to ``Dropout(p=0.0)``,
-        resulting in no dropout being applied.
-    **kwargs
-        Additional keyword arguments to pass through to the linear layers.
+    bias: bool, optional
+        Whether to add a learnable bias vector in the projections.
+        Defaults to ``True``.
+    dropout: float, optional
+        The amount of dropout to apply to the gated signal before adding it
+        to the activated residual. Defaults to 0.
+    device: str or pt.device, optional
+        Torch device to first create the block on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     Note
     ----
     This implementation is inspired by how features are encoded in `Temporal
     Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
     intermediate linear layer (Eq. 3) is eliminated and dropout is applied
-    directly to the activations after the first layer. Secondly, the layer norm
-    (Eq. 2) is replaced by simply dividing the sum of (linearly projected)
-    input and gated signal by 2. Should additional normalization be desired, it
-    can be performed independently on the output of this module.
+    directly to the activations after the first layer. Secondly, there is no
+    layer norm (Eq. 2). Should additional normalization be desired, it can be
+    performed independently on the output of this module.
 
     References
     ----------
@@ -500,22 +522,48 @@ class GatedResidualBlock(Block):
             mod_dim: int,
             activate: Module | Functional = ptn.ELU(),
             gate: Module | Functional = ptn.Sigmoid(),
-            drop: Drop = ptn.Dropout(0.0),
-            **kwargs: Any
+            bias: bool = True,
+            dropout: float = 0.0,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.mod_dim = round(mod_dim)
+        self.__mod_dim = mod_dim
         # Although few, some activation functions have learnable parameters
-        if hasattr(activate, 'reset_parameters'):
-            activate.reset_parameters()
-        if hasattr(gate, 'reset_parameters'):
-            gate.reset_parameters()
-        self.activate = activate
-        self.gate = gate
-        self.drop = drop
-        self.kwargs = kwargs
-        self.project = ptn.Linear(self.mod_dim, self.mod_dim, **kwargs)
-        self.widen = ptn.Linear(self.mod_dim, 2 * self.mod_dim, **kwargs)
+        self.activate = self._reset(activate, device, dtype)
+        self.gate = self._reset(gate, device, dtype)
+        self.bias = bias
+        self.dropout = dropout
+        self.drop = ptn.Dropout(dropout)
+        self.project = ptn.Linear(
+            in_features=mod_dim,
+            out_features=mod_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
+        self.widen = ptn.Linear(
+            in_features=mod_dim,
+            out_features=2 * mod_dim,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.widen.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.widen.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single gated residual network (GRN).
@@ -531,29 +579,36 @@ class GatedResidualBlock(Block):
             Same dimensions and sizes as the input tensor.
 
         """
-        projected = self.project(inp)
-        wide = self.widen(self.drop(self.activate(projected)))
+        activated = self.activate(self.project(inp))
+        wide = self.widen(activated)
         gated = wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
-        return 0.5 * (projected + gated)
+        return activated + self.drop(gated)
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the block."""
         self.project.reset_parameters()
         self.widen.reset_parameters()
         # Although few, some activation functions have learnable parameters
-        if hasattr(self.activate, 'reset_parameters'):
-            self.activate.reset_parameters()
-        if hasattr(self.gate, 'reset_parameters'):
-            self.gate.reset_parameters()
+        self.activate = self._reset(self.activate, self.device, self.dtype)
+        self.gate = self._reset(self.gate, self.device, self.device)
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        GatedResidualBlock
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.mod_dim,
             self.activate,
             self.gate,
-            self.drop,
-            **self.kwargs
+            self.bias,
+            self.dropout,
+            self.device,
+            self.dtype
         )
 
 
@@ -566,10 +621,9 @@ class SkipConnection(Block):
         The block to wrap the residual/skip connection around. The reason why
         this cannot simply be a ``Module`` is that currently PyTorch does not
         provide a reasonable way of cloning them.
-    drop: Module, optional
-        Dropout to be applied to the output of `block` before adding it to
-        its input. Typically an instance of ``Dropout`` or ``AlphaDropout``.
-        Defaults to ``Dropout(p=0.0)``, resulting in no dropout being applied.
+    dropout: float, optional
+        The amount of dropout to apply to the block's output before adding it
+        back to the activated residual. Defaults to 0.
     norm_first, bool, optional
         If ``True``, normalize the inputs before passing them through the block
         and adding the outputs to the raw inputs. If ``False``, pass inputs
@@ -579,9 +633,13 @@ class SkipConnection(Block):
         The class of the norm to be applied after adding input to output, e.g.,
         ``LayerNorm`` or ``BatchNorm1d``. Again, this is needed to easily
         create a fresh, new instances with equal, but independent parameters.
-        Defaults to ``Identity``, resulting in no normalization whatsoever.
+        Defaults to :class:`Identity`, resulting in no normalization.
     *args
         Arguments used to initialize an instance of `norm_cls`.
+    device: str or pt.device, optional
+        Torch device to first create the block on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the block in. Defaults to ``torch.float``.
     **kwargs
         Keyword arguments used to initialize an instance of `norm_cls`.
 
@@ -590,20 +648,38 @@ class SkipConnection(Block):
     def __init__(
             self,
             block: Block,
-            drop: Drop = ptn.Dropout(0.0),
+            dropout: float = 0.0,
             norm_first: bool = True,
-            norm_cls: type[Module] = Identity,
+            norm_cls: type[Module] = ResetIdentity,
             *args: Any,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float,
             **kwargs: Any
     ) -> None:
         super().__init__()
-        self.block = block
-        self.drop = drop
+        self.block = block.to(device, dtype)
+        self.dropout = dropout
+        self.drop = ptn.Dropout(dropout)
         self.norm_first = norm_first
         self.norm_cls: type[Module] = norm_cls
         self.args = args
         self.kwargs = kwargs
-        self.norm = norm_cls(*args, **kwargs)
+        self.norm = norm_cls(*args, device=device, dtype=dtype, **kwargs)
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.block.mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.block.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.block.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a block with the input added to the output.
@@ -611,7 +687,7 @@ class SkipConnection(Block):
         Parameters
         ----------
         inp: Tensor
-            The size of the last dimension is expected to be ``mod_dim``.
+            The size of the last dimension is expected to be `mod_dim`.
 
         Returns
         -------
@@ -620,8 +696,8 @@ class SkipConnection(Block):
 
         """
         if self.norm_first:
-            return 0.5 * (inp + self.drop(self.block(self.norm(inp))))
-        return self.norm(0.5 * (inp + self.drop(self.block(inp))))
+            return inp + self.drop(self.block(self.norm(inp)))
+        return self.norm(inp + self.drop(self.block(inp)))
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the block and the norm."""
@@ -629,13 +705,22 @@ class SkipConnection(Block):
         self.norm.reset_parameters()
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        SkipConnection
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.block.new(),
-            self.drop,
+            self.dropout,
             self.norm_first,
             self.norm_cls,
             *self.args,
+            device=self.device,
+            dtype=self.dtype,
             **self.kwargs
         )
 
@@ -646,9 +731,20 @@ class Repeat(Block):
     Parameters
     ----------
     skip: SkipConnection
-        An instance of a ``SkipConnection`` to repeat.
+        An instance of a :class:`SkipConnection` to repeat.
     n_layers: int, optional
         How often to repeat the `skip`. Defaults to 2.
+    device: str or pt.device, optional
+        Torch device to first create the blocks on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the blocks in. Defaults to ``torch.float``.
+
+    Raises
+    ------
+    TypeError
+        If `n_layers` is not an integer.
+    ValueError
+        If `n_layers` is smaller than 2.
 
     Notes
     -----
@@ -656,16 +752,60 @@ class Repeat(Block):
     the last repetition will also be normalized (with a fresh instance of the
     exact same norm type used by the skip-connection).
 
+    See Also
+    --------
+    SkipConnection
+
     """
 
-    def __init__(self, skip: SkipConnection, n_layers: int = 2) -> None:
+    def __init__(
+            self,
+            skip: SkipConnection,
+            n_layers: int = 2,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
+    ) -> None:
         super().__init__()
-        self.skip = skip
-        self.n_layers = n_layers
-        self.blocks = ptn.Sequential(*[skip.new() for _ in self.layers])
+        self.skip = skip.to(device, dtype)
+        self.n_layers = self.__valid(n_layers)
+        self.blocks = ptn.Sequential(*[self.skip.new() for _ in self.layers])
         self.norm = skip.norm_cls(
-            *skip.args, **skip.kwargs
-        ) if skip.norm_first else Identity()
+            *skip.args,
+            device=device,
+            dtype=dtype,
+            **skip.kwargs
+        ) if skip.norm_first else ResetIdentity()
+
+    @staticmethod
+    def __valid(n_layers: Any) -> int:
+        """Make sure `n_layers` is a positive integer."""
+        try:
+            as_int = int(n_layers)
+        except (ValueError, TypeError) as error:
+            cls = type(n_layers).__name__
+            tmp = '"{}" must at least be convertible to an int, unlike {}'
+            msg = tmp.format('n_layers', cls)
+            raise TypeError(msg) from error
+        if as_int < 2:
+            tmp = '"{}" must be greater than (or equal to) two, unlike {}!'
+            msg = tmp.format('n_layers', as_int)
+            raise ValueError(msg)
+        return as_int
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.blocks[0].mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.blocks[0].device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.blocks[0].dtype
 
     @property
     def layers(self) -> range:
@@ -678,7 +818,7 @@ class Repeat(Block):
         Parameters
         ----------
         inp: Tensor
-            The size of the last dimension is expected to be ``mod_dim``.
+            The size of the last dimension is expected to be `mod_dim`.
 
         Returns
         -------
@@ -695,8 +835,17 @@ class Repeat(Block):
         self.norm.reset_parameters()
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        Repeat
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.skip,
-            self.n_layers
+            self.n_layers,
+            self.device,
+            self.dtype
         )

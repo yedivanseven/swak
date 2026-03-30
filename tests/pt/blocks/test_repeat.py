@@ -3,7 +3,7 @@ from unittest.mock import patch, Mock
 import torch as pt
 import torch.nn as ptn
 from swak.pt.blocks import Repeat, SkipConnection
-from swak.pt.misc import Identity
+from swak.pt.misc import ResetIdentity
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.repeat, 'norm'))
 
     def test_norm(self):
-        self.assertIsInstance(self.repeat.norm, Identity)
+        self.assertIsInstance(self.repeat.norm, ResetIdentity)
 
     def test_has_layers(self):
         self.assertTrue(hasattr(self.repeat, 'layers'))
@@ -53,7 +53,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.repeat.reset_parameters))
 
     def test_call_reset_parameters(self):
-        with patch.object(Identity, 'reset_parameters') as mock:
+        with patch.object(ResetIdentity, 'reset_parameters') as mock:
             self.repeat.reset_parameters()
             self.assertEqual(3, mock.call_count)
 
@@ -109,7 +109,7 @@ class TestAttributes(unittest.TestCase):
         repeat = Repeat(skip, 4)
         norm_cls.assert_called_with(hello='world')
         self.assertEqual(5, norm_cls.call_count)
-        self.assertIsInstance(repeat.norm, Identity)
+        self.assertIsInstance(repeat.norm, ResetIdentity)
 
 
 class TestUsage(unittest.TestCase):
@@ -118,7 +118,7 @@ class TestUsage(unittest.TestCase):
         norm_out = pt.ones(4) * 2.0
         norm = Mock(return_value=norm_out)
         skip = Mock()
-        skip.new = Mock(return_value=Identity())
+        skip.new = Mock(return_value=ResetIdentity())
         skip.norm_cls = Mock(return_value=norm)
         skip.norm_first = True
         skip.args = ()
@@ -133,7 +133,7 @@ class TestUsage(unittest.TestCase):
         norm_out = pt.ones(4) * 2.0
         norm = Mock(return_value=norm_out)
         skip = Mock()
-        skip.new = Mock(return_value=Identity())
+        skip.new = Mock(return_value=ResetIdentity())
         skip.norm_cls = Mock(return_value=norm)
         skip.norm_first = False
         skip.args = ()

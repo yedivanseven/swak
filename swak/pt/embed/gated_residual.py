@@ -26,7 +26,7 @@ class GatedResidualEmbedder(Block):
         on whether it needs to be further parameterized or not.
         Defaults to a sigmoid.
     bias: bool, optional
-        Whether to add a learnable bias vector in the projection.
+        Whether to add a learnable bias vector in the projections.
         Defaults to ``True``.
     dropout: float, optional
         The amount of dropout to apply to the gated signal before adding it

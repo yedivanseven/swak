@@ -17,7 +17,7 @@ class ActivatedEmbedder(Block):
         The activation function to be applied after (linear) projection into
         embedding space. Must be a callable that accepts a tensor as sole
         argument, like a module from ``torch.nn`` or a function from
-        `torch.nn.functional``, depending on whether it needs to be further
+        ``torch.nn.functional``, depending on whether it needs to be further
         parameterized or not. Defaults to ``identity``, resulting in no
         non-linear activation whatsoever.
     bias: bool, optional

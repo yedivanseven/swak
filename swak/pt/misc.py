@@ -10,9 +10,11 @@ from ..misc import ArgRepr
 from .types import (
     Tensor,
     Module,
+    Functional,
     Tensors,
     Tensors2T,
-    Resettable
+    Resettable,
+    Block
 )
 from .exceptions import (
     CompileError,
@@ -24,10 +26,12 @@ from .exceptions import (
 
 __all__ = [
     'identity',
-    'Identity',
+    'ResetIdentity',
+    'BlockIdentity',
     'Finalizer',
     'NegativeBinomialFinalizer',
     'Compile',
+    'Stack',
     'Cat',
     'LazyCatDim0'
 ]
@@ -52,12 +56,12 @@ def identity(tensor: Tensor, *_: Any, **__: Any) -> Tensor:
     return tensor
 
 
-class Identity(Resettable):
+class ResetIdentity(Resettable):
     """PyTorch module that passes a tensor right through, doing nothing.
 
-    This is a placeholder for instances where a default module is required.
-    Providing any number of (keyword) arguments on instantiation is permitted,
-    but they will be ignored.
+    This is a placeholder for instances where a default ``Module`` is required
+    that also has a :method:`reset_parameters()` method. Providing any number
+    of (keyword) arguments on instantiation is permitted, but they are ignored.
 
     """
 
@@ -83,7 +87,62 @@ class Identity(Resettable):
     def reset_parameters(self) -> None:
         """Does nothing because there are no internal parameters to reset."""
 
-    def new(self, *_: Any, **__: Any) -> Self:
+
+class BlockIdentity(Block):
+    """PyTorch module that passes a tensor right through, doing nothing.
+
+    This is a placeholder for instances where a default ``Module`` is required
+    that not only has a :method:`reset_parameters()` method, but also a
+    :method:`new()` method in addition to ``mod_dim`, ``device`` and ``dtype``.
+    Providing any number of (keyword) arguments on instantiation is permitted,
+    but they are ignored.
+
+    Parameters
+    ----------
+    mod_dim: int
+        Ignored but mandatory to maintain API compatibility.
+
+    """
+
+    def __init__(self, mod_dim: int, *_: Any, **__: Any) -> None:
+        super().__init__()
+        self.__mod_dim = mod_dim
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> None:
+        """Just for API compatibility. Always returns None."""
+        return None
+
+    @property
+    def dtype(self) -> None:
+        """Just for API compatibility. Always returns None."""
+        return None
+
+    def forward(self, tensor: Tensor, *_: Any, **__: Any) -> Tensor:
+        """Pass through first argument, ignore additional (keyword) arguments.
+
+        Parameters
+        ----------
+        tensor: Tensor
+            Any argument (typically a tensor) to be passed straight through.
+
+        Returns
+        -------
+        Tensor
+            The tensor passed in as argument.
+
+        """
+        return tensor
+
+    def reset_parameters(self) -> None:
+        """Does nothing because there are no internal parameters to reset."""
+
+    def new(self) -> Self:
         """Return a fresh, new instance.
 
         Providing any number of (keyword) arguments is permitted, but they will
@@ -91,14 +150,14 @@ class Identity(Resettable):
 
         Returns
         -------
-        Identity
+        ResetIdentity
             A fresh, new instance of itself.
 
         """
-        return self.__class__()
+        return self.__class__(self.mod_dim)
 
 
-class Finalizer(Resettable):
+class Finalizer(Block):
     """Extract one or more numbers from the final layer of a neural network.
 
     Instances of this class serve as a convenient final layer in any neural
@@ -115,35 +174,77 @@ class Finalizer(Resettable):
         The size of the last dimension of the input tensor, essentially the
         "width" of the neural network before it is to be collapsed to the
         final output.
-    *activations: Module
-        Specify as many activations (instances of PyTorch ``Module``) as you
-        want outputs (e.g., ``Sigmoid()`` for binary classification,
-        ``Softplus()`` for strictly positive regression targets, etc.). For
-        unbounded regression targets, where you want no activation function at
-        all, use ``Identity()``.
-    **kwargs
-        Keyword arguments are passed on to all linear layers.
+    activation: Module or function
+        Output activation function to be applied after (linear) projection.
+        Must be a callable that accepts a tensor as sole argument, like a
+        module from ``torch.nn`` or a function from ``torch.nn.functional``,
+        depending on whether it needs to be further parameterized or not.
+        Examples would be ``Sigmoid()`` for binary classification or
+        ``Softplus()`` for strictly positive regression targets. For
+        unbounded regression targets, where you want no activation function
+        at all, use and identity operation.
+    *activations: Module or function
+        Additional outputs.
+    bias: bool, optional
+        Whether to add a learnable bias vector to the projection(s).
+        Defaults to ``True``.
+    device: str or pt.device, optional
+        Torch device to first create the finalizer on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the finalizer in.
+        Defaults to ``torch.float``.
 
     See Also
     --------
-    Identity
+    ResetIdentity
+    BlockIdentity
 
     """
 
     def __init__(
             self,
             mod_dim: int,
-            *activations: Module,
-            **kwargs: Any
+            activation: Module | Functional,
+            *activations: Module | Functional,
+            bias: bool = True,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
-        self.activations: tuple[Module, ...] = activations
-        self.kwargs = kwargs
+        self.__mod_dim = mod_dim
+        self.activations: tuple[Module | Functional, ...] = tuple(
+            self._reset(a, device, dtype)
+            for a in (activation, *activations)
+        )
+        self.bias = bias
         self.finalize = ptn.ModuleList(
-            ptn.Sequential(ptn.Linear(mod_dim, 1, **kwargs), activate)
+            ptn.Sequential(
+                ptn.Linear(
+                    in_features=mod_dim,
+                    out_features=1,
+                    bias=bias,
+                    device=device,
+                    dtype=dtype
+                ),
+                activate
+            )
             for activate in self.activations
         )
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.finalize[0][0].weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.finalize[0][0].weight.dtype
 
     @property
     def n_out(self) -> int:
@@ -172,28 +273,10 @@ class Finalizer(Resettable):
         """Re-initialize all internal parameters."""
         for finalize in self.finalize:
             finalize[0].reset_parameters()
+            finalize[1] = self._reset(finalize[1], self.device, self.dtype)
 
-    def new(
-            self,
-            mod_dim: int | None = None,
-            *activations: Module,
-            **kwargs: Any
-    ) -> Self:
+    def new(self) -> Self:
         """Return a fresh instance with the same or updated parameters.
-
-        Parameters
-        ----------
-        mod_dim: int, optional
-            The size of the last dimension of the input tensor. Overwrites the
-            `mod_dim` of the current instance if given. Defaults to ``None``.
-        *activations: Module
-            Activation functions replace the ones in the current instance if
-            any are given. If none are given, the new instance will have the
-            same as the present instance.
-        **kwargs
-            Additional keyword arguments are merged into the keyword arguments
-            of the current instance and are then passed through to the linear
-            layers together.
 
         Returns
         -------
@@ -202,13 +285,15 @@ class Finalizer(Resettable):
 
         """
         return self.__class__(
-            self.mod_dim if mod_dim is None else mod_dim,
-            *(activations or self.activations),
-            **(self.kwargs | kwargs)
+            self.mod_dim,
+            *self.activations,
+            bias=self.bias,
+            device=self.device,
+            dtype=self.dtype
         )
 
 
-class NegativeBinomialFinalizer(Resettable):
+class NegativeBinomialFinalizer(Block):
     """Consistent mean and standard deviation for over-dispersed counts.
 
     When regressing potentially over-dispersed counts data, you might want to
@@ -224,6 +309,14 @@ class NegativeBinomialFinalizer(Resettable):
     mod_dim: int
         Size of the feature space. The input tensor is expected to be of that
         size in its last dimension.
+    bias: bool, optional
+        Whether to add a learnable bias vector to the projection(s).
+        Defaults to ``True``.
+    device: str or pt.device, optional
+        Torch device to first create the finalizer on. Defaults to "cpu".
+    dtype: pt.dtype, optional
+        Torch dtype to first create the finalizer in.
+        Defaults to ``torch.float``.
     beta: float, optional
         Scaling parameter ot the `Softplus <https://pytorch.org/docs/stable/
         generated/torch.nn.Softplus.html#torch.nn.Softplus>`__ activation
@@ -232,13 +325,11 @@ class NegativeBinomialFinalizer(Resettable):
         The `Softplus <https://pytorch.org/docs/stable/generated/
         torch.nn.Softplus.html#torch.nn.Softplus>`__ activation is approximated
         as a linear function for values greater than this. Defaults to 20.
-    **kwargs
-        Keyword arguments are passed on to the linear layers.
 
     See Also
     --------
-    swak.pt.losses.NegativeBinomialLoss
-    swak.pt.dists.MuSigmaNegativeBinomial
+    ~swak.pt.losses.NegativeBinomialLoss
+    ~swak.pt.dists.MuSigmaNegativeBinomial
 
     References
     ----------
@@ -251,18 +342,47 @@ class NegativeBinomialFinalizer(Resettable):
     def __init__(
             self,
             mod_dim: int,
+            bias: bool = True,
+            device: pt.device | str = 'cpu',
+            dtype: pt.dtype = pt.float,
             beta: float = 1.0,
-            threshold: float = 20.0,
-            **kwargs: Any
+            threshold: float = 20.0
     ) -> None:
         super().__init__()
-        self.mod_dim = mod_dim
+        self.__mod_dim = mod_dim
+        self.bias = bias
         self.beta = beta
         self.threshold = threshold
-        self.kwargs = kwargs
-        self.mu = ptn.Linear(mod_dim, 1, **kwargs)
-        self.alpha = ptn.Linear(mod_dim, 1, **kwargs)
+        self.mu = ptn.Linear(
+            in_features=mod_dim,
+            out_features=1,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
+        self.alpha = ptn.Linear(
+            in_features=mod_dim,
+            out_features=1,
+            bias=bias,
+            device=device,
+            dtype=dtype
+        )
         self.activate = ptn.Softplus(beta, threshold)
+
+    @property
+    def mod_dim(self) -> int:
+        """The model dimension."""
+        return self.__mod_dim
+
+    @property
+    def device(self) -> pt.device:
+        """The device all weights, biases, activations, etc. reside on."""
+        return self.mu.weight.device
+
+    @property
+    def dtype(self) -> pt.dtype:
+        """The dtype of all weights, biases, activations, and parameters."""
+        return self.mu.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensors2T:
         """Forward pass for generating mean and matching standard deviation.
@@ -271,7 +391,7 @@ class NegativeBinomialFinalizer(Resettable):
         ----------
         inp: Tensor
             The activations after the last hidden layer in your network.
-            The size of the last dimension is expected to be ``mod_dim``.
+            The size of the last dimension is expected to be `mod_dim`.
 
         Returns
         -------
@@ -292,32 +412,8 @@ class NegativeBinomialFinalizer(Resettable):
         self.mu.reset_parameters()
         self.alpha.reset_parameters()
 
-    def new(
-            self,
-            mod_dim: int | None = None,
-            beta: float | None = None,
-            threshold: float | None = None,
-            **kwargs: Any
-    ) -> Self:
-        """Return a fresh instance with the same or updated parameters.
-
-        Parameters
-        ----------
-        mod_dim: int, optional
-            The size of the last dimension of the input tensor. Overwrites the
-            `mod_dim` of the current instance if given. Defaults to ``None``.
-        beta: float, optional
-            Scaling parameter ot the ``Softplus`` activation function.
-            Overwrites the `beta` of the current instance if given.
-            Defaults to ``None``.
-        threshold: float, optional
-            The ``Softplus`` activation is approximated as a linear function
-            for values greater than this. Overwrites the `threshold` of the
-            current instance if given. Defaults to ``None``.
-        **kwargs
-            Additional keyword arguments are merged into the keyword arguments
-            of the current instance and are then passed through to the linear
-            layers together.
+    def new(self) -> Self:
+        """Return a fresh instance.
 
         Returns
         -------
@@ -326,10 +422,12 @@ class NegativeBinomialFinalizer(Resettable):
 
         """
         return self.__class__(
-            self.mod_dim if mod_dim is None else mod_dim,
-            self.beta if beta is None else beta,
-            self.threshold if threshold is None else threshold,
-            **(self.kwargs | kwargs)
+            self.mod_dim,
+            self.bias,
+            self.device,
+            self.dtype,
+            self.beta,
+            self.threshold
         )
 
 
@@ -407,7 +505,37 @@ class Compile:
         return pt.compile(model, **merged_kwargs)
 
 
-# ToDo: Add Stack
+class Stack(ArgRepr):
+    """Simple partial of PyTorch's top-level `stack` function.
+
+    Parameters
+    ----------
+    dim: int, optional
+        The new dimension along which to stack the tensors. Defaults to 0.
+
+    """
+
+    def __init__(self, dim: int = 0) -> None:
+        super().__init__(dim)
+        self.dim = dim
+
+    def __call__(self, tensors: Tensors | list[Tensor]) -> Tensor:
+        """Concatenate the given tensors along one of their dimensions.
+
+        Parameters
+        ----------
+        tensors: tuple or list of tensors
+            Tensors to stack along a new dimension.
+
+        Returns
+        -------
+        Tensor
+            The stacked tensors.
+
+        """
+        return pt.stack(tensors, dim=self.dim)
+
+
 class Cat(ArgRepr):
     """Simple partial of PyTorch's top-level `cat` function.
 

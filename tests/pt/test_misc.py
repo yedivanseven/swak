@@ -5,7 +5,7 @@ import torch.nn as ptn
 from swak.pt.exceptions import CompileError, ShapeError, ValidationErrors
 from swak.pt.misc import (
     identity,
-    Identity,
+    ResetIdentity,
     Finalizer,
     NegativeBinomialFinalizer,
     Compile,
@@ -17,7 +17,7 @@ from swak.pt.misc import (
 class TestIdentityFunction(unittest.TestCase):
 
     def test_callable(self):
-        self.assertTrue(callable(Identity()))
+        self.assertTrue(callable(ResetIdentity()))
 
     def test_arg(self):
         obj = object()
@@ -43,64 +43,64 @@ class TestIdentityFunction(unittest.TestCase):
 class TestIdentityModule(unittest.TestCase):
 
     def test_empty_instantiation(self):
-        _ = Identity()
+        _ = ResetIdentity()
 
     def test_instantiation_accepts_args(self):
-        _ = Identity(1, 'foo', 4.2)
+        _ = ResetIdentity(1, 'foo', 4.2)
 
     def test_instantiation_accepts_kwargs(self):
-        _ = Identity(foo=1, bar='baz', answer=4.2)
+        _ = ResetIdentity(foo=1, bar='baz', answer=4.2)
 
     def test_instantiation_accepts_kargs_and_kwargs(self):
-        _ = Identity(1, 42, foo='bar')
+        _ = ResetIdentity(1, 42, foo='bar')
 
     def test_callable(self):
-        self.assertTrue(callable(Identity()))
+        self.assertTrue(callable(ResetIdentity()))
 
     def test_arg(self):
         obj = object()
-        result = Identity()(obj)
+        result = ResetIdentity()(obj)
         self.assertIs(result, obj)
 
     def test_arg_and_args(self):
         obj = object()
-        result = Identity()(obj, 'bar', 42)
+        result = ResetIdentity()(obj, 'bar', 42)
         self.assertIs(result, obj)
 
     def test_arg_and_kwargs(self):
         obj = object()
-        result = Identity()(obj, foo='bar', answer=42)
+        result = ResetIdentity()(obj, foo='bar', answer=42)
         self.assertIs(result, obj)
 
     def test_arg_and_args_and_kwargs(self):
         obj = object()
-        result = Identity()(obj, 'bar', answer=42)
+        result = ResetIdentity()(obj, 'bar', answer=42)
         self.assertIs(result, obj)
 
     def test_has_reset_parameters(self):
-        i = Identity()
+        i = ResetIdentity()
         self.assertTrue(hasattr(i, 'reset_parameters'))
 
     def test_reset_parameters(self):
-        i = Identity()
+        i = ResetIdentity()
         self.assertTrue(callable(i.reset_parameters))
 
     def test_call_reset_parameters(self):
-        i = Identity()
+        i = ResetIdentity()
         i.reset_parameters()
 
     def test_has_new(self):
-        i = Identity()
+        i = ResetIdentity()
         self.assertTrue(hasattr(i, 'new'))
 
     def test_new(self):
-        i = Identity()
+        i = ResetIdentity()
         self.assertTrue(callable(i.new))
 
     def test_call_new(self):
-        old = Identity()
+        old = ResetIdentity()
         new = old.new()
-        self.assertIsInstance(new, Identity)
+        self.assertIsInstance(new, ResetIdentity)
 
 
 class TestFinalizer(unittest.TestCase):
@@ -110,7 +110,7 @@ class TestFinalizer(unittest.TestCase):
         self.active2 = ptn.Softplus()
         self.empty = Finalizer(4)
         self.default = Finalizer(4, self.active1, self.active2)
-        self.custom = Finalizer(4, Identity(), Identity(), bias=False)
+        self.custom = Finalizer(4, ResetIdentity(), ResetIdentity(), bias=False)
         self.custom.finalize[0][0].weight.data = pt.ones(1, 4) / 4.0
         self.custom.finalize[1][0].weight.data = pt.ones(1, 4) / 4.0
 

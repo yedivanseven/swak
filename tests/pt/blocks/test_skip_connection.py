@@ -3,19 +3,19 @@ from unittest.mock import Mock
 import torch as pt
 import torch.nn as ptn
 from swak.pt.blocks import SkipConnection
-from swak.pt.misc import Identity
+from swak.pt.misc import ResetIdentity
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.skip = SkipConnection(Identity())
+        self.skip = SkipConnection(ResetIdentity())
 
     def test_has_block(self):
         self.assertTrue(hasattr(self.skip, 'block'))
 
     def test_block(self):
-        self.assertIsInstance(self.skip.block, Identity)
+        self.assertIsInstance(self.skip.block, ResetIdentity)
 
     def test_has_drop(self):
         self.assertTrue(hasattr(self.skip, 'drop'))
@@ -34,7 +34,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.skip, 'norm_cls'))
 
     def test_norm_cls(self):
-        self.assertIs(self.skip.norm_cls, Identity)
+        self.assertIs(self.skip.norm_cls, ResetIdentity)
 
     def test_has_args(self):
         self.assertTrue(hasattr(self.skip, 'args'))
@@ -52,7 +52,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.skip, 'norm'))
 
     def test_norm(self):
-        self.assertIsInstance(self.skip.norm, Identity)
+        self.assertIsInstance(self.skip.norm, ResetIdentity)
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.skip, 'reset_parameters'))
@@ -79,7 +79,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_call_new(self):
         new = self.skip.new()
         self.assertIsInstance(new, SkipConnection)
-        self.assertIsInstance(new.block, Identity)
+        self.assertIsInstance(new.block, ResetIdentity)
         self.assertIs(self.skip.drop, new.drop)
         self.assertIs(self.skip.norm_cls, new.norm_cls)
         self.assertDictEqual(self.skip.kwargs, new.kwargs)
@@ -92,7 +92,7 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.skip = SkipConnection(
-            Identity(),
+            ResetIdentity(),
             ptn.AlphaDropout(),
             False,
             ptn.BatchNorm1d,

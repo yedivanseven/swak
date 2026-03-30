@@ -31,6 +31,3 @@ else:
 
 # ToDo: Implement tools for packed & padded sequences
 # ToDo: Add positional encodings and, potentially, x-former classes
-# ToDo: Homogenize call signature (with "bias", "device", and "dtype"?)
-# ToDo: Add "device" and "dtype" properties.
-# ToDo: Add troch scripting test to unittests
