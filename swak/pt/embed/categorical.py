@@ -22,9 +22,9 @@ class CategoricalEmbedder(Bag):
         Category counts for additional features. Together with the `cat_count`,
         the total number of category counts, i.e., the total number of features
         to embed must match the size of the last dimension of the input tensor.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the embedder on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the embedder in.
         Defaults to ``torch.float``.
     **kwargs

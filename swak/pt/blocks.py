@@ -42,9 +42,9 @@ class ActivatedBlock(Block):
     bias: bool, optional
         Whether to add a learnable bias vector in to the projections.
         Defaults to ``True``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the block on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
@@ -146,9 +146,9 @@ class ActivatedHiddenBlock(Block):
     bias: bool, optional
         Whether to add a learnable bias vector in to the projections.
         Defaults to ``True``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the block on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
@@ -259,9 +259,9 @@ class GatedBlock(Block):
     bias: bool, optional
         Whether to add a learnable bias vector in to the projections.
         Defaults to ``True``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the block on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
@@ -365,9 +365,9 @@ class GatedHiddenBlock(Block):
     bias: bool, optional
         Whether to add a learnable bias vector in to the projections.
         Defaults to ``True``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the block on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     """
@@ -494,9 +494,9 @@ class GatedResidualBlock(Block):
     dropout: float, optional
         The amount of dropout to apply to the gated signal before adding it
         to the activated residual. Defaults to 0.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the block on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the block in. Defaults to ``torch.float``.
 
     Note
@@ -636,9 +636,9 @@ class SkipConnection(Block):
         Defaults to :class:`Identity`, resulting in no normalization.
     *args
         Arguments used to initialize an instance of `norm_cls`.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the block on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the block in. Defaults to ``torch.float``.
     **kwargs
         Keyword arguments used to initialize an instance of `norm_cls`.
@@ -734,9 +734,9 @@ class Repeat(Block):
         An instance of a :class:`SkipConnection` to repeat.
     n_layers: int, optional
         How often to repeat the `skip`. Defaults to 2.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the blocks on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the blocks in. Defaults to ``torch.float``.
 
     Raises

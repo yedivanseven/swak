@@ -56,11 +56,12 @@ def identity(tensor: Tensor, *_: Any, **__: Any) -> Tensor:
     return tensor
 
 
+# ToDo: Add unit tests!
 class ResetIdentity(Resettable):
     """PyTorch module that passes a tensor right through, doing nothing.
 
     This is a placeholder for instances where a default ``Module`` is required
-    that also has a :method:`reset_parameters()` method. Providing any number
+    that also has a :meth:`reset_parameters()` method. Providing any number
     of (keyword) arguments on instantiation is permitted, but they are ignored.
 
     """
@@ -88,12 +89,13 @@ class ResetIdentity(Resettable):
         """Does nothing because there are no internal parameters to reset."""
 
 
+# ToDo: Add unit tests!
 class BlockIdentity(Block):
     """PyTorch module that passes a tensor right through, doing nothing.
 
     This is a placeholder for instances where a default ``Module`` is required
-    that not only has a :method:`reset_parameters()` method, but also a
-    :method:`new()` method in addition to ``mod_dim`, ``device`` and ``dtype``.
+    that not only has a :meth:`reset_parameters()` method, but also a
+    :meth:`new()` method in addition to ``mod_dim``, ``device`` and ``dtype``.
     Providing any number of (keyword) arguments on instantiation is permitted,
     but they are ignored.
 
@@ -157,6 +159,7 @@ class BlockIdentity(Block):
         return self.__class__(self.mod_dim)
 
 
+# ToDo: Add unit tests!
 class Finalizer(Block):
     """Extract one or more numbers from the final layer of a neural network.
 
@@ -188,9 +191,9 @@ class Finalizer(Block):
     bias: bool, optional
         Whether to add a learnable bias vector to the projection(s).
         Defaults to ``True``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the finalizer on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the finalizer in.
         Defaults to ``torch.float``.
 
@@ -293,6 +296,7 @@ class Finalizer(Block):
         )
 
 
+# ToDo: Add unit tests!
 class NegativeBinomialFinalizer(Block):
     """Consistent mean and standard deviation for over-dispersed counts.
 
@@ -312,9 +316,9 @@ class NegativeBinomialFinalizer(Block):
     bias: bool, optional
         Whether to add a learnable bias vector to the projection(s).
         Defaults to ``True``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the finalizer on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the finalizer in.
         Defaults to ``torch.float``.
     beta: float, optional
@@ -505,6 +509,7 @@ class Compile:
         return pt.compile(model, **merged_kwargs)
 
 
+# ToDo: Add unit tests!
 class Stack(ArgRepr):
     """Simple partial of PyTorch's top-level `stack` function.
 

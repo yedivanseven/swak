@@ -39,7 +39,7 @@ __all__ = [
 
 
 class Resettable(Module, ABC):
-    """Abstract base class for Modules with a ``reset_parameters`` method."""
+    """Abstract base class for Modules with a :meth:`reset_parameters()`."""
 
     def __init__(self, *_: Any, **__: Any) -> None:
         super().__init__()

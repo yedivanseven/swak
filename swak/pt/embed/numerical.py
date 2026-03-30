@@ -22,9 +22,9 @@ class NumericalEmbedder(Bag):
         last dimension, and change that dimension to size `mod_dim`.
     *args
         Additional arguments to use when instantiating `emb_cls`.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the embedder on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the embedder in.
         Defaults to ``torch.float``.
     **kwargs

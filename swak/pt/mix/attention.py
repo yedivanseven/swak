@@ -31,9 +31,9 @@ class CrossAttentionMixer(Mixer):
     keep_dim: bool, optional
        Whether to keep the next-to-last dimension of the output tensor as 1
        or squeeze it. Defaults to ``False``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the mixer on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the mixer in.
         Defaults to ``torch.float``.
 
@@ -220,9 +220,9 @@ class SelfAttentionMixer(Mixer):
     keep_dim: bool, optional
         Whether to keep the next-to-last dimension of the output tensor as 1
         or squeeze it. Defaults to ``False``.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the embedder on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the embedder in.
         Defaults to ``torch.float``.
 

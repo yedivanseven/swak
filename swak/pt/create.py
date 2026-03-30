@@ -20,9 +20,9 @@ class Create(ArgRepr):
 
     Parameters
     ----------
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype of the tensor to create. Defaults to ``None``
-    device: pt.device, optional
+    device: torch.device, optional
         Torch device to create the tensor on. Defaults to ``None``
     requires_grad: bool, optional
         If autograd should record operations on the returned tensor.
@@ -74,9 +74,9 @@ class AsTensor(ArgRepr):
 
     Parameters
     ----------
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype of the tensor to create. Defaults to ``None``
-    device: pt.device, optional
+    device: torch.device, optional
         Torch device to create the tensor on. Defaults to ``None``
 
     """
@@ -136,7 +136,7 @@ class To(ArgRepr):
 
     Parameters
     ----------
-    target: pt.device or pt.dtype
+    target: torch.device or torch.dtype
         The device or dtype to move the tensor or module to.
     *args
         Additional argument to pass to the `to` method.

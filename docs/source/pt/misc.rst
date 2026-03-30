@@ -7,7 +7,12 @@ misc
 .. autofunction:: swak.pt.misc.identity
 
 
-.. autoclass:: swak.pt.misc.Identity
+.. autoclass:: swak.pt.misc.ResetIdentity
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.misc.BlockIdentity
    :members:
    :show-inheritance:
 
@@ -23,6 +28,12 @@ misc
 
 
 .. autoclass:: swak.pt.misc.Compile
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.misc.Stack
    :members:
    :special-members: __call__
    :show-inheritance:

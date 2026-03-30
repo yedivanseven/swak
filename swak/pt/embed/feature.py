@@ -20,9 +20,9 @@ class FeatureEmbedder(Bag):
         A fully configured instance of :class:`NumericalEmbedder`.
     cat: CategoricalEmbedder
         A fully configured instance of :class:`CategoricalEmbedder`.
-    device: str or pt.device, optional
+    device: str or torch.device, optional
         Torch device to first create the embedders on. Defaults to "cpu".
-    dtype: pt.dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the embedders in.
         Defaults to ``torch.float``.
 
