@@ -12,7 +12,6 @@ from .types import (
     Module,
     Tensors,
     Tensors2T,
-    Block,
     Resettable
 )
 from .exceptions import (
@@ -33,9 +32,9 @@ __all__ = [
     'LazyCatDim0'
 ]
 
-# ToDo. Try torch scripting! Can it handle **kwargs?
-def identity(tensor: Tensor, **_: Any) -> Tensor:
-    """Simply pass through the argument and ignore keyword arguments.
+
+def identity(tensor: Tensor, *_: Any, **__: Any) -> Tensor:
+    """Pass through the first argument, ignore additional (keyword) arguments.
 
     This is a placeholder for instances where a default function is required.
 
@@ -53,7 +52,7 @@ def identity(tensor: Tensor, **_: Any) -> Tensor:
     return tensor
 
 
-class Identity(Block):
+class Identity(Resettable):
     """PyTorch module that passes a tensor right through, doing nothing.
 
     This is a placeholder for instances where a default module is required.
@@ -65,8 +64,8 @@ class Identity(Block):
     def __init__(self, *_: Any, **__: Any) -> None:
         super().__init__()
 
-    def forward(self, tensor: Tensor, **_: Any) -> Tensor:
-        """Simply pass through the argument and ignore keyword arguments.
+    def forward(self, tensor: Tensor, *_: Any, **__: Any) -> Tensor:
+        """Pass through first argument, ignore additional (keyword) arguments.
 
         Parameters
         ----------
@@ -143,7 +142,7 @@ class Finalizer(Resettable):
         self.kwargs = kwargs
         self.finalize = ptn.ModuleList(
             ptn.Sequential(ptn.Linear(mod_dim, 1, **kwargs), activate)
-            for activate in activations
+            for activate in self.activations
         )
 
     @property
@@ -408,6 +407,7 @@ class Compile:
         return pt.compile(model, **merged_kwargs)
 
 
+# ToDo: Add Stack
 class Cat(ArgRepr):
     """Simple partial of PyTorch's top-level `cat` function.
 

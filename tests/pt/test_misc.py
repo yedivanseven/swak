@@ -24,9 +24,19 @@ class TestIdentityFunction(unittest.TestCase):
         result = identity(obj)
         self.assertIs(result, obj)
 
+    def test_arg_and_args(self):
+        obj = object()
+        result = identity(obj, 'bar', answer=42)
+        self.assertIs(result, obj)
+
     def test_arg_and_kwargs(self):
         obj = object()
         result = identity(obj, foo='bar', answer=42)
+        self.assertIs(result, obj)
+
+    def test_arg_and_args_and_kwargs(self):
+        obj = object()
+        result = identity(obj, 'bar', answer=42)
         self.assertIs(result, obj)
 
 
@@ -52,9 +62,19 @@ class TestIdentityModule(unittest.TestCase):
         result = Identity()(obj)
         self.assertIs(result, obj)
 
+    def test_arg_and_args(self):
+        obj = object()
+        result = Identity()(obj, 'bar', 42)
+        self.assertIs(result, obj)
+
     def test_arg_and_kwargs(self):
         obj = object()
         result = Identity()(obj, foo='bar', answer=42)
+        self.assertIs(result, obj)
+
+    def test_arg_and_args_and_kwargs(self):
+        obj = object()
+        result = Identity()(obj, 'bar', answer=42)
         self.assertIs(result, obj)
 
     def test_has_reset_parameters(self):

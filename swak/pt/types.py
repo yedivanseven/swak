@@ -67,7 +67,6 @@ class Resettable(Module, ABC):
     @abstractmethod
     def reset_parameters(self) -> None:
         """Subclasses implement in-place reset of all internal parameters."""
-        ...
 
 
 class Block(Resettable):
