@@ -10,7 +10,7 @@ features so that, when combined, all are treated on equal footing.
 
 from .activated import ActivatedEmbedder
 from .gated import GatedEmbedder
-from .gated_residual import GatedResidualEmbedder
+from .gated_activated import GatedActivatedEmbedder
 from .numerical import NumericalEmbedder
 from .categorical import CategoricalEmbedder
 from .feature import FeatureEmbedder
@@ -18,7 +18,7 @@ from .feature import FeatureEmbedder
 __all__ = [
     'ActivatedEmbedder',
     'GatedEmbedder',
-    'GatedResidualEmbedder',
+    'GatedActivatedEmbedder',
     'NumericalEmbedder',
     'CategoricalEmbedder',
     'FeatureEmbedder'

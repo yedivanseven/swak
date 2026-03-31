@@ -4,7 +4,7 @@ import torch.nn as ptn
 from ..types import Tensor, Module, Functional, Block
 
 
-class GatedResidualEmbedder(Block):
+class GatedActivatedEmbedder(Block):
     """Gated Residual Network (GRN) for embedding numerical features.
 
     Parameters
@@ -28,9 +28,6 @@ class GatedResidualEmbedder(Block):
     bias: bool, optional
         Whether to add a learnable bias vector in the projections.
         Defaults to ``True``.
-    dropout: float, optional
-        The amount of dropout to apply to the gated signal before adding it
-        to the activated residual. Defaults to 0.
     inp_dim: int, optional
         The number of features to embed together. Defaults to 1.
     device: str or torch.device, optional
@@ -47,7 +44,7 @@ class GatedResidualEmbedder(Block):
     happens inside the present module. Secondly, this embedding vector is not
     transformed again (as Eq. 4 seems to imply) and there is no option to add
     a `context vector`. Thirdly, the intermediate linear layer (Eq. 3) is
-    eliminated and dropout is applied to the activations after gating.
+    eliminated. Thirdly no dropout is applied to the inputs of the gate.
     Finally, there is no layer norm (Eq. 2). Should additional normalization
     be desired, it can be performed independently on the output of this module.
 
@@ -66,7 +63,6 @@ class GatedResidualEmbedder(Block):
             activate: Module | Functional = ptn.ELU(),
             gate: Module | Functional = ptn.Sigmoid(),
             bias: bool = True,
-            dropout: float = 0.0,
             inp_dim: int = 1,
             device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float
@@ -74,8 +70,6 @@ class GatedResidualEmbedder(Block):
         super().__init__()
         self.__mod_dim = mod_dim
         self.bias = bias
-        self.dropout = dropout
-        self.drop = ptn.Dropout(dropout)
         self.inp_dim = inp_dim
         self.embed = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
         self.widen = ptn.Linear(mod_dim, 2 * mod_dim, bias, device, dtype)
@@ -117,10 +111,8 @@ class GatedResidualEmbedder(Block):
             the size of the last dimension changed to the specified `mod_dim`.
 
         """
-        activated = self.activate(self.embed(inp))
-        wide = self.widen(activated)
-        gated = wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
-        return activated + self.drop(gated)
+        wide = self.widen(self.activate(self.embed(inp)))
+        return wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
@@ -135,7 +127,7 @@ class GatedResidualEmbedder(Block):
 
         Returns
         -------
-        GatedResidualEmbedder
+        GatedActivatedEmbedder
             A fresh, new instance of itself.
 
         """
@@ -144,7 +136,6 @@ class GatedResidualEmbedder(Block):
             self.activate,
             self.gate,
             self.bias,
-            self.dropout,
             self.inp_dim,
             self.device,
             self.dtype

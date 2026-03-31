@@ -10,7 +10,6 @@ from ..misc import ArgRepr
 from .types import (
     Tensor,
     Module,
-    Functional,
     Tensors,
     Tensors2T,
     Resettable,
@@ -56,7 +55,6 @@ def identity(tensor: Tensor, *_: Any, **__: Any) -> Tensor:
     return tensor
 
 
-# ToDo: Add unit tests!
 class ResetIdentity(Resettable):
     """PyTorch module that passes a tensor right through, doing nothing.
 
@@ -89,7 +87,6 @@ class ResetIdentity(Resettable):
         """Does nothing because there are no internal parameters to reset."""
 
 
-# ToDo: Add unit tests!
 class BlockIdentity(Block):
     """PyTorch module that passes a tensor right through, doing nothing.
 
@@ -159,7 +156,6 @@ class BlockIdentity(Block):
         return self.__class__(self.mod_dim)
 
 
-# ToDo: Add unit tests!
 class Finalizer(Block):
     """Extract one or more numbers from the final layer of a neural network.
 
@@ -177,16 +173,12 @@ class Finalizer(Block):
         The size of the last dimension of the input tensor, essentially the
         "width" of the neural network before it is to be collapsed to the
         final output.
-    activation: Module or function
+    activation: Module
         Output activation function to be applied after (linear) projection.
-        Must be a callable that accepts a tensor as sole argument, like a
-        module from ``torch.nn`` or a function from ``torch.nn.functional``,
-        depending on whether it needs to be further parameterized or not.
-        Examples would be ``Sigmoid()`` for binary classification or
-        ``Softplus()`` for strictly positive regression targets. For
-        unbounded regression targets, where you want no activation function
-        at all, use and identity operation.
-    *activations: Module or function
+        Must be a ``torch.nn.Module`` and not any function from
+        ``torch.nn.functional``. For unbounded regression targets, use an an
+        identity module.
+    *activations: Module
         Additional outputs.
     bias: bool, optional
         Whether to add a learnable bias vector to the projection(s).
@@ -207,17 +199,17 @@ class Finalizer(Block):
     def __init__(
             self,
             mod_dim: int,
-            activation: Module | Functional,
-            *activations: Module | Functional,
+            activation: Module,
+            *activations: Module,
             bias: bool = True,
             device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
         self.__mod_dim = mod_dim
-        self.activations: tuple[Module | Functional, ...] = tuple(
-            self._reset(a, device, dtype)
-            for a in (activation, *activations)
+        self.activations: tuple[Module, ...] = tuple(
+            self._reset(act, device, dtype)
+            for act in (activation, *activations)
         )
         self.bias = bias
         self.finalize = ptn.ModuleList(
@@ -296,7 +288,6 @@ class Finalizer(Block):
         )
 
 
-# ToDo: Add unit tests!
 class NegativeBinomialFinalizer(Block):
     """Consistent mean and standard deviation for over-dispersed counts.
 
@@ -509,7 +500,6 @@ class Compile:
         return pt.compile(model, **merged_kwargs)
 
 
-# ToDo: Add unit tests!
 class Stack(ArgRepr):
     """Simple partial of PyTorch's top-level `stack` function.
 

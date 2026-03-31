@@ -24,7 +24,7 @@ blocks
    :show-inheritance:
 
 
-.. autoclass:: swak.pt.blocks.GatedResidualBlock
+.. autoclass:: swak.pt.blocks.GatedActivatedBlock
    :members:
    :show-inheritance:
 

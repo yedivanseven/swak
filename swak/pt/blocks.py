@@ -18,7 +18,7 @@ __all__ = [
     'ActivatedHiddenBlock',
     'GatedBlock',
     'GatedHiddenBlock',
-    'GatedResidualBlock',
+    'GatedActivatedBlock',
     'SkipConnection',
     'Repeat'
 ]
@@ -466,7 +466,7 @@ class GatedHiddenBlock(Block):
         )
 
 
-class GatedResidualBlock(Block):
+class GatedActivatedBlock(Block):
     """Gated Residual Network (GRN) for efficiently extracting information.
 
     Parameters
@@ -491,9 +491,6 @@ class GatedResidualBlock(Block):
     bias: bool, optional
         Whether to add a learnable bias vector in the projections.
         Defaults to ``True``.
-    dropout: float, optional
-        The amount of dropout to apply to the gated signal before adding it
-        to the activated residual. Defaults to 0.
     device: str or torch.device, optional
         Torch device to first create the block on. Defaults to "cpu".
     dtype: torch.dtype, optional
@@ -503,10 +500,10 @@ class GatedResidualBlock(Block):
     ----
     This implementation is inspired by how features are encoded in `Temporal
     Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
-    intermediate linear layer (Eq. 3) is eliminated and dropout is applied
-    directly to the activations after the first layer. Secondly, there is no
-    layer norm (Eq. 2). Should additional normalization be desired, it can be
-    performed independently on the output of this module.
+    intermediate linear layer (Eq. 3) is eliminated. Secondly no dropout is
+    applied to the inputs of the gate. Finally, there is no residual
+    connection and no layer norm (Eq. 2) inside this module. If desired,
+    these operations can be done independently around this module.
 
     References
     ----------
@@ -523,7 +520,6 @@ class GatedResidualBlock(Block):
             activate: Module | Functional = ptn.ELU(),
             gate: Module | Functional = ptn.Sigmoid(),
             bias: bool = True,
-            dropout: float = 0.0,
             device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float
     ) -> None:
@@ -533,8 +529,6 @@ class GatedResidualBlock(Block):
         self.activate = self._reset(activate, device, dtype)
         self.gate = self._reset(gate, device, dtype)
         self.bias = bias
-        self.dropout = dropout
-        self.drop = ptn.Dropout(dropout)
         self.project = ptn.Linear(
             in_features=mod_dim,
             out_features=mod_dim,
@@ -579,10 +573,8 @@ class GatedResidualBlock(Block):
             Same dimensions and sizes as the input tensor.
 
         """
-        activated = self.activate(self.project(inp))
-        wide = self.widen(activated)
-        gated = wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
-        return activated + self.drop(gated)
+        wide = self.widen(self.activate(self.project(inp)))
+        return wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the block."""
@@ -590,14 +582,14 @@ class GatedResidualBlock(Block):
         self.widen.reset_parameters()
         # Although few, some activation functions have learnable parameters
         self.activate = self._reset(self.activate, self.device, self.dtype)
-        self.gate = self._reset(self.gate, self.device, self.device)
+        self.gate = self._reset(self.gate, self.device, self.dtype)
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters.
 
         Returns
         -------
-        GatedResidualBlock
+        GatedActivatedBlock
             A fresh, new instance of itself.
 
         """
@@ -606,7 +598,6 @@ class GatedResidualBlock(Block):
             self.activate,
             self.gate,
             self.bias,
-            self.dropout,
             self.device,
             self.dtype
         )
@@ -748,9 +739,9 @@ class Repeat(Block):
 
     Notes
     -----
-    If the skip-connection sets `norm_first` to ``True``, the final output of
-    the last repetition will also be normalized (with a fresh instance of the
-    exact same norm type used by the skip-connection).
+    If the skip-connection sets `norm_first` to ``True``, no norm will be
+    applied to the final output of the last repetition. If a trailing norm
+    is desired, it should be applied externally, after this module.
 
     See Also
     --------
@@ -766,15 +757,11 @@ class Repeat(Block):
             dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
-        self.skip = skip.to(device, dtype)
         self.n_layers = self.__valid(n_layers)
-        self.blocks = ptn.Sequential(*[self.skip.new() for _ in self.layers])
-        self.norm = skip.norm_cls(
-            *skip.args,
-            device=device,
-            dtype=dtype,
-            **skip.kwargs
-        ) if skip.norm_first else ResetIdentity()
+        self.blocks = ptn.Sequential(*[
+            skip.new().to(device, dtype)
+            for _ in self.layers
+        ])
 
     @staticmethod
     def __valid(n_layers: Any) -> int:
@@ -826,13 +813,12 @@ class Repeat(Block):
             Same dimensions and sizes as the input tensor.
 
         """
-        return self.norm(self.blocks(inp))
+        return self.blocks(inp)
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of all blocks."""
         for block in self.blocks:
             block.reset_parameters()
-        self.norm.reset_parameters()
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters.
@@ -844,7 +830,7 @@ class Repeat(Block):
 
         """
         return self.__class__(
-            self.skip,
+            self.blocks[0],
             self.n_layers,
             self.device,
             self.dtype

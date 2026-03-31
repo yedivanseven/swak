@@ -6,10 +6,12 @@ from swak.pt.exceptions import CompileError, ShapeError, ValidationErrors
 from swak.pt.misc import (
     identity,
     ResetIdentity,
+    BlockIdentity,
     Finalizer,
     NegativeBinomialFinalizer,
     Compile,
     Cat,
+    Stack,
     LazyCatDim0
 )
 
@@ -17,7 +19,7 @@ from swak.pt.misc import (
 class TestIdentityFunction(unittest.TestCase):
 
     def test_callable(self):
-        self.assertTrue(callable(ResetIdentity()))
+        self.assertTrue(callable(identity))
 
     def test_arg(self):
         obj = object()
@@ -40,7 +42,7 @@ class TestIdentityFunction(unittest.TestCase):
         self.assertIs(result, obj)
 
 
-class TestIdentityModule(unittest.TestCase):
+class TestRestIdentity(unittest.TestCase):
 
     def test_empty_instantiation(self):
         _ = ResetIdentity()
@@ -51,7 +53,7 @@ class TestIdentityModule(unittest.TestCase):
     def test_instantiation_accepts_kwargs(self):
         _ = ResetIdentity(foo=1, bar='baz', answer=4.2)
 
-    def test_instantiation_accepts_kargs_and_kwargs(self):
+    def test_instantiation_accepts_args_and_kwargs(self):
         _ = ResetIdentity(1, 42, foo='bar')
 
     def test_callable(self):
@@ -89,18 +91,94 @@ class TestIdentityModule(unittest.TestCase):
         i = ResetIdentity()
         i.reset_parameters()
 
+
+class TestBlockIdentity(unittest.TestCase):
+
+    def test_empty_instantiation(self):
+        _ = BlockIdentity(4)
+
+    def test_instantiation_accepts_args(self):
+        _ = BlockIdentity(4, 'foo', 4.2)
+
+    def test_instantiation_accepts_kwargs(self):
+        _ = BlockIdentity(4, foo=1, bar='baz', answer=4.2)
+
+    def test_instantiation_accepts_args_and_kwargs(self):
+        _ = BlockIdentity(4, 42, foo='bar')
+
+    def test_callable(self):
+        self.assertTrue(callable(BlockIdentity(4)))
+
+    def test_arg(self):
+        obj = object()
+        result = BlockIdentity(4)(obj)
+        self.assertIs(result, obj)
+
+    def test_arg_and_args(self):
+        obj = object()
+        result = BlockIdentity(4)(obj, 'bar', 42)
+        self.assertIs(result, obj)
+
+    def test_arg_and_kwargs(self):
+        obj = object()
+        result = BlockIdentity(4)(obj, foo='bar', answer=42)
+        self.assertIs(result, obj)
+
+    def test_arg_and_args_and_kwargs(self):
+        obj = object()
+        result = BlockIdentity(4)(obj, 'bar', answer=42)
+        self.assertIs(result, obj)
+
+    def test_has_reset_parameters(self):
+        i = BlockIdentity(4)
+        self.assertTrue(hasattr(i, 'reset_parameters'))
+
+    def test_reset_parameters(self):
+        i = BlockIdentity(4)
+        self.assertTrue(callable(i.reset_parameters))
+
+    def test_call_reset_parameters(self):
+        i = BlockIdentity(4)
+        i.reset_parameters()
+
+    def test_has_mod_dim(self):
+        i = BlockIdentity(4)
+        self.assertTrue(hasattr(i, 'mod_dim'))
+
+    def test_mod_dim(self):
+        i = BlockIdentity(4)
+        self.assertIsInstance(i.mod_dim, int)
+        self.assertEqual(4, i.mod_dim)
+
+    def test_has_device(self):
+        i = BlockIdentity(4)
+        self.assertTrue(hasattr(i, 'device'))
+
+    def test_device(self):
+        i = BlockIdentity(4)
+        self.assertIsNone(i.device)
+
+    def test_has_dtype(self):
+        i = BlockIdentity(4)
+        self.assertTrue(hasattr(i, 'dtype'))
+
+    def test_dtype(self):
+        i = BlockIdentity(4)
+        self.assertIsNone(i.dtype)
+
     def test_has_new(self):
-        i = ResetIdentity()
+        i = BlockIdentity(4)
         self.assertTrue(hasattr(i, 'new'))
 
     def test_new(self):
-        i = ResetIdentity()
+        i = BlockIdentity(4)
         self.assertTrue(callable(i.new))
 
     def test_call_new(self):
-        old = ResetIdentity()
+        old = BlockIdentity(4)
         new = old.new()
-        self.assertIsInstance(new, ResetIdentity)
+        self.assertIsInstance(new, BlockIdentity)
+        self.assertIsNot(old, new)
 
 
 class TestFinalizer(unittest.TestCase):
@@ -108,9 +186,14 @@ class TestFinalizer(unittest.TestCase):
     def setUp(self):
         self.active1 = ptn.Sigmoid()
         self.active2 = ptn.Softplus()
-        self.empty = Finalizer(4)
         self.default = Finalizer(4, self.active1, self.active2)
-        self.custom = Finalizer(4, ResetIdentity(), ResetIdentity(), bias=False)
+        self.custom = Finalizer(
+            4,
+            ResetIdentity(),
+            ResetIdentity(),
+            bias=False,
+            dtype=pt.float64
+        )
         self.custom.finalize[0][0].weight.data = pt.ones(1, 4) / 4.0
         self.custom.finalize[1][0].weight.data = pt.ones(1, 4) / 4.0
 
@@ -121,6 +204,18 @@ class TestFinalizer(unittest.TestCase):
         self.assertIsInstance(self.default.mod_dim, int)
         self.assertEqual(4, self.default.mod_dim)
 
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.default, 'device'))
+
+    def test_device(self):
+        self.assertEqual(pt.device('cpu'), self.default.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.default, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.default.dtype, pt.float)
+
     def test_has_activations(self):
         self.assertTrue(hasattr(self.default, 'activations'))
 
@@ -130,18 +225,6 @@ class TestFinalizer(unittest.TestCase):
             self.default.activations
         )
 
-    def test_empty_activations(self):
-        self.assertTupleEqual((), self.empty.activations)
-
-    def test_has_kwargs(self):
-        self.assertTrue(hasattr(self.default, 'kwargs'))
-
-    def test_default_kwargs(self):
-        self.assertDictEqual({}, self.default.kwargs)
-
-    def test_custom_kwargs(self):
-        self.assertDictEqual({'bias': False}, self.custom.kwargs)
-
     def test_has_n_out(self):
         self.assertTrue(hasattr(self.default, 'n_out'))
 
@@ -149,30 +232,59 @@ class TestFinalizer(unittest.TestCase):
         self.assertIsInstance(self.default.n_out, int)
         self.assertEqual(2, self.default.n_out)
 
-    def test_empty_n_out(self):
-        self.assertEqual(0, self.empty.n_out)
-
     def test_has_finalize(self):
         self.assertTrue(hasattr(self.default, 'finalize'))
 
     def test_finalize(self):
         self.assertIsInstance(self.default.finalize, ptn.ModuleList)
+        self.assertEqual(2, len(self.default.finalize))
 
     @patch('torch.nn.Linear')
-    def test_empty_linear_not_called(self, mock):
-        _ = Finalizer(4)
-        mock.assert_not_called()
+    def test_linear_called_once_default(self, mock):
+        mock.return_value = self.active1
+        _ = Finalizer(4, self.active1)
+        mock.assert_called_once_with(
+            in_features=4,
+            out_features=1,
+            bias=True,
+            device='cpu',
+            dtype=pt.float
+        )
 
     @patch('torch.nn.Linear')
-    def test_linear_called_once(self, mock):
-        mock.return_value = self.active2
-        _ = Finalizer(4, self.active1, bias=False)
-        mock.assert_called_once_with(4, 1, bias=False)
+    def test_linear_called_once_custom(self, mock):
+        mock.return_value = self.active1
+        _ = Finalizer(4, self.active1, bias=False, dtype=pt.float64)
+        mock.assert_called_once_with(
+            in_features=4,
+            out_features=1,
+            bias=False,
+            device='cpu',
+            dtype=pt.float64
+        )
 
     @patch('torch.nn.Linear')
     def test_linear_called_twice(self, mock):
-        mock.return_value = self.active2
+        mock.return_value = self.active1
         _ = Finalizer(4, self.active1, self.active2)
+        self.assertEqual(2, mock.call_count)
+
+    @patch('torch.nn.Sigmoid.to')
+    def test_to_called_once_default(self, mock):
+        mock.return_value = self.active1
+        _ = Finalizer(4, self.active1)
+        mock.assert_called_once_with(device='cpu', dtype=pt.float)
+
+    @patch('torch.nn.Sigmoid.to')
+    def test_to_called_custom(self, mock):
+        mock.return_value = self.active1
+        _ = Finalizer(4, self.active1, bias=False, dtype=pt.float64)
+        mock.assert_called_once_with(device='cpu', dtype=pt.float64)
+
+    @patch('torch.nn.Sigmoid.to')
+    def test_to_called_twice(self, mock):
+        mock.return_value = self.active1
+        _ = Finalizer(4, self.active1, self.active1)
         self.assertEqual(2, mock.call_count)
 
     def test_has_reset_parameters(self):
@@ -189,26 +301,32 @@ class TestFinalizer(unittest.TestCase):
         self.default.reset_parameters()
         self.assertEqual(2, mock.call_count)
 
+    def test_reset_parameters_calls_activations(self):
+        finalize = Finalizer(4, ptn.PReLU())
+        with patch('torch.nn.PReLU.reset_parameters') as mock:
+            finalize.reset_parameters()
+            mock.assert_called_once_with()
+
+    @patch('torch.nn.Sigmoid.to', return_value=pt.nn.Sigmoid())
+    def test_to_called_on_activate(self, mock):
+        self.default.reset_parameters()
+        mock.assert_called_once_with(
+            device=pt.device('cpu'),
+            dtype=pt.float
+        )
+
     def test_has_new(self):
         self.assertTrue(hasattr(self.default, 'new'))
 
     def test_new(self):
         self.assertTrue(callable(self.default.new))
 
-    def test_call_new_defaults(self):
+    def test_call_new(self):
         new = self.default.new()
         self.assertIsInstance(new, Finalizer)
+        self.assertIsNot(new, self.default)
         self.assertEqual(self.default.mod_dim, new.mod_dim)
         self.assertTupleEqual(self.default.activations, new.activations)
-
-    def test_call_new_update(self):
-        new = self.default.new(8, self.active2, self.active1, bias=False)
-        self.assertEqual(8, new.mod_dim)
-        self.assertTupleEqual(
-            (self.active2, self.active1),
-            new.activations
-        )
-        self.assertDictEqual({'bias': False}, new.kwargs)
 
     def test_callable(self):
         self.assertTrue(callable(self.custom))
@@ -275,9 +393,13 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
 
     def setUp(self):
         self.default = NegativeBinomialFinalizer(8)
-        self.custom = NegativeBinomialFinalizer(4, 0.75, 10, bias=False)
-        self.custom.mu.weight.data = pt.ones(1, 4) / 4.0
-        self.custom.alpha.weight.data = pt.ones(1, 4) / 4.0
+        self.custom = NegativeBinomialFinalizer(
+            mod_dim=4,
+            bias=False,
+            dtype=pt.float64,
+            beta=0.75,
+            threshold=10
+        )
         self.expected_mu = pt.tensor(0.75).exp().log1p() * 4.0 / 3.0
         self.expected_alpha = (
             self.expected_mu * (1.0 + self.expected_mu * self.expected_mu)
@@ -289,6 +411,31 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
     def test_mod_dim(self):
         self.assertIsInstance(self.default.mod_dim, int)
         self.assertEqual(8, self.default.mod_dim)
+
+    def test_has_bias(self):
+        self.assertTrue(hasattr(self.default, 'bias'))
+
+    def test_bias(self):
+        self.assertIsInstance(self.default.bias, bool)
+        self.assertTrue(self.default.bias)
+
+    def test_custom_bias(self):
+        self.assertFalse(self.custom.bias)
+
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.default, 'device'))
+
+    def test_device(self):
+        self.assertEqual(pt.device('cpu'), self.default.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.default, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.default.dtype, pt.float)
+
+    def test_custom_dtype(self):
+        self.assertIs(pt.float64, self.custom.dtype)
 
     def test_has_beta(self):
         self.assertTrue(hasattr(self.default, 'beta'))
@@ -307,15 +454,6 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
 
     def test_custom_threshold(self):
         self.assertEqual(10.0, self.custom.threshold)
-
-    def test_has_kwargs(self):
-        self.assertTrue(hasattr(self.default, 'kwargs'))
-
-    def test_default_kwargs(self):
-        self.assertDictEqual({}, self.default.kwargs)
-
-    def test_custom_kwargs(self):
-        self.assertDictEqual({'bias': False}, self.custom.kwargs)
 
     def test_has_mu(self):
         self.assertTrue(hasattr(self.default, 'mu'))
@@ -385,25 +523,26 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
     def test_new(self):
         self.assertTrue(callable(self.default.new))
 
-    def test_call_new_defaults(self):
+    def test_call_new(self):
         new = self.default.new()
         self.assertIsInstance(new, NegativeBinomialFinalizer)
+        self.assertIsNot(new, self.default)
         self.assertEqual(self.default.mod_dim, new.mod_dim)
+        self.assertEqual(self.default.bias, new.bias)
         self.assertEqual(self.default.beta, new.beta)
         self.assertEqual(self.default.threshold, new.threshold)
-        self.assertDictEqual(self.default.kwargs, new.kwargs)
-
-    def test_call_new_custom(self):
-        new = self.default.new(4, 0.75, 10., bias=False)
-        self.assertEqual(4, new.mod_dim)
-        self.assertEqual(0.75, new.beta)
-        self.assertEqual(10., new.threshold)
-        self.assertDictEqual({'bias': False}, new.kwargs)
+        self.assertIsNot(self.default.activate, new.activate)
+        self.assertIsNot(self.default.mu, new.mu)
+        self.assertIsNot(self.default.alpha, new.alpha)
+        self.assertEqual(self.default.device, new.device)
+        self.assertIs(self.default.dtype, new.dtype)
 
     def test_callable(self):
         self.assertTrue(callable(self.custom))
 
     def test_1d(self):
+        self.custom.mu.weight.data = pt.ones(1, 4) / 4.0
+        self.custom.alpha.weight.data = pt.ones(1, 4) / 4.0
         inp = pt.ones(4)
         actual_1, actual_2 = self.custom(inp)
         ones = pt.ones(1)
@@ -411,6 +550,8 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
         pt.testing.assert_close(actual_2, self.expected_alpha * ones)
 
     def test_2d(self):
+        self.custom.mu.weight.data = pt.ones(1, 4) / 4.0
+        self.custom.alpha.weight.data = pt.ones(1, 4) / 4.0
         inp = pt.ones(3, 4)
         actual_1, actual_2 = self.custom(inp)
         ones = pt.ones(3, 1)
@@ -418,6 +559,8 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
         pt.testing.assert_close(actual_2, self.expected_alpha * ones)
 
     def test_3d(self):
+        self.custom.mu.weight.data = pt.ones(1, 4) / 4.0
+        self.custom.alpha.weight.data = pt.ones(1, 4) / 4.0
         inp = pt.ones(2, 3, 4)
         actual_1, actual_2 = self.custom(inp)
         ones = pt.ones(2, 3, 1)
@@ -425,6 +568,8 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
         pt.testing.assert_close(actual_2, self.expected_alpha * ones)
 
     def test_4d(self):
+        self.custom.mu.weight.data = pt.ones(1, 4) / 4.0
+        self.custom.alpha.weight.data = pt.ones(1, 4) / 4.0
         inp = pt.ones(5, 2, 3, 4)
         actual_1, actual_2 = self.custom(inp)
         ones = pt.ones(5, 2, 3, 1)
@@ -442,14 +587,21 @@ class TestNegativeBinomialFinalizer(unittest.TestCase):
         mock_2.assert_called_once_with(inp)
 
     def test_activate_called(self):
-        mock = Mock(return_value=pt.ones(1))
+        ones = pt.ones(1, 4, device='cpu', dtype=pt.float64) / 4.0
+        self.custom.mu.weight.data = ones
+        self.custom.alpha.weight.data = ones
+
+        mock = Mock(return_value=pt.ones(1, device='cpu', dtype=pt.float64))
         self.custom.activate.forward = mock
-        inp = pt.ones(4)
+
+        inp = pt.ones(4, device='cpu', dtype=pt.float64)
         _ = self.custom(inp)
+
+        expected = pt.ones(1, device='cpu', dtype=pt.float64)
         actual_mu = mock.call_args_list[0][0][0]
         actual_alpha = mock.call_args_list[1][0][0]
-        pt.testing.assert_close(actual_mu, pt.ones(1))
-        pt.testing.assert_close(actual_alpha, pt.ones(1))
+        pt.testing.assert_close(actual_mu, expected)
+        pt.testing.assert_close(actual_alpha, expected)
 
 
 class TestCompile(unittest.TestCase):
@@ -575,6 +727,45 @@ class TestCat(unittest.TestCase):
     def test_custom_repr(self):
         expected = 'Cat(2)'
         self.assertEqual(expected, repr(Cat(2)))
+
+
+class TestStack(unittest.TestCase):
+
+    def test_has_dim(self):
+        stack = Stack()
+        self.assertTrue(hasattr(stack, 'dim'))
+
+    def test_default_dim(self):
+        stack = Stack()
+        self.assertIsInstance(stack.dim, int)
+        self.assertEqual(0, stack.dim)
+
+    def test_custom_dim(self):
+        stack = Stack(2)
+        self.assertEqual(2, stack.dim)
+
+    def test_callable(self):
+        self.assertTrue(callable(Stack()))
+
+    @patch('torch.stack')
+    def test_cat_called_with_default_dim(self,  mock):
+        stack = Stack()
+        _ = stack([1, 2, 3])
+        mock.assert_called_once_with([1, 2, 3], dim=0)
+
+    @patch('torch.stack')
+    def test_cat_called_with_custom_dim(self,  mock):
+        stack = Stack(2)
+        _ = stack([1, 2, 3])
+        mock.assert_called_once_with([1, 2, 3], dim=2)
+
+    def test_default_repr(self):
+        expected = 'Stack(0)'
+        self.assertEqual(expected, repr(Stack()))
+
+    def test_custom_repr(self):
+        expected = 'Stack(2)'
+        self.assertEqual(expected, repr(Stack(2)))
 
 
 class TestLazyCatDim0(unittest.TestCase):

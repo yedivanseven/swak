@@ -55,6 +55,9 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_embed(self):
         self.assertIsInstance(self.embed.embed, Linear)
+        self.assertEqual(1, self.embed.embed.in_features)
+        self.assertEqual(8, self.embed.embed.out_features)
+        self.assertIsInstance(self.embed.embed.bias, pt.Tensor)
 
     @patch('torch.nn.Linear', return_value=pt.nn.Linear(1, 8))
     def test_linear_called(self, mock):
@@ -103,6 +106,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(self.embed.bias, new.bias)
         self.assertEqual(self.embed.dtype, new.dtype)
         self.assertEqual(self.embed.device, new.device)
+        self.assertIsNot(self.embed.embed, new.embed)
 
 
 class TestAttributes(unittest.TestCase):
