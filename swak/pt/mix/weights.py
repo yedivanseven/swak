@@ -64,7 +64,7 @@ class GlobalWeightsMixer(Mixer):
 
     @property
     def n_features(self) -> int:
-        """The number of features in the bag."""
+        """The number of features in the mix."""
         return self.__n_features
 
     @property
@@ -226,7 +226,7 @@ class InstanceWeightsMixer(Mixer):
 
     @property
     def n_features(self) -> int:
-        """The number of features in the bag."""
+        """The number of features in the mix."""
         return self.__n_features
 
     @property

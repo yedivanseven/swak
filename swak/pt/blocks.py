@@ -615,7 +615,7 @@ class SkipConnection(Block):
     dropout: float, optional
         The amount of dropout to apply to the block's output before adding it
         back to the activated residual. Defaults to 0.
-    norm_first, bool, optional
+    norm_first: bool, optional
         If ``True``, normalize the inputs before passing them through the block
         and adding the outputs to the raw inputs. If ``False``, pass inputs
         through the block first and normalize the sum of the inputs and outputs
@@ -624,7 +624,7 @@ class SkipConnection(Block):
         The class of the norm to be applied after adding input to output, e.g.,
         ``LayerNorm`` or ``BatchNorm1d``. Again, this is needed to easily
         create a fresh, new instances with equal, but independent parameters.
-        Defaults to :class:`Identity`, resulting in no normalization.
+        Defaults to :class:`ResetIdentity`, resulting in no normalization.
     *args
         Arguments used to initialize an instance of `norm_cls`.
     device: str or torch.device, optional
@@ -633,6 +633,10 @@ class SkipConnection(Block):
         Torch dtype to first create the block in. Defaults to ``torch.float``.
     **kwargs
         Keyword arguments used to initialize an instance of `norm_cls`.
+
+    See Also
+    --------
+    ~swak.pt.misc.ResetIdentity
 
     """
 
@@ -737,8 +741,8 @@ class Repeat(Block):
     ValueError
         If `n_layers` is smaller than 1.
 
-    Notes
-    -----
+    Note
+    ----
     If the skip-connection sets `norm_first` to ``True``, no norm will be
     applied to the final output of the last repetition. If a trailing norm
     is desired, it should be applied externally, after this module.

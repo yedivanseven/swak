@@ -68,7 +68,7 @@ class NumericalEmbedder(Bag):
 
     @property
     def n_features(self) -> int:
-        """The number of features in the bag."""
+        """The number of features to embed."""
         return self.__n_features
 
     @property
