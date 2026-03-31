@@ -15,5 +15,6 @@ pt
    pt/losses
    pt/dists
    pt/blocks
+   pt/positions
    pt/train
    pt/io

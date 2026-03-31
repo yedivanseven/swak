@@ -34,7 +34,8 @@ __all__ = [
     'Resettable',
     'Block',
     'Bag',
-    'Mixer'
+    'Mixer',
+    'PosEnc',
 ]
 
 
@@ -104,3 +105,11 @@ class Mixer(Block):
     @abstractmethod
     def importance(self, inp: Tensor, mask: Tensor | None = None) -> Tensor:
         """Return per-instance feature importance."""
+
+
+class PosEnc(Block):
+
+    @property
+    @abstractmethod
+    def context(self) -> int:
+        """The maximum sequence length."""

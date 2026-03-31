@@ -23,7 +23,6 @@ __all__ = ['Trainer']
 
 
 # ToDo: Add EMA model averaging?
-# ToDo: Review early stopping logic. What if patience is None?
 class Trainer(ArgRepr):
     """Train and, optionally, evaluate a model with early stopping.
 
@@ -429,11 +428,12 @@ class Trainer(ArgRepr):
                     optimizer,
                     scheduler
                 )
-            elif n_wait < self.patience:
-                n_wait += 1
-            else:
-                self.checkpoint.load(model, optimizer, scheduler)
-                break
+            elif self.patience is not None:
+                if n_wait < self.patience:
+                    n_wait += 1
+                else:
+                    self.checkpoint.load(model, optimizer, scheduler)
+                    break
 
         # Did we exhaust the maximum number of epochs?
         else:
