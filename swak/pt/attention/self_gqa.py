@@ -1,29 +1,28 @@
 import sys
-import math
 from typing import Self
 import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
-from .types import Tensor, Block, PosEnc
-from .misc import BlockIdentity
-
-__all__ = [
-    'SelfAttention'
-]
+from ..types import Tensor, Block, PosEnc
+from ..misc import BlockIdentity
 
 
-# ToDo: Enable Grouped-Query Attention
-class SelfAttention(Block):
-    """Multi-headed self attention with optional (rotary) positional encodings.
+class GroupedQuerySelfAttention(Block):
+    """Grouped-query attention with optional (rotary) positional encoding.
 
     Parameters
     ----------
     mod_dim: int
         The model dimension. Inputs are expected to be of that size in their
         last dimension.
-    n_heads: int
+    n_heads: int, optional
         The number of attention heads. Must integer divide `mod_dim` and the
-        result must still be and even number.
+        result must still be and even number. Defaults to 1.
+    n_groups: int, optional
+        The number of key/value head groups. Must integer divide `n_heads`.
+        Realizes standard multi-head-attention (MHA) with `n_groups`=`n_heads`,
+        multi-query attention (MQA) with `n_groups`=1, and grouped-query
+        attention (GQA) otherwise. Defaults to `n_heads` (i.e. standard MHA).
     bias: bool, optional
         Whether to add learnable bias vectors in the projections from
         input to query, key and value and the final out projection.
@@ -40,7 +39,7 @@ class SelfAttention(Block):
         * processes tensors with dimensions (..., `n_heads`, `S`, `head_dim`),
 
         where `S` is the sequence length, and `head_dim` is the `mod_dim`
-        divided by `n_heads`. If given, it will  be called on queries and keys.
+        divided by `n_heads`. If given, it will be called on queries and keys.
         Typically, this would be an instance of :class:`Rotary` positional
         encodings. Defaults to an instance of :class:`BlockIdentity`,
         which does nothing.
@@ -53,18 +52,19 @@ class SelfAttention(Block):
     ------
     ValueError
         If `n_heads` does not integer divide `mod_dim`.
+        If `n_groups` does not integer divide `n_heads`.
 
     See Also
     --------
     Rotary
-    ~swak.pt.types.BlockIdentity
 
     """
 
     def __init__(
             self,
             mod_dim: int,
-            n_heads: int,
+            n_heads: int = 1,
+            n_groups: int | None = None,
             bias: bool = False,
             dropout: float = 0.1,
             pos_enc: PosEnc | None = None,
@@ -73,25 +73,19 @@ class SelfAttention(Block):
     ) -> None:
         super().__init__()
         self.__mod_dim = mod_dim
-        self.n_heads = self.__compatible(n_heads)
+        self.n_heads = self.__valid(mod_dim, n_heads, 'mod_dim', 'n_heads')
+        self.n_groups = n_heads if n_groups is None else self.__valid(
+            n_heads, n_groups, 'n_heads', 'n_groups'
+        )
         self.bias = bias
         self.dropout = dropout
-        if pos_enc is None:
-            self.pos_enc = BlockIdentity(mod_dim)
-        else:
-            self.pos_enc = pos_enc.to(device=device, dtype=dtype)
-        self.register_buffer(
-            'scale',
-            pt.tensor(
-                1.0 / math.sqrt(self.head_dim),
-                dtype=dtype,
-                device=device
-            ),
-            persistent=False
-        )
+        self.pos_enc = BlockIdentity(mod_dim) if pos_enc is None else pos_enc
+        self.pos_enc = self.pos_enc.to(device=device, dtype=dtype)
+        scale = pt.tensor(self.head_dim, dtype=dtype, device=device).pow(-0.5)
+        self.register_buffer('scale', scale, persistent=False)
         self.qkv = ptn.Linear(
             mod_dim,
-            3 * mod_dim,
+            2 * self.kv_dim + mod_dim,
             bias=bias,
             device=device,
             dtype=dtype
@@ -104,14 +98,14 @@ class SelfAttention(Block):
             dtype=dtype
         )
 
-    def __compatible(self, n_heads: int) -> int:
-        """Validate compatibility of model dimension and number of heads."""
-        if self.mod_dim % n_heads != 0:
-            tmp = ('Model dimension ({}) must be integer '
-                   'divisible by the number of heads ({})!')
-            msg = tmp.format(self.mod_dim, n_heads)
+    @staticmethod
+    def __valid(num: int, denom: int, num_label: str, denom_label: str) -> int:
+        """Validate that numerator is evenly divisible by denominator."""
+        if num % denom != 0:
+            tmp = '"{}" ({}) must be divisible by "{}" ({})!'
+            msg = tmp.format(num, num_label, denom, denom_label)
             raise ValueError(msg)
-        return n_heads
+        return denom
 
     @property
     def mod_dim(self) -> int:
@@ -134,6 +128,31 @@ class SelfAttention(Block):
         return self.mod_dim // self.n_heads
 
     @property
+    def n_kv_heads(self) -> int:
+        """The number of key/value heads."""
+        return self.n_heads // self.n_groups
+
+    @property
+    def kv_dim(self) -> int:
+        """Total dimension of keys (or values): n_kv_heads * head_dim."""
+        return self.n_kv_heads * self.head_dim
+
+    @property
+    def _q_sizes(self) -> tuple[int, int]:
+        """Tuple of (n_heads, head_dim) to reshape query tensors."""
+        return self.n_heads, self.head_dim
+
+    @property
+    def _kv_sizes(self) -> tuple[int, int]:
+        """Tuple of (n_kv_heads, head_dim) to reshape key/value tensors."""
+        return self.n_kv_heads, self.head_dim
+
+    @property
+    def _splits(self) -> tuple[int, int, int]:
+        """Tuple of (mod_dim, kv_dim, kv_dim) to split projected input."""
+        return self.mod_dim, self.kv_dim, self.kv_dim
+
+    @property
     def has_pos_enc(self) -> bool:
         """Whether a `pos_enc` module was provided at instantiation or not."""
         return not isinstance(self.pos_enc, BlockIdentity)
@@ -145,18 +164,13 @@ class SelfAttention(Block):
             return self.pos_enc.context
         return sys.maxsize
 
-    @property
-    def _sizes(self) -> tuple[int, int]:
-        """Tuple of n_heads and head_dim to reshape intermediate tensors"""
-        return self.n_heads, self.head_dim
-
     def forward(
             self,
             src: Tensor,
             mask: Tensor | None = None,
             is_causal: bool = True
     ) -> Tensor:
-        """Forward pass through multi-headed self attention.
+        """Forward pass through grouped query attention.
 
         Parameters
         ----------
@@ -195,11 +209,12 @@ class SelfAttention(Block):
         Therefore, to stay compatible, use float masks!
 
         """
-        query, key, value = self.qkv(src).chunk(3, -1)
+        query, key, value = self.qkv(src).split(self._splits, dim=-1)
         # Reshape from (..., S, mod_dim) to (..., n_heads, S, head_dim)
-        query = query.unflatten(-1, self._sizes).transpose(-2, -3)
-        key = key.unflatten(-1, self._sizes).transpose(-2, -3)
-        value = value.unflatten(-1, self._sizes).transpose(-2, -3)
+        query = query.unflatten(-1, self._q_sizes).transpose(-2, -3)
+        # Reshape from (..., S, mod_dim) to (..., n_kv_heads, S, head_dim)
+        key = key.unflatten(-1, self._kv_sizes).transpose(-2, -3)
+        value = value.unflatten(-1, self._kv_sizes).transpose(-2, -3)
 
         attended = ptnf.scaled_dot_product_attention(
             query=self.pos_enc(query),
@@ -208,7 +223,8 @@ class SelfAttention(Block):
             attn_mask=None if is_causal else mask,
             dropout_p=self.dropout if self.training else 0.0,
             is_causal=is_causal,
-            scale=self.scale
+            scale=self.scale,
+            enable_gqa=True
         )
         # Reshape back from (..., n_heads, S, head_dim) to (..., S, mod_dim)
         return self.out(attended.transpose(-2, -3).flatten(-2))
@@ -224,6 +240,7 @@ class SelfAttention(Block):
         return self.__class__(
             self.mod_dim,
             self.n_heads,
+            self.n_groups,
             self.bias,
             self.dropout,
             self.pos_enc.new(),

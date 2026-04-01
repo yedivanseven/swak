@@ -16,5 +16,6 @@ pt
    pt/dists
    pt/blocks
    pt/positions
+   pt/attention
    pt/train
    pt/io
