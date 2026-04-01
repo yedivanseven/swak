@@ -38,15 +38,12 @@ class GatedActivatedEmbedder(Block):
 
     Note
     ----
-    This implementation is inspired by how features are encoded in `Temporal
-    Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
-    (linear) projection of scalar numerical features into embedding space
-    happens inside the present module. Secondly, this embedding vector is not
-    transformed again (as Eq. 4 seems to imply) and there is no option to add
-    a `context vector`. Thirdly, the intermediate linear layer (Eq. 3) is
-    eliminated. Thirdly no dropout is applied to the inputs of the gate.
-    Finally, there is no layer norm (Eq. 2). Should additional normalization
-    be desired, it can be performed independently on the output of this module.
+    Inspired by Gated Residual Network (GRN) introduced in [1]_, this module
+    (linearly) projects scalar numerical features into embedding space,
+    applies a non-linearity, and gates the result by a sigmoid activation of
+    a projection of the same intermediate representation, giving the model
+    per-dimension control over how much non-linearity contributes to the
+    output.
 
     References
     ----------
@@ -72,7 +69,7 @@ class GatedActivatedEmbedder(Block):
         self.bias = bias
         self.inp_dim = inp_dim
         self.embed = ptn.Linear(inp_dim, mod_dim, bias, device, dtype)
-        self.widen = ptn.Linear(mod_dim, 2 * mod_dim, bias, device, dtype)
+        self.rotate = ptn.Linear(mod_dim, mod_dim, bias, device, dtype)
         # Although few, some activation functions have learnable parameters
         self.activate = self._reset(activate, device, dtype)
         self.gate = self._reset(gate, device, dtype)
@@ -111,13 +108,14 @@ class GatedActivatedEmbedder(Block):
             the size of the last dimension changed to the specified `mod_dim`.
 
         """
-        wide = self.widen(self.activate(self.embed(inp)))
-        return wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
+        activated = self.activate(self.embed(inp))
+        gate = self.gate(self.rotate(activated))
+        return gate * activated
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
         self.embed.reset_parameters()
-        self.widen.reset_parameters()
+        self.rotate.reset_parameters()
         # Although few, some activation functions have learnable parameters
         self.activate = self._reset(self.activate, self.device, self.dtype)
         self.gate = self._reset(self.gate, self.device, self.dtype)

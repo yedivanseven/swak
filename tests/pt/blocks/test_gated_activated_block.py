@@ -58,14 +58,14 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(4, self.block.project.out_features)
         self.assertIsInstance(self.block.project.bias, pt.Tensor)
 
-    def test_has_widen(self):
-        self.assertTrue(hasattr(self.block, 'widen'))
+    def test_has_rotate(self):
+        self.assertTrue(hasattr(self.block, 'rotate'))
 
-    def test_widen(self):
-        self.assertIsInstance(self.block.widen, ptn.Linear)
-        self.assertEqual(4, self.block.widen.in_features)
-        self.assertEqual(8, self.block.widen.out_features)
-        self.assertIsInstance(self.block.widen.bias, pt.Tensor)
+    def test_rotate(self):
+        self.assertIsInstance(self.block.rotate, ptn.Linear)
+        self.assertEqual(4, self.block.rotate.in_features)
+        self.assertEqual(4, self.block.rotate.out_features)
+        self.assertIsInstance(self.block.rotate.bias, pt.Tensor)
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.block, 'reset_parameters'))
@@ -135,7 +135,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(self.block.device, new.device)
         self.assertIs(self.block.activate, new.activate)
         self.assertIs(self.block.gate, new.gate)
-        self.assertIsNot(self.block.widen, new.widen)
+        self.assertIsNot(self.block.rotate, new.rotate)
         self.assertIsNot(self.block.project, new.project)
 
 
@@ -169,11 +169,11 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(8, self.block.project.out_features)
         self.assertIsNone(self.block.project.bias)
 
-    def test_widen(self):
-        self.assertIsNone(self.block.widen.bias)
-        self.assertEqual(8, self.block.widen.in_features)
-        self.assertEqual(16, self.block.widen.out_features)
-        self.assertIsNone(self.block.widen.bias)
+    def test_rotate(self):
+        self.assertIsNone(self.block.rotate.bias)
+        self.assertEqual(8, self.block.rotate.in_features)
+        self.assertEqual(8, self.block.rotate.out_features)
+        self.assertIsNone(self.block.rotate.bias)
 
 
 class TestUsage(unittest.TestCase):
@@ -181,7 +181,7 @@ class TestUsage(unittest.TestCase):
     def setUp(self):
         self.block = GatedActivatedBlock(4, identity, identity, bias=False)
         self.block.project.weight.data = pt.ones(4, 4)
-        self.block.widen.weight.data = pt.ones(8, 4)
+        self.block.rotate.weight.data = pt.ones(4, 4)
 
     def test_callable(self):
         self.assertTrue(callable(self.block))
@@ -189,31 +189,31 @@ class TestUsage(unittest.TestCase):
     def test_1d(self):
         inp = pt.ones(4)
         actual = self.block(inp)
-        expected = pt.ones(4) * 256
+        expected = pt.ones(4) * 64
         pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 4)
         actual = self.block(inp)
-        expected = pt.ones(3, 4) * 256
+        expected = pt.ones(3, 4) * 64
         pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 4)
         actual = self.block(inp)
-        expected = pt.ones(2, 3, 4) * 256
+        expected = pt.ones(2, 3, 4) * 64
         pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(5, 2, 3, 4)
         actual = self.block(inp)
-        expected = pt.ones(5, 2, 3, 4) * 256
+        expected = pt.ones(5, 2, 3, 4) * 64
         pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 4)
         actual = self.block(inp)
-        expected = pt.ones(3, 0, 4) * 256
+        expected = pt.ones(3, 0, 4) * 64
         pt.testing.assert_close(actual, expected)
 
     def test_project_called(self):
@@ -236,11 +236,11 @@ class TestUsage(unittest.TestCase):
         expected = pt.ones(4) * 4
         pt.testing.assert_close(actual, expected)
 
-    def test_widen_called(self):
+    def test_rotate_called(self):
         with patch.object(
-                self.block.widen,
+                self.block.rotate,
                 'forward',
-                return_value=pt.ones(8)
+                return_value=pt.ones(4)
         ) as mock:
             inp = pt.ones(4)
             _ = self.block(inp)

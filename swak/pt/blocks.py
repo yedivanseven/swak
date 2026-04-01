@@ -498,12 +498,11 @@ class GatedActivatedBlock(Block):
 
     Note
     ----
-    This implementation is inspired by how features are encoded in `Temporal
-    Fusion Transformers`, [1]_ but it is not quite the same. Firstly, the
-    intermediate linear layer (Eq. 3) is eliminated. Secondly no dropout is
-    applied to the inputs of the gate. Finally, there is no residual
-    connection and no layer norm (Eq. 2) inside this module. If desired,
-    these operations can be done independently around this module.
+    Inspired by Gated Residual Network (GRN) introduced in [1]_, this module
+    (linearly) projects the input, applies a non-linearity, and gates the
+    result by a sigmoid activation of a projection of the same intermediate
+    representation, giving the model per-dimension control over how much
+    non-linearity contributes to the output.
 
     References
     ----------
@@ -536,9 +535,9 @@ class GatedActivatedBlock(Block):
             device=device,
             dtype=dtype
         )
-        self.widen = ptn.Linear(
+        self.rotate = ptn.Linear(
             in_features=mod_dim,
-            out_features=2 * mod_dim,
+            out_features=mod_dim,
             bias=bias,
             device=device,
             dtype=dtype
@@ -552,12 +551,12 @@ class GatedActivatedBlock(Block):
     @property
     def device(self) -> pt.device:
         """The device all weights, biases, activations, etc. reside on."""
-        return self.widen.weight.device
+        return self.rotate.weight.device
 
     @property
     def dtype(self) -> pt.dtype:
         """The dtype of all weights, biases, activations, and parameters."""
-        return self.widen.weight.dtype
+        return self.rotate.weight.dtype
 
     def forward(self, inp: Tensor) -> Tensor:
         """Forward pass through a single gated residual network (GRN).
@@ -573,13 +572,14 @@ class GatedActivatedBlock(Block):
             Same dimensions and sizes as the input tensor.
 
         """
-        wide = self.widen(self.activate(self.project(inp)))
-        return wide[..., :self.mod_dim] * self.gate(wide[..., self.mod_dim:])
+        activated = self.activate(self.project(inp))
+        gate = self.gate(self.rotate(activated))
+        return gate * activated
 
     def reset_parameters(self) -> None:
         """Re-initialize the internal parameters of the block."""
         self.project.reset_parameters()
-        self.widen.reset_parameters()
+        self.rotate.reset_parameters()
         # Although few, some activation functions have learnable parameters
         self.activate = self._reset(self.activate, self.device, self.dtype)
         self.gate = self._reset(self.gate, self.device, self.dtype)

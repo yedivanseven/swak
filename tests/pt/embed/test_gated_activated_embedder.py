@@ -65,21 +65,21 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(4, self.embed.embed.out_features)
         self.assertIsInstance(self.embed.embed.bias, pt.Tensor)
 
-    def test_has_widen(self):
-        self.assertTrue(hasattr(self.embed, 'widen'))
+    def test_has_rotate(self):
+        self.assertTrue(hasattr(self.embed, 'rotate'))
 
-    def test_widen(self):
-        self.assertIsInstance(self.embed.widen, Linear)
-        self.assertEqual(4, self.embed.widen.in_features)
-        self.assertEqual(8, self.embed.widen.out_features)
-        self.assertIsInstance(self.embed.widen.bias, pt.Tensor)
+    def test_rotate(self):
+        self.assertIsInstance(self.embed.rotate, Linear)
+        self.assertEqual(4, self.embed.rotate.in_features)
+        self.assertEqual(4, self.embed.rotate.out_features)
+        self.assertIsInstance(self.embed.rotate.bias, pt.Tensor)
 
     @patch('torch.nn.Linear', return_value=pt.nn.Linear(1, 8))
     def test_linear_called(self, mock):
         _ = GatedActivatedEmbedder(4)
         args_1, args_2 = mock.call_args_list
         self.assertTupleEqual((1, 4, True, 'cpu', pt.float), args_1[0])
-        self.assertTupleEqual((4, 8, True, 'cpu', pt.float), args_2[0])
+        self.assertTupleEqual((4, 4, True, 'cpu', pt.float), args_2[0])
 
     @patch('torch.nn.Sigmoid.to')
     @patch('torch.nn.ELU.to')
@@ -138,7 +138,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(self.embed.dtype, new.dtype)
         self.assertEqual(self.embed.device, new.device)
         self.assertIsNot(self.embed.embed, new.embed)
-        self.assertIsNot(self.embed.widen, new.widen)
+        self.assertIsNot(self.embed.rotate, new.rotate)
 
 
 class TestAttributes(unittest.TestCase):
@@ -172,7 +172,7 @@ class TestAttributes(unittest.TestCase):
         _ = GatedActivatedEmbedder(4, inp_dim=2, bias=False, dtype=pt.float64)
         args_1, args_2 = mock.call_args_list
         self.assertTupleEqual((2, 4, False, 'cpu', pt.float64), args_1[0])
-        self.assertTupleEqual((4, 8, False, 'cpu', pt.float64), args_2[0])
+        self.assertTupleEqual((4, 4, False, 'cpu', pt.float64), args_2[0])
 
     def test_reset_parameters_called_on_instantiation(self):
         activation = pt.nn.PReLU()
@@ -252,7 +252,7 @@ class TestUsageSingleFeature(unittest.TestCase):
     def setUp(self):
         self.embed = GatedActivatedEmbedder(4, identity, identity, bias=False)
         self.embed.embed.weight.data = pt.ones(4, 1)
-        self.embed.widen.weight.data = pt.ones(8, 4)
+        self.embed.rotate.weight.data = pt.ones(4, 4)
 
     def test_callable(self):
         self.assertTrue(callable(self.embed))
@@ -260,31 +260,31 @@ class TestUsageSingleFeature(unittest.TestCase):
     def test_1d(self):
         inp = pt.ones(1)
         actual = self.embed(inp)
-        expected = pt.ones(4) * 16
+        expected = pt.ones(4) * 4
         pt.testing.assert_close(actual, expected)
 
     def test_2d(self):
         inp = pt.ones(3, 1)
         actual = self.embed(inp)
-        expected = pt.ones(3, 4) * 16
+        expected = pt.ones(3, 4) * 4
         pt.testing.assert_close(actual, expected)
 
     def test_3d(self):
         inp = pt.ones(2, 3, 1)
         actual = self.embed(inp)
-        expected = pt.ones(2, 3, 4) * 16
+        expected = pt.ones(2, 3, 4) * 4
         pt.testing.assert_close(actual, expected)
 
     def test_4d(self):
         inp = pt.ones(1, 2, 3, 1)
         actual = self.embed(inp)
-        expected = pt.ones(1, 2, 3, 4) * 16
+        expected = pt.ones(1, 2, 3, 4) * 4
         pt.testing.assert_close(actual, expected)
 
     def test_empty_dims(self):
         inp = pt.ones(3, 0, 1)
         actual = self.embed(inp)
-        expected = pt.ones(3, 0, 4) * 16
+        expected = pt.ones(3, 0, 4) * 4
         pt.testing.assert_close(actual, expected)
 
     def test_embed_called(self):
@@ -303,9 +303,9 @@ class TestUsageSingleFeature(unittest.TestCase):
         expected = pt.ones(3, 4)
         pt.testing.assert_close(actual, expected)
 
-    def test_widen_called(self):
-        mock = Mock(return_value=pt.ones(3, 8))
-        self.embed.widen.forward = mock
+    def test_rotate_called(self):
+        mock = Mock(return_value=pt.ones(3, 4))
+        self.embed.rotate.forward = mock
         inp = pt.ones(3, 1)
         _ = self.embed(inp)
         actual = mock.call_args[0][0]
@@ -333,7 +333,7 @@ class TestUsageMultiFeature(unittest.TestCase):
             bias=False
         )
         self.embed.embed.weight.data = pt.ones(4, 2) / 2
-        self.embed.widen.weight.data = pt.ones(8, 4) / 4
+        self.embed.rotate.weight.data = pt.ones(4, 4) / 4
 
     def test_1d(self):
         inp = pt.ones(2)
@@ -381,9 +381,9 @@ class TestUsageMultiFeature(unittest.TestCase):
         expected = pt.ones(3, 4)
         pt.testing.assert_close(actual, expected)
 
-    def test_widen_called(self):
-        mock = Mock(return_value=pt.ones(3, 8))
-        self.embed.widen.forward = mock
+    def test_rotate_called(self):
+        mock = Mock(return_value=pt.ones(3, 4))
+        self.embed.rotate.forward = mock
         inp = pt.ones(3, 2)
         _ = self.embed(inp)
         actual = mock.call_args[0][0]
