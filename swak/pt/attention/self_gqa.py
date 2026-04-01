@@ -7,6 +7,7 @@ from ..types import Tensor, Block, PosEnc
 from ..misc import BlockIdentity
 
 
+# ToDo: Go from n_groups to query heads per key/value head with default 1!
 class GroupedQuerySelfAttention(Block):
     """Grouped-query attention with optional (rotary) positional encoding.
 
