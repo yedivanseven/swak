@@ -15,7 +15,6 @@ pt
    pt/losses
    pt/dists
    pt/blocks
-   pt/positions
-   pt/attention
+   pt/transformer
    pt/train
    pt/io

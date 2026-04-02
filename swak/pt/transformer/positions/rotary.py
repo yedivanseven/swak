@@ -1,7 +1,7 @@
 from typing import Any, Self
 import math
 import torch as pt
-from ..types import Tensor, PosEnc
+from ...types import Tensor, PosEnc
 
 
 class Rotary(PosEnc):

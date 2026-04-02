@@ -1,6 +1,6 @@
 import unittest
 import torch as pt
-from swak.pt.positions import Rotary
+from swak.pt.transformer import Rotary
 
 
 class TestDefaultAttributes(unittest.TestCase):

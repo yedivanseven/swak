@@ -36,6 +36,7 @@ __all__ = [
     'Bag',
     'Mixer',
     'PosEnc',
+    'Attention',
 ]
 
 
@@ -113,3 +114,11 @@ class PosEnc(Block):
     @abstractmethod
     def context(self) -> int:
         """The maximum sequence length."""
+
+
+class Attention(PosEnc):
+
+    @property
+    @abstractmethod
+    def has_pos_enc(self) -> bool:
+        """Whether the attention internally applies positional encodings."""

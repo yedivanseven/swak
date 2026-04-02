@@ -3,12 +3,11 @@ from typing import Self
 import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
-from ..types import Tensor, Block, PosEnc
-from ..misc import BlockIdentity
+from ...types import Tensor, Attention, PosEnc
+from ...misc import BlockIdentity
 
 
-# ToDo: Go from n_groups to query heads per key/value head with default 1!
-class GroupedQuerySelfAttention(Block):
+class GroupedQuerySelfAttention(Attention):
     """Grouped-query attention with optional (rotary) positional encoding.
 
     Parameters
@@ -19,11 +18,13 @@ class GroupedQuerySelfAttention(Block):
     n_heads: int, optional
         The number of attention heads. Must integer divide `mod_dim` and the
         result must still be and even number. Defaults to 1.
-    n_groups: int, optional
-        The number of key/value head groups. Must integer divide `n_heads`.
-        Realizes standard multi-head-attention (MHA) with `n_groups`=`n_heads`,
-        multi-query attention (MQA) with `n_groups`=1, and grouped-query
-        attention (GQA) otherwise. Defaults to `n_heads` (i.e. standard MHA).
+    q-factor: int, optional
+        Reduce the number of attention heads for keys and values by this
+        factor compared to the `n_heads` used for queries. Must integer divide
+        `n_heads`. Realizes standard multi-head-attention (MHA) with
+        `q_factor`=1, multi-query attention (MQA) with `q_factor`=`n_heads`
+        and grouped-query attention (GQA) otherwise.
+        Defaults to 1 (i.e. standard MHA).
     bias: bool, optional
         Whether to add learnable bias vectors in the projections from
         input to query, key and value and the final out projection.
@@ -65,7 +66,7 @@ class GroupedQuerySelfAttention(Block):
             self,
             mod_dim: int,
             n_heads: int = 1,
-            n_groups: int | None = None,
+            q_factor: int = 1,
             bias: bool = False,
             dropout: float = 0.1,
             pos_enc: PosEnc | None = None,
@@ -75,9 +76,7 @@ class GroupedQuerySelfAttention(Block):
         super().__init__()
         self.__mod_dim = mod_dim
         self.n_heads = self.__valid(mod_dim, n_heads, 'mod_dim', 'n_heads')
-        self.n_groups = n_heads if n_groups is None else self.__valid(
-            n_heads, n_groups, 'n_heads', 'n_groups'
-        )
+        self.q_factor = self.__valid(n_heads, q_factor, 'n_heads', 'q_factor')
         self.bias = bias
         self.dropout = dropout
         self.pos_enc = BlockIdentity(mod_dim) if pos_enc is None else pos_enc
@@ -104,7 +103,7 @@ class GroupedQuerySelfAttention(Block):
         """Validate that numerator is evenly divisible by denominator."""
         if num % denom != 0:
             tmp = '"{}" ({}) must be divisible by "{}" ({})!'
-            msg = tmp.format(num, num_label, denom, denom_label)
+            msg = tmp.format(num_label, num, denom_label, denom)
             raise ValueError(msg)
         return denom
 
@@ -131,7 +130,7 @@ class GroupedQuerySelfAttention(Block):
     @property
     def n_kv_heads(self) -> int:
         """The number of key/value heads."""
-        return self.n_heads // self.n_groups
+        return self.n_heads // self.q_factor
 
     @property
     def kv_dim(self) -> int:
@@ -237,11 +236,18 @@ class GroupedQuerySelfAttention(Block):
         self.pos_enc.reset_parameters()
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        GroupedQuerySelfAttention
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.mod_dim,
             self.n_heads,
-            self.n_groups,
+            self.q_factor,
             self.bias,
             self.dropout,
             self.pos_enc.new(),

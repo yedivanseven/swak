@@ -1,7 +1,7 @@
 from typing import Any, Self
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, PosEnc
+from ...types import Tensor, PosEnc
 
 
 class Learnable(PosEnc):

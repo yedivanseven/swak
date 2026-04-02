@@ -3,11 +3,11 @@ from typing import Self
 import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
-from ..types import Tensor, Block, PosEnc
-from ..misc import BlockIdentity
+from ...types import Tensor, Attention, PosEnc
+from ...misc import BlockIdentity
 
 
-class MultiheadedSelfAttention(Block):
+class MultiheadedSelfAttention(Attention):
     """Multi-headed self attention with optional (rotary) positional encodings.
 
     Parameters
@@ -205,7 +205,14 @@ class MultiheadedSelfAttention(Block):
         self.pos_enc.reset_parameters()
 
     def new(self) -> Self:
-        """Return a fresh, new instance with exactly the same parameters."""
+        """Return a fresh, new instance with exactly the same parameters.
+
+        Returns
+        -------
+        MultiheadedSelfAttention
+            A fresh, new instance of itself.
+
+        """
         return self.__class__(
             self.mod_dim,
             self.n_heads,

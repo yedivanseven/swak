@@ -1,6 +1,7 @@
 import unittest
+from unittest.mock import patch
 import torch as pt
-from swak.pt.positions import Sinusoidal
+from swak.pt.transformer import Learnable
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -8,7 +9,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def setUp(self):
         self.mod_dim = 8
         self.context = 16
-        self.pos_enc = Sinusoidal(self.mod_dim, self.context)
+        self.pos_enc = Learnable(self.mod_dim, self.context)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.pos_enc, 'mod_dim'))
@@ -43,7 +44,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_positional_encodings_type(self):
         self.assertIsInstance(
             self.pos_enc.positional_encodings,
-            pt.Tensor
+            pt.nn.Parameter
         )
 
     def test_positional_encodings_device(self):
@@ -62,17 +63,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTupleEqual(
             (1, self.context, self.mod_dim),
             self.pos_enc.positional_encodings.data.shape
-        )
-
-    def test_positional_encodings_values(self):
-        exponents = -pt.arange(0, self.mod_dim, 2) / self.mod_dim
-        divisors = pt.tensor(self.context).pow(exponents)
-        positions = pt.arange(0, self.context).unsqueeze(1)
-        angles = positions * divisors
-        expected = pt.empty(1, self.context, self.mod_dim, device='cpu')
-        expected[:, :, 0::2] = pt.sin(angles)
-        expected[:, :, 1::2] = pt.cos(angles)
-        pt.testing.assert_close(self.pos_enc.positional_encodings, expected)
+            )
 
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.pos_enc, 'reset_parameters'))
@@ -80,8 +71,15 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_reset_parameters(self):
         self.assertTrue(callable(self.pos_enc.reset_parameters))
 
-    def test_call_reset_parameters(self):
+    @patch('torch.nn.init.normal_')
+    def test_reset_parameters_called(self, mock):
+        _ = Learnable(self.mod_dim, self.context)
+        mock.assert_called_once()
+
+    @patch('torch.nn.init.normal_')
+    def test_call_reset_parameters(self, mock):
         self.pos_enc.reset_parameters()
+        mock.assert_called_once()
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.pos_enc, 'new'))
@@ -91,7 +89,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_call_new(self):
         new = self.pos_enc.new()
-        self.assertIsInstance(new, Sinusoidal)
+        self.assertIsInstance(new, Learnable)
         self.assertIsNot(new, self.pos_enc)
         self.assertEqual(self.pos_enc.mod_dim, new.mod_dim)
         self.assertEqual(self.pos_enc.context, new.context)
@@ -105,7 +103,7 @@ class TestAttributes(unittest.TestCase):
         self.mod_dim = 8
         self.context = 16
         self.dtype = pt.double
-        self.pos_enc = Sinusoidal(self.mod_dim, self.context, dtype=self.dtype)
+        self.pos_enc = Learnable(self.mod_dim, self.context, dtype=self.dtype)
 
     def test_dtype(self):
         self.assertIs(self.pos_enc.dtype, self.dtype)
@@ -117,47 +115,39 @@ class TestUsage(unittest.TestCase):
     def setUp(self):
         self.mod_dim = 8
         self.context = 16
-        self.pos_enc = Sinusoidal(self.mod_dim, self.context)
-
+        self.pos_enc = Learnable(self.mod_dim, self.context)
+        self.tensor = pt.randn(1, self.context, self.mod_dim, device='cpu')
+        self.pos_enc.positional_encodings.data = self.tensor
 
     def test_2d(self):
         inp = pt.zeros(self.context, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
-        pt.testing.assert_close(actual, self.pos_enc.positional_encodings)
+        pt.testing.assert_close(actual, self.tensor)
 
     def test_2d_short(self):
         inp = pt.zeros(self.context - 4, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
-        pt.testing.assert_close(
-            actual,
-            self.pos_enc.positional_encodings[:, :-4, :]
-        )
+        pt.testing.assert_close(actual, self.tensor[:, :-4, :])
 
     def test_3d(self):
         inp = pt.zeros(1, self.context, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
-        pt.testing.assert_close(actual, self.pos_enc.positional_encodings)
+        pt.testing.assert_close(actual, self.tensor)
 
     def test_3d_short(self):
         inp = pt.zeros(1, self.context - 5, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
-        pt.testing.assert_close(
-            actual,
-            self.pos_enc.positional_encodings[:, :-5, :]
-        )
+        pt.testing.assert_close(actual, self.tensor[:, :-5, :])
 
     def test_4d(self):
         inp = pt.zeros(3, 1, self.context, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
-        pt.testing.assert_close(actual[0], self.pos_enc.positional_encodings)
+        pt.testing.assert_close(actual[0], self.tensor)
 
     def test_4d_short(self):
         inp = pt.zeros(3, 1, self.context - 6, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
-        pt.testing.assert_close(
-            actual[0],
-            self.pos_enc.positional_encodings[:, :-6, :]
-        )
+        pt.testing.assert_close(actual[0], self.tensor[:, :-6, :])
 
     def test_too_long_raises(self):
         inp = pt.zeros(3, 1, self.context + 1, self.mod_dim, device='cpu')

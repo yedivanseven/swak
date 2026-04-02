@@ -3,14 +3,14 @@ import unittest
 from unittest.mock import patch, Mock
 import torch as pt
 from swak.pt.misc import BlockIdentity
-from swak.pt.attention import MultiheadedSelfAttention
+from swak.pt.transformer import GroupedQuerySelfAttention
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
         self.mod_dim = 16
-        self.attention = MultiheadedSelfAttention(self.mod_dim)
+        self.attention = GroupedQuerySelfAttention(self.mod_dim)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.attention, 'mod_dim'))
@@ -28,7 +28,18 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_incompatible_n_heads_raises(self):
         with self.assertRaises(ValueError):
-            _ = MultiheadedSelfAttention(16, 3)
+            _ = GroupedQuerySelfAttention(16, 3)
+
+    def test_has_q_factor(self):
+        self.assertTrue(hasattr(self.attention, 'q_factor'))
+
+    def test_q_factor(self):
+        self.assertIsInstance(self.attention.q_factor, int)
+        self.assertEqual(1, self.attention.q_factor)
+
+    def test_incompatible_q_factor_raises(self):
+        with self.assertRaises(ValueError):
+            _ = GroupedQuerySelfAttention(16, 2, 3)
 
     def test_has_bias(self):
         self.assertTrue(hasattr(self.attention, 'bias'))
@@ -52,7 +63,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_pos_enc_to_called(self):
         pos_enc = Mock()
         pos_enc.to.return_value = pos_enc
-        attention = MultiheadedSelfAttention(self.mod_dim, pos_enc=pos_enc)
+        attention = GroupedQuerySelfAttention(self.mod_dim, pos_enc=pos_enc)
         pos_enc.to.assert_called_once_with(
             device=attention.device.type,
             dtype=attention.dtype
@@ -100,6 +111,20 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.attention.head_dim, int)
         self.assertEqual(self.mod_dim, self.attention.head_dim)
 
+    def test_has_n_kv_heads(self):
+        self.assertTrue(hasattr(self.attention, 'n_kv_heads'))
+
+    def test_n_kv_heads(self):
+        self.assertIsInstance(self.attention.n_kv_heads, int)
+        self.assertEqual(1, self.attention.n_kv_heads)
+
+    def test_has_kv_dim(self):
+        self.assertTrue(hasattr(self.attention, 'kv_dim'))
+
+    def test_kv_dim(self):
+        self.assertIsInstance(self.attention.kv_dim, int)
+        self.assertEqual(self.mod_dim, self.attention.kv_dim)
+
     def test_has_scale(self):
         self.assertTrue(hasattr(self.attention, 'scale'))
 
@@ -131,7 +156,7 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_call_reset_parameters(self, mock):
         pos_enc = Mock()
         pos_enc.to.return_value = pos_enc
-        attention = MultiheadedSelfAttention(self.mod_dim, pos_enc=pos_enc)
+        attention = GroupedQuerySelfAttention(self.mod_dim, pos_enc=pos_enc)
         self.assertEqual(2, mock.call_count)
         attention.reset_parameters()
         self.assertEqual(4, mock.call_count)
@@ -146,12 +171,13 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_call_new(self):
         pos_enc = Mock()
         pos_enc.to.return_value = pos_enc
-        attention = MultiheadedSelfAttention(self.mod_dim, pos_enc=pos_enc)
+        attention = GroupedQuerySelfAttention(self.mod_dim, pos_enc=pos_enc)
         new = attention.new()
-        self.assertIsInstance(new, MultiheadedSelfAttention)
+        self.assertIsInstance(new, GroupedQuerySelfAttention)
         self.assertIsNot(new, attention)
         self.assertEqual(attention.mod_dim, new.mod_dim)
         self.assertEqual(attention.n_heads, new.n_heads)
+        self.assertEqual(attention.q_factor, new.q_factor)
         self.assertEqual(attention.bias, new.bias)
         self.assertEqual(attention.dropout, new.dropout)
         self.assertEqual(attention.device, new.device)
@@ -166,6 +192,7 @@ class TestAttributes(unittest.TestCase):
     def setUp(self):
         self.mod_dim = 32
         self.n_heads = 4
+        self.q_factor = 2
         self.bias = True
         self.dropout = 0.2
         self.dtype = pt.double
@@ -174,14 +201,29 @@ class TestAttributes(unittest.TestCase):
         self.pos_enc.to.return_value = self.pos_enc
         self.pos_enc.context = self.context
         self.head_dim = self.mod_dim // self.n_heads
-        self.attention = MultiheadedSelfAttention(
+        self.n_kv_heads = self.n_heads // self.q_factor
+        self.kv_dim = self.n_kv_heads * self.head_dim
+        self.attention = GroupedQuerySelfAttention(
             self.mod_dim,
             self.n_heads,
+            self.q_factor,
             self.bias,
             self.dropout,
             self.pos_enc,
             dtype=self.dtype
         )
+
+    def test_n_heads(self):
+        self.assertEqual(self.n_heads, self.attention.n_heads)
+
+    def test_q_factor(self):
+        self.assertEqual(self.q_factor, self.attention.q_factor)
+
+    def test_n_kv_heads(self):
+        self.assertEqual(self.n_kv_heads, self.attention.n_kv_heads)
+
+    def test_kv_dim(self):
+        self.assertEqual(self.kv_dim, self.attention.kv_dim)
 
     def test_bias(self):
         self.assertEqual(self.bias, self.attention.bias)
@@ -212,9 +254,10 @@ class TestAttributes(unittest.TestCase):
 
     def test_call_new(self):
         new = self.attention.new()
-        self.assertIsInstance(new, MultiheadedSelfAttention)
+        self.assertIsInstance(new, GroupedQuerySelfAttention)
         self.assertEqual(self.attention.mod_dim, new.mod_dim)
         self.assertEqual(self.attention.n_heads, new.n_heads)
+        self.assertEqual(self.attention.q_factor, new.q_factor)
         self.assertEqual(self.attention.bias, new.bias)
         self.assertEqual(self.attention.dropout, new.dropout)
         self.assertEqual(self.attention.device, new.device)
@@ -227,15 +270,20 @@ class TestUsage(unittest.TestCase):
         self.batch_size = 15
         self.seq_len = 32
         self.mod_dim = 16
-        self.n_heads = 2
+        self.n_heads = 4
+        self.q_factor = 2
         self.head_dim = self.mod_dim // self.n_heads
-        self.attention = MultiheadedSelfAttention(
+        self.n_kv_heads = self.n_heads // self.q_factor
+        self.kv_dim = self.n_kv_heads * self.head_dim
+        self.attention = GroupedQuerySelfAttention(
             self.mod_dim,
             self.n_heads,
-            bias=False
+            self.q_factor,
+            bias=False,
+            dropout=0.0
         )
         self.attention.qkv.weight.data = pt.ones(
-            3 * self.mod_dim,
+            2 * self.kv_dim + self.mod_dim,
             self.mod_dim,
             device='cpu'
         )
@@ -256,7 +304,7 @@ class TestUsage(unittest.TestCase):
         qkv.return_value = pt.rand(
             self.batch_size,
             self.seq_len,
-            3 * self.mod_dim,
+            2 * self.kv_dim + self.mod_dim,
             device='cpu'
         )
         _ = self.attention(inp)
@@ -271,19 +319,26 @@ class TestUsage(unittest.TestCase):
             self.mod_dim,
             device='cpu'
         )
-        out = pt.ones(
+        query = pt.ones(
             15,
             self.n_heads,
             self.seq_len,
             self.head_dim,
             device='cpu'
         )
-        attn.return_value = out
+        key_value = pt.ones(
+            15,
+            self.n_kv_heads,
+            self.seq_len,
+            self.head_dim,
+            device='cpu'
+        )
+        attn.return_value = query
         self.attention.train()
         _ = self.attention(inp, object(), True)
-        pt.testing.assert_close(attn.call_args[1]['query'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['key'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['value'], 16 * out)
+        pt.testing.assert_close(attn.call_args[1]['query'], 16 * query)
+        pt.testing.assert_close(attn.call_args[1]['key'], 16 * key_value)
+        pt.testing.assert_close(attn.call_args[1]['value'], 16 * key_value)
         self.assertIsNone(attn.call_args[1]['attn_mask'])
         self.assertEqual(
             self.attention.dropout,
@@ -301,19 +356,26 @@ class TestUsage(unittest.TestCase):
             self.mod_dim,
             device='cpu'
         )
-        out = pt.ones(
+        query = pt.ones(
             15,
             self.n_heads,
             self.seq_len,
             self.head_dim,
             device='cpu'
         )
-        attn.return_value = out
+        key_value = pt.ones(
+            15,
+            self.n_kv_heads,
+            self.seq_len,
+            self.head_dim,
+            device='cpu'
+        )
+        attn.return_value = query
         self.attention.eval()
         _ = self.attention(inp, object(), True)
-        pt.testing.assert_close(attn.call_args[1]['query'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['key'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['value'], 16 * out)
+        pt.testing.assert_close(attn.call_args[1]['query'], 16 * query)
+        pt.testing.assert_close(attn.call_args[1]['key'], 16 * key_value)
+        pt.testing.assert_close(attn.call_args[1]['value'], 16 * key_value)
         self.assertIsNone(attn.call_args[1]['attn_mask'])
         self.assertEqual(0.0,  attn.call_args[1]['dropout_p'])
         self.assertIsInstance(attn.call_args[1]['is_causal'], bool)
@@ -328,20 +390,27 @@ class TestUsage(unittest.TestCase):
             self.mod_dim,
             device='cpu'
         )
-        out = pt.ones(
+        query = pt.ones(
             15,
             self.n_heads,
             self.seq_len,
             self.head_dim,
             device='cpu'
         )
-        attn.return_value = out
+        key_value = pt.ones(
+            15,
+            self.n_kv_heads,
+            self.seq_len,
+            self.head_dim,
+            device='cpu'
+        )
+        attn.return_value = query
         mask = object()
         self.attention.train()
         _ = self.attention(inp, mask, False)
-        pt.testing.assert_close(attn.call_args[1]['query'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['key'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['value'], 16 * out)
+        pt.testing.assert_close(attn.call_args[1]['query'], 16 * query)
+        pt.testing.assert_close(attn.call_args[1]['key'], 16 * key_value)
+        pt.testing.assert_close(attn.call_args[1]['value'], 16 * key_value)
         self.assertIs(attn.call_args[1]['attn_mask'], mask)
         self.assertEqual(
             self.attention.dropout,
@@ -359,20 +428,27 @@ class TestUsage(unittest.TestCase):
             self.mod_dim,
             device='cpu'
         )
-        out = pt.ones(
+        query = pt.ones(
             15,
             self.n_heads,
             self.seq_len,
             self.head_dim,
             device='cpu'
         )
-        attn.return_value = out
+        key_value = pt.ones(
+            15,
+            self.n_kv_heads,
+            self.seq_len,
+            self.head_dim,
+            device='cpu'
+        )
+        attn.return_value = query
         mask = object()
         self.attention.eval()
         _ = self.attention(inp, mask, False)
-        pt.testing.assert_close(attn.call_args[1]['query'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['key'], 16 * out)
-        pt.testing.assert_close(attn.call_args[1]['value'], 16 * out)
+        pt.testing.assert_close(attn.call_args[1]['query'], 16 * query)
+        pt.testing.assert_close(attn.call_args[1]['key'], 16 * key_value)
+        pt.testing.assert_close(attn.call_args[1]['value'], 16 * key_value)
         self.assertIs(attn.call_args[1]['attn_mask'], mask)
         self.assertEqual(0.0, attn.call_args[1]['dropout_p'])
         self.assertIsInstance(attn.call_args[1]['is_causal'], bool)
@@ -390,7 +466,7 @@ class TestUsage(unittest.TestCase):
         out.return_value = pt.rand(
             self.batch_size,
             self.seq_len,
-            3 * self.mod_dim,
+            2 * self.kv_dim + self.mod_dim,
             device='cpu'
         )
         _ = self.attention(inp)
@@ -449,8 +525,8 @@ class TestUsage(unittest.TestCase):
             device='cpu'
         )
         mask = pt.zeros(self.seq_len, device='cpu')
-        actual = self.attention(inp, mask, False)
-        self.assertTupleEqual(inp.shape, actual.shape)
+        with self.assertRaises(IndexError):
+            _ = self.attention(inp, mask, False)
 
 
     def test_3d_inp_2d_mask(self):
