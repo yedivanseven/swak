@@ -7,12 +7,7 @@ misc
 .. autofunction:: swak.pt.misc.identity
 
 
-.. autoclass:: swak.pt.misc.ResetIdentity
-   :members:
-   :show-inheritance:
-
-
-.. autoclass:: swak.pt.misc.BlockIdentity
+.. autoclass:: swak.pt.misc.Identity
    :members:
    :show-inheritance:
 

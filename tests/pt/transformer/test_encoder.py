@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import patch
 import torch as pt
-from swak.pt.misc import BlockIdentity
-from swak.pt.blocks import ActivatedBlock
+from swak.pt.blocks import ActivatedBlock, IdentityBlock
 from swak.pt.transformer import (
     MultiheadedSelfAttention,
     EncoderLayer,
@@ -38,7 +37,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.encode, 'pos_enc'))
 
     def test_pos_enc(self):
-        self.assertIsInstance(self.encode.pos_enc, BlockIdentity)
+        self.assertIsInstance(self.encode.pos_enc, IdentityBlock)
 
     def test_has_dropout(self):
         self.assertTrue(hasattr(self.encode, 'dropout'))
@@ -133,7 +132,7 @@ class TestDefaultAttributes(unittest.TestCase):
         new = self.encode.new()
         self.assertIsInstance(new, Encoder)
         self.assertIsNot(new, self.encode)
-        self.assertIsInstance(new.pos_enc, BlockIdentity)
+        self.assertIsInstance(new.pos_enc, IdentityBlock)
         self.assertIsNot(new.pos_enc, self.encode.pos_enc)
         self.assertEqual(new.dropout, self.encode.dropout)
         self.assertEqual(new.device, self.encode.device)
@@ -203,7 +202,7 @@ class TestAttributes(unittest.TestCase):
     def test_norm_identity_not_norm_first(self):
         el = EncoderLayer(self.attention, self.feedforward, norm_first=False)
         encode = Encoder(el, pos_enc=self.pos_enc)
-        self.assertIsInstance(encode.norm, BlockIdentity)
+        self.assertIsInstance(encode.norm, IdentityBlock)
 
 
 class TestMasking(unittest.TestCase):

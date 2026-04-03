@@ -2,7 +2,7 @@ from typing import Any, Self
 import torch as pt
 import torch.nn as ptn
 from ..types import Module, Tensor, Block
-from ..misc import ResetIdentity
+from ..misc import Identity
 
 
 class SkipConnection(Block):
@@ -26,7 +26,7 @@ class SkipConnection(Block):
         The class of the norm to be applied after adding input to output, e.g.,
         ``LayerNorm`` or ``BatchNorm1d``. Again, this is needed to easily
         create a fresh, new instances with equal, but independent parameters.
-        Defaults to :class:`ResetIdentity`, resulting in no normalization.
+        Defaults to :class:`Identity`, resulting in no normalization.
     *args
         Arguments used to initialize an instance of `norm_cls`.
     device: str or torch.device, optional
@@ -38,7 +38,7 @@ class SkipConnection(Block):
 
     See Also
     --------
-    ~swak.pt.misc.ResetIdentity
+    ~swak.pt.misc.Identity
 
     """
 
@@ -47,7 +47,7 @@ class SkipConnection(Block):
             block: Block,
             dropout: float = 0.0,
             norm_first: bool = True,
-            norm_cls: type[Module] = ResetIdentity,
+            norm_cls: type[Module] = Identity,
             *args: Any,
             device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float,

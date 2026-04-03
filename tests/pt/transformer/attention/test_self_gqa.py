@@ -2,7 +2,7 @@ import sys
 import unittest
 from unittest.mock import patch, Mock
 import torch as pt
-from swak.pt.misc import BlockIdentity
+from swak.pt.blocks import IdentityBlock
 from swak.pt.transformer import GroupedQuerySelfAttention
 
 
@@ -58,7 +58,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.attention, 'pos_enc'))
 
     def test_pos_enc(self):
-        self.assertIsInstance(self.attention.pos_enc, BlockIdentity)
+        self.assertIsInstance(self.attention.pos_enc, IdentityBlock)
 
     def test_pos_enc_to_called(self):
         pos_enc = Mock()

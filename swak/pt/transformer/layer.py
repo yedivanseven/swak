@@ -4,7 +4,7 @@ import torch as pt
 import torch.nn as ptn
 from torch.nn import LayerNorm, RMSNorm
 from ..types import Tensor, Block, PosEnc, Attention
-from ..misc import BlockIdentity
+from ..blocks import IdentityBlock
 
 __all__ = ['EncoderLayer']
 
@@ -39,7 +39,7 @@ class EncoderLayer(Block):
         specified in the `attention`. If given, it will be called on the input
         tensor first thing. Typically, this would be an instance of
         ``Sinusoidal`` or ``Learnable`` positional encodings. Defaults to an
-        instance of :class:`BlockIdentity`, which does nothing.
+        instance of :class:`IdentityBlock`, which does nothing.
     bias: bool, optional
         Whether to use a bias in the ``LayerNorm`` components.
         Defaults to ``True``.
@@ -55,9 +55,9 @@ class EncoderLayer(Block):
     eps: float, optional
         Add this value to the denominator in the ``LayerNorm`` components.
         Defaults to 1e-5.
-    device: str or device, optional
+    device: str or torch.device, optional
         Torch device to first create the encoder layer on. Defaults to "cpu".
-    dtype: dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the layer in. Defaults to ``torch.float``.
 
     See Also
@@ -85,7 +85,7 @@ class EncoderLayer(Block):
         super().__init__()
         self.attention = attention.to(device=device, dtype=dtype)
         self.feed_forward = feed_forward.to(device=device, dtype=dtype)
-        pos_enc = pos_enc or BlockIdentity(attention.mod_dim)
+        pos_enc = pos_enc or IdentityBlock(attention.mod_dim)
         self.pos_enc = self.__check(pos_enc).to(device=device, dtype=dtype)
         self.bias = bias
         self.dropout = dropout
@@ -113,7 +113,7 @@ class EncoderLayer(Block):
 
     def __check(self, pos_enc: Block) -> Block:
         """Warn if both attention and layer apply positional encodings."""
-        we_have_pos_enc = not isinstance(pos_enc, BlockIdentity)
+        we_have_pos_enc = not isinstance(pos_enc, IdentityBlock)
         if we_have_pos_enc and self.attention.has_pos_enc:
             msg = ("Attention and layer both apply positional encodings! "
                    "Hope you know what you're doing ...")
@@ -145,7 +145,7 @@ class EncoderLayer(Block):
         """Whether positional encodings are applied."""
         return (
             self.attention.has_pos_enc or
-            not isinstance(self.pos_enc, BlockIdentity)
+            not isinstance(self.pos_enc, IdentityBlock)
         )
 
     @property
@@ -228,7 +228,7 @@ class EncoderLayer(Block):
             A fresh, new instance of itself.
 
         """
-        we_have_pos_enc = not isinstance(self.pos_enc, BlockIdentity)
+        we_have_pos_enc = not isinstance(self.pos_enc, IdentityBlock)
         return self.__class__(
             self.attention.new(),
             self.feed_forward.new(),

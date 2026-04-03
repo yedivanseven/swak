@@ -4,7 +4,7 @@ import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
 from ...types import Tensor, Attention, PosEnc
-from ...misc import BlockIdentity
+from ...blocks import IdentityBlock
 
 
 class GroupedQuerySelfAttention(Attention):
@@ -18,7 +18,7 @@ class GroupedQuerySelfAttention(Attention):
     n_heads: int, optional
         The number of attention heads. Must integer divide `mod_dim` and the
         result must still be and even number. Defaults to 1.
-    q-factor: int, optional
+    q_factor: int, optional
         Reduce the number of attention heads for keys and values by this
         factor compared to the `n_heads` used for queries. Must integer divide
         `n_heads`. Realizes standard multi-head-attention (MHA) with
@@ -43,7 +43,7 @@ class GroupedQuerySelfAttention(Attention):
         where `S` is the sequence length, and `head_dim` is the `mod_dim`
         divided by `n_heads`. If given, it will be called on queries and keys.
         Typically, this would be an instance of :class:`Rotary` positional
-        encodings. Defaults to an instance of :class:`BlockIdentity`,
+        encodings. Defaults to an instance of :class:`IdentityBlock`,
         which does nothing.
     device: str or torch.device, optional
         Torch device to compute self attention on. Defaults to "cpu".
@@ -59,6 +59,7 @@ class GroupedQuerySelfAttention(Attention):
     See Also
     --------
     Rotary
+    ~swak.pt.blocks.IdentityBlock
 
     """
 
@@ -79,7 +80,7 @@ class GroupedQuerySelfAttention(Attention):
         self.q_factor = self.__valid(n_heads, q_factor, 'n_heads', 'q_factor')
         self.bias = bias
         self.dropout = dropout
-        self.pos_enc = BlockIdentity(mod_dim) if pos_enc is None else pos_enc
+        self.pos_enc = IdentityBlock(mod_dim) if pos_enc is None else pos_enc
         self.pos_enc = self.pos_enc.to(device=device, dtype=dtype)
         scale = pt.tensor(self.head_dim, dtype=dtype, device=device).pow(-0.5)
         self.register_buffer('scale', scale, persistent=False)
@@ -155,7 +156,7 @@ class GroupedQuerySelfAttention(Attention):
     @property
     def has_pos_enc(self) -> bool:
         """Whether a `pos_enc` module was provided at instantiation or not."""
-        return not isinstance(self.pos_enc, BlockIdentity)
+        return not isinstance(self.pos_enc, IdentityBlock)
 
     @property
     def context(self) -> int:

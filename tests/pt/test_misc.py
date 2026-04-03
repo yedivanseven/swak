@@ -5,8 +5,7 @@ import torch.nn as ptn
 from swak.pt.exceptions import CompileError, ShapeError, ValidationErrors
 from swak.pt.misc import (
     identity,
-    ResetIdentity,
-    BlockIdentity,
+    Identity,
     Finalizer,
     NegativeBinomialFinalizer,
     Compile,
@@ -42,143 +41,54 @@ class TestIdentityFunction(unittest.TestCase):
         self.assertIs(result, obj)
 
 
-class TestRestIdentity(unittest.TestCase):
+class TestIdentity(unittest.TestCase):
 
     def test_empty_instantiation(self):
-        _ = ResetIdentity()
+        _ = Identity()
 
     def test_instantiation_accepts_args(self):
-        _ = ResetIdentity(1, 'foo', 4.2)
+        _ = Identity(1, 'foo', 4.2)
 
     def test_instantiation_accepts_kwargs(self):
-        _ = ResetIdentity(foo=1, bar='baz', answer=4.2)
+        _ = Identity(foo=1, bar='baz', answer=4.2)
 
     def test_instantiation_accepts_args_and_kwargs(self):
-        _ = ResetIdentity(1, 42, foo='bar')
+        _ = Identity(1, 42, foo='bar')
 
     def test_callable(self):
-        self.assertTrue(callable(ResetIdentity()))
+        self.assertTrue(callable(Identity()))
 
     def test_arg(self):
         obj = object()
-        result = ResetIdentity()(obj)
+        result = Identity()(obj)
         self.assertIs(result, obj)
 
     def test_arg_and_args(self):
         obj = object()
-        result = ResetIdentity()(obj, 'bar', 42)
+        result = Identity()(obj, 'bar', 42)
         self.assertIs(result, obj)
 
     def test_arg_and_kwargs(self):
         obj = object()
-        result = ResetIdentity()(obj, foo='bar', answer=42)
+        result = Identity()(obj, foo='bar', answer=42)
         self.assertIs(result, obj)
 
     def test_arg_and_args_and_kwargs(self):
         obj = object()
-        result = ResetIdentity()(obj, 'bar', answer=42)
+        result = Identity()(obj, 'bar', answer=42)
         self.assertIs(result, obj)
 
     def test_has_reset_parameters(self):
-        i = ResetIdentity()
+        i = Identity()
         self.assertTrue(hasattr(i, 'reset_parameters'))
 
     def test_reset_parameters(self):
-        i = ResetIdentity()
+        i = Identity()
         self.assertTrue(callable(i.reset_parameters))
 
     def test_call_reset_parameters(self):
-        i = ResetIdentity()
+        i = Identity()
         i.reset_parameters()
-
-
-class TestBlockIdentity(unittest.TestCase):
-
-    def test_empty_instantiation(self):
-        _ = BlockIdentity(4)
-
-    def test_instantiation_accepts_args(self):
-        _ = BlockIdentity(4, 'foo', 4.2)
-
-    def test_instantiation_accepts_kwargs(self):
-        _ = BlockIdentity(4, foo=1, bar='baz', answer=4.2)
-
-    def test_instantiation_accepts_args_and_kwargs(self):
-        _ = BlockIdentity(4, 42, foo='bar')
-
-    def test_callable(self):
-        self.assertTrue(callable(BlockIdentity(4)))
-
-    def test_arg(self):
-        obj = object()
-        result = BlockIdentity(4)(obj)
-        self.assertIs(result, obj)
-
-    def test_arg_and_args(self):
-        obj = object()
-        result = BlockIdentity(4)(obj, 'bar', 42)
-        self.assertIs(result, obj)
-
-    def test_arg_and_kwargs(self):
-        obj = object()
-        result = BlockIdentity(4)(obj, foo='bar', answer=42)
-        self.assertIs(result, obj)
-
-    def test_arg_and_args_and_kwargs(self):
-        obj = object()
-        result = BlockIdentity(4)(obj, 'bar', answer=42)
-        self.assertIs(result, obj)
-
-    def test_has_reset_parameters(self):
-        i = BlockIdentity(4)
-        self.assertTrue(hasattr(i, 'reset_parameters'))
-
-    def test_reset_parameters(self):
-        i = BlockIdentity(4)
-        self.assertTrue(callable(i.reset_parameters))
-
-    def test_call_reset_parameters(self):
-        i = BlockIdentity(4)
-        i.reset_parameters()
-
-    def test_has_mod_dim(self):
-        i = BlockIdentity(4)
-        self.assertTrue(hasattr(i, 'mod_dim'))
-
-    def test_mod_dim(self):
-        i = BlockIdentity(4)
-        self.assertIsInstance(i.mod_dim, int)
-        self.assertEqual(4, i.mod_dim)
-
-    def test_has_device(self):
-        i = BlockIdentity(4)
-        self.assertTrue(hasattr(i, 'device'))
-
-    def test_device(self):
-        i = BlockIdentity(4)
-        self.assertIsNone(i.device)
-
-    def test_has_dtype(self):
-        i = BlockIdentity(4)
-        self.assertTrue(hasattr(i, 'dtype'))
-
-    def test_dtype(self):
-        i = BlockIdentity(4)
-        self.assertIsNone(i.dtype)
-
-    def test_has_new(self):
-        i = BlockIdentity(4)
-        self.assertTrue(hasattr(i, 'new'))
-
-    def test_new(self):
-        i = BlockIdentity(4)
-        self.assertTrue(callable(i.new))
-
-    def test_call_new(self):
-        old = BlockIdentity(4)
-        new = old.new()
-        self.assertIsInstance(new, BlockIdentity)
-        self.assertIsNot(old, new)
 
 
 class TestFinalizer(unittest.TestCase):
@@ -189,8 +99,8 @@ class TestFinalizer(unittest.TestCase):
         self.default = Finalizer(4, self.active1, self.active2)
         self.custom = Finalizer(
             4,
-            ResetIdentity(),
-            ResetIdentity(),
+            Identity(),
+            Identity(),
             bias=False,
             dtype=pt.float64
         )
@@ -1010,6 +920,7 @@ class TestLazyCatDim0(unittest.TestCase):
             self.cat_3d[1:3, 2:4, 2:6],
             self.expected_3d[1:3, 2:4, 2:6]
         )
+
 
 if __name__ == '__main__':
     unittest.main()

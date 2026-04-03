@@ -14,6 +14,7 @@ from .gated_hidden import GatedHiddenBlock
 from .gated_activated import GatedActivatedBlock
 from .skip import SkipConnection
 from .repeat import Repeat
+from .identity import IdentityBlock
 
 
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     'GatedHiddenBlock',
     'GatedActivatedBlock',
     'SkipConnection',
-    'Repeat'
+    'Repeat',
+    'IdentityBlock',
 ]

@@ -2,8 +2,7 @@ import sys
 import unittest
 from unittest.mock import patch, Mock
 import torch as pt
-from swak.pt.misc import BlockIdentity
-from swak.pt.blocks import ActivatedBlock
+from swak.pt.blocks import ActivatedBlock, IdentityBlock
 from swak.pt.transformer import (
     MultiheadedSelfAttention,
     EncoderLayer,
@@ -36,7 +35,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.layer, 'pos_enc'))
 
     def test_pos_enc(self):
-        self.assertIsInstance(self.layer.pos_enc, BlockIdentity)
+        self.assertIsInstance(self.layer.pos_enc, IdentityBlock)
 
     def test_has_bias(self):
         self.assertTrue(hasattr(self.layer, 'bias'))
@@ -201,7 +200,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsNot(new.attention, self.layer.attention)
         self.assertIsInstance(new.feed_forward, ActivatedBlock)
         self.assertIsNot(new.feed_forward, self.layer.feed_forward)
-        self.assertIsInstance(new.pos_enc, BlockIdentity)
+        self.assertIsInstance(new.pos_enc, IdentityBlock)
         self.assertIsNot(new.pos_enc, self.layer.pos_enc)
         self.assertEqual(new.bias, self.layer.bias)
         self.assertEqual(new.dropout, self.layer.dropout)

@@ -4,7 +4,7 @@ import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
 from ...types import Tensor, Attention, PosEnc
-from ...misc import BlockIdentity
+from ...blocks import IdentityBlock
 
 
 class MultiheadedSelfAttention(Attention):
@@ -36,7 +36,7 @@ class MultiheadedSelfAttention(Attention):
         where `S` is the sequence length, and `head_dim` is the `mod_dim`
         divided by `n_heads`. If given, it will  be called on queries and keys.
         Typically, this would be an instance of :class:`Rotary` positional
-        encodings. Defaults to an instance of :class:`BlockIdentity`,
+        encodings. Defaults to an instance of :class:`IdentityBlock`,
         which does nothing.
     device: str or torch.device, optional
         Torch device to compute self attention on. Defaults to "cpu".
@@ -51,7 +51,7 @@ class MultiheadedSelfAttention(Attention):
     See Also
     --------
     Rotary
-    ~swak.pt.types.BlockIdentity
+    ~swak.pt.blocks.IdentityBlock
 
     """
 
@@ -70,7 +70,7 @@ class MultiheadedSelfAttention(Attention):
         self.n_heads = self.__valid(n_heads)
         self.bias = bias
         self.dropout = dropout
-        self.pos_enc = BlockIdentity(mod_dim) if pos_enc is None else pos_enc
+        self.pos_enc = IdentityBlock(mod_dim) if pos_enc is None else pos_enc
         self.pos_enc = self.pos_enc.to(device=device, dtype=dtype)
         scale = pt.tensor(self.head_dim, dtype=dtype, device=device).pow(-0.5)
         self.register_buffer('scale', scale, persistent=False)
@@ -121,7 +121,7 @@ class MultiheadedSelfAttention(Attention):
     @property
     def has_pos_enc(self) -> bool:
         """Whether a `pos_enc` module was provided at instantiation or not."""
-        return not isinstance(self.pos_enc, BlockIdentity)
+        return not isinstance(self.pos_enc, IdentityBlock)
 
     @property
     def context(self) -> int:

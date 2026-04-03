@@ -2,8 +2,8 @@ import warnings
 from typing import Self
 import torch as pt
 import torch.nn as ptn
-from swak.pt.types import Tensor, Tensors1T, Block, PosEnc
-from swak.pt.misc import BlockIdentity
+from ..types import Tensor, Tensors1T, Block, PosEnc
+from ..blocks import IdentityBlock
 from .layer import EncoderLayer
 
 __all__ = ['Encoder']
@@ -30,13 +30,13 @@ class Encoder(Block):
         specified in the `layer`. If given, it will be called on the input
         tensor first thing. Typically, this would be an instance of
         ``Sinusoidal`` or ``Learnable`` positional encodings. Defaults to an
-        instance of :class:`BlockIdentity`, which does nothing.
+        instance of :class:`IdentityBlock`, which does nothing.
     dropout: float, optional
         Apply dropout to the sum of token embedding and positional encodings
         with this probability during training. Defaults to 0.
-    device: str or device, optional
+    device: str or torch.device, optional
         Torch device to first create the transformer on. Defaults to "cpu".
-    dtype: dtype, optional
+    dtype: torch.dtype, optional
         Torch dtype to first create the transformer encoder stack in.
         Defaults to ``torch.float``.
 
@@ -69,7 +69,7 @@ class Encoder(Block):
             layer.new().to(device=device, dtype=dtype)
             for _ in range(self.n_layers)
         ])
-        pos_enc = pos_enc or BlockIdentity(layer.mod_dim)
+        pos_enc = pos_enc or IdentityBlock(layer.mod_dim)
         self.pos_enc = self.__check(pos_enc).to(device=device, dtype=dtype)
         self.dropout = dropout
         self.drop = ptn.Dropout(dropout)
@@ -80,7 +80,7 @@ class Encoder(Block):
             device=device,
             dtype=dtype,
             **layer.bias_kwarg
-        ) if layer.norm_first else BlockIdentity(layer.mod_dim)
+        ) if layer.norm_first else IdentityBlock(layer.mod_dim)
 
     @staticmethod
     def __valid(n_layers: int) -> int:
@@ -92,7 +92,7 @@ class Encoder(Block):
 
     def __check(self, pos_enc: PosEnc) -> PosEnc:
         """Check compatibility of encoder and layer positional encodings."""
-        we_have_pos_enc = not isinstance(pos_enc, BlockIdentity)
+        we_have_pos_enc = not isinstance(pos_enc, IdentityBlock)
         if we_have_pos_enc and self.layers[0].has_pos_enc:
             msg = ("Encoder and layer(s) both apply positional encodings! "
                    "Hope you know what you're doing ...")
@@ -208,7 +208,7 @@ class Encoder(Block):
             A fresh, new instance of itself.
 
         """
-        we_have_pos_enc = not isinstance(self.pos_enc, BlockIdentity)
+        we_have_pos_enc = not isinstance(self.pos_enc, IdentityBlock)
         return self.__class__(
             self.layers[0],
             self.n_layers,

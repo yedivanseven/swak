@@ -45,3 +45,16 @@ Positional encodings
 .. autoclass:: swak.pt.transformer.Learnable
    :members:
    :show-inheritance:
+
+
+Base classes
+------------
+
+.. autoclass:: swak.pt.types.PosEnc
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.types.Attention
+   :members:
+   :show-inheritance:

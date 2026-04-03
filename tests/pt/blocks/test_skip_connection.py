@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 import torch as pt
 import torch.nn as ptn
 from swak.pt.blocks import SkipConnection, ActivatedBlock
-from swak.pt.misc import ResetIdentity
+from swak.pt.misc import Identity
 
 
 class TestDefaultAttributes(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.skip, 'norm_cls'))
 
     def test_norm_cls(self):
-        self.assertIs(self.skip.norm_cls, ResetIdentity)
+        self.assertIs(self.skip.norm_cls, Identity)
 
     def test_has_args(self):
         self.assertTrue(hasattr(self.skip, 'args'))
@@ -60,7 +60,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.skip, 'norm'))
 
     def test_norm(self):
-        self.assertIsInstance(self.skip.norm, ResetIdentity)
+        self.assertIsInstance(self.skip.norm, Identity)
 
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.skip, 'mod_dim'))
