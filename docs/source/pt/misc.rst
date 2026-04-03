@@ -12,6 +12,11 @@ misc
    :show-inheritance:
 
 
+.. autoclass:: swak.pt.misc.Delayed
+   :members:
+   :show-inheritance:
+
+
 .. autoclass:: swak.pt.misc.Finalizer
    :members:
    :show-inheritance:
