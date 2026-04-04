@@ -3,7 +3,7 @@ import unittest
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from pathlib import Path
 from logging import Logger, getLogger, FileHandler
-from swak.misc import FileLogger, PID_FMT, RAW_FMT, SHORT_FMT
+from swak.loggers import FileLogger, PID_FMT, RAW_FMT, SHORT_FMT
 
 
 class TestDefaultAttributes(unittest.TestCase):

@@ -4,7 +4,7 @@ import unittest
 import pickle
 from unittest.mock import Mock
 from logging import Logger
-from swak.misc import JsonStreamHandler
+from swak.loggers import JsonStreamHandler
 from swak.funcflow.loggers import PassThroughJsonLogger
 
 

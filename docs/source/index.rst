@@ -84,6 +84,7 @@ as a, well, template.
    pl
    cloud
    pt
+   loggers
    misc
 
 

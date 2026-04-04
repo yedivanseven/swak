@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 from functools import cached_property
 from datetime import datetime
 from logging import Logger, StreamHandler, Handler, LogRecord
-from ..repr import ArgRepr
+from ..misc import ArgRepr
 from .formats import JSON_FMT
 
 

@@ -4,7 +4,8 @@ from typing import Literal, Any
 from collections.abc import Callable, Iterable, Mapping
 from functools import cached_property
 from logging import Logger, StreamHandler, Handler
-from ...misc import ArgRepr, JsonStreamHandler
+from ...misc import ArgRepr
+from ...loggers import JsonStreamHandler
 from .formats import JSON_FMT
 
 type JSON = Mapping[str, Any]

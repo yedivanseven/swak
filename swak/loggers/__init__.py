@@ -1,3 +1,5 @@
+"""Preconfigured loggers for various output targets and formats."""
+
 from .formats import DEFAULT_FMT, PID_FMT, RAW_FMT, SHORT_FMT, JSON_FMT
 from .std import StdLogger
 from .file import FileLogger
@@ -14,5 +16,3 @@ __all__ = [
     'JsonLogger',
     'JsonStreamHandler'
 ]
-
-# ToDo: Move loggers to top-level package

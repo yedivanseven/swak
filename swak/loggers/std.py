@@ -2,7 +2,7 @@ import sys
 import logging
 from functools import cached_property
 from logging import Logger, Formatter, StreamHandler, Handler
-from ..repr import ArgRepr
+from ..misc import ArgRepr
 from .formats import DEFAULT_FMT
 
 

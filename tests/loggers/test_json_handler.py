@@ -5,7 +5,7 @@ import unittest
 import datetime as dt
 from logging import LogRecord
 from swak.jsonobject import JsonObject
-from swak.misc import JsonStreamHandler
+from swak.loggers import JsonStreamHandler
 
 
 def serialize(mapping: dict) -> str:
