@@ -64,7 +64,7 @@ class Sort(ArgRepr):
         Parameters
         ----------
         df: DataFrame
-            The Dataframe to sort.
+            The dataframe to sort.
 
         Returns
         -------

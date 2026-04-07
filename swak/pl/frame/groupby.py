@@ -23,7 +23,7 @@ class GroupBy(ArgRepr):
 
 
     .. _group: https://docs.pola.rs/api/python/stable/reference/dataframe/api/
-               polars.DataFrame.group_by.html
+               polars.DataFrame.group_by.html#polars.DataFrame.group_by
 
     """
 

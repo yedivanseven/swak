@@ -17,7 +17,12 @@ from .frame import (
     GroupBy,
     GroupByDynamic,
     Join,
-    ToPandas
+    ToPandas,
+    Cast,
+    Rename,
+    DropNulls,
+    Pivot,
+    VStack
 )
 
 __all__ = [
@@ -31,5 +36,10 @@ __all__ = [
     'GroupByDynamic',
     'Join',
     'ToPandas',
-    'GroupByAgg'
+    'GroupByAgg',
+    'Cast',
+    'Rename',
+    'DropNulls',
+    'Pivot',
+    'VStack'
 ]

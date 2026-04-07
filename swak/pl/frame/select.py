@@ -34,7 +34,7 @@ class Select(ArgRepr):
         Parameters
         ----------
         df: DataFrame
-            The Dataframe to select columns from.
+            The dataframe to select columns from.
 
         Returns
         -------

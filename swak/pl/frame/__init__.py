@@ -7,6 +7,11 @@ from .groupby import GroupBy
 from .groupby_dynamic import GroupByDynamic
 from .join import Join
 from .to_pandas import ToPandas
+from .cast import Cast
+from .drop_nulls import DropNulls
+from .rename import Rename
+from .pivot import Pivot
+from .vstack import VStack
 
 __all__ = [
     'Select',
@@ -16,5 +21,13 @@ __all__ = [
     'WithColumns',
     'GroupBy',
     'GroupByDynamic',
-    'ToPandas'
+    'Join',
+    'ToPandas',
+    'Cast',
+    'DropNulls',
+    'Rename',
+    'Pivot',
+    'VStack'
 ]
+
+# ToDo: Add unit tests for Cast, DropNulls, Rename, Pivot, VStack

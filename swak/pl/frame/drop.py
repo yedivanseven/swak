@@ -20,7 +20,7 @@ class Drop(ArgRepr):
 
 
     .. _drop: https://docs.pola.rs/api/python/stable/reference/dataframe/api/
-              polars.DataFrame.drop.html
+              polars.DataFrame.drop.html#polars.DataFrame.drop
 
     """
 
@@ -35,12 +35,12 @@ class Drop(ArgRepr):
         Parameters
         ----------
         df: DataFrame
-            The Dataframe to drop columns from.
+            The dataframe to drop columns from.
 
         Returns
         -------
         DataFrame
-            The Dataframe without the dropped `columns`.
+            The Ddtaframe without the dropped `columns`.
 
         """
         return df.drop(*self.columns, strict=self.strict)
