@@ -1,8 +1,8 @@
 from polars.dataframe.group_by import GroupBy, DynamicGroupBy
 from polars import DataFrame
 from polars._typing import IntoExpr
-from ..misc import ArgRepr
-from .types import IntoExprs
+from ...misc import ArgRepr
+from ..types import IntoExprs
 
 
 class GroupByAgg(ArgRepr):
