@@ -1,11 +1,5 @@
 from typing import Any, overload
-from collections.abc import Callable
-
-__all__ = [
-    'apply',
-    'unit',
-    'identity'
-]
+from collections.abc import Callable, Iterable
 
 
 def apply[**P, T](call: type[T] | Callable[P, T], *args: P.args) -> T:
@@ -71,3 +65,21 @@ def identity(*args):
 
     """
     return args[0] if len(args) == 1 else args
+
+
+# ToDo: Add unit tests
+def to_list[T](arg: Iterable[T]) -> list[T]:
+    """Convert any iterable to a list with python's builtin :func:`list`.
+
+    Parameters
+    ----------
+    arg: iterable
+        Iterable to convert to a list.
+
+    Returns
+    -------
+    list
+        The converted iterable
+
+    """
+    return list(arg)

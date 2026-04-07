@@ -6,31 +6,28 @@ pipe of callable objects.
 
 """
 
-from .groupby import GroupByApply, RollingGroupByApply
-from .frame import (
-    AsType,
-    ColumnSelector,
-    ColumnsSelector,
-    ColumnMapper,
-    RowsSelector,
-    GroupBy,
-    Join,
-    Assign,
-    Drop,
-    DropNA,
-    SortValues,
-    SetIndex,
-    ResetIndex,
-    Rename,
-    Agg,
-    RollingWindow
-)
+from .astype import AsType
+from .column_selector import ColumnSelector
+from .columns_selector import ColumnsSelector
+from .mapper import Mapper
+from .rows_selector import RowsSelector
+from .groupby import GroupBy, GroupByApply, RollingGroupByApply
+from .join import Join
+from .assign import Assign
+from .drop import Drop
+from .dropna import DropNA
+from .sort_values import SortValues
+from .set_index import SetIndex
+from .reset_index import ResetIndex
+from .rename import Rename
+from .agg import Agg
+from .rolling_window import RollingWindow
 
 __all__ = [
     'AsType',
     'ColumnSelector',
     'ColumnsSelector',
-    'ColumnMapper',
+    'Mapper',
     'RowsSelector',
     'Join',
     'Assign',
@@ -46,3 +43,8 @@ __all__ = [
     'GroupByApply',
     'RollingGroupByApply',
 ]
+
+# ToDo: Add AsFreq, Explode, Transform, Copy, and FillNA
+# ToDo: Search for "inplace" keywords and pop them!
+# ToDo: Explore use of dispatch method more!
+# ToDo: Don't forget methods of Rolling!

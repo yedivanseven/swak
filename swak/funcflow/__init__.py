@@ -28,7 +28,7 @@ from .sum import Sum
 from .fallback import Fallback
 from .safe import Safe
 from .exceptions import SafeError
-from .misc import apply, unit, identity
+from .misc import apply, unit, identity, to_list
 
 __all__ = [
     'Filter',
@@ -46,7 +46,8 @@ __all__ = [
     'SafeError',
     'apply',
     'unit',
-    'identity'
+    'identity',
+    'to_list'
 ]
 
 # ToDo: Add Retry
