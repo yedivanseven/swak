@@ -11,11 +11,11 @@ class TestDefaultAttributes(unittest.TestCase):
         self.by = 'foo'
         self.sort = SortValues(self.by)
 
-    def test_has_by(self):
-        self.assertTrue(hasattr(self.sort, 'by'))
+    def test_has_bys(self):
+        self.assertTrue(hasattr(self.sort, 'bys'))
 
-    def test_by(self):
-        self.assertEqual(self.by, self.sort.by)
+    def test_bys(self):
+        self.assertListEqual([self.by], self.sort.bys)
 
     def test_has_kwargs(self):
         self.assertTrue(hasattr(self.sort, 'kwargs'))
@@ -28,14 +28,15 @@ class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.by = ['foo', 'bar']
+        self.bys = 'baz'
         self.kwargs = {
             'answer': 42,
             'inplace': True
         }
-        self.sort = SortValues(self.by, **self.kwargs)
+        self.sort = SortValues(self.by, self.bys, **self.kwargs)
 
-    def test_by(self):
-        self.assertEqual(self.by, self.sort.by)
+    def test_bys(self):
+        self.assertEqual([*self.by, self.bys], self.sort.bys)
 
     def test_kwargs(self):
         self.assertDictEqual({'answer': 42}, self.sort.kwargs)
@@ -45,42 +46,49 @@ class TestUsage(unittest.TestCase):
 
     def setUp(self):
         self.by = ['foo', 'bar']
+        self.bys = 'baz'
         self.kwargs = {
             'axis': 1,
             'ascending': False
         }
-        self.sort = SortValues(self.by, **self.kwargs)
+        self.sort = SortValues(self.by, self.bys, **self.kwargs)
 
 
     def test_callable(self):
         self.assertTrue(callable(self.sort))
 
-    def test_sort_values_called(self):
-        df = Mock()
-        _ = self.sort(df)
+    def test_dataframe(self):
+        df = pd.DataFrame(range(10))
+        df.sort_values = Mock(return_value='answer')
+        actual = self.sort(df)
         df.sort_values.assert_called_once_with(
-            self.by,
+            [*self.by, self.bys],
             inplace=False,
             **self.kwargs
         )
+        self.assertEqual('answer', actual)
 
-    def test_return_value(self):
-        df = pd.DataFrame([[1, 2, 3, 3], [7, 6, 5, 4]], index=self.by)
+    def test_series(self):
+        df = pd.Series(range(10))
+        df.sort_values = Mock(return_value='answer')
         actual = self.sort(df)
-        expected = df.sort_values(self.by, **self.kwargs)
-        pd.testing.assert_frame_equal(actual, expected)
+        df.sort_values.assert_called_once_with(
+            inplace=False,
+            **self.kwargs
+        )
+        self.assertEqual('answer', actual)
 
 
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         sort = SortValues('foo')
-        expected = "SortValues('foo')"
+        expected = "SortValues(['foo'])"
         self.assertEqual(expected, repr(sort))
 
     def test_custom_repr(self):
         sort = SortValues( ['foo', 'bar'], answer=42, inplace=True)
-        expected = "SortValues(['foo', 'bar'], answer=42, inplace=True)"
+        expected = "SortValues(['foo', 'bar'], answer=42)"
         self.assertEqual(expected, repr(sort))
 
     def test_pickle_works(self):

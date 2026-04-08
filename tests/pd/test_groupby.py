@@ -125,7 +125,7 @@ class TestUsage(unittest.TestCase):
         _ = self.groupby(df)
         df.groupby.assert_called_once_with(
             self.by,
-            level=self.level,
+            self.level,
             as_index=self.as_index,
             sort=self.sort,
             group_keys=self.group_keys,

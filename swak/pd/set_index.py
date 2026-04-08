@@ -1,30 +1,20 @@
-from typing import Any
-from collections.abc import Hashable, Iterator
-import numpy as np
-from numpy import ndarray
-from pandas import DataFrame, Series, Index
+from collections.abc import Hashable
+from pandas import DataFrame
 from ..misc import ArgRepr
-
-type Key = (
-    Hashable
-    | ndarray[tuple[int], np.dtype[Any]]
-    | Series
-    | Index
-    | Iterator[Hashable]
-)
-type Keys = list[Key]
+from .types import Labels
 
 
-# ToDo: Make key, keys work like col, *cols?
 class SetIndex(ArgRepr):
     """Simple partial of a pandas dataframe's ``set_index`` method.
 
     Parameters
     ----------
-    keys: hashable or array-like
+    key: hashable or array-like
         This parameter can be either a single column key, a single array of
         the same length as the calling DataFrame, or a list containing an
         arbitrary combination of column keys and arrays.
+    *keys: hashable
+        Additional columns to include into the index.
     drop : bool, optional
         Delete columns to be used as the new index. Defaults to ``True``.
     append : bool, optional
@@ -34,14 +24,15 @@ class SetIndex(ArgRepr):
 
     def __init__(
             self,
-            keys: Key | Keys,
+            key: Labels,
+            *keys: Hashable,
             drop: bool = True,
             append: bool = False,
     ) -> None:
-        self.keys = keys
+        self.keys = self.__valid(key) + self.__valid(keys)
         self.drop = drop
         self.append = append
-        super().__init__(keys, drop=drop, append=append)
+        super().__init__(self.keys, drop=drop, append=append)
 
     def __call__(self, df: DataFrame) -> DataFrame:
         """Set the index of a pandas dataframe.
@@ -63,3 +54,15 @@ class SetIndex(ArgRepr):
             append=self.append,
             inplace=False
         )
+
+    @staticmethod
+    def __valid(cols: Labels) -> list[Hashable]:
+        """Ensure that the columns are indeed a sequence of hashables."""
+        if isinstance(cols, str):
+            return [cols]
+        try:
+            _ = [hash(col) for col in cols]
+        except TypeError:
+            _ = hash(cols)
+            return [cols]
+        return list(cols)

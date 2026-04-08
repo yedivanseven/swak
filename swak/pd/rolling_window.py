@@ -1,4 +1,4 @@
-from typing import Any, overload
+from typing import overload, Any
 from pandas.core.window import Rolling, Window, RollingGroupby
 from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
 from pandas import DataFrame, Series
@@ -45,7 +45,7 @@ class RollingWindow(ArgRepr):
         ...
 
     def __call__(self, df):
-        """Call a pandas object`s ``rolling`` method with the cached (kw)args.
+        """Call a pandas object's ``rolling`` method with the cached (kw)args.
 
         Parameters
         ----------

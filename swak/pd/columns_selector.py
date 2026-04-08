@@ -1,8 +1,9 @@
 from typing import overload
-from collections.abc import Hashable, Sequence
+from collections.abc import Hashable
 from pandas.core.groupby import DataFrameGroupBy
 from pandas import DataFrame
 from ..misc import ArgRepr
+from .types import Labels
 
 
 class ColumnsSelector(ArgRepr):
@@ -14,20 +15,15 @@ class ColumnsSelector(ArgRepr):
 
     Parameters
     ----------
-    col: Hashable, optional
+    col: hashable or array-like, optional
         Column name or sequence thereof. Defaults to an empty tuple.
-    *cols: Hashable
+    *cols: hashable
         Additional columns names.
 
     """
 
-    def __init__(
-            self,
-            col: Hashable | Sequence[Hashable] = (),
-            *cols: Hashable
-    ) -> None:
-        col: tuple[Hashable, ...] = self.__valid(col)
-        self.cols: tuple[Hashable, ...] = col + self.__valid(cols)
+    def __init__(self, col: Labels = (), *cols: Hashable) -> None:
+        self.cols = self.__valid(col) + self.__valid(cols)
         super().__init__(*self.cols)
 
     @overload
@@ -55,13 +51,13 @@ class ColumnsSelector(ArgRepr):
         return df[list(self.cols)]
 
     @staticmethod
-    def __valid(cols: Hashable | Sequence[Hashable]) -> tuple[Hashable, ...]:
+    def __valid(cols: Labels) -> list[Hashable]:
         """Ensure that the columns are indeed a sequence of hashables."""
         if isinstance(cols, str):
-            return cols,
+            return [cols]
         try:
             _ = [hash(col) for col in cols]
         except TypeError:
             _ = hash(cols)
-            return cols,
-        return tuple(cols)
+            return [cols]
+        return list(cols)

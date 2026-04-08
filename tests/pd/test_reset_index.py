@@ -1,6 +1,9 @@
 import pickle
 import unittest
 from unittest.mock import Mock
+
+import pandas as pd
+
 from swak.pd import ResetIndex
 
 
@@ -107,9 +110,10 @@ class TestUsage(unittest.TestCase):
     def test_callable(self):
         self.assertTrue(callable(self.reset))
 
-    def test_reset_index_called(self):
-        df = Mock()
-        _ = self.reset(df)
+    def test_dataframe(self):
+        df = pd.DataFrame(range(10))
+        df.reset_index = Mock(return_value='answer')
+        actual = self.reset(df)
         df.reset_index.assert_called_once_with(
             self.level,
             drop=self.drop,
@@ -119,12 +123,43 @@ class TestUsage(unittest.TestCase):
             allow_duplicates=self.allow_duplicates,
             names=self.names
         )
+        self.assertEqual('answer', actual)
 
-    def test_return_value(self):
-        df = Mock()
+    def test_series_name(self):
+        df = pd.Series(range(10))
         df.reset_index = Mock(return_value='answer')
         actual = self.reset(df)
+        df.reset_index.assert_called_once_with(
+            self.level,
+            name=self.names,
+            drop=self.drop,
+            inplace=False,
+            allow_duplicates=self.allow_duplicates
+        )
         self.assertEqual('answer', actual)
+
+    def test_series_no_name(self):
+        reset = ResetIndex(
+            self.level,
+            self.drop,
+            self.col_level,
+            self.col_fill,
+            self.allow_duplicates
+        )
+        df = pd.Series(range(10))
+        df.reset_index = Mock(return_value='answer')
+        actual = reset(df)
+        df.reset_index.assert_called_once_with(
+            self.level,
+            drop=self.drop,
+            inplace=False,
+            allow_duplicates=self.allow_duplicates
+        )
+        self.assertEqual('answer', actual)
+
+    def test_raises_on_wrong_type(self):
+        with self.assertRaises(TypeError):
+            _ = self.reset(2)
 
 
 class TestMisc(unittest.TestCase):

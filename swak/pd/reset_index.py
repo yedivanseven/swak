@@ -1,11 +1,12 @@
-from collections.abc import Hashable, Sequence
-from pandas import DataFrame
+from collections.abc import Hashable
+from functools import singledispatchmethod
+from pandas import DataFrame, Series
 from ..misc import ArgRepr
+from .types import Labels
 
 
-# ToDo: ake this work also for Series (maybe with single dispatch)?
 class ResetIndex(ArgRepr):
-    """Simple partial of a pandas dataframe's ``reset_index`` method.
+    """Simple partial of a pandas dataframe or series ``reset_index`` method.
 
     Parameters
     ----------
@@ -32,12 +33,12 @@ class ResetIndex(ArgRepr):
 
     def __init__(
             self,
-            level: Hashable | Sequence[Hashable] | None = None,
+            level: Labels | None = None,
             drop: bool = False,
             col_level: Hashable = 0,
             col_fill: Hashable = '',
             allow_duplicates: bool = False,
-            names: Hashable | Sequence[Hashable] | None = None,
+            names: Labels | None = None,
     ) -> None:
         self.level = level
         self.drop = drop
@@ -54,20 +55,33 @@ class ResetIndex(ArgRepr):
             names=names
         )
 
-    def __call__(self, df: DataFrame) -> DataFrame:
-        """Reset the index of a pandas dataframe.
+    @singledispatchmethod
+    def __call__(self, df):
+        """Reset the index of a pandas dataframe or series.
 
         Parameters
         ----------
-        df: DataFrame
-            The dataframe to reset the index of.
+        df: DataFrame or Series
+            The dataframe or series to reset the index of.
 
         Returns
         -------
-        DataFrame
+        DataFrame or series
             The dataframe with its index reset.
 
+        Raises
+        ------
+        TypeError
+            When called with an unsuitable object type.
+
         """
+        cls = type(df).__name__
+        tmp = 'Cannot reset the index of an object of type {}!'
+        msg = tmp.format(cls)
+        raise TypeError(msg)
+
+    @__call__.register
+    def _(self, df: DataFrame) -> DataFrame:
         return df.reset_index(
             self.level,
             drop=self.drop,
@@ -75,5 +89,15 @@ class ResetIndex(ArgRepr):
             col_level=self.col_level,
             col_fill=self.col_fill,
             allow_duplicates=self.allow_duplicates,
-            names=self.names,
+            names=self.names
+        )
+
+    @__call__.register
+    def _(self, df: Series) -> Series:
+        return df.reset_index(
+            self.level,
+            **({'name': self.names} if self.names is not None else {}),
+            drop=self.drop,
+            inplace=False,
+            allow_duplicates=self.allow_duplicates
         )

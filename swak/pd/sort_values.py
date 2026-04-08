@@ -1,8 +1,9 @@
 from typing import Any
 from functools import singledispatchmethod
-from collections.abc import Hashable, Sequence
+from collections.abc import Hashable
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
+from .types import Labels
 
 
 class SortValues(ArgRepr):
@@ -28,13 +29,13 @@ class SortValues(ArgRepr):
 
     def __init__(
             self,
-            by: Hashable | Sequence[Hashable],
+            by: Labels,
             *bys: Hashable,
             **kwargs: Any
     ) -> None:
         self.bys = self.__valid(by) + self.__valid(bys)
         self.kwargs = (kwargs.pop('inplace', ''), kwargs)[1]
-        super().__init__(*self.bys, **kwargs)
+        super().__init__(self.bys, **self.kwargs)
 
 
     @singledispatchmethod
@@ -71,13 +72,13 @@ class SortValues(ArgRepr):
         return  df.sort_values(inplace=False, **self.kwargs)
 
     @staticmethod
-    def __valid(cols: Hashable | Sequence[Hashable]) -> tuple[Hashable, ...]:
+    def __valid(cols: Labels) -> list[Hashable]:
         """Ensure that the columns are indeed a sequence of hashables."""
         if isinstance(cols, str):
-            return cols,
+            return [cols]
         try:
             _ = [hash(col) for col in cols]
         except TypeError:
             _ = hash(cols)
-            return cols,
-        return tuple(cols)
+            return [cols]
+        return list(cols)

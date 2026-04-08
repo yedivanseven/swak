@@ -40,7 +40,7 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_ignore_index(self):
         self.assertIsInstance(self.drop.ignore_index, bool)
-        self.assertFalse(self.drop.ignore_index)
+        self.assertTrue(self.drop.ignore_index)
 
 
 class TestAttributes(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestAttributes(unittest.TestCase):
             how='all',
             thresh=2,
             subset=['foo', 'bar'],
-            ignore_index=True
+            ignore_index=False
         )
 
     def test_axis(self):
@@ -67,7 +67,7 @@ class TestAttributes(unittest.TestCase):
         self.assertListEqual(['foo', 'bar'], self.drop.subset)
 
     def test_ignore_index(self):
-        self.assertTrue(self.drop.ignore_index)
+        self.assertFalse(self.drop.ignore_index)
 
 
 class TestUsage(unittest.TestCase):
@@ -75,31 +75,59 @@ class TestUsage(unittest.TestCase):
     def test_callable(self):
         self.assertTrue(callable(DropNA()))
 
-    def test_dropna_called_how(self):
+    def test_dataframe_default(self):
+        drop = DropNA()
+        df = pd.DataFrame(range(10))
+        df.dropna = Mock(return_value='answer')
+        actual = drop(df)
+        df.dropna.assert_called_once_with(
+            axis=0,
+            subset=None,
+            inplace=False,
+            ignore_index=True
+        )
+        self.assertEqual('answer', actual)
+
+    def test_dataframe_custom(self):
+        drop = DropNA(1, subset=['foo', 'bar'], ignore_index=False)
+        df = pd.DataFrame(range(10))
+        df.dropna = Mock(return_value='answer')
+        actual = drop(df)
+        df.dropna.assert_called_once_with(
+            axis=1,
+            subset=['foo', 'bar'],
+            inplace=False,
+            ignore_index=False
+        )
+        self.assertEqual('answer', actual)
+
+    def test_dataframe_how(self):
         drop = DropNA(
             axis=1,
             how='all',
             subset=['foo', 'bar'],
-            ignore_index=True,
+            ignore_index=False,
         )
-        df = Mock()
+        df = pd.DataFrame(range(10))
+        df.dropna = Mock()
         _ = drop(df)
         df.dropna.assert_called_once_with(
             axis=1,
             how='all',
             subset=['foo', 'bar'],
             inplace=False,
-            ignore_index=True
+            ignore_index=False
         )
 
-    def test_dropna_called_thresh(self):
+    def test_dataframe_thresh(self):
         drop = DropNA(
             axis=1,
             thresh=2,
             subset=['foo', 'bar'],
             ignore_index=True,
         )
-        df = Mock()
+        df = pd.DataFrame(range(10))
+        df.dropna = Mock()
         _ = drop(df)
         df.dropna.assert_called_once_with(
             axis=1,
@@ -109,11 +137,53 @@ class TestUsage(unittest.TestCase):
             ignore_index=True
         )
 
-    def test_return_value(self):
-        df = pd.DataFrame([[1, 2, None, 4], [5, 6, 7, None]])
-        actual = DropNA()(df)
-        expected = df.dropna()
-        pd.testing.assert_frame_equal(actual, expected)
+    def test_dataframe_how_thresh(self):
+        drop = DropNA(
+            axis=1,
+            how='any',
+            thresh=2,
+            subset=['foo', 'bar'],
+            ignore_index=True,
+        )
+        df = pd.DataFrame(range(10))
+        df.dropna = Mock()
+        _ = drop(df)
+        df.dropna.assert_called_once_with(
+            axis=1,
+            how='any',
+            subset=['foo', 'bar'],
+            inplace=False,
+            ignore_index=True
+        )
+
+    def test_series_default(self):
+        drop = DropNA()
+        df = pd.Series(range(10))
+        df.dropna = Mock(return_value='answer')
+        actual = drop(df)
+        df.dropna.assert_called_once_with(
+            axis=0,
+            inplace=False,
+            ignore_index=True
+        )
+        self.assertEqual('answer', actual)
+
+    def test_series_custom(self):
+        drop = DropNA(1, subset=['foo', 'bar'], ignore_index=False)
+        df = pd.Series(range(10))
+        df.dropna = Mock(return_value='answer')
+        actual = drop(df)
+        df.dropna.assert_called_once_with(
+            axis=0,
+            inplace=False,
+            ignore_index=False
+        )
+        self.assertEqual('answer', actual)
+
+    def test_raises_on_wrong_type(self):
+        drop = DropNA()
+        with self.assertRaises(TypeError):
+            _ = drop(2)
 
 
 class TestMisc(unittest.TestCase):
@@ -121,7 +191,7 @@ class TestMisc(unittest.TestCase):
     def test_default_repr(self):
         drop = DropNA()
         expected = ('DropNA(axis=0, how=None, thresh=None, '
-                    'subset=None, ignore_index=False)')
+                    'subset=None, ignore_index=True)')
         self.assertEqual(expected, repr(drop))
 
     def test_custom_repr(self):
@@ -129,10 +199,10 @@ class TestMisc(unittest.TestCase):
             axis=1,
             thresh=2,
             subset=['foo', 'bar'],
-            ignore_index=True,
+            ignore_index=False,
         )
         expected = ("DropNA(axis=1, how=None, thresh=2, "
-                    "subset=['foo', 'bar'], ignore_index=True)")
+                    "subset=['foo', 'bar'], ignore_index=False)")
         self.assertEqual(expected, repr(drop))
 
     def test_pickle_works(self):

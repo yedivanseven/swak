@@ -1,9 +1,10 @@
-from typing import Any, overload
+from typing import overload
 from collections.abc import Hashable, Mapping
 import numpy as np
 from pandas.core.dtypes.base import ExtensionDtype
 from pandas import DataFrame, Series
 from ..misc.repr import ReprName
+from .types import Errors
 
 type Type = str | type | np.dtype | ExtensionDtype
 type Types = Mapping[Hashable, Type]
@@ -17,19 +18,18 @@ class AsType(ReprName):
     types: type or dict
         Single type or dictionary of column names and types, specifying type
         conversion of entire dataframe or specific columns, respectively
-    **kwargs
-        Keyword arguments are passed on to the ``astype`` method call after
-        the `types` argument.
+    errors: str, optional
+        What to do when data cannot be type cast. Must be one of "raise" or
+        "ignore". Defaults to "raise".
 
     """
-    def __init__(self, types: Type | Types, **kwargs: Any) -> None:
+    def __init__(self, types: Type | Types, errors: Errors = 'raise') -> None:
         super().__init__()
         self.types = types
-        self.kwargs = kwargs
+        self.errors = errors
 
     def __repr__(self) -> str:
-        kwargs = (f'{k}={self._repr(v)}' for k, v in self.kwargs.items())
-        kwargs = ', '.join(kwargs)
+        kwargs = f"errors='{self.errors}'"
         try:
             args = (f'{k!r}: {self._name(self.types[k])}' for k in self.types)
             args = '{' + ', '.join(args) + '}'
@@ -60,4 +60,4 @@ class AsType(ReprName):
             Pandas dataframe (columns) or series cast to new type(s).
 
         """
-        return df.astype(self.types, **self.kwargs)
+        return df.astype(self.types, errors=self.errors)

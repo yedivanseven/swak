@@ -6,69 +6,68 @@ from unittest.mock import Mock
 from swak.pd import AsType
 
 
+class TestDefaultAttributes(unittest.TestCase):
+
+    def setUp(self):
+        self.convert = AsType(float)
+
+    def test_hast_types(self):
+        self.assertTrue(hasattr(self.convert, 'types'))
+
+    def test_types(self):
+        self.assertIs(self.convert.types, float)
+
+    def test_has_errors(self):
+        self.assertTrue(hasattr(self.convert, 'errors'))
+
+    def test_errors(self):
+        self.assertEqual('raise', self.convert.errors)
+
+
 class TestAttributes(unittest.TestCase):
 
-    def test_arg(self):
-        convert = AsType(float)
-        self.assertTrue(hasattr(convert, 'types'))
-        self.assertIs(float, convert.types)
-        self.assertTrue(hasattr(convert, 'kwargs'))
-        self.assertDictEqual({}, convert.kwargs)
+    def setUp(self):
+        self.types = {'foo': float, 'bar': int}
+        self.errors = 'ignore'
+        self.convert = AsType(self.types, self.errors)
 
-    def test_arg_kwargs(self):
-        convert = AsType(float, copy=True)
-        self.assertTrue(hasattr(convert, 'types'))
-        self.assertIs(float, convert.types)
-        self.assertTrue(hasattr(convert, 'kwargs'))
-        self.assertDictEqual({'copy': True}, convert.kwargs)
+    def test_types(self):
+        self.assertDictEqual(self.types, self.convert.types)
 
-    def test_dict(self):
-        convert = AsType({0: float})
-        self.assertTrue(hasattr(convert, 'types'))
-        self.assertDictEqual({0: float}, convert.types)
-        self.assertTrue(hasattr(convert, 'kwargs'))
-        self.assertDictEqual({}, convert.kwargs)
-
-    def test_dict_kwargs(self):
-        convert = AsType({0: float}, copy=True)
-        self.assertTrue(hasattr(convert, 'types'))
-        self.assertDictEqual({0: float}, convert.types)
-        self.assertTrue(hasattr(convert, 'kwargs'))
-        self.assertDictEqual({'copy': True}, convert.kwargs)
+    def test_errors(self):
+        self.assertEqual(self.errors, self.convert.errors)
 
 
 class TestMethodCall(unittest.TestCase):
 
-    def setUp(self) -> None:
-        self.mock = Mock()
+    def setUp(self):
+        self.types = {'foo': float, 'bar': int}
+        self.errors = 'ignore'
+        self.convert = AsType(self.types, self.errors)
 
     def test_callable(self):
         convert = AsType(float)
         self.assertTrue(callable(convert))
 
-    def test_arg(self):
-        convert = AsType(float)
-        _ = convert(self.mock)
-        self.mock.astype.assert_called_once()
-        self.mock.astype.assert_called_once_with(float)
+    def test_dataframe(self):
+        df = pd.DataFrame(range(10))
+        df.astype = Mock(return_value='answer')
+        actual = self.convert(df)
+        df.astype.assert_called_once_with(
+            self.convert.types,
+            errors=self.errors
+        )
+        self.assertEqual('answer', actual)
 
-    def test_arg_kwargs(self):
-        convert = AsType(float, copy=True)
-        _ = convert(self.mock)
-        self.mock.astype.assert_called_once()
-        self.mock.astype.assert_called_once_with(float, copy=True)
-
-    def test_dict(self):
-        convert = AsType({0: float})
-        _ = convert(self.mock)
-        self.mock.astype.assert_called_once()
-        self.mock.astype.assert_called_once_with({0: float})
-
-    def test_dict_kwargs(self):
-        convert = AsType({0: float}, copy=True)
-        _ = convert(self.mock)
-        self.mock.astype.assert_called_once()
-        self.mock.astype.assert_called_once_with({0: float}, copy=True)
+    def test_series(self):
+        df = pd.Series(range(10))
+        df.astype = Mock(return_value='answer')
+        actual = self.convert(df)
+        df.astype.assert_called_once_with(
+            self.convert.types,
+            errors=self.errors
+        )
+        self.assertEqual('answer', actual)
 
 
 class TestUsage(unittest.TestCase):
@@ -149,30 +148,30 @@ class TestUsage(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_python_type(self):
-        convert = AsType(float, copy=False)
-        self.assertEqual('AsType(float, copy=False)', repr(convert))
+        convert = AsType(float)
+        self.assertEqual("AsType(float, errors='raise')", repr(convert))
 
     def test_numpy_type(self):
         convert = AsType(np.float32)
-        self.assertEqual('AsType(float32)', repr(convert))
+        self.assertEqual("AsType(float32, errors='raise')", repr(convert))
 
     def test_dict_python_types(self):
-        convert = AsType({'a': float, 2: int, 'c': str}, errors='raise')
-        expected = "AsType({'a': float, 2: int, 'c': str}, errors='raise')"
+        convert = AsType({'a': float, 2: int, 'c': str}, errors='ignore')
+        expected = "AsType({'a': float, 2: int, 'c': str}, errors='ignore')"
         self.assertEqual(expected, repr(convert))
 
     def test_dict_numpy_types(self):
         convert = AsType({'a': np.float32, 2: np.int8})
-        expected = "AsType({'a': float32, 2: int8})"
+        expected = "AsType({'a': float32, 2: int8}, errors='raise')"
         self.assertEqual(expected, repr(convert))
 
     def test_dict_empty(self):
-        convert = AsType({}, copy=True)
-        expected = "AsType({}, copy=True)"
+        convert = AsType({})
+        expected = "AsType({}, errors='raise')"
         self.assertEqual(expected, repr(convert))
 
     def test_pickle_works(self):
-        convert = AsType(float, copy=False)
+        convert = AsType(float)
         _ = pickle.loads(pickle.dumps(convert))
 
 

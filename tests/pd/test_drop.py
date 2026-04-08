@@ -71,7 +71,7 @@ class TestAttributes(unittest.TestCase):
         self.assertListEqual(['baz'], self.drop.index)
 
     def test_columns(self):
-        self.assertEqual(1, self.drop.columns)
+        self.assertListEqual([1], self.drop.columns)
 
     def test_level(self):
         self.assertEqual(2, self.drop.level)
@@ -111,7 +111,7 @@ class TestUsage(unittest.TestCase):
             ['foo', 'bar'],
             axis=0,
             index=['baz'],
-            columns=1,
+            columns=[1],
             level=2,
             inplace=False,
             errors='ignore'

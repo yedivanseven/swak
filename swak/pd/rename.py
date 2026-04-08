@@ -1,14 +1,15 @@
-from typing import Literal, Any
+from typing import Any
 from collections.abc import Hashable, Callable, Mapping
-from pandas import DataFrame
+from functools import singledispatchmethod
+from pandas import DataFrame, Series
 from ..misc import ArgRepr
+from .types import Labels, Axis, Errors
 
 type Renamer = Mapping[Hashable, Hashable] | Callable[[Hashable], Hashable]
 
 
-# ToDo: Make this work also for a Series! Maybe with single dispatch?
 class Rename(ArgRepr):
-    """Simple partial of a pandas dataframe's ``rename`` method.
+    """Simple partial of a pandas dataframe or series ``rename`` method.
 
     Parameters
     ----------
@@ -33,12 +34,12 @@ class Rename(ArgRepr):
 
     def __init__(
             self,
-            mapper: Renamer | None = None,
-            index: Renamer | None = None,
-            columns: Renamer | None = None,
-            axis: int | Literal['index', 'columns', 'rows'] = 1,
+            mapper: Renamer | Labels | None = None,
+            index: Renamer | Labels | None = None,
+            columns: Renamer | Labels | None = None,
+            axis: Axis = 1,
             level: Hashable | None = None,
-            errors: Literal['ignore', 'raise'] = 'ignore'
+            errors: Errors = 'ignore'
     ) -> None:
         self.mapper = mapper
         self.index = index
@@ -66,26 +67,46 @@ class Rename(ArgRepr):
         }
 
 
-
-    def __call__(self, df: DataFrame) -> DataFrame:
-        """Rename a pandas dataframe's columns or rows.
+    @singledispatchmethod
+    def __call__(self, df):
+        """Rename a pandas dataframe's or series' columns or rows.
 
         Parameters
         ----------
-        df: DataFrame
-            The dataframe to rename columns or rows of.
+        df: DataFrame or Series
+            The dataframe or series to rename columns or rows of.
 
         Returns
         -------
-        DataFrame
-            The dataframe with renamed columns or rows.
+        DataFrame or Series
+            The dataframe or series with renamed columns or rows.
+
+        Raises
+        ------
+        TypeError
+            When called on an unsuitable object type.
 
         """
+        cls = type(df).__name__
+        tmp = 'Cannot rename an object of type {}!'
+        msg = tmp.format(cls)
+        raise TypeError(msg)
 
+    @__call__.register
+    def _(self, df: DataFrame) -> DataFrame:
         return df.rename(
             self.mapper,
             **self.resolved,
-            level=self.level,
             inplace=False,
+            level=self.level,
+            errors=self.errors
+        )
+
+    @__call__.register
+    def _(self, df: Series) -> Series:
+        return df.rename(
+            self.index,
+            inplace=False,
+            level=self.level,
             errors=self.errors
         )

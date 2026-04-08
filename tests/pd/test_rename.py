@@ -1,6 +1,7 @@
 import pickle
 import unittest
 from unittest.mock import Mock
+import pandas as pd
 from swak.pd import Rename
 
 
@@ -124,9 +125,10 @@ class TestUsage(unittest.TestCase):
     def test_callable(self):
         self.assertTrue(callable(self.rename))
 
-    def test_rename_called_mapper_not_none(self):
-        df = Mock()
-        _ = self.rename(df)
+    def test_dataframe_mapper_not_none(self):
+        df = pd.DataFrame(range(10))
+        df.rename = Mock(return_value='answer')
+        actual = self.rename(df)
         df.rename.assert_called_once_with(
             self.mapper,
             axis=self.axis,
@@ -134,25 +136,45 @@ class TestUsage(unittest.TestCase):
             inplace=False,
             errors=self.errors
         )
+        self.assertEqual('answer', actual)
 
-    def test_rename_called_mapper_none(self):
-        rename = Rename(index=self.index, errors=self.errors)
-        df = Mock()
-        _ = rename(df)
+    def test_dataframe_mapper_none(self):
+        df = pd.DataFrame(range(10))
+        df.rename = Mock(return_value='answer')
+        rename = Rename(
+            None,
+            self.index,
+            self.columns,
+            self.axis,
+            self.level,
+            self.errors
+        )
+        actual = rename(df)
         df.rename.assert_called_once_with(
             None,
             index=self.index,
-            columns=None,
-            level=None,
+            columns=self.columns,
+            inplace=False,
+            level=self.level,
+            errors=self.errors
+        )
+        self.assertEqual('answer', actual)
+
+    def test_series(self):
+        df = pd.Series(range(10))
+        df.rename = Mock(return_value='answer')
+        actual = self.rename(df)
+        df.rename.assert_called_once_with(
+            self.index,
+            level=self.level,
             inplace=False,
             errors=self.errors
         )
-
-    def test_return_value(self):
-        df = Mock()
-        df.rename = Mock(return_value='answer')
-        actual = self.rename(df)
         self.assertEqual('answer', actual)
+
+    def test_raises_on_wrong_type(self):
+        with self.assertRaises(TypeError):
+            _ = self.rename(2)
 
 
 class TestMisc(unittest.TestCase):

@@ -11,7 +11,8 @@ from .column_selector import ColumnSelector
 from .columns_selector import ColumnsSelector
 from .mapper import Mapper
 from .rows_selector import RowsSelector
-from .groupby import GroupBy, GroupByApply, RollingGroupByApply
+from .groupby import GroupBy
+from .apply import Apply
 from .join import Join
 from .assign import Assign
 from .drop import Drop
@@ -40,11 +41,9 @@ __all__ = [
     'GroupBy',
     'Agg',
     'RollingWindow',
-    'GroupByApply',
-    'RollingGroupByApply',
+    'Apply'
 ]
 
 # ToDo: Add AsFreq, Explode, Transform, Copy, and FillNA
-# ToDo: Search for "inplace" keywords and pop them!
-# ToDo: Explore use of dispatch method more!
-# ToDo: Don't forget methods of Rolling!
+# ToDo: Exploit data types in pandas.core._typing!
+# ToDo: Revisit docstrings!

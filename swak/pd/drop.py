@@ -1,7 +1,8 @@
-from typing import Literal, overload
-from collections.abc import Hashable, Sequence
+from typing import overload
+from collections.abc import Hashable
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
+from .types import Labels, Axis, Errors
 
 
 class Drop(ArgRepr):
@@ -31,18 +32,18 @@ class Drop(ArgRepr):
 
     def __init__(
             self,
-            label: Hashable | Sequence[Hashable] | None = None,
+            label: Labels | None = None,
             *labels: Hashable,
-            axis: int | Literal['index', 'columns', 'rows'] = 1,
-            index: Hashable | Sequence[Hashable] | None = None,
-            columns: Hashable | Sequence[Hashable] | None = None,
+            axis: Axis = 1,
+            index: Labels | None = None,
+            columns: Labels | None = None,
             level: Hashable | None = None,
-            errors: Literal['ignore', 'raise'] = 'raise'
+            errors: Errors = 'raise'
     ) -> None:
         self.labels = (self.__valid(label) + self.__valid(labels)) or None
         self.axis = axis
-        self.index = index
-        self.columns = columns
+        self.index = self.__valid(index) or None
+        self.columns = self.__valid(columns) or None
         self.level = level
         self.errors = errors
         super().__init__(
@@ -87,7 +88,7 @@ class Drop(ArgRepr):
         )
 
     @staticmethod
-    def __valid(labels: Hashable | Sequence[Hashable]) -> list[Hashable]:
+    def __valid(labels: Labels) -> list[Hashable]:
         """Ensure that the labels are indeed a sequence of hashables."""
         if labels is None:
             return []

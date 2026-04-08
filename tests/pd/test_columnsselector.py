@@ -16,37 +16,37 @@ class TestAttributeUsage(unittest.TestCase):
     def test_empty(self):
         select = ColumnsSelector()
         self.assertTrue(hasattr(select, 'cols'))
-        self.assertTupleEqual((), select.cols)
+        self.assertListEqual([], select.cols)
 
     def test_one_int_column(self):
         select = ColumnsSelector(0)
         self.assertTrue(hasattr(select, 'cols'))
-        self.assertTupleEqual((0,), select.cols)
+        self.assertListEqual([0], select.cols)
 
     def test_one_str_column(self):
         select = ColumnsSelector('foo')
         self.assertTrue(hasattr(select, 'cols'))
-        self.assertTupleEqual(('foo',), select.cols)
+        self.assertListEqual(['foo'], select.cols)
 
     def test_one_int_and_one_str_column(self):
         select = ColumnsSelector(0, 'foo')
         self.assertTrue(hasattr(select, 'cols'))
-        self.assertTupleEqual((0, 'foo'), select.cols)
+        self.assertListEqual([0, 'foo'], select.cols)
 
     def test_one_str_and_one_int_column(self):
         select = ColumnsSelector('foo', 0)
         self.assertTrue(hasattr(select, 'cols'))
-        self.assertTupleEqual(('foo', 0), select.cols)
+        self.assertListEqual(['foo', 0], select.cols)
 
     def test_int_tuple_and_str_columns(self):
         select = ColumnsSelector([0, 1], 'foo', 'bar')
         self.assertTrue(hasattr(select, 'cols'))
-        self.assertTupleEqual((0, 1, 'foo', 'bar'), select.cols)
+        self.assertListEqual([0, 1, 'foo', 'bar'], select.cols)
 
     def test_str_tuple_and_int_columns(self):
         select = ColumnsSelector(['foo', 'bar'], 0, 1)
         self.assertTrue(hasattr(select, 'cols'))
-        self.assertTupleEqual(('foo', 'bar', 0, 1), select.cols)
+        self.assertListEqual(['foo', 'bar', 0, 1], select.cols)
 
     def test_non_hashables_raise(self):
         with self.assertRaises(TypeError):
