@@ -81,6 +81,7 @@ class Apply(ArgRepr):
         msg = tmp.format(cls)
         raise TypeError(msg)
 
+    # ToDo: Can we not make these show up in the sphinx doc?
     @__call__.register
     def _(self, df: DataFrame) -> Series | DataFrame:
         return df.apply(
