@@ -93,7 +93,7 @@ class GbqQuery2DataFrame(ArgRepr):
         Returns
         -------
         DataFrame
-            The results of the SQL query in teh requested dataframe type.
+            The results of the SQL query in the requested dataframe type.
 
         Raises
         ------

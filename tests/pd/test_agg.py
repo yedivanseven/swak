@@ -179,10 +179,6 @@ class TestUsage(unittest.TestCase):
         )
         self.assertEqual('answer', actual)
 
-    def test_raises_on_wrong_type(self):
-        with self.assertRaises(TypeError):
-            _ = self.agg(2)
-
 
 class TestMisc(unittest.TestCase):
 

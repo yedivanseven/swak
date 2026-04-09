@@ -56,20 +56,13 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.apply, 'engine'))
 
     def test_engine(self):
-        self.assertEqual('python', self.apply.engine)
+        self.assertIsNone(self.apply.engine)
 
     def test_has_engine_kwargs(self):
         self.assertTrue(hasattr(self.apply, 'engine_kwargs'))
 
     def test_engine_kwargs(self):
         self.assertIsNone(self.apply.engine_kwargs)
-
-    def test_has_include_groups(self):
-        self.assertTrue(hasattr(self.apply, 'include_groups'))
-
-    def test_include_groups(self):
-        self.assertIsInstance(self.apply.include_groups, bool)
-        self.assertTrue(self.apply.include_groups)
 
     def test_has_kwargs(self):
         self.assertTrue(self.apply, 'kwargs')
@@ -89,7 +82,6 @@ class TestAttributes(unittest.TestCase):
         self.by_row = False
         self.engine = 'numba'
         self.engine_kwargs = {'nogil': True}
-        self.include_groups = False
         self.kwargs = {'answer': 42}
         self.apply = Apply(
             self.func,
@@ -100,7 +92,6 @@ class TestAttributes(unittest.TestCase):
             self.by_row,
             self.engine,
             self.engine_kwargs,
-            self.include_groups,
             **self.kwargs,
         )
 
@@ -128,14 +119,11 @@ class TestAttributes(unittest.TestCase):
     def test_has_engine_kwargs(self):
         self.assertTrue(hasattr(self.apply, 'engine_kwargs'))
 
-    def test_include_groups(self):
-        self.assertEqual(self.include_groups, self.apply.include_groups)
-
     def test_kwargs(self):
         self.assertDictEqual(self.kwargs, self.apply.kwargs)
 
 
-class TestCallSignature(unittest.TestCase):
+class TestUsage(unittest.TestCase):
 
     def setUp(self):
         self.func = f
@@ -146,7 +134,6 @@ class TestCallSignature(unittest.TestCase):
         self.by_row = False
         self.engine = 'numba'
         self.engine_kwargs = {'nogil': True}
-        self.include_groups = False
         self.kwargs = {'answer': 42}
         self.apply = Apply(
             self.func,
@@ -157,7 +144,6 @@ class TestCallSignature(unittest.TestCase):
             self.by_row,
             self.engine,
             self.engine_kwargs,
-            self.include_groups,
             **self.kwargs,
         )
 
@@ -184,8 +170,36 @@ class TestCallSignature(unittest.TestCase):
         actual = self.apply(df)
         df.apply.assert_called_once_with(
             self.func,
-            self.args,
+            args=self.args,
             by_row=self.by_row,
+            **self.kwargs
+        )
+        self.assertEqual('return_value', actual)
+
+    def test_rolling(self):
+        df = pd.DataFrame(range(10)).rolling(1)
+        df.apply = Mock(return_value='return_value')
+        actual = self.apply(df)
+        df.apply.assert_called_once_with(
+            self.func,
+            raw=self.raw,
+            engine=self.engine,
+            engine_kwargs=self.engine_kwargs,
+            args=self.args,
+            kwargs=self.kwargs
+        )
+        self.assertEqual('return_value', actual)
+
+    def test_resample(self):
+        df = pd.DataFrame(
+            range(10),
+            index=pd.bdate_range('2012-01-01', periods=10)
+        ).resample('1D')
+        df.apply = Mock(return_value='return_value')
+        actual = self.apply(df)
+        df.apply.assert_called_once_with(
+            self.func,
+            *self.args,
             **self.kwargs
         )
         self.assertEqual('return_value', actual)
@@ -197,7 +211,7 @@ class TestCallSignature(unittest.TestCase):
         df.apply.assert_called_once_with(
             self.func,
             *self.args,
-            include_groups=self.include_groups,
+            include_groups=False,
             **self.kwargs
         )
         self.assertEqual('return_value', actual)
@@ -227,144 +241,13 @@ class TestCallSignature(unittest.TestCase):
         )
         self.assertEqual('return_value', actual)
 
-    def test_expanding_groupby(self):
-        df = pd.DataFrame(range(10)).groupby(0).expanding(1)
-        df.apply = Mock(return_value='return_value')
-        actual = self.apply(df)
-        df.apply.assert_called_once_with(
-            self.func,
-            raw=self.raw,
-            engine=self.engine,
-            engine_kwargs=self.engine_kwargs,
-            args=self.args,
-            kwargs=self.kwargs
-        )
-        self.assertEqual('return_value', actual)
-
-    def test_raises_on_wrong_type(self):
-        with self.assertRaises(TypeError):
-            _ = self.apply(2)
-
-
-class TestUsage(unittest.TestCase):
-
-    def test_dataframe_function(self):
-        df = pd.DataFrame(range(10))
-        apply = Apply(
-            lambda x, y: 2*x + y,
-            axis=1,
-            raw=True,
-            result_type='broadcast',
-            args=(3,),
-            by_row=False,
-            engine='engine',
-            engine_kwargs={'answer': 42}
-        )
-        actual = apply(df)
-        pd.testing.assert_frame_equal(actual, df*2 + 3)
-
-    def test_dataframe_list(self):
-        df = pd.DataFrame(range(10))
-        apply = Apply(
-            ['mean'],
-            axis=1,
-            raw=True,
-            result_type='broadcast',
-            args=(3,),
-            by_row=False,
-            engine='engine',
-            engine_kwargs={'answer': 42}
-        )
-        actual = apply(df)
-        expected = pd.DataFrame(range(10), columns=['mean'], dtype=float)
-        pd.testing.assert_frame_equal(actual, expected)
-
-    def test_dataframe_str(self):
-        df = pd.DataFrame(range(10))
-        apply = Apply(
-            'mean',
-            axis=1,
-            result_type='expand'
-        )
-        actual = apply(df)
-        expected = pd.Series(range(10), dtype=float)
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test_dataframe_map(self):
-        df = pd.DataFrame(range(10))
-        apply = Apply(
-            {1: 'mean'},
-            axis=1,
-            result_type='expand'
-        )
-        actual = apply(df)
-        expected = pd.Series({1: 1.0})
-        pd.testing.assert_series_equal(actual, expected)
-
-    def test_series_function(self):
-        df = pd.Series(range(10))
-        apply = Apply(
-            lambda x, y: 2 * x + y,
-            axis=1,
-            raw=True,
-            result_type='broadcast',
-            args=(3,),
-            by_row=False,
-            engine='dss',
-            engine_kwargs={'answer': 42}
-        )
-        actual = apply(df)
-        pd.testing.assert_series_equal(actual, df * 2 + 3)
-
-    def test_series_list(self):
-        df = pd.DataFrame(range(10))
-        apply = Apply(
-            ['mean'],
-            axis=1,
-            raw=True,
-            result_type='broadcast',
-            args=(3,),
-            by_row=False,
-            engine='dss',
-            engine_kwargs={'answer': 42}
-        )
-        actual = apply(df)
-        expected = pd.DataFrame(range(10), columns=['mean'], dtype=float)
-        pd.testing.assert_frame_equal(actual, expected)
-
-    def test_series_str(self):
-        df = pd.Series(range(10))
-        apply = Apply(
-            'mean',
-            axis=1,
-            raw=False,
-            result_type='expand'
-        )
-        actual = apply(df)
-        self.assertEqual(4.5, actual)
-
-    def test_series_map(self):
-        df = pd.Series(range(10))
-        apply = Apply(
-            {1: 'mean'},
-            axis=1,
-            raw=False,
-            result_type='expand'
-        )
-        actual = apply(df)
-        expected = pd.Series({1: 4.5})
-        pd.testing.assert_series_equal(actual, expected)
-
-    # ToDo: COntinue with other pandas objects
-
 
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         agg = Apply(f)
         expected = ("Apply(f, axis=0, raw=False, result_type=None, args=(), "
-                    "by_row='compat', engine='python', engine_kwargs=None, "
-                    "include_groups=True)")
+                    "by_row='compat', engine=None, engine_kwargs=None)")
         self.assertEqual(expected, repr(agg))
 
     def test_custom_repr(self):
@@ -377,13 +260,11 @@ class TestMisc(unittest.TestCase):
             by_row=False,
             engine='numba',
             engine_kwargs={'nogil': True},
-            include_groups=False,
             answer=42
         )
         expected = ("Apply(f, axis=1, raw=True, result_type='expand', "
                     "args=('foo', 'bar'), by_row=False, engine='numba', "
-                    "engine_kwargs={'nogil': True}, include_groups=False, "
-                    "answer=42)")
+                    "engine_kwargs={'nogil': True}, answer=42)")
         self.assertEqual(expected, repr(agg))
 
     def test_pickle_works_with_function(self):

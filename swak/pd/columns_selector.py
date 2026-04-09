@@ -48,7 +48,7 @@ class ColumnsSelector(ArgRepr):
             The selected column(s) of the (grouped) dataframe.
 
         """
-        return df[list(self.cols)]
+        return df[self.cols]
 
     @staticmethod
     def __valid(cols: Labels) -> list[Hashable]:

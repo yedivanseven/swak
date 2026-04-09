@@ -45,5 +45,3 @@ __all__ = [
 ]
 
 # ToDo: Add AsFreq, Explode, Transform, Copy, and FillNA
-# ToDo: Exploit data types in pandas.core._typing!
-# ToDo: Revisit docstrings!

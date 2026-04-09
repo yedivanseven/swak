@@ -62,6 +62,13 @@ class GroupBy(ArgRepr):
             observed: bool = False,
             dropna: bool = True,
     ) -> None:
+        self.by = by
+        self.level = level
+        self.as_index = as_index
+        self.sort = sort
+        self.group_keys = group_keys
+        self.observed = observed
+        self.dropna = dropna
         super().__init__(
             by,
             level,
@@ -71,13 +78,6 @@ class GroupBy(ArgRepr):
             observed=observed,
             dropna=dropna
         )
-        self.by = by
-        self.level = level
-        self.as_index = as_index
-        self.sort = sort
-        self.group_keys = group_keys
-        self.observed = observed
-        self.dropna = dropna
 
     @overload
     def __call__(self, df: Series) -> SeriesGroupBy:

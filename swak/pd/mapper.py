@@ -3,7 +3,6 @@ from collections.abc import Hashable, Callable, Mapping
 from functools import singledispatchmethod
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
-from .types import Engine
 
 type Transform = Mapping[Hashable, Any] | Series | Callable[[Any], Any]
 
@@ -17,7 +16,7 @@ class Mapper(ArgRepr):
         Function or mapping in the form of a dictionary or a pandas series.
     na_action: str, optional
         Can take the value "ignore" or ``None``, defaulting to the latter.
-    engine: str, optional
+    engine: decorator, optional
         The engine to use for a pandas series, Defaults to ``None``.
     **kwargs: Any
         Keyword arguments are pass on to `func`.
@@ -32,7 +31,7 @@ class Mapper(ArgRepr):
             self,
             func: Transform,
             na_action: Literal['ignore'] | None = None,
-            engine: Engine | None = None,
+            engine: Callable | None = None,
             **kwargs: Any
     ) -> None:
         self.func = func

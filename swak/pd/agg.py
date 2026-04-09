@@ -1,14 +1,11 @@
-from typing import Any
-from collections.abc import Callable, Mapping
+from typing import Any, Literal
+from collections.abc import Mapping
 from functools import singledispatchmethod
-from pandas.core.window import Rolling, RollingGroupby
-from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
+from pandas.core.groupby import SeriesGroupBy, DataFrameGroupBy
 from pandas import DataFrame, Series
+from pandas._typing import AggFuncType
 from ..misc import ArgRepr
-from .types import Axis, Engine
-
-type Func = Callable[[Series], float] | str
-type Funcs = list[Func] | dict[str, Func] | dict[str, list[Func]]
+from .types import Axis
 
 
 class Agg(ArgRepr):
@@ -50,30 +47,31 @@ class Agg(ArgRepr):
 
     def __init__(
             self,
-            func: Func | Funcs | None = None,
+            func: AggFuncType | None = None,
             axis: Axis = 0,
             *args: Any,
-            engine: Engine | None = None,
+            engine: Literal['cython', 'numba'] | None = None,
             engine_kwargs: Mapping[str, bool] | None = None,
             **kwargs: Any
     ) -> None:
-        super().__init__(
-            func,
-            axis,
-            *args,
-            engine=engine,
-            engine_kwargs=engine_kwargs,
-            **kwargs
-        )
         self.func = func
         self.axis = axis
         self.args = args
         self.engine = engine
         self.engine_kwargs = engine_kwargs
         self.kwargs = kwargs
+        name = func if callable(func) or func is None else type(func)
+        super().__init__(
+            name,
+            axis,
+            *args,
+            engine=engine,
+            engine_kwargs=engine_kwargs,
+            **kwargs
+        )
 
     @singledispatchmethod
-    def __call__(self, df):
+    def __call__(self, df) -> Any:
         """Call a pandas object's ``agg`` method with the cached (kw)args.
 
         Parameters
@@ -86,16 +84,8 @@ class Agg(ArgRepr):
         Scalar, Series, or DataFrame
             The aggregation of the pandas object.
 
-        Raises
-        ------
-        TypeError
-            When called with an unsuitable object type.
-
         """
-        cls = type(df).__name__
-        tmp = 'Cannot aggregate an object of type {}!'
-        msg = tmp.format(cls)
-        raise TypeError(msg)
+        return df.agg(self.func,*self.args, **self.kwargs)
 
     @__call__.register
     def _(self, df: DataFrame) -> Series | DataFrame:
@@ -124,11 +114,3 @@ class Agg(ArgRepr):
             engine_kwargs=self.engine_kwargs,
             **self.kwargs
         )
-
-    @__call__.register
-    def _(self, df: Rolling) -> Series | DataFrame:
-        return df.agg(self.func,*self.args, **self.kwargs)
-
-    @__call__.register
-    def _(self, df: RollingGroupby) -> Series | DataFrame:
-        return df.agg(self.func,*self.args, **self.kwargs)
