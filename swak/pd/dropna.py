@@ -1,6 +1,5 @@
-from typing import Literal, Any
+from typing import Literal, Any, overload
 from collections.abc import Hashable
-from functools import singledispatchmethod
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 from .types import Axis, Labels
@@ -58,7 +57,15 @@ class DropNA(ArgRepr):
             return {'thresh': self.thresh}
         return {}
 
-    @singledispatchmethod
+
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
     def __call__(self, df):
         """Drop rows or columns with NAs from a pandas series or dataframe.
 
@@ -73,28 +80,26 @@ class DropNA(ArgRepr):
             The object with rows or columns with NAs dropped.
 
         """
-        cls = type(df).__name__
-        tmp = 'Cannot drop rows or columns from an object of type {}!'
-        msg = tmp.format(cls)
-        raise TypeError(msg)
-
-    @__call__.register
-    def _(self, df: Series) -> Series:
-        return df.dropna(
-            axis=0,
-            inplace=False,
-            ignore_index=self.ignore_index
-        )
-
-    @__call__.register
-    def _(self, df: DataFrame) -> DataFrame:
-        return df.dropna(
-            axis=self.axis,
-            **self._how_thresh,
-            subset=self.subset,
-            inplace=False,
-            ignore_index=self.ignore_index
-        )
+        match df:
+            case DataFrame():
+                return df.dropna(
+                    axis=self.axis,
+                    **self._how_thresh,
+                    subset=self.subset,
+                    inplace=False,
+                    ignore_index=self.ignore_index
+                )
+            case Series():
+                return df.dropna(
+                    axis=0,
+                    inplace=False,
+                    ignore_index=self.ignore_index
+                )
+            case _:
+                cls = type(df).__name__
+                tmp = 'Cannot drop rows or columns from an object of type {}!'
+                msg = tmp.format(cls)
+                raise TypeError(msg)
 
     @staticmethod
     def __valid(labels: Labels) -> list[Hashable]:

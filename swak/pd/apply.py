@@ -1,5 +1,4 @@
 from typing import Any, Literal
-from functools import singledispatchmethod
 from pandas import DataFrame, Series
 from pandas.core.window.rolling import BaseWindow
 from pandas.core.groupby.groupby import BaseGroupBy
@@ -87,13 +86,12 @@ class Apply(ArgRepr):
             **self.kwargs
         )
 
-    @singledispatchmethod
-    def __call__(self, df) -> Any:
+    def __call__(self, df: Pandas) -> Series | DataFrame:
         """Call a pandas object's ``apply`` method.
 
         Parameters
         ----------
-        df: Pandas
+        df
             The pandas object to call ``apply`` on.
 
         Returns
@@ -102,47 +100,41 @@ class Apply(ArgRepr):
             The return type of calling ``apply`` on the pandas object.
 
         """
-        return df.apply(self.func, *self.args, **self.kwargs)
-
-    @__call__.register
-    def _(self, df: DataFrame) -> Series | DataFrame:
-        return df.apply(
-            self.func,
-            axis=self.axis,
-            raw=self.raw,
-            result_type=self.result_type,
-            args=self.args,
-            by_row=self.by_row,
-            engine=self.engine,
-            engine_kwargs=self.engine_kwargs,
-            **self.kwargs
-        )
-
-    @__call__.register
-    def _(self, df: Series) -> Series | DataFrame:
-        return df.apply(
-            self.func,
-            args=self.args,
-            by_row=self.by_row,
-            **self.kwargs
-        )
-
-    @__call__.register
-    def _(self, df: DataFrameGroupBy) -> Series | DataFrame:
-        return df.apply(
-            self.func,
-            *self.args,
-            include_groups=False,
-            **self.kwargs
-        )
-
-    @__call__.register
-    def _(self, df: BaseWindow) -> Series | DataFrame:
-        return df.apply(
-            self.func,
-            raw=self.raw,
-            engine=self.engine,
-            engine_kwargs=self.engine_kwargs,
-            args=self.args,
-            kwargs=self.kwargs
-        )
+        match df:
+            case DataFrame():
+                return df.apply(
+                    self.func,
+                    axis=self.axis,
+                    raw=self.raw,
+                    result_type=self.result_type,
+                    args=self.args,
+                    by_row=self.by_row,
+                    engine=self.engine,
+                    engine_kwargs=self.engine_kwargs,
+                    **self.kwargs
+                )
+            case Series():
+                return df.apply(
+                    self.func,
+                    args=self.args,
+                    by_row=self.by_row,
+                    **self.kwargs
+                )
+            case DataFrameGroupBy():
+                return df.apply(
+                    self.func,
+                    *self.args,
+                    include_groups=False,
+                    **self.kwargs
+                )
+            case BaseWindow():
+                return df.apply(
+                    self.func,
+                    raw=self.raw,
+                    engine=self.engine,
+                    engine_kwargs=self.engine_kwargs,
+                    args=self.args,
+                    kwargs=self.kwargs
+                )
+            case _:
+                return df.apply(self.func, *self.args, **self.kwargs)

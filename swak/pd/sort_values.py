@@ -1,5 +1,4 @@
-from typing import Any
-from functools import singledispatchmethod
+from typing import Any, overload
 from collections.abc import Hashable
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
@@ -38,7 +37,14 @@ class SortValues(ArgRepr):
         super().__init__(self.bys, **self.kwargs)
 
 
-    @singledispatchmethod
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
     def __call__(self, df):
         """Sort a pandas dataframe or series by column(s) values.
 
@@ -58,18 +64,16 @@ class SortValues(ArgRepr):
             If called on anything else other than a pandas series or dataframe.
 
         """
-        cls = type(df).__name__
-        tmp = '"df" must be a pandas DataFrame or Series, not a {}!'
-        msg = tmp.format(cls)
-        raise TypeError(msg)
-
-    @__call__.register
-    def _(self, df: DataFrame) -> DataFrame:
-        return  df.sort_values(self.bys, inplace=False, **self.kwargs)
-
-    @__call__.register
-    def _(self, df: Series) -> Series:
-        return  df.sort_values(inplace=False, **self.kwargs)
+        match df:
+            case DataFrame():
+                return df.sort_values(self.bys, inplace=False, **self.kwargs)
+            case Series():
+                return df.sort_values(inplace=False, **self.kwargs)
+            case _:
+                cls = type(df).__name__
+                tmp = '"df" must be a pandas DataFrame or Series, not a {}!'
+                msg = tmp.format(cls)
+                raise TypeError(msg)
 
     @staticmethod
     def __valid(cols: Labels) -> list[Hashable]:

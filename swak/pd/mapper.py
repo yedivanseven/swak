@@ -1,6 +1,5 @@
-from typing import Literal, Any
+from typing import Literal, Any, overload
 from collections.abc import Hashable, Callable, Mapping
-from functools import singledispatchmethod
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 
@@ -41,7 +40,14 @@ class Mapper(ArgRepr):
         name = func if callable(func) else type(func)
         super().__init__(name, na_action, engine, **kwargs)
 
-    @singledispatchmethod
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
     def __call__(self, df):
         """Called the ``map`` method of a pandas series or dataframe.
 
@@ -63,15 +69,18 @@ class Mapper(ArgRepr):
             When called on an unsuitable object type.
 
         """
-        cls = type(df).__name__
-        tmp = 'Cannot map an object of type {}!'
-        msg = tmp.format(cls)
-        raise TypeError(msg)
-
-    @__call__.register
-    def _(self, df: Series) -> Series:
-        return df.map(self.func, self.na_action, self.engine, **self.kwargs)
-
-    @__call__.register
-    def _(self, df: DataFrame) -> DataFrame:
-        return df.map(self.func, self.na_action, **self.kwargs)
+        match df:
+            case DataFrame():
+                return df.map(self.func, self.na_action, **self.kwargs)
+            case Series():
+                return df.map(
+                    self.func,
+                    self.na_action,
+                    self.engine,
+                    **self.kwargs
+                )
+            case _:
+                cls = type(df).__name__
+                tmp = 'Cannot map an object of type {}!'
+                msg = tmp.format(cls)
+                raise TypeError(msg)

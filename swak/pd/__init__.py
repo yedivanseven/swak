@@ -23,6 +23,11 @@ from .reset_index import ResetIndex
 from .rename import Rename
 from .agg import Agg
 from .rolling_window import RollingWindow
+from .transform import Transform
+from .asfreq import AsFreq
+from .copy import Copy
+from .explode import Explode
+from .fillna import FillNA
 
 __all__ = [
     'AsType',
@@ -30,6 +35,8 @@ __all__ = [
     'ColumnsSelector',
     'Mapper',
     'RowsSelector',
+    'GroupBy',
+    'Apply',
     'Join',
     'Assign',
     'Drop',
@@ -38,10 +45,11 @@ __all__ = [
     'SetIndex',
     'ResetIndex',
     'Rename',
-    'GroupBy',
     'Agg',
     'RollingWindow',
-    'Apply'
+    'Transform',
+    'AsFreq',
+    'Copy',
+    'Explode',
+    'FillNA'
 ]
-
-# ToDo: Add AsFreq, Explode, Transform, Copy, and FillNA

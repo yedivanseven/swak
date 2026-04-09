@@ -1,5 +1,5 @@
+from typing import overload
 from collections.abc import Hashable
-from functools import singledispatchmethod
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 from .types import Labels
@@ -55,7 +55,14 @@ class ResetIndex(ArgRepr):
             names=names
         )
 
-    @singledispatchmethod
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
     def __call__(self, df):
         """Reset the index of a pandas dataframe or series.
 
@@ -75,29 +82,27 @@ class ResetIndex(ArgRepr):
             When called with an unsuitable object type.
 
         """
-        cls = type(df).__name__
-        tmp = 'Cannot reset the index of an object of type {}!'
-        msg = tmp.format(cls)
-        raise TypeError(msg)
-
-    @__call__.register
-    def _(self, df: DataFrame) -> DataFrame:
-        return df.reset_index(
-            self.level,
-            drop=self.drop,
-            inplace=False,
-            col_level=self.col_level,
-            col_fill=self.col_fill,
-            allow_duplicates=self.allow_duplicates,
-            names=self.names
-        )
-
-    @__call__.register
-    def _(self, df: Series) -> Series:
-        return df.reset_index(
-            self.level,
-            **({'name': self.names} if self.names is not None else {}),
-            drop=self.drop,
-            inplace=False,
-            allow_duplicates=self.allow_duplicates
-        )
+        match df:
+            case DataFrame():
+                return df.reset_index(
+                    self.level,
+                    drop=self.drop,
+                    inplace=False,
+                    col_level=self.col_level,
+                    col_fill=self.col_fill,
+                    allow_duplicates=self.allow_duplicates,
+                    names=self.names
+                )
+            case Series():
+                return df.reset_index(
+                    self.level,
+                    **({'name': self.names} if self.names is not None else {}),
+                    drop=self.drop,
+                    inplace=False,
+                    allow_duplicates=self.allow_duplicates
+                )
+            case _:
+                cls = type(df).__name__
+                tmp = 'Cannot reset the index of an object of type {}!'
+                msg = tmp.format(cls)
+                raise TypeError(msg)

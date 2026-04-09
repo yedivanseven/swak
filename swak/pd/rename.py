@@ -1,6 +1,5 @@
-from typing import Any
+from typing import Any, overload
 from collections.abc import Hashable, Callable, Mapping
-from functools import singledispatchmethod
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 from .types import Labels, Axis, Errors
@@ -66,8 +65,14 @@ class Rename(ArgRepr):
             'axis': self.axis
         }
 
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
 
-    @singledispatchmethod
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
     def __call__(self, df):
         """Rename a pandas dataframe's or series' columns or rows.
 
@@ -87,26 +92,24 @@ class Rename(ArgRepr):
             When called on an unsuitable object type.
 
         """
-        cls = type(df).__name__
-        tmp = 'Cannot rename an object of type {}!'
-        msg = tmp.format(cls)
-        raise TypeError(msg)
-
-    @__call__.register
-    def _(self, df: DataFrame) -> DataFrame:
-        return df.rename(
-            self.mapper,
-            **self.resolved,
-            inplace=False,
-            level=self.level,
-            errors=self.errors
-        )
-
-    @__call__.register
-    def _(self, df: Series) -> Series:
-        return df.rename(
-            self.index,
-            inplace=False,
-            level=self.level,
-            errors=self.errors
-        )
+        match df:
+            case DataFrame():
+                return df.rename(
+                    self.mapper,
+                    **self.resolved,
+                    inplace=False,
+                    level=self.level,
+                    errors=self.errors
+                )
+            case Series():
+                return df.rename(
+                    self.index,
+                    inplace=False,
+                    level=self.level,
+                    errors=self.errors
+                )
+            case _:
+                cls = type(df).__name__
+                tmp = 'Cannot rename an object of type {}!'
+                msg = tmp.format(cls)
+                raise TypeError(msg)
