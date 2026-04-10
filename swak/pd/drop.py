@@ -1,4 +1,4 @@
-from typing import overload
+from typing import overload, Any
 from collections.abc import Hashable
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
@@ -55,6 +55,16 @@ class Drop(ArgRepr):
             errors=errors
         )
 
+    @property
+    def resolved(self) -> dict[str, Any]:
+        """Resolved labels-axis vs. index-columns keywords."""
+        return {
+            'index': self.index,
+            'columns': self.columns
+        } if self.labels is None else {
+            'axis': self.axis
+        }
+
     @overload
     def __call__(self, df: Series) -> Series:
         ...
@@ -79,9 +89,7 @@ class Drop(ArgRepr):
         """
         return df.drop(
             self.labels,
-            axis=self.axis,
-            index=self.index,
-            columns=self.columns,
+            **self.resolved,
             level=self.level,
             inplace=False,
             errors=self.errors,

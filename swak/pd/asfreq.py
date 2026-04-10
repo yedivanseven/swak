@@ -16,7 +16,7 @@ class AsFreq(ArgRepr):
     method: str, optional
         Method to use for filling holes in re-indexed Series (note this
         does not fill NaNs that already were present). Must be one of
-        "pad" / "ffill" or "backfill" / "bfill". Defaults to ``None``.
+        "pad"/"ffill" or "backfill"/"bfill". Defaults to ``None``.
     how: str, optional
         For PeriodIndex only. Must be one of "start" or "end".
         Defaults to ``None``.

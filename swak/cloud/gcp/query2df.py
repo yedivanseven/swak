@@ -24,7 +24,7 @@ class GbqQuery2DataFrame(ArgRepr):
         Type of dataframe to return. Can be one of "pandas" or "polars". Use
         the :class:`Bears` enum to avoid typos. Defaults to "pandas".
     config: QueryJobConfig | None, optional
-        An instance of ``QueryJobConfig`` (see the `documentation
+        An instance of ``QueryJobConfig`` (see the ` API docs
         <https://docs.cloud.google.com/python/docs/reference/bigquery/
         latest/google.cloud.bigquery.job.QueryJobConfig>`_). If ``None``
         (the default), the default config will be used.

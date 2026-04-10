@@ -57,7 +57,7 @@ class Rename(ArgRepr):
 
     @property
     def resolved(self) -> dict[str, Any]:
-        """Resolved mapper-axis vs. index vs. columns keywords."""
+        """Resolved mapper-axis vs. index-columns keywords."""
         return {
             'index': self.index,
             'columns': self.columns

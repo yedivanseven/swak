@@ -38,7 +38,7 @@ class GbqQuery2GcsParquet(ArgRepr):
         Google Cloud Storage. If that is the case, and `skip` is ``True``,
         nothing will be done at all. Defaults to ``False``
     config: QueryJobConfig | None, optional
-        An instance of ``QueryJobConfig`` (see the `documentation
+        An instance of ``QueryJobConfig`` (see the `API reference docs
         <https://docs.cloud.google.com/python/docs/reference/bigquery/
         latest/google.cloud.bigquery.job.QueryJobConfig>`_). If ``None``
         (the default), the default config will be used.

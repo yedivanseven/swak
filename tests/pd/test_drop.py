@@ -104,12 +104,30 @@ class TestUsage(unittest.TestCase):
     def test_callable(self):
         self.assertTrue(callable(self.drop))
 
-    def test_drop_called(self):
+    def test_drop_called_with_labels(self):
         df = Mock()
         _ = self.drop(df)
         df.drop.assert_called_once_with(
             ['foo', 'bar'],
             axis=0,
+            level=2,
+            inplace=False,
+            errors='ignore'
+        )
+
+    def test_drop_called_with_index(self):
+        drop = Drop(
+            None,
+            axis=0,
+            index=['baz'],
+            columns=1,
+            level=2,
+            errors='ignore'
+        )
+        df = Mock()
+        _ = drop(df)
+        df.drop.assert_called_once_with(
+            None,
             index=['baz'],
             columns=[1],
             level=2,

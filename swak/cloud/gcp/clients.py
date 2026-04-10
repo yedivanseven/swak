@@ -70,8 +70,8 @@ class Gbq(ArgRepr):
         Additional arguments to be passed to the client init.
     **kwargs
         Additional keyword arguments to be passed to the client init.
-        See the `reference <https://docs.cloud.google.com/python/docs/
-        reference/bigquery/latest/google.cloud.bigquery.client.Client>`_
+        See the `client documentation <https://docs.cloud.google.com/python/
+        docs/reference/bigquery/latest/google.cloud.bigquery.client.Client>`_
         for options.
 
     """

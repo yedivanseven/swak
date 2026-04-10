@@ -17,7 +17,7 @@ class GbqQuery(ArgRepr):
     gbq: Gbq
         An instance of a wrapped GBQ client.
     config: QueryJobConfig | None, optional
-        An instance of ``QueryJobConfig`` (see the `documentation
+        An instance of ``QueryJobConfig`` (see the `QueryJobConfig docs
         <https://docs.cloud.google.com/python/docs/reference/bigquery/
         latest/google.cloud.bigquery.job.QueryJobConfig>`_). If ``None``
         (the default), the default config will be used.
