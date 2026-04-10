@@ -3,7 +3,6 @@ from ..misc import ArgRepr
 from .exceptions import MapError
 
 
-# ToDo: Add a "flatten" option that weeds out emtpy tuples from the results
 class Map[**P, S, T](ArgRepr):
     """Equivalent to a partial of the python builtin ``map`` function.
 
@@ -21,6 +20,11 @@ class Map[**P, S, T](ArgRepr):
         class with a list of the mapped elements). If explicitly given,
         `wrapper` will be called with a list mapped elements. Consequently,
         the return type will be the (return) type of `wrapper`.
+    flat: bool, optional
+        If ``True``, tuple return values of `transform` are unpacked into the
+        output sequence rather than kept as a single element. Non-tuple return
+        values are left untouched, regardless of this flag.
+        Defaults to ``False``.
 
     Note
     ----
@@ -28,16 +32,24 @@ class Map[**P, S, T](ArgRepr):
     generator object, the mapped iterable is fully manifested first and only
     then wrapped.
 
+    Important
+    ---------
+    If `flat` is ``True``, the length of the output sequence may differ from
+    the length of the input sequence, as tuple return values are spliced into
+    the output rather than appended as a single element.
+
     """
 
     def __init__(
             self,
             transform: type[S] | Callable[P, S],
-            wrapper: type[T] | Callable[[list[S]], T] | None = None
+            wrapper: type[T] | Callable[[list[S]], T] | None = None,
+            flat: bool = False
     ) -> None:
-        super().__init__(transform, wrapper)
+        super().__init__(transform, wrapper, flat)
         self.transform = transform
         self.wrapper = wrapper
+        self.flat = flat
 
     def __call__(self, iterable: Iterable, *iterables: Iterable) -> T:
         """Transform the element(s) of the given iterable(s).
@@ -69,7 +81,7 @@ class Map[**P, S, T](ArgRepr):
         mapped = []
         for i, elements in enumerate(zip(*(iterable, *iterables))):
             try:
-                mapped.append(self.transform(*elements))
+                result = self.transform(*elements)
             except Exception as error:
                 msg = '\n{} calling\n{}\non element #{}:\n{}\n{}'
                 name = self._name(self.transform)
@@ -77,6 +89,10 @@ class Map[**P, S, T](ArgRepr):
                 display = elements[0] if len(elements) == 1 else elements
                 fmt = msg.format(err_cls, name, i, display, error)
                 raise MapError(fmt) from error
+            if self.flat and isinstance(result, tuple):
+                mapped.extend(result)
+            else:
+                mapped.append(result)
         wrap = iterable.__class__ if self.wrapper is None else self.wrapper
         try:
             wrapped = wrap(mapped)

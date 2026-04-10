@@ -14,6 +14,38 @@ def plus(x: int, y: int) -> int:
     return x + y
 
 
+def to_tuple(x: int) -> tuple:
+    return x, x + 1
+
+
+def to_empty_tuple(x: int) -> tuple:
+    return ()
+
+
+def to_single_tuple(x: int) -> tuple:
+    return (x + 2,)
+
+
+def to_list(x: int) -> list:
+    return [x, x + 1]
+
+
+def to_set(x: int) -> set:
+    return {x, x + 1}
+
+
+def to_dict(x: int) -> dict:
+    return {x: x + 1}
+
+
+def to_string(x: int) -> str:
+    return 'ab'
+
+
+def to_tuple_or_scalar(x: int) -> tuple | int:
+    return (x, x + 1) if x % 2 == 0 else x
+
+
 class Cls:
 
     @classmethod
@@ -71,6 +103,15 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_wrapper_is_none(self):
         m = Map(plus_2)
         self.assertIsNone(m.wrapper)
+
+    def test_has_flat(self):
+        m = Map(plus_2)
+        self.assertTrue(hasattr(m, 'flat'))
+
+    def test_flat_is_false(self):
+        m = Map(plus_2)
+        self.assertIsInstance(m.flat, bool)
+        self.assertFalse(m.flat)
 
 
 class TestDefaultUsage(unittest.TestCase):
@@ -312,6 +353,90 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
 
+class TestFlatAttributes(unittest.TestCase):
+
+    def test_has_flat(self):
+        m = Map(plus_2, None, True)
+        self.assertTrue(hasattr(m, 'flat'))
+
+    def test_flat_is_true(self):
+        m = Map(plus_2, None, True)
+        self.assertIsInstance(m.flat, bool)
+        self.assertTrue(m.flat)
+
+    def test_flat_with_wrapper_is_true(self):
+        m = Map(plus_2, list, True)
+        self.assertIsInstance(m.flat, bool)
+        self.assertTrue(m.flat)
+
+
+class TestFlatUsage(unittest.TestCase):
+
+    def setUp(self):
+        self.m = Map(to_tuple, None, True)
+
+    def test_non_tuple_result_not_flattened(self):
+        m = Map(plus_2, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([3, 4, 5], actual)
+
+    def test_empty_tuple_result_disappears(self):
+        m = Map(to_empty_tuple, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([], actual)
+
+    def test_single_element_tuple_unpacked(self):
+        m = Map(to_single_tuple, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([3, 4, 5], actual)
+
+    def test_multi_element_tuple_unpacked(self):
+        actual = self.m([1, 2, 3])
+        self.assertListEqual([1, 2, 2, 3, 3, 4], actual)
+
+    def test_output_longer_than_input(self):
+        actual = self.m([1, 2, 3])
+        self.assertGreater(len(actual), 3)
+
+    def test_mixed_tuple_and_scalar(self):
+        m = Map(to_tuple_or_scalar, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([1, 2, 3, 3], actual)
+
+    def test_empty_input_flat_true(self):
+        actual = self.m([])
+        self.assertListEqual([], actual)
+
+    def test_empty_tuple_input_flat_true(self):
+        actual = self.m(())
+        self.assertTupleEqual((), actual)
+
+    def test_wrapper_respected_with_flat(self):
+        m = Map(to_tuple, tuple, True)
+        actual = m([1, 2, 3])
+        self.assertTupleEqual((1, 2, 2, 3, 3, 4), actual)
+
+    def test_string_result_not_flattened(self):
+        m = Map(to_string, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual(['ab', 'ab', 'ab'], actual)
+
+    def test_list_result_not_flattened(self):
+        m = Map(to_list, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([[1, 2], [2, 3], [3, 4]], actual)
+
+    def test_set_result_not_flattened(self):
+        m = Map(to_set, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([{1, 2}, {2, 3}, {3, 4}], actual)
+
+    def test_dict_result_not_flattened(self):
+        m = Map(to_dict, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([{1: 2}, {2: 3}, {3: 4}], actual)
+
+
 class TestMisc(unittest.TestCase):
 
     def test_default_pickle_works(self):
@@ -339,51 +464,51 @@ class TestMisc(unittest.TestCase):
 
     def test_default_lambda_repr(self):
         m = Map(lambda x: x > 3)
-        self.assertEqual('Map(lambda, None)', repr(m))
+        self.assertEqual('Map(lambda, None, False)', repr(m))
 
     def test_default_function_repr(self):
         m = Map(plus_2)
-        self.assertEqual('Map(plus_2, None)', repr(m))
+        self.assertEqual('Map(plus_2, None, False)', repr(m))
 
     def test_default_class_repr(self):
         m = Map(Cls)
-        self.assertEqual('Map(Cls, None)', repr(m))
+        self.assertEqual('Map(Cls, None, False)', repr(m))
 
     def test_default_obj_repr(self):
         m = Map(Call())
-        self.assertEqual('Map(Call(...), None)', repr(m))
+        self.assertEqual('Map(Call(...), None, False)', repr(m))
 
     def test_default_classmethod_repr(self):
         m = Map(Cls.c)
-        self.assertEqual('Map(Cls.c, None)', repr(m))
+        self.assertEqual('Map(Cls.c, None, False)', repr(m))
 
     def test_default_staticmethod_repr(self):
         m = Map(Cls().s)
-        self.assertEqual('Map(Cls.s, None)', repr(m))
+        self.assertEqual('Map(Cls.s, None, False)', repr(m))
 
     def test_default_method_repr(self):
         m = Map(Cls().m)
-        self.assertEqual('Map(Cls.m, None)', repr(m))
+        self.assertEqual('Map(Cls.m, None, False)', repr(m))
 
     def test_default_argrepr(self):
         m = Map(A(1))
-        self.assertEqual('Map(A(1), None)', repr(m))
+        self.assertEqual('Map(A(1), None, False)', repr(m))
 
     def test_default_indentrepr(self):
         m = Map(Ind([1, 2, 3]))
-        self.assertEqual('Map(Ind()[3], None)', repr(m))
+        self.assertEqual('Map(Ind()[3], None, False)', repr(m))
 
     def test_wrapper_repr(self):
         m = Map(plus_2, tuple)
-        self.assertEqual('Map(plus_2, tuple)', repr(m))
+        self.assertEqual('Map(plus_2, tuple, False)', repr(m))
 
     def test_wrapper_argrepr(self):
         m = Map(plus_2, A(1))
-        self.assertEqual('Map(plus_2, A(1))', repr(m))
+        self.assertEqual('Map(plus_2, A(1), False)', repr(m))
 
     def test_wrapper_indentrepr(self):
         m = Map(plus_2, Ind([1, 2, 3]))
-        self.assertEqual('Map(plus_2, Ind()[3])', repr(m))
+        self.assertEqual('Map(plus_2, Ind()[3], False)', repr(m))
 
     def test_type_annotation_wrapper(self):
         _ = Map[[int, bool], float, list]

@@ -18,6 +18,38 @@ def f(x: int) -> float:
     return 1 / x
 
 
+def to_tuple(x: int) -> tuple:
+    return x, x + 1
+
+
+def to_empty_tuple(x: int) -> tuple:
+    return ()
+
+
+def to_single_tuple(x: int) -> tuple:
+    return (x + 2,)
+
+
+def to_list(x: int) -> list:
+    return [x, x + 1]
+
+
+def to_set(x: int) -> set:
+    return {x, x + 1}
+
+
+def to_dict(x: int) -> dict:
+    return {x: x + 1}
+
+
+def to_string(x: int) -> str:
+    return 'ab'
+
+
+def to_tuple_or_scalar(x: int) -> tuple | int:
+    return (x, x + 1) if x % 2 == 0 else x
+
+
 class Cls:
 
     @classmethod
@@ -75,6 +107,15 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_wrapper_is_none(self):
         m = ProcessMap(plus_2)
         self.assertIsNone(m.wrapper)
+
+    def test_has_flat(self):
+        m = ProcessMap(plus_2)
+        self.assertTrue(hasattr(m, 'flat'))
+
+    def test_flat_is_false(self):
+        m = ProcessMap(plus_2)
+        self.assertIsInstance(m.flat, bool)
+        self.assertFalse(m.flat)
 
     def test_has_max_workers(self):
         m = ProcessMap(plus_2)
@@ -334,59 +375,143 @@ class TestWrapperUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
 
+class TestFlatAttributes(unittest.TestCase):
+
+    def test_has_flat(self):
+        m = ProcessMap(plus_2, None, True)
+        self.assertTrue(hasattr(m, 'flat'))
+
+    def test_flat_is_true(self):
+        m = ProcessMap(plus_2, None, True)
+        self.assertIsInstance(m.flat, bool)
+        self.assertTrue(m.flat)
+
+    def test_flat_with_wrapper_is_true(self):
+        m = ProcessMap(plus_2, list, True)
+        self.assertIsInstance(m.flat, bool)
+        self.assertTrue(m.flat)
+
+
+class TestFlatUsage(unittest.TestCase):
+
+    def setUp(self):
+        self.m = ProcessMap(to_tuple, None, True)
+
+    def test_non_tuple_result_not_flattened(self):
+        m = ProcessMap(plus_2, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([3, 4, 5], actual)
+
+    def test_empty_tuple_result_disappears(self):
+        m = ProcessMap(to_empty_tuple, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([], actual)
+
+    def test_single_element_tuple_unpacked(self):
+        m = ProcessMap(to_single_tuple, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([3, 4, 5], actual)
+
+    def test_multi_element_tuple_unpacked(self):
+        actual = self.m([1, 2, 3])
+        self.assertListEqual([1, 2, 2, 3, 3, 4], actual)
+
+    def test_output_longer_than_input(self):
+        actual = self.m([1, 2, 3])
+        self.assertGreater(len(actual), 3)
+
+    def test_mixed_tuple_and_scalar(self):
+        m = ProcessMap(to_tuple_or_scalar, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([1, 2, 3, 3], actual)
+
+    def test_empty_input_flat_true(self):
+        actual = self.m([])
+        self.assertListEqual([], actual)
+
+    def test_empty_tuple_input_flat_true(self):
+        actual = self.m(())
+        self.assertTupleEqual((), actual)
+
+    def test_wrapper_respected_with_flat(self):
+        m = ProcessMap(to_tuple, tuple, True)
+        actual = m([1, 2, 3])
+        self.assertTupleEqual((1, 2, 2, 3, 3, 4), actual)
+
+    def test_string_result_not_flattened(self):
+        m = ProcessMap(to_string, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual(['ab', 'ab', 'ab'], actual)
+
+    def test_list_result_not_flattened(self):
+        m = ProcessMap(to_list, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([[1, 2], [2, 3], [3, 4]], actual)
+
+    def test_set_result_not_flattened(self):
+        m = ProcessMap(to_set, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([{1, 2}, {2, 3}, {3, 4}], actual)
+
+    def test_dict_result_not_flattened(self):
+        m = ProcessMap(to_dict, None, True)
+        actual = m([1, 2, 3])
+        self.assertListEqual([{1: 2}, {2: 3}, {3: 4}], actual)
+
+
 class TestProcessPoolAttributes(unittest.TestCase):
 
     def test_instantiation(self):
-        _ = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        _ = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
 
     def test_has_transform(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertTrue(hasattr(m, 'transform'))
 
     def test_transform_correct(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertIs(m.transform, plus_2)
 
     def test_has_wrapper(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertTrue(hasattr(m, 'wrapper'))
 
     def test_wrapper_is_none(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertIsNone(m.wrapper)
 
     def test_has_max_workers(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertTrue(hasattr(m, 'max_workers'))
 
     def test_max_workers_correct(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertIsInstance(m.max_workers, int)
         self.assertEqual(8, m.max_workers)
 
     def test_has_max_tasks_per_child(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertTrue(hasattr(m, 'max_tasks_per_child'))
 
     def test_max_tasks_per_child_correct(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertIsInstance(m.max_tasks_per_child, int)
         self.assertEqual(3, m.max_tasks_per_child)
 
     def test_has_initializer(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertTrue(hasattr(m, 'initializer'))
 
     def test_initializer_correct(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertIs(m.initializer, plus)
 
     def test_has_initargs(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertTrue(hasattr(m, 'initargs'))
 
     def test_initargs_correct(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         self.assertTupleEqual((1, 2), m.initargs)
 
 
@@ -394,13 +519,13 @@ class TestProcessPoolUsage(unittest.TestCase):
 
     @patch('swak.funcflow.concurrent.processmap.ProcessPoolExecutor')
     def test_processpool_called(self, cls):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         _ = m([1, 2, 3])
         cls.assert_called_once()
 
     @patch('swak.funcflow.concurrent.processmap.ProcessPoolExecutor')
     def test_processpool_called_with_processpoolargs(self, cls):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
         _ = m([1, 2, 3])
         cls.assert_called_once_with(
             8,
@@ -413,12 +538,14 @@ class TestProcessPoolUsage(unittest.TestCase):
 
 class TestMapAttributes(unittest.TestCase):
 
+
+
     def test_has_timeout_arg(self):
         m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3, 42)
         self.assertTrue(hasattr(m, 'timeout'))
 
     def test_timeout_arg_correct(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3, Cls)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3, Cls)
         self.assertIs(m.timeout, Cls)
 
     def test_has_chunksize_arg(self):
@@ -426,7 +553,7 @@ class TestMapAttributes(unittest.TestCase):
         self.assertTrue(hasattr(m, 'chunksize'))
 
     def test_timeout_chunksize_correct(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3, 42, Cls)
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3, 42, Cls)
         self.assertIs(m.chunksize, Cls)
 
     def test_has_timeout_kwarg(self):
@@ -473,77 +600,107 @@ class TestMisc(unittest.TestCase):
 
     def test_default_lambda_repr(self):
         m = ProcessMap(lambda x: x > 3)
-        expected = "ProcessMap(lambda, None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(lambda, None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_default_function_repr(self):
         m = ProcessMap(plus_2)
-        expected = "ProcessMap(plus_2, None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(plus_2, None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_default_class_repr(self):
         m = ProcessMap(Cls)
-        expected = "ProcessMap(Cls, None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(Cls, None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_default_obj_repr(self):
         m = ProcessMap(Call())
-        expected = "ProcessMap(Call(...), None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(Call(...), None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_default_classmethod_repr(self):
         m = ProcessMap(Cls.c)
-        expected = "ProcessMap(Cls.c, None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(Cls.c, None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_default_staticmethod_repr(self):
         m = ProcessMap(Cls().s)
-        expected = "ProcessMap(Cls.s, None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(Cls.s, None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_default_method_repr(self):
         m = ProcessMap(Cls().m)
-        expected = "ProcessMap(Cls.m, None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(Cls.m, None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_default_argrepr(self):
         m = ProcessMap(A(1))
-        excepted = "ProcessMap(A(1), None, 4, None, (), None, None, 1)"
+        excepted = (
+            "ProcessMap(A(1), None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(excepted, repr(m))
 
     def test_default_indentrepr(self):
         m = ProcessMap(Ind([1, 2, 3]))
-        expected = "ProcessMap(Ind()[3], None, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(Ind()[3], None, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_wrapper_repr(self):
         m = ProcessMap(plus_2, tuple)
-        expected = "ProcessMap(plus_2, tuple, 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(plus_2, tuple, False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_wrapper_argrepr(self):
         m = ProcessMap(plus_2, A(1))
-        expected = "ProcessMap(plus_2, A(1), 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(plus_2, A(1), False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_wrapper_indentrepr(self):
         m = ProcessMap(plus_2, Ind([1, 2, 3]))
-        expected = "ProcessMap(plus_2, Ind()[3], 4, None, (), None, None, 1)"
+        expected = (
+            "ProcessMap(plus_2, Ind()[3], False, 4, None, (), None, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_processpool_repr(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3)
-        expected = "ProcessMap(plus_2, None, 8, plus, (1, 2), 3, None, 1)"
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3)
+        expected = (
+            "ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3, None, 1)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_map_arg_repr(self):
-        m = ProcessMap(plus_2, None, 8, plus, (1, 2), 3, 42, 5)
-        expect = "ProcessMap(plus_2, None, 8, plus, (1, 2), 3, 42, 5)"
+        m = ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3, 42, 5)
+        expect = (
+            "ProcessMap(plus_2, None, False, 8, plus, (1, 2), 3, 42, 5)"
+        )
         self.assertEqual(expect, repr(m))
 
     def test_map_kwarg_repr(self):
         m = ProcessMap(plus_2, timeout=42, chunksize=5)
-        expected = "ProcessMap(plus_2, None, 4, None, (), None, 42, 5)"
+        expected = (
+            "ProcessMap(plus_2, None, False, 4, None, (), None, 42, 5)"
+        )
         self.assertEqual(expected, repr(m))
 
     def test_type_annotation_wrapper(self):
