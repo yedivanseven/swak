@@ -21,3 +21,9 @@ class CustomField(ABC):
     def as_dtype(self):
         """How should instances appear in cells of a pandas Series?"""
         ...
+
+    @property
+    @abstractmethod
+    def as_polars(self):
+        """As which object should polars see this instance for ingestion?"""
+        ...

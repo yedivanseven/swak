@@ -30,6 +30,16 @@ class DefinesAsDtype:
         return 'mocked as_dtype'
 
 
+class DefinesAsPolars:
+
+    def __init__(self, *_):
+        pass
+
+    @property
+    def as_polars(self):
+        return 'mocked as_polars'
+
+
 class TestCustomTypeUndefined(unittest.TestCase):
 
     def test_repr_calls_repr(self):
@@ -126,6 +136,14 @@ class TestCustomTypeUndefined(unittest.TestCase):
         self.assertIsInstance(as_series, pd.Series)
         expected = pd.Series({'d': 'mocked as_dtype'}, name='Custom')
         pd.testing.assert_series_equal(expected, as_series)
+
+    def test_as_polars_calls_as_polars(self):
+
+        class Custom(JsonObject):
+            d: DefinesAsPolars
+
+        custom = Custom(d=1)
+        self.assertDictEqual({'d': 'mocked as_polars'}, custom.as_polars)
 
 
 if __name__ == '__main__':

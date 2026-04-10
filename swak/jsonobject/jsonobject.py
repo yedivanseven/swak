@@ -360,6 +360,11 @@ class JsonObject(metaclass=SchemaMeta):
         name = self.__class__.__name__
         return Series(data, name=name)
 
+    @property
+    def as_polars(self) -> Json:
+        """Representation for ingestion into polars."""
+        return {k: getattr(self[k], 'as_polars', self[k]) for k in self}
+
     # Do we even need this method?
     def get(self, item: str, default: Any = None) -> Any:
         """Get (nested) attribute by (dot.separated) name or default."""

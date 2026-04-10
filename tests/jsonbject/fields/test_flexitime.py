@@ -103,6 +103,14 @@ class TestMembers(unittest.TestCase):
         self.assertIsInstance(self.ft.as_dtype, pd.Timestamp)
         self.assertEqual(pd.to_datetime(self.time), self.ft.as_dtype)
 
+    def test_as_polars(self):
+        self.assertTrue(hasattr(self.ft, 'as_polars'))
+        self.assertIsInstance(self.ft.as_polars, dt.datetime)
+        self.assertEqual(
+            dt.datetime.fromisoformat(self.time),
+            self.ft.as_polars
+        )
+
 
 class TestMagic(unittest.TestCase):
 

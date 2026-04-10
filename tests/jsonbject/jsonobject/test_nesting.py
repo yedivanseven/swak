@@ -320,6 +320,10 @@ class TestViews(unittest.TestCase):
         expected = '{"a": "foo", "child": {"b": 42.0, "c": 1}}'
         self.assertEqual(expected, self.p.as_dtype)
 
+    def test_as_polars(self):
+        expected = {'a': 'foo', 'child': {'b': 42.0, 'c': 1}}
+        self.assertEqual(expected, self.p.as_polars)
+
     def test_as_series(self):
         expected = pd.Series(
             {'a': 'foo', 'child': '{"b": 42.0, "c": 1}'},

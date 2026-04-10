@@ -5,12 +5,21 @@ import json
 from json.decoder import JSONDecodeError
 from ast import literal_eval
 from pandas import Series, DataFrame
+from polars import DataFrame as PolarsDataFrame
 from .exceptions import ParseError, SchemaError, CastError, ValidationErrors
 from .jsonobject import SchemaMeta, JsonObject
 
 type Json = dict[str, Any]
 type Record = str | bytes | bytearray | Json | Series | JsonObject | None
-type Records = str | bytes | bytearray | DataFrame | Record | Iterable[Record]
+type Records = (
+    str
+    | bytes
+    | bytearray
+    | DataFrame
+    | PolarsDataFrame
+    | Record
+    | Iterable[Record]
+)
 
 
 # ToDo: Add polar-rs support!
@@ -174,13 +183,19 @@ class JsonObjects[T]:
     def as_df(self) -> DataFrame:
         """Representation as a pandas data frame."""
         data = [item.as_series for item in self]
-        if data:
-            columns = None
-        else:
-            columns = list(self.__item_type__.__annotations__.keys())
+        columns = None if data else list(self.__item_type__.__annotations__)
         df = DataFrame(data, columns=columns)
         df.columns.name = self.__item_type__.__name__
         return df.reset_index(drop=True)
+
+    @property
+    def as_polars(self) -> PolarsDataFrame:
+        """Representation as a polars data frame."""
+        data = [item.as_polars for item in self]
+        if not data:
+            data = [dict.fromkeys(self.__item_type__.__annotations__, None)]
+            return PolarsDataFrame(data).clear()
+        return PolarsDataFrame(data)
 
     @staticmethod
     def __class_checked(item_type: type[JsonObject]) -> type[JsonObject]:
@@ -198,7 +213,8 @@ class JsonObjects[T]:
         parsers = (
             json.loads,                             # JSON string
             literal_eval,                           # Some other string
-            lambda x: x.to_dict(orient='records'),  # Dataframe
+            lambda x: x.to_dicts(),                 # Polars Dataframe
+            lambda x: x.to_dict(orient='records'),  # Pandas Dataframe
             lambda x: [] if x is None else x        # None or some other object
         )
         # Try parsers one after another

@@ -1,5 +1,7 @@
 import unittest
 import pandas as pd
+import polars as pl
+from polars.exceptions import SchemaError as PolarsSchemaError
 from swak.jsonobject import JsonObject, JsonObjects
 
 
@@ -276,8 +278,12 @@ class TestAddition(unittest.TestCase):
         actual = self.items + Items()
         self.assertEqual(self.items, actual)
 
-    def test_empty_dataframe(self):
+    def test_empty_pandas_dataframe(self):
         actual = self.items + pd.DataFrame()
+        self.assertEqual(self.items, actual)
+
+    def test_empty_polars_dataframe(self):
+        actual = self.items + pl.DataFrame()
         self.assertEqual(self.items, actual)
 
     def test_jsonobject(self):
@@ -316,8 +322,12 @@ class TestAddition(unittest.TestCase):
         actual = self.items + Items([{'a': 3, 'b': 'baz'}])
         self.assertEqual(self.expected, actual)
 
-    def test_dataframe(self):
+    def test_pandas_dataframe(self):
         actual = self.items + pd.DataFrame([{'a': 3, 'b': 'baz'}])
+        self.assertEqual(self.expected, actual)
+
+    def test_polars_dataframe(self):
+        actual = self.items + pl.DataFrame([{'a': 3, 'b': 'baz'}])
         self.assertEqual(self.expected, actual)
 
 
@@ -383,9 +393,13 @@ class TestRightAddition(unittest.TestCase):
         actual = Items([{'a': 3, 'b': 'baz'}]) + self.items
         self.assertEqual(self.expected, actual)
 
-    def test_dataframe_raises(self):
+    def test_pandas_dataframe_raises(self):
         with self.assertRaises(TypeError):
             _ = pd.DataFrame([{'a': 3, 'b': 'baz'}]) + self.items
+
+    def test_polars_dataframe_raises(self):
+        with self.assertRaises(PolarsSchemaError):
+            _ = pl.DataFrame([{'a': 3, 'b': 'baz'}]) + self.items
 
 
 class TestExtra(unittest.TestCase):

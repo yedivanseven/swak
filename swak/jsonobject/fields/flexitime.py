@@ -3,13 +3,14 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 from pandas import Timestamp, Timedelta
+from .custom import CustomField
 
 Time = str | dt.date | dt.datetime | Timestamp | np.datetime64
 Delta = dt.timedelta | Timedelta | np.timedelta64
 
 
 # ToDo: Add polars support
-class FlexiTime:
+class FlexiTime(CustomField):
     """Flexible wrapper around python's own ``datetime.datetime`` object.
 
     Parameters
@@ -82,3 +83,8 @@ class FlexiTime:
     def as_dtype(self) -> Timestamp:
         """Representation in a pandas DataFrame."""
         return pd.to_datetime(self.as_datetime)
+
+    @property
+    def as_polars(self) -> dt.datetime:
+        """Representation for polars to ingest."""
+        return self.as_datetime

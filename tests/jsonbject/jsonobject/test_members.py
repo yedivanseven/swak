@@ -12,6 +12,10 @@ class Custom:
     def __repr__(self):
         return 'custom'
 
+    @property
+    def as_polars(self):
+        return 'custom as_polars'
+
 
 class Simple(JsonObject):
     a: int = 1
@@ -57,6 +61,16 @@ class TestMembers(unittest.TestCase):
         expected = '{"a": 1, "b": "foo", "c": "custom"}'
         self.assertEqual(expected, self.simple.as_dtype)
 
+    def test_has_as_polars(self):
+        self.assertTrue(hasattr(self.simple, 'as_polars'))
+
+    def test_as_polars_type(self):
+        self.assertIsInstance(self.simple.as_polars, dict)
+
+    def test_as_polars_value(self):
+        expected = {'a': 1, 'b': 'foo', 'c': 'custom as_polars'}
+        self.assertDictEqual(expected, self.simple.as_polars)
+
     def test_has_as_series(self):
         self.assertTrue(hasattr(self.simple, 'as_series'))
 
@@ -94,7 +108,6 @@ class TestMembers(unittest.TestCase):
     def test_get_none_field(self):
         default = Option().get('a', 'default')
         self.assertIsNone(default)
-    ###########################################################################
 
     def test_has_keys(self):
         self.assertTrue(hasattr(self.simple, 'keys'))

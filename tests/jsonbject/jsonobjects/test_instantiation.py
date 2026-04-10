@@ -1,5 +1,6 @@
 import unittest
 import pandas as pd
+import polars as pl
 from swak.jsonobject import JsonObjects, JsonObject
 from swak.jsonobject.exceptions import ParseError, ValidationErrors
 
@@ -95,8 +96,12 @@ class TestEmpty(unittest.TestCase):
         items = Items(bytearray(b'[]'))
         self.assertListEqual([], items.as_json)
 
-    def test_empty_dataframe(self):
+    def test_empty_pandas_dataframe(self):
         items = Items(pd.DataFrame())
+        self.assertListEqual([], items.as_json)
+
+    def test_empty_polars_dataframe(self):
+        items = Items(pl.DataFrame())
         self.assertListEqual([], items.as_json)
 
     def test_empty_self(self):
@@ -157,8 +162,12 @@ class TestLists(unittest.TestCase):
         items = Items(items)
         self.assertListEqual(dicts, items.as_json)
 
-    def test_dataframe(self):
+    def test_pandas_dataframe(self):
         items = Items(pd.DataFrame(dicts))
+        self.assertListEqual(dicts, items.as_json)
+
+    def test_polars_dataframe(self):
+        items = Items(pl.DataFrame(dicts))
         self.assertListEqual(dicts, items.as_json)
 
     def test_mix(self):
@@ -184,8 +193,12 @@ class TestEmptyArgs(unittest.TestCase):
         items = Items('[]', *[Item(d) for d in dicts])
         self.assertListEqual(dicts, items.as_json)
 
-    def test_empty_dataframe_and_bytes_args(self):
+    def test_empty_pandas_dataframe_and_bytes_args(self):
         items = Items(pd.DataFrame(), *[j.encode() for j in jsons])
+        self.assertListEqual(dicts, items.as_json)
+
+    def test_empty_polars_dataframe_and_bytes_args(self):
+        items = Items(pl.DataFrame(), *[j.encode() for j in jsons])
         self.assertListEqual(dicts, items.as_json)
 
     def test_empty_self_and_bytearray_args(self):
@@ -276,9 +289,17 @@ class TestNonEmptyArgs(unittest.TestCase):
         items = Items(Items(dicts[:2]), Item(dicts[2]), Item(dicts[3]))
         self.assertListEqual(dicts, items.as_json)
 
-    def test_dataframe(self):
+    def test_pandas_dataframe(self):
         items = Items(
             pd.DataFrame(dicts[:2]),
+            pd.Series(dicts[2]),
+            pd.Series(dicts[3])
+        )
+        self.assertListEqual(dicts, items.as_json)
+
+    def test_polars_dataframe(self):
+        items = Items(
+            pl.DataFrame(dicts[:2]),
             pd.Series(dicts[2]),
             pd.Series(dicts[3])
         )
