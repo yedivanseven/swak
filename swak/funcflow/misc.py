@@ -67,7 +67,6 @@ def identity(*args):
     return args[0] if len(args) == 1 else args
 
 
-# ToDo: Add unit tests
 def to_list[T](arg: Iterable[T]) -> list[T]:
     """Convert any iterable to a list with python's builtin :func:`list`.
 
