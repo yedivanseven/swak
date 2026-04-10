@@ -9,7 +9,6 @@ Date = str | dt.date | dt.datetime | Timestamp | np.datetime64
 Delta = dt.timedelta | Timedelta | np.timedelta64
 
 
-# ToDo: Add polars support
 class FlexiDate(CustomField):
     """Flexible wrapper around python's own ``datetime.date`` object.
 

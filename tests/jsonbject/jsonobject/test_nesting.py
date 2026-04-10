@@ -324,12 +324,12 @@ class TestViews(unittest.TestCase):
         expected = {'a': 'foo', 'child': {'b': 42.0, 'c': 1}}
         self.assertEqual(expected, self.p.as_polars)
 
-    def test_as_series(self):
+    def test_as_pandas(self):
         expected = pd.Series(
             {'a': 'foo', 'child': '{"b": 42.0, "c": 1}'},
             name='Parent'
         )
-        pd.testing.assert_series_equal(expected, self.p.as_series)
+        pd.testing.assert_series_equal(expected, self.p.as_pandas)
 
 
 if __name__ == '__main__':

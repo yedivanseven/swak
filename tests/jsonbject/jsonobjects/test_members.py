@@ -133,63 +133,66 @@ class TestAttributes(unittest.TestCase):
             CustomItems(items.as_dtype).as_json
         )
 
-    def test_as_df(self):
+    def test_as_pandas(self):
         items = Items(self.items)
         expected = pd.DataFrame([{'a': 1, 'b': 'foo'}, {'a': 1, 'b': 'foo'}])
         expected.columns.name = 'Item'
-        self.assertTrue(hasattr(items, 'as_df'))
-        self.assertIsInstance(items.as_df, pd.DataFrame)
-        pd.testing.assert_frame_equal(expected, items.as_df)
+        self.assertTrue(hasattr(items, 'as_pandas'))
+        self.assertIsInstance(items.as_pandas, pd.DataFrame)
+        pd.testing.assert_frame_equal(expected, items.as_pandas)
 
-    def test_instantiation_from_as_df(self):
+    def test_instantiation_from_as_pandas(self):
         items = Items(self.items)
-        pd.testing.assert_frame_equal(items.as_df, Items(items.as_df).as_df)
+        pd.testing.assert_frame_equal(
+            items.as_pandas,
+            Items(items.as_pandas).as_pandas
+        )
 
-    def test_custom_as_df(self):
+    def test_custom_as_pandas(self):
         items = CustomItems(self.custom_items)
         expected = pd.DataFrame([
             {'a': 1, 'b': 'foo', 'c': 'as dtype'},
             {'a': 1, 'b': 'foo', 'c': 'as dtype'}
         ])
         expected.columns.name = 'CustomItem'
-        self.assertTrue(hasattr(items, 'as_df'))
-        self.assertIsInstance(items.as_df, pd.DataFrame)
-        pd.testing.assert_frame_equal(expected, items.as_df)
+        self.assertTrue(hasattr(items, 'as_pandas'))
+        self.assertIsInstance(items.as_pandas, pd.DataFrame)
+        pd.testing.assert_frame_equal(expected, items.as_pandas)
 
-    def test_instantiation_from_custom_as_df(self):
+    def test_instantiation_from_custom_as_pandas(self):
         items = CustomItems(self.custom_items)
         pd.testing.assert_frame_equal(
-            items.as_df,
-            CustomItems(items.as_df).as_df
+            items.as_pandas,
+            CustomItems(items.as_pandas).as_pandas
         )
 
-    def test_empty_as_df(self):
+    def test_empty_as_pandas(self):
         items = Items()
-        self.assertTrue(hasattr(items, 'as_df'))
-        self.assertIsInstance(items.as_df, pd.DataFrame)
+        self.assertTrue(hasattr(items, 'as_pandas'))
+        self.assertIsInstance(items.as_pandas, pd.DataFrame)
         expected = pd.DataFrame([], columns=['a', 'b'])
         expected.columns.name = 'Item'
-        pd.testing.assert_frame_equal(expected, items.as_df)
+        pd.testing.assert_frame_equal(expected, items.as_pandas)
 
-    def test_empty_empty_as_df(self):
+    def test_empty_empty_as_pandas(self):
         empties = Empties()
-        self.assertTrue(hasattr(empties, 'as_df'))
-        self.assertIsInstance(empties.as_df, pd.DataFrame)
+        self.assertTrue(hasattr(empties, 'as_pandas'))
+        self.assertIsInstance(empties.as_pandas, pd.DataFrame)
         expected = pd.DataFrame([], columns=[])
         expected.columns.name = 'Empty'
-        pd.testing.assert_frame_equal(expected, empties.as_df)
+        pd.testing.assert_frame_equal(expected, empties.as_pandas)
 
     def test_extra_df(self):
         extras = Extras([{'c': 'bar'}, {'d': 'baz'}])
-        self.assertTrue(hasattr(extras, 'as_df'))
-        self.assertIsInstance(extras.as_df, pd.DataFrame)
+        self.assertTrue(hasattr(extras, 'as_pandas'))
+        self.assertIsInstance(extras.as_pandas, pd.DataFrame)
         data = [
             {'a': 1, 'b': 'foo', 'c': 'bar'},
             {'a': 1, 'b': 'foo', 'd': 'baz'},
         ]
         expected = pd.DataFrame(data, columns=['a', 'b', 'c', 'd'])
         expected.columns.name = 'Extra'
-        pd.testing.assert_frame_equal(expected, extras.as_df)
+        pd.testing.assert_frame_equal(expected, extras.as_pandas)
 
     def test_as_polars(self):
         items = Items(self.items)

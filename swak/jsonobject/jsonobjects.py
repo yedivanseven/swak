@@ -22,7 +22,6 @@ type Records = (
 )
 
 
-# ToDo: Add polar-rs support!
 class JsonObjects[T]:
     """List-like container for JSON-serializable dictionaries.
 
@@ -180,9 +179,9 @@ class JsonObjects[T]:
         return self.__str__()
 
     @property
-    def as_df(self) -> DataFrame:
+    def as_pandas(self) -> DataFrame:
         """Representation as a pandas data frame."""
-        data = [item.as_series for item in self]
+        data = [item.as_pandas for item in self]
         columns = None if data else list(self.__item_type__.__annotations__)
         df = DataFrame(data, columns=columns)
         df.columns.name = self.__item_type__.__name__

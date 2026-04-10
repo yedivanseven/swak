@@ -37,7 +37,8 @@ class SchemaMeta(type):
 
     __blacklist__ = {
         'as_json',
-        'as_series',
+        'as_pandas',
+        'as_polars',
         'as_dtype',
         'get',  # Do we even need this method?
         'keys',
@@ -175,7 +176,6 @@ class SchemaMeta(type):
         return defaults, errors
 
 
-# ToDo: Add polar-rs support!
 class JsonObject(metaclass=SchemaMeta):
     """Flexible Dataclass-like data structure with enforced type schema.
 
@@ -354,7 +354,7 @@ class JsonObject(metaclass=SchemaMeta):
         return self.__str__()
 
     @property
-    def as_series(self) -> Series:
+    def as_pandas(self) -> Series:
         """Representation as a pandas series."""
         data = {key: getattr(self[key], 'as_dtype', self[key]) for key in self}
         name = self.__class__.__name__
