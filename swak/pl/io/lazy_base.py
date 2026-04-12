@@ -8,6 +8,7 @@ from ...io.types import LiteralStorage, Storage
 from ..misc import ArgRepr
 
 
+# ToDo. Split into LazyReader and LazyWriter Base classes!
 class LazyBase(ArgRepr):
     """Base class for lazily reading from and writing to parquet files.
 
