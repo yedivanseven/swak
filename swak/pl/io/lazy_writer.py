@@ -1,11 +1,8 @@
-import fsspec
 from collections.abc import Mapping
 from typing import Any
-from functools import cached_property
 from pathlib import PurePosixPath
-from fsspec.spec import AbstractFileSystem
-from ...io.types import LiteralStorage, Storage
 from ..misc import ArgRepr
+from .types import LiteralLazyStorage, LazyStorage
 
 
 class LazyWriter(ArgRepr):
@@ -16,16 +13,10 @@ class LazyWriter(ArgRepr):
     path: str
         The absolute path to the file to sink. May contain any number of string
         placeholders (i.e., pairs of curly brackets) that will be interpolated
-        when instances are called. Defaults to "{}".
+        when instances are called.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
-        Defaults to "file". Use the :class:`Storage` enum to avoid typos.
-    overwrite: bool, optional
-        Whether to silently overwrite the destination file. Defaults to
-        ``False``, which will raise an exception if it already exists.
-    skip: bool, optional
-        Whether to silently do nothing if the target file already exists.
-        Defaults to ``False``.
+        Defaults to "file". Use the :class:`LazyStorage` enum to avoid typos.
     storage_kws: dict, optional
         Passed on as keyword arguments both to the fsspec filesystem
         constructor and as `storage_options` to polars' sink methods.
@@ -45,39 +36,33 @@ class LazyWriter(ArgRepr):
 
     See Also
     --------
-    Storage
+    LazyStorage
 
     """
 
     def __init__(
             self,
-            path: str = '{}',
-            storage: LiteralStorage | Storage = Storage.FILE,
-            overwrite: bool = False,
-            skip: bool = False,
+            path: str,
+            storage: LiteralLazyStorage | LazyStorage = LazyStorage.FILE,
             storage_kws: Mapping[str, Any] | None = None,
             *args: Any,
             **kwargs: Any
     ) -> None:
         self.path = self.__strip(path)
-        self.storage = str(Storage(storage))
-        self.overwrite = bool(overwrite)
-        self.skip = bool(skip)
+        self.storage = str(LazyStorage(storage))
         self.storage_kws = {} if storage_kws is None else dict(storage_kws)
         super().__init__(
             self.path,
             self.storage,
-            self.overwrite,
-            self.skip,
             self.storage_kws,
             *args,
             **kwargs
         )
 
-    @cached_property
-    def fs(self) -> AbstractFileSystem:
-        """Fresh fsspec file system on first use, same thereafter."""
-        return fsspec.filesystem(self.storage, **self.storage_kws)
+    @property
+    def prefix(self) -> str:
+        """The URI prefix for the selected storage backend."""
+        return '' if self.storage == LazyStorage.FILE else f'{self.storage}:/'
 
     @staticmethod
     def __strip(path: Any) -> str:
@@ -100,11 +85,4 @@ class LazyWriter(ArgRepr):
     def _uri_from(self, *parts: Any) -> str:
         """Check skip/overwrite and create parent directories."""
         path = self.__non_root_from(*parts)
-        if self.fs.exists(path):
-            if self.skip:
-                return ''
-            if not self.overwrite:
-                msg = f'File "{path}" already exists!'
-                raise FileExistsError(msg)
-        self.fs.makedirs(str(path.parent), exist_ok=True)
-        return f'{self.storage}:/{path}'
+        return f'{self.prefix}{path}'
