@@ -517,7 +517,7 @@ class TestUsage(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             _ = self.attention(inp, mask, False)
 
-    # ToDo: Check which PyTorch version raises here!
+    # ToDo: Check which PyTorch version raises here and bump to that version!
     def test_3d_inp_1d_mask(self):
         inp = pt.rand(
             self.batch_size,
