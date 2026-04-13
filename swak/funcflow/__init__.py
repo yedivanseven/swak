@@ -52,3 +52,4 @@ __all__ = [
 
 # ToDo: Add Retry
 # ToDo: Add lazy sub-package
+# ToDo: Remove sequence element fro error in Map
