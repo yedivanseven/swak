@@ -83,11 +83,10 @@ class Map[**P, S, T](ArgRepr):
             try:
                 result = self.transform(*elements)
             except Exception as error:
-                msg = '\n{} calling\n{}\non element #{}:\n{}\n{}'
+                msg = '\n{} calling\n{}\non element #{}:\n{}'
                 name = self._name(self.transform)
                 err_cls = error.__class__.__name__
-                display = elements[0] if len(elements) == 1 else elements
-                fmt = msg.format(err_cls, name, i, display, error)
+                fmt = msg.format(err_cls, name, i, error)
                 raise MapError(fmt) from error
             if self.flat and isinstance(result, tuple):
                 mapped.extend(result)

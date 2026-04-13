@@ -208,7 +208,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'lambda\n'
                     'on element #1:\n'
-                    '0\n'
                     'division by zero')
         m = Map(lambda x: 1 / x)
         with self.assertRaises(MapError) as error:
@@ -219,7 +218,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'A(1)\n'
                     'on element #1:\n'
-                    '0\n'
                     'division by zero')
         m = Map(A(1))
         with self.assertRaises(MapError) as error:
@@ -231,7 +229,6 @@ class TestDefaultUsage(unittest.TestCase):
                     'Ind():\n'
                     '[ 0] 1\n'
                     'on element #1:\n'
-                    '0\n'
                     'division by zero')
         m = Map(Ind([1]))
         with self.assertRaises(MapError) as error:
