@@ -1,20 +1,19 @@
 from collections.abc import Mapping
 from typing import Any
-from pathlib import PurePosixPath
 from polars import LazyFrame
 from ...io.types import LiteralStorage, Storage
-from .lazy_base import LazyBase
+from .lazy_writer import LazyWriter
 
 
-class LazyFrame2Parquet(LazyBase):
-    """Sink a polars lazyframe to a parquet file on any supported file system.
+class LazyFrame2Parquet(LazyWriter):
+    """Sink a polars lazy frame to a parquet file on any supported file system.
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         The absolute path to the parquet file to write. May include any number
         of string placeholders (i.e., pairs of curly brackets) that will be
-        interpolated when the instance is called.
+        interpolated when the instance is called. Defaults to "{}".
     storage: str, optional
         The type of file system to write to ("file", "s3", "gcs", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -48,58 +47,39 @@ class LazyFrame2Parquet(LazyBase):
     Note
     ----
     ``sink_parquet`` requires a streaming-compatible query plan. Ensure your
-    lazy query is compatible before calling; Polars will raise if it is not.
+    lazy query is compatible before calling. Polars will raise if it is not.
 
     """
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             overwrite: bool = False,
             skip: bool = False,
             storage_kws: Mapping[str, Any] | None = None,
             parquet_kws: Mapping[str, Any] | None = None
     ) -> None:
-        self.overwrite = bool(overwrite)
-        self.skip = bool(skip)
         self.parquet_kws = {} if parquet_kws is None else dict(parquet_kws)
         super().__init__(
             path,
             storage,
-            storage_kws,
-            self.overwrite,
-            self.skip,
-            self.parquet_kws
+            overwrite,
+            skip,
+            storage_kws
         )
 
-    def _uri_from(self, *parts: Any) -> str:
-        """Interpolate parts, validate, handle skip/overwrite, make parents."""
-        path = self._strip(self.path.format(*parts))
-        if path.count('/') < 2:
-            msg = 'Path "{}" must not point to the root directory ("/")!'
-            raise ValueError(msg.format(path))
-        uri = f'{self.storage}:/{path}'
-        bare = path  # fsspec exists/makedirs operate on the bare path
-        if self.fs.exists(bare):
-            if self.skip:
-                return ''
-            if not self.overwrite:
-                raise FileExistsError(f'File "{uri}" already exists!')
-        self.fs.makedirs(str(PurePosixPath(bare).parent), exist_ok=True)
-        return uri
-
     def __call__(self, lf: LazyFrame, *parts: Any) -> tuple[()]:
-        """Sink a Polars LazyFrame to a parquet file.
+        """Sink a polars lazy frame to a parquet file.
 
         Parameters
         ----------
         lf: LazyFrame
-            The Polars :class:`LazyFrame` to sink.
+            The polars lazy frame to sink.
         *parts: str
-            Fragments interpolated into the `path` given at instantiation.
-            There must be at least as many as there are placeholders in the
-            `path`.
+            Fragments that will be interpolated into the `path` given at
+            instantiation. Obviously, there must be at least as many as
+            there are placeholders in the `path`.
 
         Returns
         -------
@@ -109,12 +89,16 @@ class LazyFrame2Parquet(LazyBase):
         Raises
         ------
         IndexError
-            If the `path` has more placeholders than there are `parts`.
+            If the `path` given at instantiation has more string placeholders
+            that there are `parts`.
         FileExistsError
             If the destination file already exists, `skip` is ``False`` and
             `overwrite` is also ``False``.
         ValueError
-            If the final path points directly to the root directory.
+            If the final path is directly under root (e.g., "/file.parquet")
+            because, on local file system, this is not where you want to save
+            to and, on object storage, the first directory refers to the name
+            of an (existing!) bucket.
 
         """
         if uri := self._uri_from(*parts):

@@ -3,11 +3,11 @@ from typing import Any
 import polars as pl
 from polars import LazyFrame
 from ...io.types import LiteralStorage, Storage
-from .lazy_base import LazyBase
+from .lazy_reader import LazyReader
 
 
-class Parquet2LazyFrame(LazyBase):
-    """Lazily connect to a parquet file on any supported file system.
+class Parquet2LazyFrame(LazyReader):
+    """Lazily scan a parquet file on any supported file system.
 
     Parameters
     ----------
@@ -19,8 +19,7 @@ class Parquet2LazyFrame(LazyBase):
         The type of file system to read from ("file", "s3", "gcs", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
     storage_kws: dict, optional
-        Passed on as keyword arguments to the fsspec filesystem constructor
-        and as ``storage_options`` to :func:`polars.scan_parquet`.
+        Passed on as `storage_options` to :func:`polars.scan_parquet`.
     parquet_kws: dict, optional
         Passed on as additional keyword arguments to polar's top-level
         :func:`scan_parquet`. See the `Polars documentation
@@ -52,7 +51,7 @@ class Parquet2LazyFrame(LazyBase):
         super().__init__(path, storage, storage_kws, self.parquet_kws)
 
     def __call__(self, path: str = '') -> LazyFrame:
-        """Lazily connect to a parquet file on the specified file system.
+        """Lazily scana parquet file on the specified file system.
 
         Parameters
         ----------
