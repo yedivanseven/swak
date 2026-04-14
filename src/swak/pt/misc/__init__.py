@@ -5,7 +5,7 @@ from .delayed import Delayed
 from .finalizers import Finalizer, NegativeBinomialFinalizer
 from .compile import Compile
 from .shape import Cat, Stack, LazyCatDim0
-from .configure import ConfigureTorch
+from .configure import Configure
 
 __all__ = [
     'identity',
@@ -17,5 +17,5 @@ __all__ = [
     'Stack',
     'Cat',
     'LazyCatDim0',
-    'ConfigureTorch'
+    'Configure'
 ]
