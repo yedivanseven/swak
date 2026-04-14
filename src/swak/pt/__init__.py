@@ -20,13 +20,4 @@ except ModuleNotFoundError as error:
     msg = 'Install the "torch" package to unlock the PyTorch utilities!'
     raise ImportError(msg) from error
 
-__all__ = ['DEVICE']
-
-DEVICE = pt.device('cuda') if pt.cuda.is_available() else pt.device('cpu')
-pt.set_default_device(DEVICE)
-if pt.cuda.is_available():
-    pt.set_float32_matmul_precision('high')
-else:
-    pt.set_float32_matmul_precision('medium')
-
 # ToDo: Implement tools for packed & padded sequences

@@ -4,6 +4,12 @@ misc
 .. automodule:: swak.pt.misc
 
 
+.. autoclass:: swak.pt.misc.ConfigureTorch
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autofunction:: swak.pt.misc.identity
 
 
