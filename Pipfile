@@ -26,6 +26,7 @@ ruff = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 build = "*"
+boto3-stubs = "*"
 
 [gcp]
 google-cloud-storage = "*"
