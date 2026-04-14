@@ -13,20 +13,18 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         name: Checkout repository
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
         name: Set up python
-      - name: Install pipenv
-        run: pip install --upgrade pipenv --user
       - name: Install build
-        run: pipenv install --dev build
+        run: pip install build
       - name: Run build
-        run: pipenv run python -m build
+        run: python -m build
       - name: Upload the package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-package-distributions
           path: dist/
@@ -43,7 +41,7 @@ jobs:
       id-token: write
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
           path: dist/
