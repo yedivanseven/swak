@@ -54,8 +54,8 @@ gcp = [
     "gcsfs>=2025.5.1"
 ]
 
-[tool.setuptools.packages]
-find = {exclude = ["Notebooks"]}
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools_scm]
 version_file = "version.env"
