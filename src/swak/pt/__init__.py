@@ -14,10 +14,10 @@ data. Image processing is not currently the main focus.
 
 """
 
-try:
-    import torch as pt
-except ModuleNotFoundError as error:
+from importlib.util import find_spec
+
+if find_spec('torch') is None:
     msg = 'Install the "torch" package to unlock the PyTorch utilities!'
-    raise ImportError(msg) from error
+    raise ImportError(msg)
 
 # ToDo: Implement tools for packed & padded sequences
