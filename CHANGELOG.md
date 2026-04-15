@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- New AWS and GCP cloud APIs
+- funcflow Map now has a "flat" option
+- Moved IO from text to new io subpackage
+- New IO API based on fsspec
+- Moved loggers out of misc into top-level loggers subpackage
+- Pandas partials now handle a greater range of pandas objects
+- Polars support for JsonObject
+- Changed PyTorch API (embedders, mixers, blocks)
+
+### Added
+- New pandas partials
+- New polars partials
+- Polars lazy frame read and write
+- PyTorch transformers
+
+
+## [0.5.6] - 2025-09-05
+- Added LogNormal loss
+- Added re-parameterized LogNormal distribution with mus and sigma
+
 ## [0.5.5] - 2025-07-01
 - Added S3Bucket creation
 - Added overwrite and skip to DataFrame2S3Bucket

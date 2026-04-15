@@ -4,10 +4,21 @@ misc
 .. automodule:: swak.pt.misc
 
 
+.. autoclass:: swak.pt.misc.Configure
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autofunction:: swak.pt.misc.identity
 
 
 .. autoclass:: swak.pt.misc.Identity
+   :members:
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.misc.Delayed
    :members:
    :show-inheritance:
 
@@ -23,6 +34,12 @@ misc
 
 
 .. autoclass:: swak.pt.misc.Compile
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.pt.misc.Stack
    :members:
    :special-members: __call__
    :show-inheritance:

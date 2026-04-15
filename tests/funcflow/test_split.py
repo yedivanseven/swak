@@ -406,7 +406,7 @@ class TestMisc(unittest.TestCase):
         _ = pickle.loads(pickle.dumps(s))
 
     def test_lambda_wrapper_pickle_raises(self):
-        s = Split(g, lambda x: tuple(x))
+        s = Split(g, lambda x: tuple(x))  #noqa
         with self.assertRaises(AttributeError):
             _ = pickle.loads(pickle.dumps(s))
 

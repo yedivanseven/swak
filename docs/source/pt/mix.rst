@@ -1,12 +1,14 @@
 mix
 ===
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Subpackages
-
-   weighted
-
 .. automodule:: swak.pt.mix
+   :members:
+   :show-inheritance:
+
+
+Base class
+----------
+
+.. autoclass:: swak.pt.types.Mixer
    :members:
    :show-inheritance:

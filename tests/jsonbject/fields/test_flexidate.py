@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 import pandas as pd
 import datetime as dt
 from swak.jsonobject.fields import FlexiDate, FlexiTime
@@ -47,6 +48,11 @@ class TestAttributes(unittest.TestCase):
         fd = FlexiDate(ts)
         self.assertEqual('2021-01-23', str(fd))
 
+    def test_numpy(self):
+        ts = np.datetime64('2021-01-23 12:23:12')
+        fd = FlexiDate(ts)
+        self.assertEqual('2021-01-23', str(fd))
+
     def test_self(self):
         f = FlexiDate('2021-01-23')
         fd = FlexiDate(f)
@@ -69,6 +75,11 @@ class TestMembers(unittest.TestCase):
         self.assertIsInstance(self.fd.as_date, dt.date)
         self.assertEqual(dt.date.fromisoformat(self.date), self.fd.as_date)
 
+    def test_as_np(self):
+        self.assertTrue(hasattr(self.fd, 'as_np'))
+        self.assertIsInstance(self.fd.as_np, np.datetime64)
+        self.assertEqual(np.datetime64(self.date), self.fd.as_date)
+
     def test_as_json(self):
         self.assertTrue(hasattr(self.fd, 'as_json'))
         self.assertEqual(self.date, self.fd.as_json)
@@ -83,6 +94,11 @@ class TestMembers(unittest.TestCase):
         self.assertTrue(hasattr(self.fd, 'as_dtype'))
         self.assertIsInstance(self.fd.as_dtype, pd.Timestamp)
         self.assertEqual(pd.to_datetime(self.date), self.fd.as_dtype)
+
+    def test_as_polars(self):
+        self.assertTrue(hasattr(self.fd, 'as_polars'))
+        self.assertIsInstance(self.fd.as_polars, dt.date)
+        self.assertEqual(dt.date.fromisoformat(self.date), self.fd.as_polars)
 
 
 class TestMagic(unittest.TestCase):
@@ -104,6 +120,7 @@ class TestMagic(unittest.TestCase):
         self.assertLess(self.fd, dt.datetime.fromisoformat('2021-01-24'))
         self.assertLess(self.fd, FlexiDate('2021-01-24'))
         self.assertLess(self.fd, FlexiTime('2021-01-24'))
+        self.assertLess(self.fd, np.datetime64('2021-01-24'))
 
     def test_le(self):
         self.assertLessEqual(self.fd, '2021-01-24')
@@ -112,6 +129,7 @@ class TestMagic(unittest.TestCase):
         self.assertLessEqual(self.fd, dt.datetime.fromisoformat('2021-01-24'))
         self.assertLessEqual(self.fd, FlexiDate('2021-01-24'))
         self.assertLessEqual(self.fd, FlexiTime('2021-01-24'))
+        self.assertLessEqual(self.fd, np.datetime64('2021-01-24'))
 
     def test_gt(self):
         self.assertGreater(self.fd, '2021-01-22')
@@ -120,6 +138,7 @@ class TestMagic(unittest.TestCase):
         self.assertGreater(self.fd, dt.datetime.fromisoformat('2021-01-22'))
         self.assertGreater(self.fd, FlexiDate('2021-01-22'))
         self.assertGreater(self.fd, FlexiTime('2021-01-22'))
+        self.assertGreater(self.fd, np.datetime64('2021-01-22'))
 
     def test_ge(self):
         self.assertGreaterEqual(self.fd, '2021-01-23')
@@ -131,6 +150,7 @@ class TestMagic(unittest.TestCase):
         )
         self.assertGreaterEqual(self.fd, FlexiDate('2021-01-23'))
         self.assertGreaterEqual(self.fd, FlexiTime('2021-01-23'))
+        self.assertGreaterEqual(self.fd, np.datetime64('2021-01-23'))
 
     def test_eq(self):
         self.assertEqual(self.fd, '2021-01-23')
@@ -139,6 +159,7 @@ class TestMagic(unittest.TestCase):
         self.assertEqual(self.fd, dt.datetime.fromisoformat('2021-01-23'))
         self.assertEqual(self.fd, FlexiDate('2021-01-23'))
         self.assertEqual(self.fd, FlexiTime('2021-01-23'))
+        self.assertEqual(self.fd, np.datetime64('2021-01-23'))
 
     def test_ne(self):
         self.assertNotEqual(self.fd, '2021-01-24')
@@ -147,12 +168,16 @@ class TestMagic(unittest.TestCase):
         self.assertNotEqual(self.fd, dt.datetime.fromisoformat('2021-01-24'))
         self.assertNotEqual(self.fd, FlexiDate('2021-01-24'))
         self.assertNotEqual(self.fd, FlexiTime('2021-01-24'))
+        self.assertNotEqual(self.fd, np.datetime64('2021-01-24'))
 
     def test_add(self):
         added = self.fd + self.delta
         self.assertIsInstance(added, FlexiDate)
         self.assertEqual('2021-01-25', str(added))
         added = self.fd + pd.to_timedelta(self.delta)
+        self.assertIsInstance(added, FlexiDate)
+        self.assertEqual('2021-01-25', str(added))
+        added = self.fd + np.timedelta64(self.delta)
         self.assertIsInstance(added, FlexiDate)
         self.assertEqual('2021-01-25', str(added))
 
@@ -163,12 +188,18 @@ class TestMagic(unittest.TestCase):
         added = pd.to_timedelta(self.delta) + self.fd
         self.assertIsInstance(added, FlexiDate)
         self.assertEqual('2021-01-25', str(added))
+        added = np.timedelta64(self.delta) + self.fd
+        self.assertIsInstance(added, FlexiDate)
+        self.assertEqual('2021-01-25', str(added))
 
     def test_sub(self):
         added = self.fd - self.delta
         self.assertIsInstance(added, FlexiDate)
         self.assertEqual('2021-01-21', str(added))
         added = self.fd - pd.to_timedelta(self.delta)
+        self.assertIsInstance(added, FlexiDate)
+        self.assertEqual('2021-01-21', str(added))
+        added = self.fd - np.timedelta64(self.delta)
         self.assertIsInstance(added, FlexiDate)
         self.assertEqual('2021-01-21', str(added))
 

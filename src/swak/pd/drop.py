@@ -1,0 +1,110 @@
+from typing import overload, Any
+from collections.abc import Hashable
+from pandas import DataFrame, Series
+from ..misc import ArgRepr
+from .types import Labels, Axis, Errors
+
+
+class Drop(ArgRepr):
+    """A simple partial of a pandas dataframe or series' ``drop`` method.
+
+    Parameters
+    ----------
+    labels: hashable or sequence, optional
+        Index or column labels to drop. Defaults to ``None``.
+    axis: 1 or "columns", 0 or "index"
+        Whether to drop labels from the columns (1 or "columns") or
+        index (0 or "index"). Defaults to 1
+    index: hashable or sequence, optional
+        Single label or list-like. Defaults to ``None``.  Alternative to
+        specifying axis (labels, axis=0 is equivalent to index=labels).
+    columns: hashable or sequence, optional
+        Single label or list-like. Defaults to ``None``. Alternative to
+        specifying axis (labels, axis=1 is equivalent to columns=labels).
+    level: hashable, optional.
+        Integer or level name. Defaults to ``None``. For MultiIndex, level
+        from which the labels will be removed.
+    errors: "raise" or "ignore"
+        Defaults to "raise". If "ignore", suppress error and drop only
+        existing labels.
+
+    """
+
+    def __init__(
+            self,
+            label: Labels | None = None,
+            *labels: Hashable,
+            axis: Axis = 1,
+            index: Labels | None = None,
+            columns: Labels | None = None,
+            level: Hashable | None = None,
+            errors: Errors = 'raise'
+    ) -> None:
+        self.labels = (self.__valid(label) + self.__valid(labels)) or None
+        self.axis = axis
+        self.index = self.__valid(index) or None
+        self.columns = self.__valid(columns) or None
+        self.level = level
+        self.errors = errors
+        super().__init__(
+            self.labels,
+            axis= axis,
+            index=index,
+            columns=columns,
+            level=level,
+            errors=errors
+        )
+
+    @property
+    def resolved(self) -> dict[str, Any]:
+        """Resolved labels-axis vs. index-columns keywords."""
+        return {
+            'index': self.index,
+            'columns': self.columns
+        } if self.labels is None else {
+            'axis': self.axis
+        }
+
+    @overload
+    def __call__(self, df: Series) -> Series:
+        ...
+
+    @overload
+    def __call__(self, df: DataFrame) -> DataFrame:
+        ...
+
+    def __call__(self, df):
+        """Drop rows or columns from a pandas series or dataframe.
+
+        Parameters
+        ----------
+        df: Series or DataFrame
+            The object to drop rows or columns from.
+
+        Returns
+        -------
+        Series or DataFrame
+            The object with rows or columns dropped.
+
+        """
+        return df.drop(
+            self.labels,
+            **self.resolved,
+            level=self.level,
+            inplace=False,
+            errors=self.errors,
+        )
+
+    @staticmethod
+    def __valid(labels: Labels) -> list[Hashable]:
+        """Ensure that the labels are indeed a sequence of hashables."""
+        if labels is None:
+            return []
+        if isinstance(labels, str):
+            return [labels]
+        try:
+            _ = [hash(label) for label in labels]
+        except TypeError:
+            _ = hash(labels)
+            return [labels]
+        return list(labels)

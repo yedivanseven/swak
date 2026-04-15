@@ -3,7 +3,20 @@ gcp
 
 .. automodule:: swak.cloud.gcp
 
+
 .. autoclass:: swak.cloud.gcp.Gcs
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.cloud.gcp.Gbq
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.cloud.gcp.ParquetLoadJobConfig
    :members:
    :special-members: __call__
    :show-inheritance:
@@ -28,18 +41,6 @@ gcp
 
 
 .. autoclass:: swak.cloud.gcp.GbqQuery2GcsParquet
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-
-.. autoclass:: swak.cloud.gcp.GcsDir2LocalDir
-   :members:
-   :special-members: __call__
-   :show-inheritance:
-
-
-.. autoclass:: swak.cloud.gcp.GcsParquet2DataFrame
    :members:
    :special-members: __call__
    :show-inheritance:
@@ -88,16 +89,3 @@ Enums
 
    .. autoattribute:: LOGICAL
       :annotation: = LOGICAL
-
-
-.. autoclass:: swak.cloud.gcp.IfExists
-   :show-inheritance:
-
-   .. autoattribute:: FAIL
-      :annotation: = fail
-
-   .. autoattribute:: REPLACE
-      :annotation: = replace
-
-   .. autoattribute:: APPEND
-      :annotation: = append

@@ -15,5 +15,6 @@ pt
    pt/losses
    pt/dists
    pt/blocks
+   pt/transformer
    pt/train
    pt/io

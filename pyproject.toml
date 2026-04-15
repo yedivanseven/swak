@@ -10,12 +10,13 @@ name = "swak"
 dynamic = ["version"]
 requires-python = ">=3.12"
 dependencies = [
-  "pandas>=2.2",
-  "pyarrow>=17.0",
-  "polars>=1.24",
-  "pyyaml>=6.0",
-  "tomli-w>=1.1",
-  "tqdm>=4.6"
+    "pandas>=2.2",
+    "pyarrow>=17.0",
+    "polars>=1.24",
+    "pyyaml>=6.0",
+    "tomli-w>=1.1",
+    "tqdm>=4.6",
+    "fsspec>=2025.5.1"
 ]
 authors = [{name = "yedivanseven", email = "yedivanseven@outlook.de"}]
 description = "Swiss army knife for functional data-science projects."
@@ -30,6 +31,8 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Utilities",
     "License :: OSI Approved :: MIT License",
 ]
@@ -41,15 +44,18 @@ Issues = "https://github.com/yedivanseven/swak/issues"
 Changelog = "https://github.com/yedivanseven/swak/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-cloud = [
+aws = [
+    "boto3>=1.37.9",
+    "s3fs>=2025.5.1",
+]
+gcp = [
     "google-cloud-bigquery>=3.25",
     "google-cloud-storage>=2.18",
-    "pandas-gbq>=0.23",
-    "boto3>=1.37.9"
+    "gcsfs>=2025.5.1"
 ]
 
-[tool.setuptools.packages]
-find = {exclude = ["Notebooks"]}
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools_scm]
 version_file = "version.env"
@@ -62,7 +68,7 @@ line-length = 79
 quote-style = "single"
 
 [tool.ruff.lint]
-ignore = ["PLR", "A005"]
+ignore = ["A005"]
 select = [
     "A",
     "F",
@@ -74,7 +80,8 @@ select = [
     "YTT",
     "ASYNC",
     "C4",
-    "T100",
+    "T10",
+    "T20",
     "EXE",
     "ISC",
     "ICN",
@@ -85,8 +92,9 @@ select = [
     "SIM",
     "INT",
     "PTH",
-    "PL",
+    "PLE",
+    "PLW",
     "NPY",
     "PERF",
-    "FURB"
+    "FURB",
 ]

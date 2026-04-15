@@ -4,6 +4,11 @@ blocks
 .. automodule:: swak.pt.blocks
 
 
+.. autoclass:: swak.pt.blocks.IdentityBlock
+   :members:
+   :show-inheritance:
+
+
 .. autoclass:: swak.pt.blocks.ActivatedBlock
    :members:
    :show-inheritance:
@@ -24,12 +29,7 @@ blocks
    :show-inheritance:
 
 
-.. autoclass:: swak.pt.blocks.ActivatedGatedBlock
-   :members:
-   :show-inheritance:
-
-
-.. autoclass:: swak.pt.blocks.GatedResidualBlock
+.. autoclass:: swak.pt.blocks.GatedActivatedBlock
    :members:
    :show-inheritance:
 

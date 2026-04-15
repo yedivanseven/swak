@@ -1,389 +1,521 @@
 import unittest
 import pickle
 from unittest.mock import patch, Mock
-from swak.cloud.gcp import GbqQuery2GcsParquet
+from swak.cloud.gcp import GbqQuery2GcsParquet, Gbq
 from swak.cloud.gcp.exceptions import GbqError
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.export = GbqQuery2GcsParquet('project', 'bucket')
+        client = Mock()
+        self.gbq = Mock(return_value=client)
+        self.gbq.kwargs = {}
+        self.gbq.project='project'
+        self.export = GbqQuery2GcsParquet(self.gbq)
 
-    def test_project(self):
-        self.assertTrue(hasattr(self.export, 'project'))
-        self.assertEqual('project', self.export.project)
+    def test_has_gbq(self):
+        self.assertTrue(hasattr(self.export, 'gbq'))
 
-    def test_bucket(self):
-        self.assertTrue(hasattr(self.export, 'bucket'))
-        self.assertEqual('bucket', self.export.bucket)
+    def test_gbq(self):
+        self.assertIs(self.export.gbq, self.gbq)
 
-    def test_prefix(self):
-        self.assertTrue(hasattr(self.export, 'prefix'))
-        self.assertEqual('', self.export.prefix)
+    def test_has_path(self):
+        self.assertTrue(hasattr(self.export, 'path'))
+
+    def test_path(self):
+        self.assertEqual('{}', self.export.path)
+
+    def test_has_overwrite(self):
+        self.assertTrue(hasattr(self.export, 'overwrite'))
 
     def test_overwrite(self):
-        self.assertTrue(hasattr(self.export, 'overwrite'))
         self.assertFalse(self.export.overwrite)
 
-    def test_skip(self):
+    def test_has_skip(self):
         self.assertTrue(hasattr(self.export, 'skip'))
+
+    def test_skip(self):
         self.assertFalse(self.export.skip)
 
-    def test_polling_interval(self):
+    def test_has_config(self):
+        self.assertTrue(hasattr(self.export, 'config'))
+
+    def test_config(self):
+        self.assertIsNone(self.export.config)
+
+    def test_has_polling_interval(self):
         self.assertTrue(hasattr(self.export, 'polling_interval'))
-        self.assertIsInstance(self.export.polling_interval, int)
-        self.assertEqual(5, self.export.polling_interval)
 
-    def test_priority(self):
-        self.assertTrue(hasattr(self.export, 'priority'))
-        self.assertEqual('BATCH', self.export.priority)
+    def test_polling_interval(self):
+        self.assertIsInstance(self.export.polling_interval, float)
+        self.assertEqual(5.0, self.export.polling_interval)
 
-    def test_gbq_kws(self):
-        self.assertTrue(hasattr(self.export, 'gbq_kws'))
-        self.assertDictEqual({}, self.export.gbq_kws)
+    def test_has_kwargs(self):
+        self.assertTrue(hasattr(self.export, 'kwargs'))
 
-    def test_gcs_kws(self):
-        self.assertTrue(hasattr(self.export, 'gcs_kws'))
-        self.assertDictEqual({}, self.export.gcs_kws)
+    def test_kwargs(self):
+        self.assertDictEqual({}, self.export.kwargs)
 
-    def test_project_stripped(self):
-        export = GbqQuery2GcsParquet(' / .project /. ', 'bucket')
-        self.assertEqual('project', export.project)
+    def test_has_options(self):
+        self.assertTrue(hasattr(self.export, 'options'))
 
-    def test_bucket_stripped(self):
-        export = GbqQuery2GcsParquet('project', ' . / bucket. /')
-        self.assertEqual('bucket', export.bucket)
+    def test_options(self):
+        expected =  {
+            '_http': None,
+            'client_info': None,
+            'client_options': None,
+            'credentials': None,
+            'project': 'project'
+        }
+        self.assertDictEqual(expected, self.export.options)
+
+    def test_has_flag(self):
+        self.assertTrue(hasattr(self.export, 'flag'))
+
+    def test_flag(self):
+        self.assertEqual('false', self.export.flag)
 
 
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            '  . /prefix . / ',
-            True,
-            True,
-            7,
-            ' priORIty  ',
-            {'foo': 'bar'},
-            {'baz': 42},
-        )
+        client = Mock()
+        self.gbq = Mock(return_value=client)
+        self.gbq.kwargs = {}
+        self.gbq.project = 'project'
 
-    def test_prefix(self):
-        self.assertEqual('prefix', self.export.prefix)
+    def test_path(self):
+        export = GbqQuery2GcsParquet(self.gbq, 'path')
+        self.assertEqual('path', export.path)
+
+    def test_path_strips(self):
+        export = GbqQuery2GcsParquet(self.gbq, ' / . path/to/my  . /')
+        self.assertEqual('path/to/my', export.path)
+
+    def test_path_raises_wrong_type(self):
+        with self.assertRaises(TypeError):
+            _ = GbqQuery2GcsParquet(self.gbq, 42)
+
+    def test_path_raises_empty(self):
+        with self.assertRaises(ValueError):
+            _ = GbqQuery2GcsParquet(self.gbq, '')
 
     def test_overwrite(self):
-        self.assertTrue(self.export.overwrite)
+        export = GbqQuery2GcsParquet(self.gbq, overwrite=True)
+        self.assertTrue(export.overwrite)
 
     def test_skip(self):
-        self.assertTrue(self.export.skip)
+        export = GbqQuery2GcsParquet(self.gbq, skip=True)
+        self.assertTrue(export.skip)
 
     def test_polling_interval(self):
-        self.assertEqual(7, self.export.polling_interval)
+        export = GbqQuery2GcsParquet(self.gbq, polling_interval=3.0)
+        self.assertIsInstance(export.polling_interval, float)
+        self.assertEqual(3.0, export.polling_interval)
 
-    def test_priority(self):
-        self.assertEqual('PRIORITY', self.export.priority)
+    def test_polling_interval_raises_wrong_type(self):
+        with self.assertRaises(TypeError):
+            _ = GbqQuery2GcsParquet(self.gbq, polling_interval='foo')
 
-    def test_gbq_kws(self):
-        self.assertTrue(hasattr(self.export, 'gbq_kws'))
-        self.assertDictEqual({'foo': 'bar'}, self.export.gbq_kws)
+    def test_polling_interval_raises_wrong_value(self):
+        with self.assertRaises(ValueError):
+            _ = GbqQuery2GcsParquet(self.gbq, polling_interval=-3)
 
-    def test_gcs_kws(self):
-        self.assertTrue(hasattr(self.export, 'gcs_kws'))
-        self.assertDictEqual({'baz': 42}, self.export.gcs_kws)
+    def test_kwargs(self):
+        export = GbqQuery2GcsParquet(self.gbq, foo='bar', baz=42)
+        self.assertDictEqual({'foo': 'bar', 'baz': 42}, export.kwargs)
+
+    def test_options(self):
+        expected = {
+            '_http': None,
+            'client_info': 'client_info',
+            'client_options': None,
+            'credentials': 'credentials',
+            'project': 'project',
+            'foo': 'bar',
+            'baz': 42
+        }
+        export = GbqQuery2GcsParquet(
+            self.gbq,
+            foo='bar',
+            baz=42,
+            credentials='credentials',
+            client_info='client_info'
+        )
+        self.assertDictEqual(expected, export.options)
+
+    def test_flag(self):
+        export = GbqQuery2GcsParquet(self.gbq, overwrite=True)
+        self.assertEqual('true', export.flag)
+
+
+class TestMethods(unittest.TestCase):
+
+    def setUp(self):
+        client = Mock()
+        self.gbq = Mock(return_value=client)
+        self.gbq.kwargs = {}
+        self.gbq.project = 'project'
+        self.bucket = Mock()
+        self.gcs = Mock()
+        self.gcs.get_bucket.return_value = self.bucket
+        self.gcs_patch = patch(
+            'swak.cloud.gcp.query2gcs.GcsClient',
+            return_value=self.gcs
+        )
+        self.gcs_cls = self.gcs_patch.start()
+
+    def tearDown(self):
+        self.gcs_patch.stop()
+
+    def test_normalize_full_path_default(self):
+        export = GbqQuery2GcsParquet(self.gbq)
+        path = 'bucket/prefix/folder'
+        bucket, prefix = export._normalize(path)
+        self.assertEqual('bucket', bucket)
+        self.assertEqual('prefix/folder', prefix)
+
+    def test_normalize_full_path_stripped(self):
+        export = GbqQuery2GcsParquet(self.gbq)
+        path = ' . // bucket/prefix/folder .//'
+        bucket, prefix= export._normalize(path)
+        self.assertEqual('bucket', bucket)
+        self.assertEqual('prefix/folder', prefix)
+
+    def test_normalize_inner_slashes_stripped(self):
+        export = GbqQuery2GcsParquet(self.gbq)
+        path = 'bucket///prefix//folder'
+        bucket, prefix = export._normalize(path)
+        self.assertEqual('bucket', bucket)
+        self.assertEqual('prefix/folder', prefix)
+
+    @patch('swak.cloud.gcp.query2gcs.uuid.uuid4')
+    def test_normalize_creates_uuid(self, mock):
+        mock.return_value = 'uuid'
+        export = GbqQuery2GcsParquet(self.gbq)
+        bucket, prefix = export._normalize(' / .bucket //.')
+        self.assertEqual('uuid', prefix)
+        self.assertEqual('bucket', bucket)
+
+    def test_normalize_raises_on_empty_path(self):
+        export = GbqQuery2GcsParquet(self.gbq)
+        with self.assertRaises(ValueError):
+            _ = export._normalize('')
+
+    def test_normalize_raises_on_empty_path_after_cleanup(self):
+        export = GbqQuery2GcsParquet(self.gbq)
+        with self.assertRaises(ValueError):
+            _ = export._normalize(' . //  .//')
+
+    def test_skip_query_for_skip_false_overwrite_false_no_blobs(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        actual = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_not_called()
+        self.bucket.delete_blobs.assert_not_called()
+        self.assertIsInstance(actual, bool)
+        self.assertFalse(actual)
+
+    def test_skip_query_for_skip_false_overwrite_false_blobs(self):
+        self.gcs.list_blobs.return_value = [1, 2, 3]
+        export = GbqQuery2GcsParquet(self.gbq)
+        with self.assertRaises(FileExistsError):
+            _ = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_not_called()
+        self.bucket.delete_blobs.assert_not_called()
+
+    def test_skip_query_for_skip_false_overwrite_true_no_blobs(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq, overwrite=True)
+        actual = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_not_called()
+        self.bucket.delete_blobs.assert_not_called()
+        self.assertIsInstance(actual, bool)
+        self.assertFalse(actual)
+
+    def test_skip_query_for_skip_false_overwrite_true_blobs(self):
+        self.gcs.list_blobs.return_value = [1, 2, 3]
+        export = GbqQuery2GcsParquet(self.gbq, overwrite=True)
+        actual = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_called_once_with('bucket')
+        self.bucket.delete_blobs.assert_called_once_with([1, 2, 3])
+        self.assertIsInstance(actual, bool)
+        self.assertFalse(actual)
+
+    def test_skip_query_for_skip_true_overwrite_false_no_blobs(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq, skip=True)
+        actual = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_not_called()
+        self.bucket.delete_blobs.assert_not_called()
+        self.assertIsInstance(actual, bool)
+        self.assertFalse(actual)
+
+    def test_skip_query_for_skip_true_overwrite_false_blobs(self):
+        self.gcs.list_blobs.return_value = [1, 2, 3]
+        export = GbqQuery2GcsParquet(self.gbq, skip=True)
+        actual = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_not_called()
+        self.bucket.delete_blobs.assert_not_called()
+        self.assertIsInstance(actual, bool)
+        self.assertTrue(actual)
+
+    def test_skip_query_for_skip_true_overwrite_true_no_blobs(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq, skip=True, overwrite=True)
+        actual = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_not_called()
+        self.bucket.delete_blobs.assert_not_called()
+        self.assertIsInstance(actual, bool)
+        self.assertFalse(actual)
+
+    def test_skip_query_for_skip_true_overwrite_true_blobs(self):
+        self.gcs.list_blobs.return_value = [1, 2, 3]
+        export = GbqQuery2GcsParquet(self.gbq, skip=True, overwrite=True)
+        actual = export._skip_query_for('bucket', 'prefix')
+        self.gcs_cls.assert_called_once_with(**export.options)
+        self.gcs.list_blobs.assert_called_once_with('bucket', prefix='prefix')
+        self.gcs.get_bucket.assert_not_called()
+        self.bucket.delete_blobs.assert_not_called()
+        self.assertIsInstance(actual, bool)
+        self.assertTrue(actual)
+
+    def test_split_empty_raises(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        with self.assertRaises(ValueError):
+            _ = export._split('')
+
+    def test_split_semicolon_raises(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        with self.assertRaises(ValueError):
+            _ = export._split('  ; ')
+
+    def test_split_simple_query_no_trailing_semicolon(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        scripts, main = export._split('SELECT * FROM table')
+        self.assertEqual('', scripts)
+        self.assertEqual('SELECT * FROM table', main)
+
+    def test_split_simple_query_trailing_semicolon(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        scripts, main = export._split('SELECT * FROM table;')
+        self.assertEqual('', scripts)
+        self.assertEqual('SELECT * FROM table', main)
+
+    def test_split_simple_query_no_trailing_semicolon_stripped(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        scripts, main = export._split('\n ; SELECT * FROM table \n')
+        self.assertEqual('', scripts)
+        self.assertEqual('SELECT * FROM table', main)
+
+    def test_split_simple_query_trailing_semicolon_stripped(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        scripts, main = export._split('\n ; SELECT * FROM table; \n')
+        self.assertEqual('', scripts)
+        self.assertEqual('SELECT * FROM table', main)
+
+    def test_complex_simple_query_no_trailing_semicolon(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        query = 'DECLARE x INT64;SET x = 1;SELECT * FROM table'
+        scripts, main = export._split(query)
+        self.assertEqual('DECLARE x INT64;\nSET x = 1;\n', scripts)
+        self.assertEqual('SELECT * FROM table', main)
+
+    def test_complex_simple_query_trailing_semicolon(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        query = 'DECLARE x INT64;SET x = 1;SELECT * FROM table;'
+        scripts, main = export._split(query)
+        self.assertEqual('DECLARE x INT64;\nSET x = 1;\n', scripts)
+        self.assertEqual('SELECT * FROM table', main)
+
+    def test_complex_simple_query_no_trailing_semicolon_stripped(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        query = ' \n; DECLARE x INT64;SET x = 1;SELECT * FROM table'
+        scripts, main = export._split(query)
+        self.assertEqual('DECLARE x INT64;\nSET x = 1;\n', scripts)
+        self.assertEqual('SELECT * FROM table', main)
+
+
+    def test_complex_simple_query_trailing_semicolon_stripped(self):
+        self.gcs.list_blobs.return_value = []
+        export = GbqQuery2GcsParquet(self.gbq)
+        query = ' \n ; DECLARE x INT64;SET x = 1;SELECT * FROM table;'
+        scripts, main = export._split(query)
+        self.assertEqual('DECLARE x INT64;\nSET x = 1;\n', scripts)
+        self.assertEqual('SELECT * FROM table', main)
 
 
 class TestUsage(unittest.TestCase):
 
-    def setUp(self) -> None:
-        self.query = 'DECLARE;\nSET;\nSELECT *\n'
+    def setUp(self):
         self.job = Mock()
-        self.job.running.return_value = False
-        self.job.error_result = {}
+        self.job.running = Mock(side_effect=[True, False])
+        self.job.error_result = None
+        self.client = Mock()
+        self.client.query.return_value = self.job
+        self.gbq = Mock(return_value=self.client)
+        self.gbq.kwargs = {}
+        self.gbq.project = 'project'
         self.bucket = Mock()
-        self.client_instance = Mock()
-        self.storage_instance = Mock()
-        self.storage_instance.list_blobs = Mock(return_value=[1, 2, 3])
-        self.storage_instance.get_bucket.return_value = self.bucket
-        self.client_instance.query.return_value = self.job
-        self.client_patch = patch(
-            'google.cloud.bigquery.Client',
-            return_value=self.client_instance
+        self.gcs = Mock()
+        self.gcs.get_bucket.return_value = self.bucket
+        self.gcs_patch = patch(
+            'swak.cloud.gcp.query2gcs.GcsClient',
+            return_value=self.gcs
         )
-        self.storage_patch = patch(
-            'google.cloud.storage.Client',
-            return_value=self.storage_instance
-        )
-        self.config_patch = patch(
-            'google.cloud.bigquery.QueryJobConfig',
-            return_value='config'
-        )
-        self.client_class = self.client_patch.start()
-        self.storage_class = self.storage_patch.start()
-        self.config = self.config_patch.start()
+        self.gcs_cls = self.gcs_patch.start()
+        self.query = 'DECLARE;\nSELECT * FROM table'
 
-    def tearDown(self) -> None:
-        self.client_patch.stop()
-        self.storage_patch.stop()
-        self.config_patch.stop()
+    def tearDown(self):
+        self.gcs_patch.stop()
+
 
     def test_callable(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
+        export = GbqQuery2GcsParquet(self.gbq)
         self.assertTrue(callable(export))
 
-    def test_storage_called_default(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export(self.query)
-        self.storage_class.assert_called_once_with('project')
+    def test_skip_return_value(self):
+        export = GbqQuery2GcsParquet(self.gbq, 'bucket/prefix/{}')
+        with patch.object(export, '_skip_query_for') as mock:
+            mock.return_value = True
+            actual = export(self.query, 'path')
+            mock.assert_called_once_with('bucket', 'prefix/path')
+        self.assertEqual('bucket/prefix/path/', actual)
 
-    def test_storage_called_kwargs(self):
+    def test_client_created(self):
+        export = GbqQuery2GcsParquet(self.gbq, 'bucket/{}', polling_interval=1)
+        with patch.object(export, '_skip_query_for') as mock:
+            mock.return_value = False
+            actual = export(self.query, 'prefix')
+            mock.assert_called_once_with('bucket', 'prefix')
+        self.gbq.assert_called_once_with()
+        self.assertEqual('bucket/prefix/', actual)
+
+    def test_query_fired(self):
+        export = GbqQuery2GcsParquet(self.gbq, 'bucket/{}', polling_interval=1)
+        with patch.object(export, '_skip_query_for') as mock:
+            mock.return_value = False
+            actual = export(self.query, 'prefix')
+            mock.assert_called_once_with('bucket', 'prefix')
+        expected = """DECLARE;
+
+    EXPORT DATA OPTIONS(
+        uri="gs://bucket/prefix/*.parquet"
+      , format="PARQUET"
+      , compression="SNAPPY"
+      , overwrite=false
+    ) AS
+
+SELECT * FROM table"""
+        self.client.query.assert_called_once_with(expected, None)
+        self.assertEqual('bucket/prefix/', actual)
+
+    def test_config_passed(self):
         export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            gcs_kws={'foo': 'bar'}
+            self.gbq,
+            'bucket/{}',
+            config='config',
+            polling_interval=1
         )
-        _ = export(self.query)
-        self.storage_class.assert_called_once_with('project', foo='bar')
+        with patch.object(export, '_skip_query_for') as mock:
+            mock.return_value = False
+            actual = export(self.query, 'prefix')
+            mock.assert_called_once_with('bucket', 'prefix')
+        expected = """DECLARE;
 
-    def test_list_called_prefix_instantiation(self):
-        export = GbqQuery2GcsParquet('project', 'bucket', 'prefix')
-        _ = export(self.query)
-        self.storage_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='prefix/'
-        )
+    EXPORT DATA OPTIONS(
+        uri="gs://bucket/prefix/*.parquet"
+      , format="PARQUET"
+      , compression="SNAPPY"
+      , overwrite=false
+    ) AS
 
-    def test_list_called_prefix_call(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export(self.query, 'prefix')
-        self.storage_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='prefix/'
-        )
+SELECT * FROM table"""
+        self.client.query.assert_called_once_with(expected, 'config')
+        self.assertEqual('bucket/prefix/', actual)
 
-    def test_list_called_prefix_both(self):
-        export = GbqQuery2GcsParquet('project', 'bucket', 'pre')
-        _ = export(self.query, 'fix')
-        self.storage_instance.list_blobs.assert_called_once_with(
-            'bucket',
-            prefix='pre/fix/'
-        )
+    @patch('swak.cloud.gcp.query2gcs.time.sleep')
+    def test_polling_called_correct_number_of_times(self, mock_sleep):
+        export = GbqQuery2GcsParquet(self.gbq, 'bucket/{}', polling_interval=1)
+        self.job.running.side_effect = [True, True, True, False]
+        with patch.object(export, '_skip_query_for') as mock:
+            mock.return_value = False
+            actual = export(self.query, 'prefix')
+            mock.assert_called_once_with('bucket', 'prefix')
+        self.assertEqual(3, mock_sleep.call_count)
+        mock_sleep.assert_called_with(1)
+        self.assertEqual('bucket/prefix/', actual)
 
-    def test_get_not_called_exists_default(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export(self.query)
-        self.storage_instance.get_bucket.assert_not_called()
-
-    def test_get_called_exists_overwrite(self):
-        export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            overwrite=True
-        )
-        _ = export(self.query)
-        self.storage_instance.get_bucket.assert_called_once_with('bucket')
-        self.bucket.delete_blobs.assert_called_once_with([1, 2, 3])
-
-    def test_get_not_called_not_exists_overwrite(self):
-        self.storage_instance.list_blobs = Mock(return_value=[])
-        export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            overwrite=True
-        )
-        _ = export(self.query)
-        self.storage_instance.get_bucket.assert_not_called()
-        self.bucket.delete_blobs.assert_not_called()
-
-    def test_get_not_called_exists_skip(self):
-        export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            skip=True
-        )
-        _ = export(self.query)
-        self.storage_instance.get_bucket.assert_not_called()
-        self.bucket.delete_blobs.assert_not_called()
-
-    def test_get_not_called_not_exists_skip(self):
-        self.storage_instance.list_blobs = Mock(return_value=[])
-        export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            skip=True
-        )
-        _ = export(self.query)
-        self.storage_instance.get_bucket.assert_not_called()
-        self.bucket.delete_blobs.assert_not_called()
-
-    def test_client_called_default(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export(self.query)
-        self.client_class.assert_called_once_with('project')
-
-    def test_client_called_kwargs(self):
-        export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            gbq_kws={'foo': 'bar'}
-        )
-        _ = export(self.query)
-        self.client_class.assert_called_once_with('project', foo='bar')
-
-    def test_config_called_defaults(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export(self.query)
-        self.config.assert_called_once_with(priority='BATCH')
-
-    def test_config_called_kwargs(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export(self.query, foo='bar')
-        self.config.assert_called_once_with(priority='BATCH', foo='bar')
-
-    def test_query_no_scripts_prefix_instantiation(self):
-        export = GbqQuery2GcsParquet('project', 'bucket', 'prefix')
-        _ = export('SELECT *\n')
-        expected = ('\n'
-                    '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/prefix/*.parquet"\n'
-                    '      , format="PARQUET"\n'
-                    '      , compression="SNAPPY"\n'
-                    '      , overwrite=false\n'
-                    '    ) AS\n'
-                    'SELECT *\n')
-        self.client_instance.query.assert_called_once_with(expected, 'config')
-
-    def test_query_no_scripts_prefix_call(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export('SELECT *\n', 'prefix')
-        expected = ('\n'
-                    '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/prefix/*.parquet"\n'
-                    '      , format="PARQUET"\n'
-                    '      , compression="SNAPPY"\n'
-                    '      , overwrite=false\n'
-                    '    ) AS\n'
-                    'SELECT *\n')
-        self.client_instance.query.assert_called_once_with(expected, 'config')
-
-    def test_query_prefix_call_stripped(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export('SELECT *\n', ' . / prefix./ ')
-        expected = ('\n'
-                    '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/prefix/*.parquet"\n'
-                    '      , format="PARQUET"\n'
-                    '      , compression="SNAPPY"\n'
-                    '      , overwrite=false\n'
-                    '    ) AS\n'
-                    'SELECT *\n')
-        self.client_instance.query.assert_called_once_with(expected, 'config')
-
-    def test_query_no_scripts_prefix_both(self):
-        export = GbqQuery2GcsParquet('project', 'bucket', 'pre')
-        _ = export('SELECT *\n', 'fix')
-        expected = ('\n'
-                    '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/*.parquet"\n'
-                    '      , format="PARQUET"\n'
-                    '      , compression="SNAPPY"\n'
-                    '      , overwrite=false\n'
-                    '    ) AS\n'
-                    'SELECT *\n')
-        self.client_instance.query.assert_called_once_with(expected, 'config')
-
-    def test_query_scripts(self):
-        export = GbqQuery2GcsParquet('project', 'bucket', 'pre')
-        _ = export('DECLARE;\nSET;\nSELECT *\n', 'fix')
-        expected = ('DECLARE;\n'
-                    'SET;\n'
-                    '\n'
-                    '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/*.parquet"\n'
-                    '      , format="PARQUET"\n'
-                    '      , compression="SNAPPY"\n'
-                    '      , overwrite=false\n'
-                    '    ) AS\n\n'
-                    'SELECT *\n')
-        self.client_instance.query.assert_called_once_with(expected, 'config')
-
-    def test_query_respects_overwrite(self):
-        export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            'pre',
-            overwrite=True
-        )
-        _ = export('SELECT *\n', 'fix')
-        expected = ('\n'
-                    '    EXPORT DATA OPTIONS(\n'
-                    '        uri="gs://bucket/pre/fix/*.parquet"\n'
-                    '      , format="PARQUET"\n'
-                    '      , compression="SNAPPY"\n'
-                    '      , overwrite=true\n'
-                    '    ) AS\n'
-                    'SELECT *\n')
-        self.client_instance.query.assert_called_once_with(expected, 'config')
-
-    def test_returns_prefix_instantiation(self):
-        export = GbqQuery2GcsParquet('project', 'bucket', 'prefix')
-        prefix = export('SELECT *\n')
-        self.assertEqual('prefix/', prefix)
-
-    def test_returns_prefix_call(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        prefix = export('SELECT *\n', 'prefix')
-        self.assertEqual('prefix/', prefix)
-
-    def test_returns_prefix_combined(self):
-        export = GbqQuery2GcsParquet('project', 'bucket', 'pre')
-        prefix = export('SELECT *\n', 'fix')
-        self.assertEqual('pre/fix/', prefix)
-
-    def test_creates_prefix(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        prefix = export('SELECT *\n')
-        self.assertIsInstance(prefix, str)
-        expected = ('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]'
-                    '{4}-[0-9a-f]{4}-[0-9a-f]{12}/$')
-        self.assertRegex(prefix, expected)
-
-    def test_checks_job_running(self):
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        _ = export(self.query)
-        self.job.running.assert_called_once_with()
-
-    def test_raises(self):
-        self.job.error_result = {'reason': 'reason', 'message': 'message'}
-        export = GbqQuery2GcsParquet('project', 'bucket')
-        with self.assertRaises(GbqError):
-            _ = export(self.query)
+    def test_query_error(self):
+        export = GbqQuery2GcsParquet(self.gbq, 'bucket/{}', polling_interval=1)
+        self.job.error_result = {'reason': 'error', 'message': 'message'}
+        with patch.object(export, '_skip_query_for') as mock:
+            mock.return_value = False
+            with self.assertRaises(GbqError) as error:
+                _ = export(self.query, 'prefix')
+            expected = '\nERROR: message'
+            actual = str(error.exception)
+            self.assertEqual(expected, actual)
 
 
 class TestMisc(unittest.TestCase):
 
     def setUp(self):
-        self.export = GbqQuery2GcsParquet(
-            'project',
-            'bucket',
-            'prefix',
-            True,
-            True,
-            7,
-            'BATCH',
-            {'foo': 'bar'},
-            {'baz': 42},
-        )
+        self.gbq = Gbq('project')
 
-    def test_repr(self):
-        expected = ("GbqQuery2GcsParquet('project', 'bucket', 'prefix', "
-                    "True, True, 7, 'BATCH', {'foo': 'bar'}, {'baz': 42})")
-        self.assertEqual(expected, repr(self.export))
+    def test_default_repr(self):
+        export = GbqQuery2GcsParquet(self.gbq)
+        expected = ("GbqQuery2GcsParquet(Gbq('project'), "
+                    "'{}', False, False, None, 5.0)")
+        self.assertEqual(expected, repr(export))
+
+    def test_custom_repr(self):
+        export = GbqQuery2GcsParquet(
+            self.gbq,
+            'bucket/prefix/{}',
+            config='config',
+            skip=True,
+            overwrite=True,
+            polling_interval=3
+        )
+        expected = ("GbqQuery2GcsParquet(Gbq('project'), "
+                    "'bucket/prefix/{}', True, True, 'config', 3.0)")
+        self.assertEqual(expected, repr(export))
 
     def test_pickle_works(self):
-        _ = pickle.loads(pickle.dumps(self.export))
+        export = GbqQuery2GcsParquet(
+            self.gbq,
+            'bucket/prefix/{}',
+            config='config',
+            skip=True,
+            overwrite=True,
+            polling_interval=3
+        )
+        _ = pickle.loads(pickle.dumps(export))
 
 
 if __name__ == '__main__':

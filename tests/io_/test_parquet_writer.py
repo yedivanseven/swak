@@ -1,0 +1,207 @@
+import pickle
+import unittest
+import pandas as pd
+import polars as pl
+from unittest.mock import patch, Mock
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from polars.testing import assert_frame_equal as pl_assert_frame_equal
+from swak.io import DataFrame2Parquet, Writer, Storage, Mode
+
+
+class TestInstantiation(unittest.TestCase):
+
+    def setUp(self):
+        self.path = '/path/to/file.parquet'
+
+    def test_is_writer(self):
+        self.assertTrue(issubclass(DataFrame2Parquet, Writer))
+
+    @patch.object(Writer, '__init__')
+    def test_writer_init_called_defaults(self, init):
+        _ = DataFrame2Parquet(self.path)
+        init.assert_called_once_with(
+            self.path,
+            Storage.FILE,
+            False,
+            False,
+            Mode.WB,
+            32,
+            None,
+            {}
+        )
+
+    @patch.object(Writer, '__init__')
+    def test_writer_init_called_custom(self, init):
+        _ = DataFrame2Parquet(
+            '/some/other/file.parquet',
+            Storage.MEMORY,
+            True,
+            True,
+            16,
+            {'foo': 'bar'},
+            {'answer': 42},
+        )
+        init.assert_called_once_with(
+            '/some/other/file.parquet',
+            Storage.MEMORY,
+            True,
+            True,
+            Mode.WB,
+            16,
+            {'foo': 'bar'},
+            {'answer': 42}
+        )
+
+
+class TestAttributes(unittest.TestCase):
+
+    def setUp(self):
+        self.path = '/path/to/file.parquet'
+
+    def test_has_parquet_kws(self):
+        write = DataFrame2Parquet(self.path)
+        self.assertTrue(hasattr(write, 'parquet_kws'))
+
+    def test_default_parquet_kws(self):
+        write = DataFrame2Parquet(self.path)
+        self.assertDictEqual({}, write.parquet_kws)
+
+    def test_custom_parquet_kws(self):
+        write = DataFrame2Parquet(self.path, parquet_kws={'answer': 42})
+        self.assertDictEqual({'answer': 42}, write.parquet_kws)
+
+
+class TestUsage(unittest.TestCase):
+
+    def setUp(self):
+        self.storage = Storage.FILE
+        self.dir = TemporaryDirectory()
+        self.file = self.dir.name + '/file.parquet'
+        self.path = Path(self.file)
+        self.df = Mock()
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def test_callable(self):
+        write = DataFrame2Parquet(self.file)
+        self.assertTrue(callable(write))
+
+    @patch.object(Writer, '_uri_from')
+    def test_uri_from_called(self, uri_from):
+        uri_from.return_value = self.file
+        write = DataFrame2Parquet(self.file, self.storage)
+        _ = write(self.df, 'foo', 42)
+        uri_from.assert_called_once_with('foo', 42)
+
+    @patch.object(Writer, '_managed')
+    def test_managed_called(self, managed):
+        with self.path.open('wb') as file:
+            managed.return_value = file
+            write = DataFrame2Parquet(self.file, self.storage, overwrite=True)
+            _ = write(self.df, 'foo', 42)
+        managed.assert_called_once_with(self.file)
+
+    @patch.object(Writer, '_managed')
+    @patch.object(Writer, '_uri_from')
+    def test_managed_not_called(self, uri_from, managed):
+        uri_from.return_value = ''
+        write = DataFrame2Parquet(self.file, self.storage)
+        _ = write(self.df, 'foo', 42)
+        managed.assert_not_called()
+
+    @patch.object(Writer, '_managed')
+    def test_to_parquet_called_defaults(self, managed):
+        with self.path.open('wb') as file:
+            managed.return_value = file
+            write = DataFrame2Parquet(self.file, self.storage, overwrite=True)
+            _ = write(self.df)
+            self.df.to_parquet.assert_called_once_with(file)
+
+    @patch.object(Writer, '_managed')
+    def test_to_parquet_called_custom(self, managed):
+        with self.path.open('wb') as file:
+            managed.return_value = file
+            write = DataFrame2Parquet(
+                self.file,
+                storage=self.storage,
+                overwrite=True,
+                parquet_kws={'answer': 42}
+            )
+            _ = write(self.df)
+            self.df.to_parquet.assert_called_once_with(file, answer=42)
+
+    @patch.object(Writer, '_managed')
+    def test_write_parquet_called(self, managed):
+        df = Mock(spec=['write_parquet'])
+        with self.path.open('wb') as file:
+            managed.return_value = file
+            write = DataFrame2Parquet(self.file, self.storage, overwrite=True)
+            _ = write(df)
+            df.write_parquet.assert_called_once_with(file)
+
+    def test_return_value(self):
+        write = DataFrame2Parquet(self.file, self.storage)
+        actual = write(self.df)
+        self.assertTupleEqual((), actual)
+
+    def test_actually_saves_pandas(self):
+        df = pd.DataFrame([{'foo': 42}, {'bar': 43}])
+        write = DataFrame2Parquet(self.file, self.storage)
+        _ = write(df)
+        with self.path.open('rb') as file:
+            actual = pd.read_parquet(file)
+        pd.testing.assert_frame_equal(actual, df)
+
+    def test_actually_saves_polars(self):
+        df = pl.DataFrame([{'foo': 42}, {'bar': 43}])
+        write = DataFrame2Parquet(self.file, self.storage)
+        _ = write(df)
+        with self.path.open('rb') as file:
+            actual = pl.read_parquet(file)
+        pl_assert_frame_equal(actual, df)
+
+    def test_subdirectory_created_file(self):
+        df = pd.DataFrame([{'foo': 42}, {'bar': 43}])
+        path = self.dir.name + '/sub/folder/file.parquet'
+        write = DataFrame2Parquet(path, self.storage)
+        _ = write(df)
+        with write.fs.open(path, 'rb') as file:
+            actual = pd.read_parquet(file)
+        pd.testing.assert_frame_equal(actual, df)
+
+    def test_subdirectory_created_memory(self):
+        df = pd.DataFrame([{'foo': 42}, {'bar': 43}])
+        path = self.dir.name + '/sub/folder/file.parquet'
+        write = DataFrame2Parquet(path, 'memory')
+        _ = write(df)
+        with write.fs.open(path, 'rb') as file:
+            actual = pd.read_parquet(file)
+        pd.testing.assert_frame_equal(actual, df)
+
+
+class TestMisc(unittest.TestCase):
+
+    def setUp(self):
+        self.path = '/path/file.parquet'
+
+    def test_default_repr(self):
+        write = DataFrame2Parquet(self.path)
+        expected = ("DataFrame2Parquet('/path/file.parquet', "
+                    "'file', False, False, 32.0, {}, {})")
+        self.assertEqual(expected, repr(write))
+
+    def test_custom_repr(self):
+        write = DataFrame2Parquet(self.path, parquet_kws={'answer': 42})
+        expected = ("DataFrame2Parquet('/path/file.parquet', "
+                    "'file', False, False, 32.0, {}, {'answer': 42})")
+        self.assertEqual(expected, repr(write))
+
+    def test_pickle_works(self):
+        write = DataFrame2Parquet(self.path)
+        _ = pickle.loads(pickle.dumps(write))
+
+
+if __name__ == '__main__':
+    unittest.main()

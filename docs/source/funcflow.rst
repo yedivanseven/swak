@@ -5,8 +5,8 @@ funcflow
    :maxdepth: 1
    :caption: Subpackages
 
-   concurrent
-   loggers
+   funcflow/concurrent
+   funcflow/loggers
 
 .. automodule:: swak.funcflow
    :members:

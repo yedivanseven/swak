@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from swak.misc import NotFound
+from swak.io import NotFound
 from swak.text import TextResourceLoader
 
 

@@ -79,10 +79,12 @@ as a, well, template.
    text
    cli
    jsonobject
+   io
    pd
    pl
    cloud
    pt
+   loggers
    misc
 
 

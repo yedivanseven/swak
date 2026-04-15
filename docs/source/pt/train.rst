@@ -9,13 +9,7 @@ train
    :show-inheritance:
 
 
-.. autoclass:: swak.pt.train.InMemory
-   :members:
-   :show-inheritance:
-   :inherited-members:
-
-
-.. autoclass:: swak.pt.train.OnDisk
+.. autoclass:: swak.pt.train.Checkpoint
    :members:
    :show-inheritance:
    :inherited-members:

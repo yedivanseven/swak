@@ -1,23 +1,16 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import Mock
 import torch as pt
 import torch.nn as ptn
-from swak.pt.blocks import Repeat, SkipConnection
-from swak.pt.misc import Identity
+from swak.pt.blocks import Repeat, SkipConnection, ActivatedBlock
 
 
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.block = Mock()
+        self.block = ActivatedBlock(4)
         self.skip = SkipConnection(self.block)
         self.repeat = Repeat(self.skip)
-
-    def test_has_skip(self):
-        self.assertTrue(hasattr(self.repeat, 'skip'))
-
-    def test_skip(self):
-        self.assertIsInstance(self.repeat.skip, SkipConnection)
 
     def test_has_n_layers(self):
         self.assertTrue(hasattr(self.repeat, 'n_layers'))
@@ -33,11 +26,34 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.repeat.blocks, ptn.Sequential)
         self.assertEqual(2, len(self.repeat.blocks))
 
-    def test_has_norm(self):
-        self.assertTrue(hasattr(self.repeat, 'norm'))
+    def test_blocks_are_skip_connections(self):
+        for block in self.repeat.blocks:
+            self.assertIsInstance(block, SkipConnection)
 
-    def test_norm(self):
-        self.assertIsInstance(self.repeat.norm, Identity)
+    def test_blocks_are_distinct(self):
+        self.assertIsNot(self.repeat.blocks[0], self.repeat.blocks[1])
+        self.assertIsNot(self.repeat.blocks[0], self.block)
+        self.assertIsNot(self.repeat.blocks[1], self.block)
+
+    def test_has_mod_dim(self):
+        self.assertTrue(hasattr(self.repeat, 'mod_dim'))
+
+    def test_mod_dim(self):
+        self.assertIsInstance(self.repeat.mod_dim, int)
+        self.assertEqual(4, self.repeat.mod_dim)
+
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.repeat, 'device'))
+
+    def test_device(self):
+        self.assertEqual(pt.device('cpu'), self.repeat.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.repeat, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.repeat.dtype, pt.float)
+        self.assertIs(self.skip.dtype, self.repeat.dtype)
 
     def test_has_layers(self):
         self.assertTrue(hasattr(self.repeat, 'layers'))
@@ -53,9 +69,11 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.repeat.reset_parameters))
 
     def test_call_reset_parameters(self):
-        with patch.object(Identity, 'reset_parameters') as mock:
-            self.repeat.reset_parameters()
-            self.assertEqual(3, mock.call_count)
+        for skip in self.repeat.blocks:
+            skip.reset_parameters = Mock(return_value=skip)
+        self.repeat.reset_parameters()
+        for skip in self.repeat.blocks:
+            skip.reset_parameters.assert_called_once_with()
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.repeat, 'new'))
@@ -66,8 +84,10 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_call_new(self):
         new = self.repeat.new()
         self.assertIsInstance(new, Repeat)
-        self.assertIs(new.skip, self.repeat.skip)
         self.assertEqual(self.repeat.n_layers, new.n_layers)
+        self.assertEqual(self.skip.mod_dim, new.mod_dim)
+        self.assertEqual(self.skip.device, new.device)
+        self.assertIs(self.skip.dtype, new.dtype)
 
     def test_callable(self):
         self.assertTrue(callable(self.repeat))
@@ -76,9 +96,9 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.block = Mock()
+        self.block = ActivatedBlock(4)
         self.skip = SkipConnection(self.block)
-        self.repeat = Repeat(self.skip, 4)
+        self.repeat = Repeat(self.skip, 4, dtype=pt.float64)
 
     def test_n_layers(self):
         self.assertEqual(4, self.repeat.n_layers)
@@ -86,89 +106,60 @@ class TestAttributes(unittest.TestCase):
     def test_blocks(self):
         self.assertEqual(4, len(self.repeat.blocks))
 
-    def test_norm_first(self):
-        block = Mock()
-        norm = Mock()
-        norm_cls = Mock(return_value=norm)
-        skip = SkipConnection(block, norm_cls=norm_cls, hello='world')
-        repeat = Repeat(skip, 4)
-        norm_cls.assert_called_with(hello='world')
-        self.assertEqual(6, norm_cls.call_count)
-        self.assertIs(repeat.norm, norm)
+    def test_dtype(self):
+        self.assertIs(self.repeat.dtype, pt.float64)
+        for block in self.repeat.blocks:
+            self.assertIs(block.dtype, pt.float64)
 
-    def test_norm_after(self):
-        block = Mock()
-        norm = Mock()
-        norm_cls = Mock(return_value=norm)
-        skip = SkipConnection(
-            block,
-            norm_first=False,
-            norm_cls=norm_cls,
-            hello='world'
-        )
-        repeat = Repeat(skip, 4)
-        norm_cls.assert_called_with(hello='world')
-        self.assertEqual(5, norm_cls.call_count)
-        self.assertIsInstance(repeat.norm, Identity)
+
+class TestNLayers(unittest.TestCase):
+
+    def setUp(self):
+        self.block = ActivatedBlock(4)
+        self.skip = SkipConnection(self.block)
+
+    def test_n_layers_zero_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            Repeat(self.skip, n_layers=0)
+
+    def test_n_layers_negative_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            Repeat(self.skip, n_layers=-1)
+
+    def test_n_layers_non_castable_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            Repeat(self.skip, n_layers='abc')
+
+    def test_n_layers_none_raises_type_error(self):
+        with self.assertRaises(TypeError):
+            Repeat(self.skip, n_layers=None)
+
+    def test_n_layers_float_is_cast(self):
+        repeat = Repeat(self.skip, n_layers=3.9)
+        self.assertEqual(3, repeat.n_layers)
 
 
 class TestUsage(unittest.TestCase):
 
-    def test_skip_called_norm_first(self):
-        norm_out = pt.ones(4) * 2.0
-        norm = Mock(return_value=norm_out)
-        skip = Mock()
-        skip.new = Mock(return_value=Identity())
-        skip.norm_cls = Mock(return_value=norm)
-        skip.norm_first = True
-        skip.args = ()
-        skip.kwargs = {}
-        repeat = Repeat(skip, 3)
-        inp = pt.ones(4)
-        actual = repeat(inp)
-        self.assertIs(actual, norm_out)
-        norm.assert_called_once_with(inp)
+    def setUp(self):
+        self.block = ActivatedBlock(4)
+        self.skip = SkipConnection(self.block)
+        self.repeat = Repeat(self.skip, n_layers=3)
 
-    def test_skip_called_norm_after(self):
-        norm_out = pt.ones(4) * 2.0
-        norm = Mock(return_value=norm_out)
-        skip = Mock()
-        skip.new = Mock(return_value=Identity())
-        skip.norm_cls = Mock(return_value=norm)
-        skip.norm_first = False
-        skip.args = ()
-        skip.kwargs = {}
-        repeat = Repeat(skip, 3)
+    def test_all_blocks_called(self):
         inp = pt.ones(4)
-        actual = repeat(inp)
-        self.assertIs(actual, inp)
-        norm.assert_not_called()
-
-    def test_no_repetitions_norm_first(self):
-        block = Mock()
-        expected = pt.ones(4) * 2
-        norm = Mock(return_value=expected)
-        norm_cls = Mock(return_value=norm)
-        skip = SkipConnection(block, norm_cls=norm_cls)
-        repeat = Repeat(skip, 0)
-        inp = pt.ones(4)
-        block.assert_not_called()
-        actual = repeat(inp)
-        norm.assert_called_once_with(inp)
-        self.assertIs(actual, expected)
-
-    def test_no_repetitions_norm_after(self):
-        block = Mock()
-        expected = pt.ones(4) * 2
-        norm = Mock(return_value=expected)
-        norm_cls = Mock(return_value=norm)
-        skip = SkipConnection(block, norm_first=False, norm_cls=norm_cls)
-        repeat = Repeat(skip, 0)
-        inp = pt.ones(4)
-        block.assert_not_called()
-        actual = repeat(inp)
-        norm.assert_not_called()
-        self.assertIs(actual, inp)
+        mocks = []
+        prev_out = inp
+        for i, block in enumerate(self.repeat.blocks):
+            out = pt.ones(4) * float(i + 2)
+            m = Mock(return_value=out)
+            block.forward = m
+            mocks.append((m, prev_out))
+            prev_out = out
+        self.repeat(inp)
+        for m, expected_inp in mocks:
+            m.assert_called_once()
+            pt.testing.assert_close(m.call_args[0][0], expected_inp)
 
 
 if __name__ == '__main__':

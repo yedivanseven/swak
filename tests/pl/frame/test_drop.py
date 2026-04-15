@@ -47,7 +47,7 @@ class TestUsage(unittest.TestCase):
     def test_callable(self):
         self.assertTrue(callable(self.drop))
 
-    def test_filter_called(self):
+    def test_drop_called(self):
         df = Mock()
         _ = self.drop(df)
         df.drop.assert_called_once_with(*self.columns, strict=self.strict)

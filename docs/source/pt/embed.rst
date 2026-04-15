@@ -14,7 +14,7 @@ embed
    :show-inheritance:
 
 
-.. autoclass:: swak.pt.embed.GatedResidualEmbedder
+.. autoclass:: swak.pt.embed.GatedActivatedEmbedder
    :members:
    :show-inheritance:
 
@@ -30,5 +30,14 @@ embed
 
 
 .. autoclass:: swak.pt.embed.FeatureEmbedder
+   :members:
+   :show-inheritance:
+
+
+
+Base class
+----------
+
+.. autoclass:: swak.pt.types.Bag
    :members:
    :show-inheritance:

@@ -24,11 +24,12 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ELU)
 
-    def test_has_kwargs(self):
-        self.assertTrue(hasattr(self.block, 'kwargs'))
+    def test_has_bias(self):
+        self.assertTrue(hasattr(self.block, 'bias'))
 
-    def test_kwargs(self):
-        self.assertDictEqual({}, self.block.kwargs)
+    def test_bias(self):
+        self.assertIsInstance(self.block.bias, bool)
+        self.assertTrue(self.block.bias)
 
     def test_has_project(self):
         self.assertTrue(hasattr(self.block, 'project'))
@@ -39,30 +40,56 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(4, self.block.project.out_features)
         self.assertIsInstance(self.block.project.bias, pt.Tensor)
 
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.block, 'device'))
+
+    def test_device(self):
+        self.assertEqual(pt.device('cpu'), self.block.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.block, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.block.dtype, pt.float)
+
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.block, 'reset_parameters'))
 
     def test_reset_parameters(self):
         self.assertTrue(callable(self.block.reset_parameters))
 
-    @patch('torch.nn.Linear.reset_parameters')
-    def test_reset_parameters_called_on_instantiation(self, linear):
+    def test_reset_parameters_called_on_instantiation(self):
         activate = ptn.PReLU()
         with patch('torch.nn.PReLU.reset_parameters') as mock:
             _ = ActivatedBlock(4, activate)
-            self.assertEqual(1, mock.call_count)
-            self.assertEqual(1, linear.call_count)
+            mock.assert_called_once_with()
+
+    @patch('torch.nn.ELU.to')
+    def test_to_called_on_instantiation(self, mock):
+        _ = ActivatedBlock(4)
+        mock.assert_called_once_with(
+            device='cpu',
+            dtype=pt.float
+        )
 
     @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
         self.block.reset_parameters()
-        self.assertEqual(1, mock.call_count)
+        mock.assert_called_once_with()
 
     def test_reset_parameters_called_on_activate(self):
         block = ActivatedBlock(4, ptn.PReLU())
-        with patch('torch.nn.PReLU.reset_parameters') as activate:
+        with patch('torch.nn.PReLU.reset_parameters') as mock:
             block.reset_parameters()
-            self.assertEqual(1, activate.call_count)
+            mock.assert_called_once_with()
+
+    @patch('torch.nn.ELU.to', return_value=pt.nn.ELU())
+    def test_to_called_on_activate(self, mock):
+        self.block.reset_parameters()
+        mock.assert_called_once_with(
+            device=pt.device('cpu'),
+            dtype=pt.float
+        )
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.block, 'new'))
@@ -74,33 +101,40 @@ class TestDefaultAttributes(unittest.TestCase):
         new = self.block.new()
         self.assertIsInstance(new, ActivatedBlock)
         self.assertEqual(self.block.mod_dim, new.mod_dim)
+        self.assertEqual(self.block.bias, new.bias)
         self.assertIs(self.block.activate, new.activate)
-        self.assertDictEqual(self.block.kwargs, new.kwargs)
+        self.assertEqual(self.block.device, new.device)
+        self.assertIs(self.block.dtype, new.dtype)
+        self.assertIsNot(self.block.project, new.project)
 
 
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.block = ActivatedBlock(
-            2.8,
+            8,
             ptn.ReLU(),
-            bias=False
+            bias=False,
+            dtype=pt.float64,
         )
 
     def test_mod_dim(self):
         self.assertIsInstance(self.block.mod_dim, int)
-        self.assertEqual(3, self.block.mod_dim)
+        self.assertEqual(8, self.block.mod_dim)
 
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ReLU)
 
-    def test_kwargs(self):
-        self.assertDictEqual({'bias': False}, self.block.kwargs)
+    def test_bias(self):
+        self.assertFalse(self.block.bias)
+
+    def test_dtype(self):
+        self.assertIs(self.block.dtype, pt.float64)
 
     def test_project(self):
         self.assertIsNone(self.block.project.bias)
-        self.assertEqual(3, self.block.project.in_features)
-        self.assertEqual(3, self.block.project.out_features)
+        self.assertEqual(8, self.block.project.in_features)
+        self.assertEqual(8, self.block.project.out_features)
 
 
 class TestUsage(unittest.TestCase):

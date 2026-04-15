@@ -18,6 +18,7 @@ polars = "*"
 pyyaml = "*"
 tqdm = "*"
 tomli-w = "*"
+fsspec = "*"
 
 [dev-packages]
 jupyter = "*"
@@ -25,12 +26,16 @@ ruff = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 build = "*"
+boto3-stubs = "*"
 
-[cloud]
+[gcp]
 google-cloud-storage = "*"
 google-cloud-bigquery = "*"
-pandas-gbq = "*"
+gcsfs = "*"
+
+[aws]
 boto3 = "*"
+s3fs = "*"
 
 [cpu]
 torch = {version="*", index="cpu"}

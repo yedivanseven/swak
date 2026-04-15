@@ -24,24 +24,19 @@ class TestDefaultAttributes(unittest.TestCase):
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ELU)
 
-    def test_has_drop(self):
-        self.assertTrue(hasattr(self.block, 'drop'))
+    def test_has_factor(self):
+        self.assertTrue(hasattr(self.block, 'factor'))
 
-    def test_drop(self):
-        self.assertIsInstance(self.block.drop, ptn.Dropout)
+    def test_factor(self):
+        self.assertIsInstance(self.block.factor, int)
+        self.assertEqual(4, self.block.factor)
 
-    def test_has_hidden_factor(self):
-        self.assertTrue(hasattr(self.block, 'hidden_factor'))
+    def test_has_bias(self):
+        self.assertTrue(hasattr(self.block, 'bias'))
 
-    def test_hidden_factor(self):
-        self.assertIsInstance(self.block.hidden_factor, int)
-        self.assertEqual(4, self.block.hidden_factor)
-
-    def test_has_kwargs(self):
-        self.assertTrue(hasattr(self.block, 'kwargs'))
-
-    def test_kwargs(self):
-        self.assertDictEqual({}, self.block.kwargs)
+    def test_bias(self):
+        self.assertIsInstance(self.block.bias, bool)
+        self.assertTrue(self.block.bias)
 
     def test_has_widen(self):
         self.assertTrue(hasattr(self.block, 'widen'))
@@ -61,19 +56,37 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(4, self.block.shrink.out_features)
         self.assertIsInstance(self.block.shrink.bias, pt.Tensor)
 
+    def test_has_device(self):
+        self.assertTrue(hasattr(self.block, 'device'))
+
+    def test_device(self):
+        self.assertEqual(pt.device('cpu'), self.block.device)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.block, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIs(self.block.dtype, pt.float)
+
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.block, 'reset_parameters'))
 
     def test_reset_parameters(self):
         self.assertTrue(callable(self.block.reset_parameters))
 
-    @patch('torch.nn.Linear.reset_parameters')
-    def test_reset_parameters_called_on_instantiation(self, linear):
+    def test_reset_parameters_called_on_instantiation(self):
         activate = ptn.PReLU()
         with patch('torch.nn.PReLU.reset_parameters') as mock:
             _ = ActivatedHiddenBlock(4, activate)
-            self.assertEqual(1, mock.call_count)
-            self.assertEqual(2, linear.call_count)
+            mock.assert_called_once_with()
+
+    @patch('torch.nn.ELU.to')
+    def test_to_called_on_instantiation(self, mock):
+        _ = ActivatedHiddenBlock(4)
+        mock.assert_called_once_with(
+            device='cpu',
+            dtype=pt.float
+        )
 
     @patch('torch.nn.Linear.reset_parameters')
     def test_reset_parameters_called(self, mock):
@@ -82,9 +95,17 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_reset_parameters_called_on_activate(self):
         block = ActivatedHiddenBlock(4, ptn.PReLU())
-        with patch('torch.nn.PReLU.reset_parameters') as activate:
+        with patch('torch.nn.PReLU.reset_parameters') as mock:
             block.reset_parameters()
-            self.assertEqual(1, activate.call_count)
+            mock.assert_called_once_with()
+
+    @patch('torch.nn.ELU.to', return_value=pt.nn.ELU())
+    def test_to_called_on_activate(self, mock):
+        self.block.reset_parameters()
+        mock.assert_called_once_with(
+            device=pt.device('cpu'),
+            dtype=pt.float
+        )
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.block, 'new'))
@@ -96,49 +117,54 @@ class TestDefaultAttributes(unittest.TestCase):
         new = self.block.new()
         self.assertIsInstance(new, ActivatedHiddenBlock)
         self.assertEqual(self.block.mod_dim, new.mod_dim)
+        self.assertEqual(self.block.factor, new.factor)
+        self.assertEqual(self.block.bias, new.bias)
         self.assertIs(self.block.activate, new.activate)
-        self.assertIs(self.block.drop, new.drop)
-        self.assertEqual(self.block.hidden_factor, new.hidden_factor)
-        self.assertDictEqual(self.block.kwargs, new.kwargs)
+        self.assertEqual(self.block.device, new.device)
+        self.assertIs(self.block.dtype, new.dtype)
+        self.assertIsNot(self.block.widen, new.widen)
+        self.assertIsNot(self.block.shrink, new.shrink)
 
 
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
         self.block = ActivatedHiddenBlock(
-            2.6,
+            8,
             ptn.ReLU(),
-            ptn.AlphaDropout(0.1),
-            2.1,
-            bias=False
+            2,
+            bias=False,
+            dtype=pt.float64
         )
 
     def test_mod_dim(self):
         self.assertIsInstance(self.block.mod_dim, int)
-        self.assertEqual(3, self.block.mod_dim)
+        self.assertEqual(8, self.block.mod_dim)
 
     def test_activate(self):
         self.assertIsInstance(self.block.activate, ptn.ReLU)
 
-    def test_drop(self):
-        self.assertIsInstance(self.block.drop, ptn.AlphaDropout)
+    def test_bias(self):
+        self.assertFalse(self.block.bias)
 
-    def test_hidden_factor(self):
-        self.assertIsInstance(self.block.hidden_factor, int)
-        self.assertEqual(2, self.block.hidden_factor)
+    def test_dtype(self):
+        self.assertIs(self.block.dtype, pt.float64)
 
-    def test_kwargs(self):
-        self.assertDictEqual({'bias': False}, self.block.kwargs)
+    def test_factor(self):
+        self.assertIsInstance(self.block.factor, int)
+        self.assertEqual(2, self.block.factor)
 
     def test_widen(self):
         self.assertIsNone(self.block.widen.bias)
-        self.assertEqual(3, self.block.widen.in_features)
-        self.assertEqual(5, self.block.widen.out_features)
+        self.assertEqual(8, self.block.widen.in_features)
+        self.assertEqual(16, self.block.widen.out_features)
+        self.assertIsNone(self.block.widen.bias)
 
     def test_shrink(self):
         self.assertIsNone(self.block.shrink.bias)
-        self.assertEqual(5, self.block.shrink.in_features)
-        self.assertEqual(3, self.block.shrink.out_features)
+        self.assertEqual(16, self.block.shrink.in_features)
+        self.assertEqual(8, self.block.shrink.out_features)
+        self.assertIsNone(self.block.shrink.bias)
 
 
 class TestUsage(unittest.TestCase):
@@ -207,16 +233,6 @@ class TestUsage(unittest.TestCase):
         actual = mock.call_args[0][0]
         expected = pt.ones(16) * 4
         pt.testing.assert_close(actual, expected)
-
-    def test_drop_called(self):
-        inp = pt.ones(4)
-        with patch.object(self.block.drop, 'forward') as mock:
-            mock.return_value=pt.ones(16)
-            _ = self.block(inp)
-            mock.assert_called_once()
-            actual = mock.call_args[0][0]
-            expected = pt.ones(16) * 4
-            pt.testing.assert_close(actual, expected)
 
 
 if __name__ == '__main__':

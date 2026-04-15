@@ -1,7 +1,7 @@
 from setuptools import find_packages
 import importlib.metadata as meta
 
-PROJECT = find_packages('../..', exclude=['test*', 'Notebook*'])[0]
+PROJECT = find_packages('../../src')[0]
 
 project = PROJECT
 copyright = '2024, Georg Heimel'  # noqa: A001

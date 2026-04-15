@@ -1,5 +1,6 @@
 import unittest
 import pickle
+import polars as pl
 from swak.misc import IndentRepr, ArgRepr
 
 
@@ -97,6 +98,13 @@ class TestArgumentTypes(unittest.TestCase):
         expected = "Ind():\n[ 0] 'a'\n[ 1] 'b'\n[ 2] 'c'"
         self.assertEqual(expected, repr(actual))
 
+    def test_polars(self):
+        expr1 = pl.col('foo').alias('bar')
+        expr2 = pl.col('baz').add(42)
+        actual = self.Ind([expr1, expr2])
+        expected = "Ind():\n[ 0] PolarsExpr\n[ 1] PolarsExpr"
+        self.assertEqual(expected, repr(actual))
+
     def test_custom_object(self):
         cls = Cls()
         actual = self.Ind([cls])
@@ -167,28 +175,33 @@ class TestArgumentTypes(unittest.TestCase):
         self.assertEqual(expected, repr(grand))
 
     def test_empty_items_args(self):
-        actual = self.Ind([], 'answer', 42)
-        expected = "Ind('answer', 42)"
+        expr = pl.col('foo').alias('bar')
+        actual = self.Ind([], 'answer', 42, expr)
+        expected = "Ind('answer', 42, PolarsExpr)"
         self.assertEqual(expected, repr(actual))
 
     def test_items_args(self):
-        actual = self.Ind(['question'], 'answer', 42)
-        expected = "Ind('answer', 42):\n[ 0] 'question'"
+        expr = pl.col('foo').alias('bar')
+        actual = self.Ind(['question'], 'answer', 42, expr)
+        expected = "Ind('answer', 42, PolarsExpr):\n[ 0] 'question'"
         self.assertEqual(expected, repr(actual))
 
     def test_empty_items_kwargs(self):
-        actual = self.Ind([], answer=42)
-        expected = "Ind(answer=42)"
+        expr = pl.col('foo').alias('bar')
+        actual = self.Ind([], answer=expr)
+        expected = "Ind(answer=PolarsExpr)"
         self.assertEqual(expected, repr(actual))
 
     def test_items_kwargs(self):
-        actual = self.Ind(['question'], answer=42)
-        expected = "Ind(answer=42):\n[ 0] 'question'"
+        expr = pl.col('foo').alias('bar')
+        actual = self.Ind(['question'], answer=expr)
+        expected = "Ind(answer=PolarsExpr):\n[ 0] 'question'"
         self.assertEqual(expected, repr(actual))
 
     def test_empty_items_args_kwargs(self):
-        actual = self.Ind([], 'question', answer=42)
-        expected = "Ind('question', answer=42)"
+        expr = pl.col('foo').alias('bar')
+        actual = self.Ind([], expr, answer=42)
+        expected = "Ind(PolarsExpr, answer=42)"
         self.assertEqual(expected, repr(actual))
 
     def test_items_args_kwargs(self):

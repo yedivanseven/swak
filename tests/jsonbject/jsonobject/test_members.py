@@ -12,6 +12,10 @@ class Custom:
     def __repr__(self):
         return 'custom'
 
+    @property
+    def as_polars(self):
+        return 'custom as_polars'
+
 
 class Simple(JsonObject):
     a: int = 1
@@ -57,18 +61,28 @@ class TestMembers(unittest.TestCase):
         expected = '{"a": 1, "b": "foo", "c": "custom"}'
         self.assertEqual(expected, self.simple.as_dtype)
 
-    def test_has_as_series(self):
-        self.assertTrue(hasattr(self.simple, 'as_series'))
+    def test_has_as_polars(self):
+        self.assertTrue(hasattr(self.simple, 'as_polars'))
 
-    def test_as_series_type(self):
-        self.assertIsInstance(self.simple.as_series, pd.Series)
+    def test_as_polars_type(self):
+        self.assertIsInstance(self.simple.as_polars, dict)
 
-    def test_as_series_value(self):
+    def test_as_polars_value(self):
+        expected = {'a': 1, 'b': 'foo', 'c': 'custom as_polars'}
+        self.assertDictEqual(expected, self.simple.as_polars)
+
+    def test_has_as_pandas(self):
+        self.assertTrue(hasattr(self.simple, 'as_pandas'))
+
+    def test_as_pandas_type(self):
+        self.assertIsInstance(self.simple.as_pandas, pd.Series)
+
+    def test_as_pandas_value(self):
         expected = pd.Series(
             {'a': 1, 'b': 'foo', 'c': self.simple.c},
             name='Simple'
         )
-        pd.testing.assert_series_equal(expected, self.simple.as_series)
+        pd.testing.assert_series_equal(expected, self.simple.as_pandas)
 
     # Do we even need this method?
     def test_has_get(self):
@@ -94,7 +108,6 @@ class TestMembers(unittest.TestCase):
     def test_get_none_field(self):
         default = Option().get('a', 'default')
         self.assertIsNone(default)
-    ###########################################################################
 
     def test_has_keys(self):
         self.assertTrue(hasattr(self.simple, 'keys'))
