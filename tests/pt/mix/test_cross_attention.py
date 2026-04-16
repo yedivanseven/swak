@@ -67,10 +67,8 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.mix, 'query'))
 
     def test_query(self):
-        self.assertIsInstance(self.mix.query, pt.nn.Parameter)
-        self.assertEqual(pt.Size([1, 4]), self.mix.query.shape)
-        self.assertIs(self.mix.dtype, self.mix.query.dtype)
-        self.assertEqual(self.mix.device, self.mix.query.device)
+        expected = pt.ones(1, 4, dtype=self.mix.dtype, device=self.mix.device)
+        pt.testing.assert_close(self.mix.query, expected)
 
     def test_has_attention(self):
         self.assertTrue(hasattr(self.mix, 'attention'))
