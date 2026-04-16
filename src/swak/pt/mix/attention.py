@@ -62,10 +62,11 @@ class CrossAttentionMixer(Mixer):
         self.skip = skip
         self.keep_dim = keep_dim
         self.drop = ptn.Dropout(dropout)
-        self.query = ptn.Parameter(
-            pt.empty(1, mod_dim, device=device, dtype=dtype)
+        self.register_buffer(
+            'query',
+            pt.ones(1, mod_dim, device=device, dtype=dtype),
+            persistent=False
         )
-        ptn.init.xavier_uniform_(self.query)
         self.attention = ptn.MultiheadAttention(
             embed_dim=mod_dim,
             num_heads=n_heads,
@@ -167,7 +168,6 @@ class CrossAttentionMixer(Mixer):
 
     def reset_parameters(self) -> None:
         """Re-initialize all internal parameters."""
-        ptn.init.xavier_uniform_(self.query)
         self.attention._reset_parameters()
 
     def new(self) -> Self:
