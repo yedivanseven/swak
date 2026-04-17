@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Adhered to stricter abstract base classes in transformer subpackage
+- Norm-first logic in EncoderLayer
 
 ## [1.0.1] - 2026-04-16
 - Removed redundant parameter from cross-attention feature mixer

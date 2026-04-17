@@ -401,6 +401,10 @@ class TestUsageNormFirst(unittest.TestCase):
                 'forward',
                 return_value=self.inp
         ), patch.object(
+                self.layer.pos_enc,
+            'forward',
+                return_value=self.inp
+        ), patch.object(
                 self.layer.norm2,
             'forward',
                 return_value=self.inp
@@ -439,7 +443,11 @@ class TestUsageNormFirst(unittest.TestCase):
 
     def test_output(self):
         with patch.object(
-                self.layer.norm2,
+                self.layer.pos_enc,
+                'forward',
+                return_value=self.inp
+        ), patch.object(
+                self.layer.drop1,
                 'forward',
                 return_value=self.inp
         ), patch.object(
@@ -448,7 +456,7 @@ class TestUsageNormFirst(unittest.TestCase):
                 return_value=self.inp
         ):
             out = self.layer(self.inp)
-            pt.testing.assert_close(out, 2 * self.inp)
+            pt.testing.assert_close(out, 3 * self.inp)
 
 
 class TestUsageNormLast(unittest.TestCase):
@@ -509,10 +517,14 @@ class TestUsageNormLast(unittest.TestCase):
 
     def test_norm1_called(self):
         with patch.object(
-                self.layer.drop1,
+                self.layer.pos_enc,
                 'forward',
                 return_value=self.inp
         ), patch.object(
+                self.layer.drop1,
+                'forward',
+                return_value=self.inp
+        ),patch.object(
                 self.layer.norm1,
             'forward',
                 return_value=self.inp

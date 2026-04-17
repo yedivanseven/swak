@@ -200,16 +200,18 @@ class EncoderLayer(Attention):
         Therefore, to stay compatible, use float masks!
 
         """
-        positioned = self.pos_enc(src)
+        residual = self.pos_enc(src)
         if self.norm_first:
-            attended = self.attention(self.norm1(positioned), mask, is_causal)
-            normed = self.norm2(src + self.drop1(attended))
-            out = normed + self.drop2(self.feed_forward(normed))
+            out = self.attention(self.norm1(residual), mask, is_causal)
+            residual = residual + self.drop1(out)
+            out = self.feed_forward(self.norm2(residual))
+            residual = residual + self.drop2(out)
         else:
-            attended = self.attention(positioned, mask, is_causal)
-            normed = self.norm1(src + self.drop1(attended))
-            out = self.norm2(normed + self.drop2(self.feed_forward(normed)))
-        return out
+            out = self.attention(residual, mask, is_causal)
+            residual = self.norm1(residual + self.drop1(out))
+            out = self.feed_forward(residual)
+            residual = self.norm2(residual + self.drop2(out))
+        return residual
 
     def reset_parameters(self) -> None:
         """Reset all internal parameters of the layer."""
