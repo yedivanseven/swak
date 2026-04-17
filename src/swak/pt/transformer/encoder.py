@@ -2,14 +2,14 @@ import warnings
 from typing import Self
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Tensors1T, Block, PosEnc
+from ..types import Tensor, Tensors1T, PosEnc
 from ..blocks import IdentityBlock
 from .layer import EncoderLayer
 
 __all__ = ['Encoder']
 
 
-class Encoder(Block):
+class Encoder(PosEnc):
     """Flexible transformer encoder.
 
     Parameters
