@@ -80,13 +80,13 @@ class Block(Resettable):
 
     @property
     @abstractmethod
-    def device(self) -> torch.device | None:
-        """Return the device that parameters/weights live on, if possible."""
+    def device(self) -> torch.device:
+        """Return the device that parameters/weights live on."""
 
     @property
     @abstractmethod
-    def dtype(self) -> torch.dtype | None:
-        """Return the dtype of parameters/weight, if possible."""
+    def dtype(self) -> torch.dtype:
+        """Return the dtype of parameters/weight."""
 
     @abstractmethod
     def new(self) -> Self:
@@ -94,6 +94,16 @@ class Block(Resettable):
 
 
 class Bag(Block):
+
+    @property
+    @abstractmethod
+    def device(self) -> torch.device | None:
+        """Return the device that parameters/weights live on, if possible."""
+
+    @property
+    @abstractmethod
+    def dtype(self) -> torch.dtype | None:
+        """Return the dtype of parameters/weight, if possible."""
 
     @property
     @abstractmethod

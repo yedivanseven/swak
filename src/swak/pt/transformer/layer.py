@@ -9,7 +9,7 @@ from ..blocks import IdentityBlock
 __all__ = ['EncoderLayer']
 
 
-class EncoderLayer(PosEnc):
+class EncoderLayer(Attention):
     """Encoder layer (i.e., self-attention only) to use in a transformer.
 
     Parameters
