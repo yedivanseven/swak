@@ -2,7 +2,7 @@ import warnings
 from typing import Self
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Tensors1T, PosEnc, Trafo
+from ..types import Tensor, PosEnc, Trafo
 from ..blocks import IdentityBlock
 from .layer import EncoderLayer
 
@@ -130,13 +130,64 @@ class Encoder(Trafo):
             not isinstance(self.pos_enc, IdentityBlock)
         )
 
+    # ToDo: Unit test this method! Adapt existing mask tests!
+    @staticmethod
+    def merge_masks(
+            attn_mask: Tensor | None,
+            src_mask: Tensor | None,
+            is_causal: bool
+    ) -> Tensor | None:
+        """Utility method to merge attention and source masks if necessary.
+
+        Parameters
+        ----------
+        attn_mask: Tensor, optional
+            Floating-point attention mask with a shape broadcastable to the
+            shape of the attention weights (..., `S`, `S`) to be added to the
+            product of queries and keys, before taking the softmax. A value of
+            0.0 (resulting in unchanged attention weights) indicates that an
+            element *should* be attended to and a value of "-inf" (resulting
+            in a zero attention weight) that it should *not* be attended to.
+        src_mask: Tensor, optional
+            Floating-point attention mask with a shape broadcastable to the
+            shape of `src` (..., `S`). A value of 0.0 indicates that an
+            element *should* be attended to and a value of "-inf" that it
+            should *not* be attended to.
+        is_causal: bool, optional
+            If ``True``, inputs are masked with a causal `S` x `S` triangular
+            matrix and both `attn_mask` and `src_mask` are ignored.
+
+        Returns
+        -------
+        Tensor or None
+            The merged masks, or ``None`` if none are provided or `is_causal`
+            is ``True``.
+
+        """
+        if is_causal or (attn_mask is None and src_mask is None):
+            mask = None
+        elif src_mask is None:
+            mask = attn_mask
+        else:
+            # Insert a next-to-last dimension to repeat the src_mask in
+            reshaped = src_mask.unsqueeze(-2)
+            # Construct the arguments to PyTorch tensors' expand method
+            sizes = [-1] * reshaped.dim()
+            # src_mask will be repeated sequence-length times in new dimension
+            sizes[-2] = src_mask.size(-1)
+            # Repeat to form a square mask. Shape is now original +1 dim
+            src_mask = reshaped.expand(*sizes)
+            # Add repeated and reshaped src_mask to attn_mask if present
+            mask = src_mask if attn_mask is None else attn_mask + src_mask
+        return mask
+
     def forward(
             self,
             src: Tensor,
             attn_mask: Tensor | None = None,
             src_mask: Tensor | None = None,
             is_causal: bool = True
-    ) -> Tensors1T:
+    ) -> Tensor:
         """Forward pass through the transformer encoder with optional masking.
 
         Parameters
@@ -176,23 +227,7 @@ class Encoder(Trafo):
         Boolean attention masks are not accepted!
 
         """
-        # ToDo. Factor this out into a "merge_masks" method!
-        if is_causal or (attn_mask is None and src_mask is None):
-            mask = None
-        elif src_mask is None:
-            mask = attn_mask
-        else:
-            # Insert a next-to-last dimension to repeat the src_mask in
-            reshaped = src_mask.unsqueeze(-2)
-            # Construct the arguments to PyTorch tensors' expand method
-            sizes = [-1] * reshaped.dim()
-            # src_mask will be repeated sequence-length times in new dimension
-            sizes[-2] = src_mask.size(-1)
-            # Repeat to form a square mask. Shape is now original +1 dim
-            src_mask = reshaped.expand(*sizes)
-            # Add repeated and reshaped src_mask to attn_mask if present
-            mask = src_mask if attn_mask is None else attn_mask + src_mask
-
+        mask = self.merge_masks(attn_mask, src_mask, is_causal)
         out = self.drop(self.pos_enc(src))
         for layer in self.layers:
             out = layer(out, mask, is_causal)
