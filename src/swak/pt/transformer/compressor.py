@@ -19,9 +19,18 @@ class Compressor(Trafo):
     model: Resettable
         To write
     attend: Attn
-        To write
+        A suitably parameterized instance of a self-attention block,
+        typically :class:`MultiheadedSelfAttention`
+        or :class:`GroupedQuerySelfAttention`.
     forward: Block
-        To write
+        PyTorch ``Module`` that
+
+        * has a ``reset_parameters()`` method,
+        * has a ``new()`` method to make fresh copies of itself,
+        * processes tensors with dimensions (..., `S`, `D`),
+
+        where `S` is the sequence length and `D` is the model dimension
+        specified in the `attention`.
     pos_enc: PosEnc, optional
         PyTorch ``Module`` that
 
@@ -38,7 +47,7 @@ class Compressor(Trafo):
         Whether to use a bias in the cross-attention components.
         Defaults to ``False``.
     dropout: float, optional
-        Apply dropout to the sum of token embedding and positional encodings
+        Apply dropout to the sum of embeddings and positional encodings
         with this probability during training. Defaults to 0.
     norm_first: bool, optional
         Whether to normalize inputs to attention and feed-forward or the sum

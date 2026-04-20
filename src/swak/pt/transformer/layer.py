@@ -3,21 +3,22 @@ from typing import Self
 import torch as pt
 import torch.nn as ptn
 from torch.nn import LayerNorm, RMSNorm
-from ..types import Tensor, Block, PosEnc, Trafo
+from ..types import Tensor, Block, PosEnc, Trafo, Attn
 from ..blocks import IdentityBlock
 
 __all__ = ['EncoderLayer']
 
 
+# ToDo: Make the norm handling here like the one of the Skip Block
 class EncoderLayer(Trafo):
     """Encoder layer (i.e., self-attention only) to use in a transformer.
 
     Parameters
     ----------
-    attention: Trafo
+    attention: Attn
         A suitably parameterized instance of a self-attention block,
         typically :class:`MultiheadedSelfAttention`
-        or :class:`GroupedQuerySelfAttention`
+        or :class:`GroupedQuerySelfAttention`.
     feed_forward: Block
         PyTorch ``Module`` that
 
@@ -70,7 +71,7 @@ class EncoderLayer(Trafo):
 
     def __init__(
             self,
-            attention: Trafo,
+            attention: Attn,
             feed_forward: Block,
             pos_enc: PosEnc | None = None,
             bias: bool = True,
