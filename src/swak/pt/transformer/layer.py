@@ -3,18 +3,18 @@ from typing import Self
 import torch as pt
 import torch.nn as ptn
 from torch.nn import LayerNorm, RMSNorm
-from ..types import Tensor, Block, PosEnc, Attention
+from ..types import Tensor, Block, PosEnc, Trafo
 from ..blocks import IdentityBlock
 
 __all__ = ['EncoderLayer']
 
 
-class EncoderLayer(Attention):
+class EncoderLayer(Trafo):
     """Encoder layer (i.e., self-attention only) to use in a transformer.
 
     Parameters
     ----------
-    attention: Attention
+    attention: Trafo
         A suitably parameterized instance of a self-attention block,
         typically :class:`MultiheadedSelfAttention`
         or :class:`GroupedQuerySelfAttention`
@@ -46,15 +46,14 @@ class EncoderLayer(Attention):
     dropout: float, optional
         Fraction of dropout to apply after self-attention and feed-forward.
         Defaults to 0.1
-    norm_cls: type, optional
-        Which type of norm to use between (sub-)layers. Must be one of
-        ``torch.nn.LayerNorm`` (the default) or ``torch.nn.RMSNorm``.
     norm_first: bool, optional
         Whether to normalize inputs to attention and feed-forward or the sum
         of respective inputs and outputs. Defaults to ``True``.
+    norm_cls: type, optional
+        Which type of norm to use between (sub-)layers. Must be one of
+        ``torch.nn.LayerNorm`` (the default) or ``torch.nn.RMSNorm``.
     eps: float, optional
-        Add this value to the denominator in the ``LayerNorm`` components.
-        Defaults to 1e-5.
+        Add this value to the denominator in the norms. Defaults to 1e-5.
     device: str or torch.device, optional
         Torch device to first create the encoder layer on. Defaults to "cpu".
     dtype: torch.dtype, optional
@@ -71,13 +70,13 @@ class EncoderLayer(Attention):
 
     def __init__(
             self,
-            attention: Attention,
+            attention: Trafo,
             feed_forward: Block,
             pos_enc: PosEnc | None = None,
             bias: bool = True,
             dropout: float = 0.1,
-            norm_cls: type[LayerNorm | RMSNorm] = LayerNorm,
             norm_first: bool = True,
+            norm_cls: type[LayerNorm | RMSNorm] = LayerNorm,
             eps: float = 1e-5,
             device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float
@@ -89,8 +88,8 @@ class EncoderLayer(Attention):
         self.pos_enc = self.__check(pos_enc).to(device=device, dtype=dtype)
         self.bias = bias
         self.dropout = dropout
-        self.norm_cls = norm_cls
         self.norm_first = norm_first
+        self.norm_cls = norm_cls
         self.eps = eps
         self.drop1 = ptn.Dropout(dropout)
         self.drop2 = ptn.Dropout(dropout)
@@ -237,8 +236,8 @@ class EncoderLayer(Attention):
             self.pos_enc.new() if we_have_pos_enc else None,
             self.bias,
             self.dropout,
-            self.norm_cls,
             self.norm_first,
+            self.norm_cls,
             self.eps,
             self.device,
             self.dtype

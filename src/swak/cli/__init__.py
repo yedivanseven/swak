@@ -12,3 +12,5 @@ __all__ = [
     'DESCRIPTION',
     'EPILOG'
 ]
+
+# ToDo: Add a "read config file" function or class for merging logic!

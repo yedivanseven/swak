@@ -55,6 +55,6 @@ Base classes
    :show-inheritance:
 
 
-.. autoclass:: swak.pt.types.Attention
+.. autoclass:: swak.pt.types.Trafo
    :members:
    :show-inheritance:

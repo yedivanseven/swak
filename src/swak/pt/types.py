@@ -36,7 +36,7 @@ __all__ = [
     'Bag',
     'Mixer',
     'PosEnc',
-    'Attention',
+    'Trafo',
 ]
 
 
@@ -126,7 +126,7 @@ class PosEnc(Block):
         """The maximum sequence length."""
 
 
-class Attention(PosEnc):
+class Trafo(PosEnc):
 
     @property
     @abstractmethod

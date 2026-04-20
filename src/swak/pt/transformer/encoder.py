@@ -2,14 +2,14 @@ import warnings
 from typing import Self
 import torch as pt
 import torch.nn as ptn
-from ..types import Tensor, Tensors1T, PosEnc
+from ..types import Tensor, Tensors1T, PosEnc, Trafo
 from ..blocks import IdentityBlock
 from .layer import EncoderLayer
 
 __all__ = ['Encoder']
 
 
-class Encoder(PosEnc):
+class Encoder(Trafo):
     """Flexible transformer encoder.
 
     Parameters
@@ -45,6 +45,11 @@ class Encoder(PosEnc):
     ValueError
         If `n_layers` is less than 1.
 
+    Note
+    ----
+    If the `layer` sets `norm_first` to ``True``, no norm is applied to the
+    final output of the :class:`Encoder`. If a trailing norm is desired,
+    it should be applied externally, after this module.
 
     See Also
     --------
@@ -73,14 +78,6 @@ class Encoder(PosEnc):
         self.pos_enc = self.__check(pos_enc).to(device=device, dtype=dtype)
         self.dropout = dropout
         self.drop = ptn.Dropout(dropout)
-        self.norm = layer.norm1.__class__(
-            self.mod_dim,
-            eps=layer.norm1.eps,
-            elementwise_affine=layer.norm1.elementwise_affine,
-            device=device,
-            dtype=dtype,
-            **layer.bias_kwarg
-        ) if layer.norm_first else IdentityBlock(layer.mod_dim)
 
     @staticmethod
     def __valid(n_layers: int) -> int:
@@ -124,6 +121,14 @@ class Encoder(PosEnc):
         if hasattr(self.pos_enc, 'context'):
             return min(self.pos_enc.context, self.layers[0].context)
         return self.layers[0].context
+
+    @property
+    def has_pos_enc(self) -> bool:
+        """Whether positional encodings are applied."""
+        return (
+            self.layers[0].has_pos_enc or
+            not isinstance(self.pos_enc, IdentityBlock)
+        )
 
     def forward(
             self,
@@ -171,6 +176,7 @@ class Encoder(PosEnc):
         Boolean attention masks are not accepted!
 
         """
+        # ToDo. Factor this out into a "merge_masks" method!
         if is_causal or (attn_mask is None and src_mask is None):
             mask = None
         elif src_mask is None:
@@ -190,14 +196,13 @@ class Encoder(PosEnc):
         out = self.drop(self.pos_enc(src))
         for layer in self.layers:
             out = layer(out, mask, is_causal)
-        return self.norm(out)
+        return out
 
     def reset_parameters(self) -> None:
         """Reset all learnable parameters in all components of the model."""
         for layer in self.layers:
             layer.reset_parameters()
         self.pos_enc.reset_parameters()
-        self.norm.reset_parameters()
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters.

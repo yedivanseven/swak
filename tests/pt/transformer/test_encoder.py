@@ -75,24 +75,6 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.encode.drop, pt.nn.Dropout)
         self.assertEqual(self.encode.dropout, self.encode.drop.p)
 
-    def test_has_norm(self):
-        self.assertTrue(hasattr(self.encode, 'norm'))
-
-    def test_norm(self):
-        self.assertIsInstance(self.encode.norm, pt.nn.LayerNorm)
-        self.assertTupleEqual(
-            (self.mod_dim,),
-            self.encode.norm.normalized_shape
-        )
-        self.assertEqual(self.encode.norm.eps, self.encode.layers[0].norm1.eps)
-        self.assertTrue(self.encode.norm.elementwise_affine)
-        self.assertTupleEqual(
-            (self.mod_dim,),
-            self.encode.norm.bias.shape
-        )
-        self.assertEqual('cpu', self.encode.norm.weight.device.type)
-        self.assertIs(pt.float, self.encode.norm.weight.dtype)
-
     def test_has_mod_dim(self):
         self.assertTrue(hasattr(self.encode, 'mod_dim'))
 
@@ -107,6 +89,17 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.encode.context, int)
         self.assertEqual(self.context, self.encode.context)
 
+    def test_has_has_pos_enc(self):
+        self.assertTrue(hasattr(self.layer, 'has_pos_enc'))
+
+    def test_has_pos_enc_correct(self):
+        self.assertIsInstance(self.layer.has_pos_enc, bool)
+        self.assertTrue(self.layer.has_pos_enc)
+        pos_enc = IdentityBlock(self.mod_dim)
+        layer = EncoderLayer(self.attention, self.feedforward, pos_enc=pos_enc)
+        encoder = Encoder(layer)
+        self.assertFalse(encoder.has_pos_enc)
+
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.encode, 'reset_parameters'))
 
@@ -120,7 +113,6 @@ class TestDefaultAttributes(unittest.TestCase):
             self.encode.reset_parameters()
             a.assert_called_once_with()
             p.assert_called_once_with()
-
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.encode, 'new'))
@@ -181,12 +173,6 @@ class TestAttributes(unittest.TestCase):
         for layer in self.encode.layers:
             self.assertIs(layer.dtype, self.dtype)
 
-    def test_norm_cls(self):
-        self.assertIsInstance(self.encode.norm, pt.nn.RMSNorm)
-
-    def test_norm(self):
-        self.assertIs(self.dtype, self.encode.norm.weight.dtype)
-
     def test_context(self):
         self.assertEqual(self.context, self.encode.context)
 
@@ -198,11 +184,6 @@ class TestAttributes(unittest.TestCase):
     def test_no_pos_enc_warns(self):
         with self.assertWarns(UserWarning):
             _ = Encoder(self.layer)
-
-    def test_norm_identity_not_norm_first(self):
-        el = EncoderLayer(self.attention, self.feedforward, norm_first=False)
-        encode = Encoder(el, pos_enc=self.pos_enc)
-        self.assertIsInstance(encode.norm, IdentityBlock)
 
 
 class TestMasking(unittest.TestCase):
@@ -583,19 +564,6 @@ class TestUsage(unittest.TestCase):
         ) as forward:
             _ = self.encode(self.inp)
             forward.assert_called_once_with(self.out, None, True)
-
-    def test_norm_called(self):
-        with patch.object(
-            self.encode.layers[1],
-            'forward',
-            return_value = self.out
-        ), patch.object(
-            self.encode.norm,
-            'forward',
-            return_value = self.out
-        ) as forward:
-            _ = self.encode(self.inp)
-            forward.assert_called_once_with(self.out)
 
     def test_2d(self):
         inp = pt.rand(self.context, self.mod_dim, device='cpu')
