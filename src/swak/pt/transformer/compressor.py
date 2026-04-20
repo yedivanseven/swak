@@ -410,6 +410,7 @@ class Compressor(Trafo):
         else:
             modeled = self.model(residual, shrunk_mask, is_causal)
             residual = self.norm(residual + self.drop(modeled))
+        # ToDo: Model should not norm it's output!
 
         # Inflate the sequence
         if self.norm_first:
