@@ -403,6 +403,7 @@ class Compressor(Trafo):
             residual = self.norm_inp_3(residual + self.drop(forwarded))
 
         # Feed compressed sequence through wrapped model
+        # ToDo: Should we really skip here or should the model do this?
         if self.norm_first:
             modeled = self.model(self.norm(residual), shrunk_mask, is_causal)
             residual = residual + self.drop(modeled)
