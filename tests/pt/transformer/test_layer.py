@@ -226,8 +226,8 @@ class TestAttributes(unittest.TestCase):
             self.pos_enc,
             False,
             0.2,
-            pt.nn.RMSNorm,
             False,
+            pt.nn.RMSNorm,
             1e-4,
             dtype=self.dtype
         )
@@ -286,7 +286,7 @@ class TestAttributes(unittest.TestCase):
         self.assertTrue(self.layer.has_pos_enc)
 
     def test_double_pos_enc_warns(self):
-        attention =     MultiheadedSelfAttention(
+        attention = MultiheadedSelfAttention(
             self.mod_dim,
             self.n_heads,
             pos_enc=self.pos_enc
@@ -298,7 +298,7 @@ class TestAttributes(unittest.TestCase):
         self.assertEqual(self.context, self.layer.context)
 
     def test_context_pos_enc_on_attention(self):
-        attention =     MultiheadedSelfAttention(
+        attention = MultiheadedSelfAttention(
             self.mod_dim,
             self.n_heads,
             pos_enc=self.pos_enc
@@ -308,7 +308,7 @@ class TestAttributes(unittest.TestCase):
 
     def test_context_pos_enc_on_attn_smaller(self):
         pos_enc = Sinusoidal(self.mod_dim, 64)
-        attention =     MultiheadedSelfAttention(
+        attention = MultiheadedSelfAttention(
             self.mod_dim,
             self.n_heads,
             pos_enc=pos_enc
@@ -318,7 +318,7 @@ class TestAttributes(unittest.TestCase):
 
     def test_context_pos_enc_on_layer_smaller(self):
         pos_enc = Sinusoidal(self.mod_dim, 64)
-        attention =     MultiheadedSelfAttention(
+        attention = MultiheadedSelfAttention(
             self.mod_dim,
             self.n_heads,
             pos_enc=self.pos_enc

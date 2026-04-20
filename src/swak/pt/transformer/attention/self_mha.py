@@ -3,11 +3,11 @@ from typing import Self
 import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
-from ...types import Tensor, Attention, PosEnc
+from ...types import Tensor, Trafo, PosEnc
 from ...blocks import IdentityBlock
 
 
-class MultiheadedSelfAttention(Attention):
+class MultiheadedSelfAttention(Trafo):
     """Multi-headed self attention with optional (rotary) positional encodings.
 
     Parameters
