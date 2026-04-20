@@ -37,6 +37,7 @@ __all__ = [
     'Mixer',
     'PosEnc',
     'Trafo',
+    'Attn'
 ]
 
 
@@ -132,3 +133,11 @@ class Trafo(PosEnc):
     @abstractmethod
     def has_pos_enc(self) -> bool:
         """Whether positional encodings are applied."""
+
+
+class Attn(Trafo):
+
+    @property
+    @abstractmethod
+    def n_heads(self) -> int:
+        """The number of attention heads used."""

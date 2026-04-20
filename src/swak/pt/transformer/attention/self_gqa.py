@@ -3,11 +3,11 @@ from typing import Self
 import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
-from ...types import Tensor, Trafo, PosEnc
+from ...types import Tensor, Attn, PosEnc
 from ...blocks import IdentityBlock
 
 
-class GroupedQuerySelfAttention(Trafo):
+class GroupedQuerySelfAttention(Attn):
     """Grouped-query attention with optional (rotary) positional encoding.
 
     Parameters
@@ -76,7 +76,7 @@ class GroupedQuerySelfAttention(Trafo):
     ) -> None:
         super().__init__()
         self.__mod_dim = mod_dim
-        self.n_heads = self.__valid(mod_dim, n_heads, 'mod_dim', 'n_heads')
+        self.__n_heads = self.__valid(mod_dim, n_heads, 'mod_dim', 'n_heads')
         self.q_factor = self.__valid(n_heads, q_factor, 'n_heads', 'q_factor')
         self.bias = bias
         self.dropout = dropout
@@ -164,6 +164,11 @@ class GroupedQuerySelfAttention(Trafo):
         if hasattr(self.pos_enc, 'context'):
             return self.pos_enc.context
         return sys.maxsize
+
+    @property
+    def n_heads(self) -> int:
+        """The number of attention heads used."""
+        return self.__n_heads
 
     def forward(
             self,

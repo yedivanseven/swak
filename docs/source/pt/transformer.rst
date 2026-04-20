@@ -58,3 +58,8 @@ Base classes
 .. autoclass:: swak.pt.types.Trafo
    :members:
    :show-inheritance:
+
+
+.. autoclass:: swak.pt.types.Attn
+   :members:
+   :show-inheritance:

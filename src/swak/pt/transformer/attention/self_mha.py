@@ -3,11 +3,11 @@ from typing import Self
 import torch as pt
 import torch.nn as ptn
 import torch.nn.functional as ptnf
-from ...types import Tensor, Trafo, PosEnc
+from ...types import Tensor, Attn, PosEnc
 from ...blocks import IdentityBlock
 
 
-class MultiheadedSelfAttention(Trafo):
+class MultiheadedSelfAttention(Attn):
     """Multi-headed self attention with optional (rotary) positional encodings.
 
     Parameters
@@ -67,7 +67,7 @@ class MultiheadedSelfAttention(Trafo):
     ) -> None:
         super().__init__()
         self.__mod_dim = mod_dim
-        self.n_heads = self.__valid(n_heads)
+        self.__n_heads = self.__valid(n_heads)
         self.bias = bias
         self.dropout = dropout
         self.pos_enc = IdentityBlock(mod_dim) if pos_enc is None else pos_enc
@@ -129,6 +129,11 @@ class MultiheadedSelfAttention(Trafo):
         if hasattr(self.pos_enc, 'context'):
             return self.pos_enc.context
         return sys.maxsize
+
+    @property
+    def n_heads(self) -> int:
+        """The number of attention heads used."""
+        return self.__n_heads
 
     @property
     def _sizes(self) -> tuple[int, int]:
