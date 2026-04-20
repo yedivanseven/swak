@@ -130,7 +130,6 @@ class Encoder(Trafo):
             not isinstance(self.pos_enc, IdentityBlock)
         )
 
-    # ToDo: Unit test this method! Adapt existing mask tests!
     @staticmethod
     def merge_masks(
             attn_mask: Tensor | None,

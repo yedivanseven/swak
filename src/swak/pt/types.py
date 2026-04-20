@@ -131,4 +131,4 @@ class Trafo(PosEnc):
     @property
     @abstractmethod
     def has_pos_enc(self) -> bool:
-        """Whether the attention internally applies positional encodings."""
+        """Whether positional encodings are applied."""

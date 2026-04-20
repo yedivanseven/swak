@@ -100,6 +100,12 @@ class TestDefaultAttributes(unittest.TestCase):
         encoder = Encoder(layer)
         self.assertFalse(encoder.has_pos_enc)
 
+    def test_has_merge_masks(self):
+        self.assertTrue(hasattr(self.encode, 'merge_masks'))
+
+    def test_merge_masks(self):
+        self.assertTrue(callable(self.encode.merge_masks))
+
     def test_has_reset_parameters(self):
         self.assertTrue(hasattr(self.encode, 'reset_parameters'))
 
@@ -186,7 +192,202 @@ class TestAttributes(unittest.TestCase):
             _ = Encoder(self.layer)
 
 
-class TestMasking(unittest.TestCase):
+class TestMergeMasks(unittest.TestCase):
+
+    def setUp(self):
+        self.mod_dim = 16
+        self.n_heads = 2
+        self.context = 32
+        self.attention = MultiheadedSelfAttention(self.mod_dim, self.n_heads)
+        self.pos_enc = Sinusoidal(self.mod_dim, self.context)
+        self.feedforward = ActivatedBlock(self.mod_dim)
+        self.layer = EncoderLayer(
+            self.attention,
+            self.feedforward,
+            self.pos_enc
+        )
+        self.encode = Encoder(self.layer, 1)
+        self.inp = pt.rand(1, self.context, self.mod_dim, device='cpu')
+        self.out = pt.rand(1, self.context, self.mod_dim, device='cpu')
+        self.attn_mask = pt.nn.Transformer.generate_square_subsequent_mask(
+            self.context,
+            device='cpu'
+        )
+        self.src_mask = pt.zeros(self.context, device='cpu')
+        self.src_mask[1] = float('-inf')
+        self.src_mask[4] = float('-inf')
+        self.src_mask[7] = float('-inf')
+
+    def test_is_causal_no_attn_mask_no_src_mask(self):
+        mask = self.encode.merge_masks(None, None, True)
+        self.assertIsNone(mask)
+
+    def test_is_causal_attn_mask_no_src_mask(self):
+        mask = self.encode.merge_masks(self.attn_mask, None, True)
+        self.assertIsNone(mask)
+
+    def test_is_causal_no_attn_mask_src_mask(self):
+        mask = self.encode.merge_masks(None, self.src_mask, True)
+        self.assertIsNone(mask)
+
+    def test_is_causal_attn_mask_src_mask(self):
+        mask = self.encode.merge_masks(self.attn_mask, self.src_mask, True)
+        self.assertIsNone(mask)
+
+    def test_is_not_causal_no_attn_mask_no_src_mask(self):
+        mask = self.encode.merge_masks(None, None, False)
+        self.assertIsNone(mask)
+
+    def test_is_not_causal_attn_mask_no_src_mask(self):
+        mask = self.encode.merge_masks(self.attn_mask, None, False)
+        self.assertIs(mask, self.attn_mask)
+
+    def test_is_not_causal_no_attn_mask_src_mask_unbatched(self):
+        mask = self.encode.merge_masks(None, self.src_mask, False)
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        pt.testing.assert_close(mask, expected)
+
+    def test_is_not_causal_no_attn_mask_src_mask_batch_1(self):
+        src_mask = self.src_mask.unsqueeze(0)
+        mask = self.encode.merge_masks(None, src_mask, False)
+        expected = src_mask.unsqueeze(0).expand(-1, self.context, -1)
+        pt.testing.assert_close(mask, expected)
+
+    def test_is_not_causal_no_attn_mask_src_mask_batched(self):
+        src_mask = self.src_mask.unsqueeze(0).expand(3, -1)
+        mask = self.encode.merge_masks(None, src_mask, False)
+        expected = src_mask.unsqueeze(-2).expand(-1, self.context, -1)
+        pt.testing.assert_close(mask, expected)
+
+    def test_is_not_causal_attn_mask_src_mask_unbatched(self):
+        mask = self.encode.merge_masks(self.attn_mask, self.src_mask, False)
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        pt.testing.assert_close(mask, expected + self.attn_mask)
+
+    def test_is_not_causal_attn_mask_src_mask_batch_1(self):
+        src_mask = self.src_mask.unsqueeze(0)
+        mask = self.encode.merge_masks(self.attn_mask, src_mask, False)
+        expected = src_mask.unsqueeze(0).expand(-1, self.context, -1)
+        pt.testing.assert_close(mask, expected + self.attn_mask)
+
+    def test_is_not_causal_attn_mask_src_mask_batched(self):
+        src_mask = self.src_mask.unsqueeze(0).expand(3, -1)
+        mask = self.encode.merge_masks(self.attn_mask, src_mask, False)
+        expected = src_mask.unsqueeze(-2).expand(-1, self.context, -1)
+        pt.testing.assert_close(mask, expected + self.attn_mask)
+
+    def test_2d_attn_mask_3d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask,
+            self.src_mask.unsqueeze(0).unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = expected.unsqueeze(0).unsqueeze(0) + self.attn_mask
+        pt.testing.assert_close(mask, expected)
+
+    def test_2d_attn_mask_4d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask,
+            self.src_mask.unsqueeze(0).unsqueeze(0).unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = expected.unsqueeze(0).unsqueeze(0).unsqueeze(0)
+        pt.testing.assert_close(mask, expected + self.attn_mask)
+
+    def test_3d_attn_mask_1d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0),
+            self.src_mask,
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = self.attn_mask.unsqueeze(0) + expected
+        pt.testing.assert_close(mask, expected)
+
+    def test_3d_attn_mask_2d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0),
+            self.src_mask.unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = self.attn_mask.unsqueeze(0) + expected
+        pt.testing.assert_close(mask, expected)
+
+    def test_3d_attn_mask_3d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0),
+            self.src_mask.unsqueeze(0).unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = self.attn_mask + expected.unsqueeze(0).unsqueeze(0)
+        pt.testing.assert_close(mask, expected)
+
+    def test_3d_attn_mask_4d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0),
+            self.src_mask.unsqueeze(0).unsqueeze(0).unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = (
+            self.attn_mask.unsqueeze(0) +
+            expected.unsqueeze(0).unsqueeze(0).unsqueeze(0)
+        )
+        pt.testing.assert_close(mask, expected)
+
+    def test_4d_attn_mask_1d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0).unsqueeze(0),
+            self.src_mask,
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = self.attn_mask.unsqueeze(0).unsqueeze(0) + expected
+        pt.testing.assert_close(mask, expected)
+
+    def test_4d_attn_mask_2d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0).unsqueeze(0),
+            self.src_mask.unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = (
+            self.attn_mask.unsqueeze(0).unsqueeze(0) + expected)
+        pt.testing.assert_close(mask, expected)
+
+    def test_4d_attn_mask_3d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0).unsqueeze(0),
+            self.src_mask.unsqueeze(0).unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = (
+            self.attn_mask.unsqueeze(0).unsqueeze(0) +
+            expected.unsqueeze(0)
+        )
+        pt.testing.assert_close(mask, expected)
+
+    def test_4d_attn_mask_4d_src_mask(self):
+        mask = self.encode.merge_masks(
+            self.attn_mask.unsqueeze(0).unsqueeze(0),
+            self.src_mask.unsqueeze(0).unsqueeze(0).unsqueeze(0),
+            False
+        )
+        expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
+        expected = (
+            self.attn_mask.unsqueeze(0).unsqueeze(0) +
+            expected.unsqueeze(0).unsqueeze(0).unsqueeze(0)
+        )
+        pt.testing.assert_close(mask, expected)
+
+
+class TestLayerCalledWithCorrectMask(unittest.TestCase):
 
     def setUp(self):
         self.mod_dim = 16
