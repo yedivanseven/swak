@@ -14,6 +14,11 @@ transformer
    :show-inheritance:
 
 
+.. autoclass:: swak.pt.transformer.Compressor
+   :members:
+   :show-inheritance:
+
+
 
 Attention
 ---------

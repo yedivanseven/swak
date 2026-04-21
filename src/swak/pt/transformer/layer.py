@@ -1,5 +1,5 @@
 import warnings
-from typing import Self
+from typing import Self, Any
 import torch as pt
 import torch.nn as ptn
 from torch.nn import LayerNorm, RMSNorm
@@ -9,7 +9,6 @@ from ..blocks import IdentityBlock
 __all__ = ['EncoderLayer']
 
 
-# ToDo: Make the norm handling here like the one of the Skip Block
 class EncoderLayer(Trafo):
     """Encoder layer (i.e., self-attention only) to use in a transformer.
 
@@ -41,9 +40,6 @@ class EncoderLayer(Trafo):
         tensor first thing. Typically, this would be an instance of
         ``Sinusoidal`` or ``Learnable`` positional encodings. Defaults to an
         instance of :class:`IdentityBlock`, which does nothing.
-    bias: bool, optional
-        Whether to use a bias in the ``LayerNorm`` components.
-        Defaults to ``True``.
     dropout: float, optional
         Fraction of dropout to apply after self-attention and feed-forward.
         Defaults to 0.1
@@ -53,12 +49,14 @@ class EncoderLayer(Trafo):
     norm_cls: type, optional
         Which type of norm to use between (sub-)layers. Must be one of
         ``torch.nn.LayerNorm`` (the default) or ``torch.nn.RMSNorm``.
-    eps: float, optional
-        Add this value to the denominator in the norms. Defaults to 1e-5.
+    *args
+        Arguments used to initialize an instance of `norm_cls`.
     device: str or torch.device, optional
         Torch device to first create the encoder layer on. Defaults to "cpu".
     dtype: torch.dtype, optional
         Torch dtype to first create the layer in. Defaults to ``torch.float``.
+    **kwargs
+        Keyword arguments used to initialize an instance of `norm_cls`.
 
     See Also
     --------
@@ -74,41 +72,35 @@ class EncoderLayer(Trafo):
             attention: Attn,
             feed_forward: Block,
             pos_enc: PosEnc | None = None,
-            bias: bool = True,
             dropout: float = 0.1,
             norm_first: bool = True,
             norm_cls: type[LayerNorm | RMSNorm] = LayerNorm,
-            eps: float = 1e-5,
+            *args: Any,
             device: pt.device | str = 'cpu',
-            dtype: pt.dtype = pt.float
+            dtype: pt.dtype = pt.float,
+            **kwargs: Any
     ) -> None:
         super().__init__()
         self.attention = attention.to(device=device, dtype=dtype)
         self.feed_forward = feed_forward.to(device=device, dtype=dtype)
         pos_enc = pos_enc or IdentityBlock(attention.mod_dim)
         self.pos_enc = self.__check(pos_enc).to(device=device, dtype=dtype)
-        self.bias = bias
         self.dropout = dropout
         self.norm_first = norm_first
         self.norm_cls = norm_cls
-        self.eps = eps
+        self.args = args
+        self.kwargs = kwargs
         self.drop1 = ptn.Dropout(dropout)
         self.drop2 = ptn.Dropout(dropout)
         self.norm1 = norm_cls(
             attention.mod_dim,
-            eps=eps,
-            elementwise_affine=True,
-            device=device,
-            dtype=dtype,
-            **self.bias_kwarg
+            *args,
+            **kwargs
         )
         self.norm2 = norm_cls(
             attention.mod_dim,
-            eps=eps,
-            elementwise_affine=True,
-            device=device,
-            dtype=dtype,
-            **self.bias_kwarg
+            *args,
+            **kwargs
         )
 
     def __check(self, pos_enc: Block) -> Block:
@@ -119,11 +111,6 @@ class EncoderLayer(Trafo):
                    "Hope you know what you're doing ...")
             warnings.warn(msg)
         return pos_enc
-
-    @property
-    def bias_kwarg(self) -> dict[str, bool]:
-        """Extra keyword 'bias' for LayerNorm components, if requested."""
-        return {'bias': self.bias} if self.norm_cls == LayerNorm else {}
 
     @property
     def mod_dim(self) -> int:
@@ -235,11 +222,11 @@ class EncoderLayer(Trafo):
             self.attention.new(),
             self.feed_forward.new(),
             self.pos_enc.new() if we_have_pos_enc else None,
-            self.bias,
             self.dropout,
             self.norm_first,
             self.norm_cls,
-            self.eps,
-            self.device,
-            self.dtype
+            *self.args,
+            device=self.device,
+            dtype=self.dtype,
+            **self.kwargs
         )

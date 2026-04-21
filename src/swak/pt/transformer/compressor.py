@@ -10,14 +10,23 @@ type Tensors2T = tuple[Tensor, Tensor | None]
 type Tensors3T = tuple[Tensor | None, Tensor | None, Tensor | None]
 
 
-# ToDo: Add docstrings and unit tests
+# ToDo: Add unit tests
 class Compressor(Trafo):
-    """Compressor.
+    """Context-aware length-compression wrapper around sequence models.
+
+    The :class:`Compressor` uses self- and cross-attention to compress
+    incoming sequences of embeddings in length by a fixed factor of 2.
+    The compressed sequences are then sent through the wrapped model and
+    inflated again to the original length using cross-attention with U-net
+    style residual connections to the compression stage.
 
     Parameters
     ----------
     model: Resettable
-        To write
+        The sequence model to wrap, typically an :class:`Encoder`. It will be
+        called with 3 arguments: the compressed sequences, a correspondingly
+        compressed attention mask (or ``None``), and a boolean flag indicating
+        whether the attention mask is causal or not.
     attend: Attn
         A suitably parameterized instance of a self-attention block,
         typically :class:`MultiheadedSelfAttention`
@@ -47,10 +56,10 @@ class Compressor(Trafo):
         Whether to use a bias in the cross-attention components.
         Defaults to ``False``.
     dropout: float, optional
-        Apply dropout to the sum of embeddings and positional encodings
-        with this probability during training. Defaults to 0.
+        Apply this amount of dropout to the sum of embeddings and positional
+        encodings as well as to the outputs of each sub-layer. Defaults to 0.
     norm_first: bool, optional
-        Whether to normalize inputs to attention and feed-forward or the sum
+        Whether to normalize inputs to attentions and feed-forwards or the sum
         of respective inputs and outputs. Defaults to ``True``.
     norm_cls: type, optional
         Which type of norm to use between (sub-)layers. Must be one of
@@ -58,12 +67,26 @@ class Compressor(Trafo):
     *args
         Arguments used to initialize an instance of `norm_cls`.
     device: str or torch.device, optional
-        Torch device to first create the transformer on. Defaults to "cpu".
+        Torch device to first create the compressor on. Defaults to "cpu".
     dtype: torch.dtype, optional
-        Torch dtype to first create the transformer encoder stack in.
+        Torch dtype to first create the compressor in.
         Defaults to ``torch.float``.
     **kwargs
         Keyword arguments used to initialize an instance of `norm_cls`.
+
+    Important
+    ---------
+    If `norm_first` is ``True``, the wrapped `model` will receive an un-normed
+    input and **may** return one. If, however, `norm_first` is ``False``, then
+    the wrapped `model` will receive a normed input an **must** return one!
+
+    See Also
+    --------
+    Encoder
+    MultiheadedSelfAttention
+    GroupedQuerySelfAttention
+    Sinusoidal
+    Learnable
 
     """
 
@@ -121,13 +144,6 @@ class Compressor(Trafo):
             **kwargs
         )
         self.norm_inp_3 = norm_cls(
-            self.mod_dim,
-            *args,
-            device=device,
-            dtype=dtype,
-            **kwargs
-        )
-        self.norm = norm_cls(
             self.mod_dim,
             *args,
             device=device,
@@ -265,7 +281,7 @@ class Compressor(Trafo):
 
     @staticmethod
     def _pad(src: Tensor, mask: Tensor | None) -> Tensors2T:
-        """Utility function to pad sequences an masks of odd length."""
+        """Utility function to pad sequences and masks of odd length."""
         if src.size(-2) % 2 == 0:
             pad_seqs = src
             pad_mask = mask
@@ -293,7 +309,7 @@ class Compressor(Trafo):
             out = pt.maximum(pad_mask[..., :, 0::2], pad_mask[..., :, 1::2])
         elif is_causal:
             i = pt.arange(pad_len).to(self.device)
-            j = pt.arange(pad_len // 2).to(self.device)
+            j = i[:pad_len // 2]
             inp = (i[None, :] <= (2 * j[:, None] + 1)).float().log()
             shrunk = None
             out = (2 * j[None, :] <= i[:, None]).float().log()
@@ -403,14 +419,7 @@ class Compressor(Trafo):
             residual = self.norm_inp_3(residual + self.drop(forwarded))
 
         # Feed compressed sequence through wrapped model
-        # ToDo: Should we really skip here or should the model do this?
-        if self.norm_first:
-            modeled = self.model(self.norm(residual), shrunk_mask, is_causal)
-            residual = residual + self.drop(modeled)
-        else:
-            modeled = self.model(residual, shrunk_mask, is_causal)
-            residual = self.norm(residual + self.drop(modeled))
-        # ToDo: Model should not norm it's output!
+        residual = self.model(residual, shrunk_mask, is_causal)
 
         # Inflate the sequence
         if self.norm_first:
@@ -467,7 +476,6 @@ class Compressor(Trafo):
         self.norm_inp_1.reset_parameters()
         self.norm_inp_2.reset_parameters()
         self.norm_inp_3.reset_parameters()
-        self.norm.reset_parameters()
         self.inflate._reset_parameters()
         self.norm_out_1.reset_parameters()
         self.norm_out_2.reset_parameters()
@@ -478,7 +486,7 @@ class Compressor(Trafo):
 
         Returns
         -------
-        Encoder
+        Compressor
             A fresh, new instance of itself.
 
         """

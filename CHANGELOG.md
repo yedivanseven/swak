@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2026-04-20]
+## [Unreleased]
+
+### Changed
+- Changed init signature of the transformer encoder layer
+
+### Added
+- Added Compressor class
+
+
+## [1.0.2] - 2026-04-20
 ### Fixed
 - Adhered to stricter abstract base classes in transformer subpackage
 - Norm-first logic in EncoderLayer
