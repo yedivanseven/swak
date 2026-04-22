@@ -805,62 +805,151 @@ class TestShrink(unittest.TestCase):
             attend,
             forward
         )
-
-    def test_with_mask_inp_not_none(self):
-        inp, _, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
-        self.assertIsNotNone(inp)
-
-    def test_with_mask_shrunk_not_none(self):
-        _, shrunk, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
-        self.assertIsNotNone(shrunk)
-
-    def test_with_mask_out_not_none(self):
-        _, _, out = self.compressor._shrink(4, pt.zeros(4, 4), False)
-        self.assertIsNotNone(out)
-
-    def test_with_mask_inp_shape(self):
-        inp, _, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
-        self.assertTupleEqual((2, 4), tuple(inp.shape))
-
-    def test_with_mask_shrunk_shape(self):
-        _, shrunk, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
-        self.assertTupleEqual((2, 2), tuple(shrunk.shape))
-
-    def test_with_mask_out_shape(self):
-        _, _, out = self.compressor._shrink(4, pt.zeros(4, 4), False)
-        self.assertTupleEqual((4, 2), tuple(out.shape))
-
-    def test_causal_inp_not_none(self):
-        inp, _, _ = self.compressor._shrink(4, None, True)
-        self.assertIsNotNone(inp)
-
-    def test_causal_shrunk_is_none(self):
-        _, shrunk, _ = self.compressor._shrink(4, None, True)
-        self.assertIsNone(shrunk)
-
-    def test_causal_out_not_none(self):
-        _, _, out = self.compressor._shrink(4, None, True)
-        self.assertIsNotNone(out)
-
-    def test_causal_inp_shape(self):
-        inp, _, _ = self.compressor._shrink(4, None, True)
-        self.assertTupleEqual((2, 4), tuple(inp.shape))
-
-    def test_causal_out_shape(self):
-        _, _, out = self.compressor._shrink(4, None, True)
-        self.assertTupleEqual((4, 2), tuple(out.shape))
+        neginf = float('-inf')
+        self.pad_len = 4
+        # Non-trivial mask: top-left and bottom-right 2x2 blocks are blocked,
+        # so all three shrunken masks carry meaningful -inf entries.
+        self.pad_mask = pt.tensor([
+            [neginf, neginf, neginf, 0.    ],
+            [neginf, neginf, 0.,     0.    ],
+            [0.,     0.,     neginf, neginf],
+            [0.,     0.,     neginf, neginf],
+        ])
 
     def test_not_causal_no_mask_inp_is_none(self):
-        inp, _, _ = self.compressor._shrink(4, None, False)
+        inp, _, _ = self.compressor._shrink(self.pad_len, None, False)
         self.assertIsNone(inp)
 
     def test_not_causal_no_mask_shrunk_is_none(self):
-        _, shrunk, _ = self.compressor._shrink(4, None, False)
+        _, shrunk, _ = self.compressor._shrink(self.pad_len, None, False)
         self.assertIsNone(shrunk)
 
     def test_not_causal_no_mask_out_is_none(self):
-        _, _, out = self.compressor._shrink(4, None, False)
+        _, _, out = self.compressor._shrink(self.pad_len, None, False)
         self.assertIsNone(out)
+
+    def test_causal_no_mask_shrunk_is_none(self):
+        _, shrunk, _ = self.compressor._shrink(self.pad_len, None, True)
+        self.assertIsNone(shrunk)
+
+    def test_causal_no_mask_inp_shape(self):
+        inp, _, _ = self.compressor._shrink(self.pad_len, None, True)
+        self.assertTupleEqual(
+            (self.pad_len // 2, self.pad_len),
+            tuple(inp.shape)
+        )
+
+    def test_causal_no_mask_inp_content(self):
+        # Each compressed query j can attend to original keys 0..2j+1 only.
+        inp, _, _ = self.compressor._shrink(self.pad_len, None, True)
+        neginf = float('-inf')
+        expected = pt.tensor([
+            [0.,    0.,    neginf, neginf],
+            [0.,    0.,    0.,     0.    ],
+        ])
+        pt.testing.assert_close(inp, expected)
+
+    def test_causal_no_mask_out_shape(self):
+        _, _, out = self.compressor._shrink(self.pad_len, None, True)
+        self.assertTupleEqual(
+            (self.pad_len, self.pad_len // 2),
+            tuple(out.shape)
+        )
+
+    def test_causal_no_mask_out_content(self):
+        # Original query i can only attend to compressed key j if 2j <= i.
+        _, _, out = self.compressor._shrink(self.pad_len, None, True)
+        neginf = float('-inf')
+        expected = pt.tensor([
+            [0.,    neginf],
+            [0.,    neginf],
+            [0.,    0.    ],
+            [0.,    0.    ],
+        ])
+        pt.testing.assert_close(out, expected)
+
+    def test_mask_provided_inp_shape(self):
+        inp, _, _ = self.compressor._shrink(
+            self.pad_len,
+            self.pad_mask,
+            False
+        )
+        self.assertTupleEqual(
+            (self.pad_len // 2, self.pad_len),
+            tuple(inp.shape)
+        )
+
+    def test_mask_provided_inp_content(self):
+        # inp[i, k] = max(pad_mask[2i, k], pad_mask[2i+1, k]):
+        # a compressed query is blocked from key k only if both source
+        # rows that contribute to it are blocked.
+        inp, _, _ = self.compressor._shrink(
+            self.pad_len,
+            self.pad_mask,
+            False
+        )
+        neginf = float('-inf')
+        expected = pt.tensor([
+            [neginf, neginf, 0.,     0.    ],
+            [0.,     0.,     neginf, neginf],
+        ])
+        pt.testing.assert_close(inp, expected)
+
+    def test_mask_provided_shrunk_shape(self):
+        _, shrunk, _ = self.compressor._shrink(
+            self.pad_len,
+            self.pad_mask,
+            False
+        )
+        self.assertTupleEqual(
+            (self.pad_len // 2, self.pad_len // 2),
+            tuple(shrunk.shape)
+        )
+
+    def test_mask_provided_shrunk_content(self):
+        # shrunk[i, j] = max(inp[i, 2j], inp[i, 2j+1]):
+        # compressed query i is blocked from compressed key j only if it is
+        # blocked from both original keys that map to j.
+        _, shrunk, _ = self.compressor._shrink(
+            self.pad_len,
+            self.pad_mask,
+            False
+        )
+        neginf = float('-inf')
+        expected = pt.tensor([
+            [neginf, 0.    ],
+            [0.,     neginf],
+        ])
+        pt.testing.assert_close(shrunk, expected)
+
+    def test_mask_provided_out_shape(self):
+        _, _, out = self.compressor._shrink(
+            self.pad_len,
+            self.pad_mask,
+            False
+        )
+        self.assertTupleEqual(
+            (self.pad_len, self.pad_len // 2),
+            tuple(out.shape)
+        )
+
+    def test_mask_provided_out_content(self):
+        # out[q, j] = max(pad_mask[q, 2j], pad_mask[q, 2j+1]):
+        # original query q is blocked from compressed key j only if it is
+        # blocked from both original keys that map to j.
+        _, _, out = self.compressor._shrink(
+            self.pad_len,
+            self.pad_mask,
+            False
+        )
+        neginf = float('-inf')
+        expected = pt.tensor([
+            [neginf, 0.    ],
+            [neginf, 0.    ],
+            [0.,     neginf],
+            [0.,     neginf],
+        ])
+        pt.testing.assert_close(out, expected)
 
 
 class TestUsageNormFirst(unittest.TestCase):
