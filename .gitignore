@@ -140,3 +140,6 @@ version.env
 
 # Ruff
 .ruff_cache/
+
+# Claude
+CLAUDE.md

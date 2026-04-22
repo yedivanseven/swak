@@ -129,21 +129,21 @@ class Compressor(Trafo):
              device=device,
              dtype=dtype
         )
-        self.norm_inp_1 = norm_cls(
+        self.norm_self_attn_inp = norm_cls(
             self.mod_dim,
             *args,
             device=device,
             dtype=dtype,
             **kwargs
         )
-        self.norm_inp_2 = norm_cls(
+        self.norm_cross_attn_inp = norm_cls(
             self.mod_dim,
             *args,
             device=device,
             dtype=dtype,
             **kwargs
         )
-        self.norm_inp_3 = norm_cls(
+        self.norm_fwd_inp = norm_cls(
             self.mod_dim,
             *args,
             device=device,
@@ -159,21 +159,21 @@ class Compressor(Trafo):
              device=device,
              dtype=dtype
         )
-        self.norm_out_1 = norm_cls(
+        self.norm_self_attn_out = norm_cls(
             self.mod_dim,
             *args,
             device=device,
             dtype=dtype,
             **kwargs
         )
-        self.norm_out_2 = norm_cls(
+        self.norm_cross_attn_out = norm_cls(
             self.mod_dim,
             *args,
             device=device,
             dtype=dtype,
             **kwargs
         )
-        self.norm_out_3 = norm_cls(
+        self.norm_fwd_out = norm_cls(
             self.mod_dim,
             *args,
             device=device,
@@ -281,16 +281,16 @@ class Compressor(Trafo):
 
     @staticmethod
     def _pad(src: Tensor, mask: Tensor | None) -> Tensors2T:
-        """Utility function to pad sequences and masks of odd length."""
+        """Pad odd-length sequences and masks by repeating the first token."""
         if src.size(-2) % 2 == 0:
             pad_seqs = src
             pad_mask = mask
         else:
             pad_seqs = pt.cat([src[..., :1, :], src], dim=-2)
-            pad_mask = mask  # It the mask is None, ...
-            # ...but if there actually is a mask, ...
-            if mask is not None:
-                # ... prepend the first row, ...
+            if mask is None:
+                pad_mask = mask
+            else:
+                # Prepend the first row, ...
                 pad_mask = pt.cat([mask[..., :1, :], mask], dim=-2)
                 # ... and the first column (incl. the just prepended row)
                 pad_mask = pt.cat([pad_mask[..., :, :1], pad_mask], dim=-1)
@@ -302,7 +302,7 @@ class Compressor(Trafo):
             pad_mask: Tensor | None,
             is_causal: bool
     ) -> Tensors3T:
-        """Utility function to generate compressed masks."""
+        """Generate cross-attention masks for compression and inflation."""
         if pad_mask is not None:
             inp = pt.maximum(pad_mask[..., 0::2, :], pad_mask[..., 1::2, :])
             shrunk = pt.maximum(inp[..., :, 0::2], inp[..., :, 1::2])
@@ -371,14 +371,14 @@ class Compressor(Trafo):
         # Self-attend the original sequence
         mask = self.merge_masks(attn_mask, src_mask, is_causal)
         if self.norm_first:
-            normed = self.norm_inp_1(residual)
+            normed = self.norm_self_attn_inp(residual)
             attended = self.attend_inp(normed, mask, is_causal)
             residual = residual + self.drop(attended)
         else:
             attended = self.attend_inp(residual, mask, is_causal)
-            residual = self.norm_inp_1(residual + self.drop(attended))
+            residual = self.norm_self_attn_inp(residual + self.drop(attended))
 
-        # Pad the sequence (if needed) and get masks
+        # Pad odd-length sequences and generate attention masks
         offset = residual.size(-2) % 2
         padded, padded_mask = self._pad(residual, mask)
         compress_mask, shrunk_mask, inflate_mask = self._shrink(
@@ -389,7 +389,7 @@ class Compressor(Trafo):
 
         # Compress the sequence
         if self.norm_first:
-            normalized_padded = self.norm_inp_2(padded)
+            normalized_padded = self.norm_cross_attn_inp(padded)
             compressed, _ = self.compress(
                 normalized_padded[:, 1::2, :],
                 normalized_padded,
@@ -406,24 +406,23 @@ class Compressor(Trafo):
                 attn_mask=compress_mask,
                 is_causal=False
             )
-            residual = self.norm_inp_2(
-                padded[:, 1::2, :] + self.drop(compressed)
-            )
+            residual = padded[:, 1::2, :] + self.drop(compressed)
+            residual = self.norm_cross_attn_inp(residual)
 
-        # Feed forward
+        # Feed forward on the compressed sequence
         if self.norm_first:
-            forwarded = self.forward_inp(self.norm_inp_3(residual))
+            forwarded = self.forward_inp(self.norm_fwd_inp(residual))
             residual = residual + self.drop(forwarded)
         else:
             forwarded = self.forward_inp(residual)
-            residual = self.norm_inp_3(residual + self.drop(forwarded))
+            residual = self.norm_fwd_inp(residual + self.drop(forwarded))
 
         # Feed compressed sequence through wrapped model
         residual = self.model(residual, shrunk_mask, is_causal)
 
         # Inflate the sequence
         if self.norm_first:
-            normed = self.norm_out_2(residual)
+            normed = self.norm_cross_attn_out(residual)
             inflated, _ = self.inflate(
                 normalized_padded,
                 normed,
@@ -440,27 +439,27 @@ class Compressor(Trafo):
                 attn_mask=inflate_mask,
                 is_causal=False
             )
-            residual = self.norm_out_2(padded + self.drop(inflated))
+            residual = self.norm_cross_attn_out(padded + self.drop(inflated))
 
-        # Reduce sequence to original "unpadded" length
+        # Reduce odd-length sequences to their original "unpadded" length
         residual = residual[..., offset:, :]
 
         # Self-attend over the inflated sequence
         if self.norm_first:
-            normed = self.norm_out_1(residual)
+            normed = self.norm_self_attn_out(residual)
             attended = self.attend_out(normed, mask, is_causal)
             residual = residual + self.drop(attended)
         else:
             attended = self.attend_out(residual, mask, is_causal)
-            residual = self.norm_out_1(residual + self.drop(attended))
+            residual = self.norm_self_attn_out(residual + self.drop(attended))
 
-        # Feed forward
+        # Feed forward the inflated sequence
         if self.norm_first:
-            forwarded = self.forward_out(self.norm_out_3(residual))
+            forwarded = self.forward_out(self.norm_fwd_out(residual))
             residual = residual + self.drop(forwarded)
         else:
             forwarded = self.forward_out(residual)
-            residual = self.norm_out_3(residual + self.drop(forwarded))
+            residual = self.norm_fwd_out(residual + self.drop(forwarded))
 
         return residual
 
@@ -473,13 +472,13 @@ class Compressor(Trafo):
         self.forward_out.reset_parameters()
         self.pos_enc.reset_parameters()
         self.compress._reset_parameters()
-        self.norm_inp_1.reset_parameters()
-        self.norm_inp_2.reset_parameters()
-        self.norm_inp_3.reset_parameters()
+        self.norm_self_attn_inp.reset_parameters()
+        self.norm_cross_attn_inp.reset_parameters()
+        self.norm_fwd_inp.reset_parameters()
         self.inflate._reset_parameters()
-        self.norm_out_1.reset_parameters()
-        self.norm_out_2.reset_parameters()
-        self.norm_out_3.reset_parameters()
+        self.norm_self_attn_out.reset_parameters()
+        self.norm_cross_attn_out.reset_parameters()
+        self.norm_fwd_out.reset_parameters()
 
     def new(self) -> Self:
         """Return a fresh, new instance with exactly the same parameters.
