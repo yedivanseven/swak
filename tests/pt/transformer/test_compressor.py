@@ -7,7 +7,7 @@ from swak.pt.transformer import (
     EncoderLayer,
     Encoder,
     Sinusoidal,
-    Compressor, compressor
+    Compressor
 )
 
 
@@ -988,7 +988,7 @@ class TestUsageNormFirst(unittest.TestCase):
             _ = self.compressor(self.inp, self.mask, None, False)
             merge.assert_called_once_with(self.mask, None, False)
 
-    def test_norm_self_attn_inp_called_with_residual(self):
+    def test_norm_self_attn_inp_called(self):
         with patch.object(
             self.compressor.pos_enc,
             'forward',
@@ -1001,7 +1001,7 @@ class TestUsageNormFirst(unittest.TestCase):
             _ = self.compressor(self.inp)
             norm.assert_called_once_with(self.inp)
 
-    def test_attend_inp_receives_normed_input(self):
+    def test_attend_inp_called(self):
         with patch.object(
             self.compressor.norm_self_attn_inp,
             'forward',
@@ -1038,7 +1038,7 @@ class TestUsageNormFirst(unittest.TestCase):
             _ = self.compressor(self.inp, None, None, False)
             shrink.assert_called_once_with(self.context, None, False)
 
-    def test_norm_cross_attn_inp_called_with_residual(self):
+    def test_norm_cross_attn_inp_called(self):
         with patch.object(
             self.compressor,
             '_pad',
@@ -1157,7 +1157,7 @@ class TestUsageNormFirst(unittest.TestCase):
             _ = self.compressor(self.inp, None, None, True)
             norm.assert_called_once()
 
-    def test_attend_out_receives_normed_input(self):
+    def test_attend_out_called(self):
         with patch.object(
             self.compressor.norm_self_attn_out,
             'forward',
@@ -1225,9 +1225,9 @@ class TestUsageNormFirst(unittest.TestCase):
 class TestUsageNormLast(unittest.TestCase):
 
     def setUp(self):
-        self.mod_dim = 16
-        self.n_heads = 2
-        self.context = 32
+        self.mod_dim = 4
+        self.n_heads = 1
+        self.context = 8
         attend = MultiheadedSelfAttention(self.mod_dim, self.n_heads)
         forward = ActivatedBlock(self.mod_dim)
         pos_enc = Sinusoidal(self.mod_dim, self.context)
@@ -1239,56 +1239,249 @@ class TestUsageNormLast(unittest.TestCase):
             norm_first=False
         )
         self.inp = pt.rand(1, self.context, self.mod_dim, device='cpu')
+        self.mask = pt.rand(self.context, self.context)
 
-    def test_attend_inp_receives_unnormed_input(self):
-        # norm_last: attend_inp receives the raw pos_enc output, not normed
+    def test_pos_enc_called(self):
         with patch.object(
             self.compressor.pos_enc,
             'forward',
             return_value=self.inp
-        ), patch.object(
+        ) as pos_enc:
+            _ = self.compressor(self.inp)
+            pos_enc.assert_called_once_with(self.inp)
+
+    def test_merge_masks_called(self):
+        with patch.object(
+            self.compressor,
+            'merge_masks',
+            return_value=self.mask
+        ) as merge:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            merge.assert_called_once_with(self.mask, None, False)
+
+    def test_attend_inp_called(self):
+        with patch.object(
             self.compressor.attend_inp,
             'forward',
             return_value=self.inp
         ) as attend:
-            _ = self.compressor(self.inp)
-            attend.assert_called_once()
-            pt.testing.assert_close(attend.call_args[0][0], self.inp)
+            _ = self.compressor(self.inp, self.mask, None, False)
+            pt.testing.assert_close(attend.call_args[0][1], self.mask)
+            self.assertFalse(attend.call_args[0][2])
 
-    def test_norm_self_attn_inp_receives_sum(self):
-        # norm_last: norm receives (residual + drop(attended)),
-        # with dropout=0 that equals pos_enc(src) + attend_inp(src) = 2 * inp
+    def test_norm_self_attn_inp_called(self):
         with patch.object(
-            self.compressor.pos_enc,
-            'forward',
-            return_value=self.inp
-        ), patch.object(
-            self.compressor.attend_inp,
-            'forward',
-            return_value=self.inp
-        ), patch.object(
             self.compressor.norm_self_attn_inp,
             'forward',
             return_value=self.inp
         ) as norm:
             _ = self.compressor(self.inp)
             norm.assert_called_once()
-            pt.testing.assert_close(norm.call_args[0][0], 2 * self.inp)
+
+    def test_pad_called(self):
+        with patch.object(
+            self.compressor.norm_self_attn_inp,
+            'forward',
+            return_value=self.inp
+        ), patch.object(
+            self.compressor,
+            '_pad',
+            return_value=(self.inp, self.mask)
+        ) as pad:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            pad.assert_called_once_with(self.inp, self.mask)
+
+    def test_shrink_called(self):
+        cm, sm, im = self.compressor._shrink(
+            4,
+            self.mask,
+            False
+        )
+        with patch.object(
+            self.compressor,
+            '_pad',
+            return_value=(self.inp, self.mask)
+        ), patch.object(
+            self.compressor,
+            '_shrink',
+            return_value=(cm, sm, im)
+        ) as shrink:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            shrink.assert_called_once_with(self.context, self.mask, False)
+
+    def test_compress_called(self):
+        padded, pad_mask = self.compressor._pad(self.inp, self.mask)
+        mask, _, _ = self.compressor._shrink(
+            padded.size(-2),
+            pad_mask,
+            False
+        )
+        with patch.object(
+            self.compressor,
+            '_pad',
+            return_value=(padded, pad_mask)
+        ), patch.object(
+            self.compressor.compress,
+            'forward',
+            return_value=(self.inp[:, 1::2, :], None)
+        ) as compress:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            query = compress.call_args[0][0]
+            key = compress.call_args[0][1]
+            value = compress.call_args[0][1]
+            mask = compress.call_args[1]['attn_mask']
+            pt.testing.assert_close(query, padded[:, 1::2, :])
+            pt.testing.assert_close(key, padded)
+            pt.testing.assert_close(value, padded)
+            self.assertFalse(compress.call_args[1]['need_weights'])
+            self.assertFalse(compress.call_args[1]['is_causal'])
+            pt.testing.assert_close(compress.call_args[1]['attn_mask'], mask)
+
+    def test_norm_cross_attn_inp_called(self):
+        with patch.object(
+            self.compressor.norm_cross_attn_inp,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ) as norm:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            norm.assert_called_once()
+
+    def test_forward_inp_called(self):
+        with patch.object(
+            self.compressor.norm_cross_attn_inp,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ), patch.object(
+            self.compressor.forward_inp,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ) as fwd:
+            _ = self.compressor(self.inp, None, None, True)
+            pt.testing.assert_close(fwd.call_args[0][0], self.inp[:, 1::2, :])
+
+    def test_norm_fwd_inp_called(self):
+        with patch.object(
+            self.compressor.norm_fwd_inp,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ) as norm:
+            _ = self.compressor(self.inp, None, None, True)
+            norm.assert_called_once()
+
+    def test_model_called(self):
+        _, mask, _ = self.compressor._shrink(self.context, self.mask, False)
+        with patch.object(
+            self.compressor.norm_fwd_inp,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ), patch.object(
+            self.compressor.model,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ) as model:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            pt.testing.assert_close(
+                model.call_args[0][0],
+                self.inp[:, 1::2, :]
+            )
+            pt.testing.assert_close(model.call_args[0][1], mask)
+            self.assertFalse(model.call_args[0][2])
+
+    def test_inflate_called(self):
+        padded, pad_mask = self.compressor._pad(self.inp, self.mask)
+        _, _, mask = self.compressor._shrink(
+            padded.size(-2),
+            pad_mask,
+            False
+        )
+        with patch.object(
+            self.compressor,
+            '_pad',
+            return_value=(padded, pad_mask)
+        ), patch.object(
+            self.compressor.model,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ), patch.object(
+            self.compressor.inflate,
+            'forward',
+            return_value=(self.inp, None)
+        ) as inflate:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            query = inflate.call_args[0][0]
+            key = inflate.call_args[0][1]
+            value = inflate.call_args[0][1]
+            mask = inflate.call_args[1]['attn_mask']
+            pt.testing.assert_close(query, padded)
+            pt.testing.assert_close(key, self.inp[:, 1::2, :])
+            pt.testing.assert_close(value, self.inp[:, 1::2, :])
+            self.assertFalse(inflate.call_args[1]['need_weights'])
+            self.assertFalse(inflate.call_args[1]['is_causal'])
+            pt.testing.assert_close(inflate.call_args[1]['attn_mask'], mask)
+
+    def test_norm_cross_attn_out_called(self):
+        with patch.object(
+            self.compressor.norm_cross_attn_out,
+            'forward',
+            return_value=self.inp[:, 1::2, :]
+        ) as norm:
+            _ = self.compressor(self.inp, None, None, True)
+            norm.assert_called_once()
 
     def test_attend_out_called(self):
         with patch.object(
             self.compressor.attend_out,
             'forward',
             return_value=self.inp
-        ) as attend_out:
-            _ = self.compressor(self.inp)
-            attend_out.assert_called_once()
+        ) as attend:
+            _ = self.compressor(self.inp, self.mask, None, False)
+            pt.testing.assert_close(attend.call_args[0][1], self.mask)
+            self.assertFalse(attend.call_args[0][2])
 
-    def test_output_shape_2d(self):
+    def test_norm_self_attn_out_called(self):
+        with patch.object(
+            self.compressor.norm_self_attn_out,
+            'forward',
+            return_value=self.inp
+        ) as norm:
+            _ = self.compressor(self.inp, None, None, True)
+            norm.assert_called_once()
+
+    def test_forward_out_called(self):
+        with patch.object(
+            self.compressor.norm_self_attn_out,
+            'forward',
+            return_value=self.inp
+        ), patch.object(
+            self.compressor.forward_out,
+            'forward',
+            return_value=self.inp
+        ) as fwd:
+            _ = self.compressor(self.inp, None, None, False)
+            fwd.assert_called_once_with(self.inp)
+
+    def test_norm_fwd_out_called(self):
+        with patch.object(
+            self.compressor.norm_fwd_out,
+            'forward',
+            return_value=self.inp
+        ) as norm:
+            _ = self.compressor(self.inp, None, None, True)
+            norm.assert_called_once()
+
+    def test_output_shape_2d_even(self):
         inp = pt.rand(self.context, self.mod_dim)
         out = self.compressor(inp)
         self.assertTupleEqual(
             (1, self.context, self.mod_dim),
+            tuple(out.shape)
+        )
+
+    def test_output_shape_2d_odd(self):
+        inp = pt.rand(self.context - 1, self.mod_dim)
+        out = self.compressor(inp)
+        self.assertTupleEqual(
+            (1, self.context - 1, self.mod_dim),
             tuple(out.shape)
         )
 
@@ -1298,9 +1491,12 @@ class TestUsageNormLast(unittest.TestCase):
         self.assertTupleEqual(tuple(inp.shape), tuple(out.shape))
 
     def test_output_shape_3d_odd(self):
-        inp = pt.rand(8, 7, self.mod_dim)
+        inp = pt.rand(8, self.context - 1, self.mod_dim)
         out = self.compressor(inp)
-        self.assertTupleEqual((8, 7, self.mod_dim), tuple(out.shape))
+        self.assertTupleEqual(
+            (8, self.context - 1, self.mod_dim),
+            tuple(out.shape)
+        )
 
 
 if __name__ == '__main__':
