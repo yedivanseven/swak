@@ -393,6 +393,7 @@ class Compressor(Trafo):
                 normalized_padded[:, 1::2, :],
                 normalized_padded,
                 normalized_padded,
+                need_weights=False,
                 attn_mask=compress_mask,
                 is_causal=False
             )
@@ -402,6 +403,7 @@ class Compressor(Trafo):
                 padded[:, 1::2, :],
                 padded,
                 padded,
+                need_weights=False,
                 attn_mask=compress_mask,
                 is_causal=False
             )
@@ -426,6 +428,7 @@ class Compressor(Trafo):
                 normalized_padded,
                 normed,
                 normed,
+                need_weights=False,
                 attn_mask=inflate_mask,
                 is_causal=False
             )
@@ -435,6 +438,7 @@ class Compressor(Trafo):
                 padded,
                 residual,
                 residual,
+                need_weights=False,
                 attn_mask=inflate_mask,
                 is_causal=False
             )
