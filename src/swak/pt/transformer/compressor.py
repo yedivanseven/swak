@@ -10,7 +10,6 @@ type Tensors2T = tuple[Tensor, Tensor | None]
 type Tensors3T = tuple[Tensor | None, Tensor | None, Tensor | None]
 
 
-# ToDo: Add unit tests
 class Compressor(Trafo):
     """Context-aware length-compression wrapper around sequence models.
 

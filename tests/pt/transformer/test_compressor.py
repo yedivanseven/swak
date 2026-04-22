@@ -11,7 +11,7 @@ from swak.pt.transformer import (
 )
 
 
-def _make_model(mod_dim, n_heads, context):
+def make_model(mod_dim, n_heads, context):
     layer = EncoderLayer(
         MultiheadedSelfAttention(mod_dim, n_heads),
         ActivatedBlock(mod_dim),
@@ -28,10 +28,12 @@ class TestDefaultAttributes(unittest.TestCase):
         self.context = 32
         pos_enc = Sinusoidal(self.mod_dim, self.context)
         self.attend = MultiheadedSelfAttention(
-            self.mod_dim, self.n_heads, pos_enc=pos_enc
+            self.mod_dim,
+            self.n_heads,
+            pos_enc=pos_enc
         )
         self.forward = ActivatedBlock(self.mod_dim)
-        self.model = _make_model(self.mod_dim, self.n_heads, self.context)
+        self.model = make_model(self.mod_dim, self.n_heads, self.context)
         self.compressor = Compressor(self.model, self.attend, self.forward)
 
     def test_has_model(self):
@@ -45,7 +47,8 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_attend_inp(self):
         self.assertIsInstance(
-            self.compressor.attend_inp, MultiheadedSelfAttention
+            self.compressor.attend_inp,
+            MultiheadedSelfAttention
         )
         self.assertIsNot(self.compressor.attend_inp, self.attend)
 
@@ -54,10 +57,14 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_attend_out(self):
         self.assertIsInstance(
-            self.compressor.attend_out, MultiheadedSelfAttention
+            self.compressor.attend_out,
+            MultiheadedSelfAttention
         )
         self.assertIsNot(self.compressor.attend_out, self.attend)
-        self.assertIsNot(self.compressor.attend_out, self.compressor.attend_inp)
+        self.assertIsNot(
+            self.compressor.attend_out,
+            self.compressor.attend_inp
+        )
 
     def test_has_forward_inp(self):
         self.assertTrue(hasattr(self.compressor, 'forward_inp'))
@@ -73,7 +80,8 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(self.compressor.forward_out, ActivatedBlock)
         self.assertIsNot(self.compressor.forward_out, self.forward)
         self.assertIsNot(
-            self.compressor.forward_out, self.compressor.forward_inp
+            self.compressor.forward_out,
+            self.compressor.forward_inp
         )
 
     def test_has_pos_enc(self):
@@ -93,6 +101,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.compressor, 'dropout'))
 
     def test_dropout(self):
+        self.assertIsInstance(self.compressor.dropout, float)
         self.assertEqual(0.0, self.compressor.dropout)
 
     def test_has_norm_first(self):
@@ -144,7 +153,10 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.compressor, 'compress'))
 
     def test_compress(self):
-        self.assertIsInstance(self.compressor.compress, pt.nn.MultiheadAttention)
+        self.assertIsInstance(
+            self.compressor.compress,
+            pt.nn.MultiheadAttention
+        )
         self.assertEqual(self.mod_dim, self.compressor.compress.embed_dim)
         self.assertEqual(self.n_heads, self.compressor.compress.num_heads)
         self.assertTrue(self.compressor.compress.batch_first)
@@ -152,7 +164,7 @@ class TestDefaultAttributes(unittest.TestCase):
             self.compressor.device,
             self.compressor.compress.in_proj_weight.device
         )
-        self.assertEqual(
+        self.assertIs(
             self.compressor.dtype,
             self.compressor.compress.in_proj_weight.dtype
         )
@@ -161,7 +173,10 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.compressor, 'inflate'))
 
     def test_inflate(self):
-        self.assertIsInstance(self.compressor.inflate, pt.nn.MultiheadAttention)
+        self.assertIsInstance(
+            self.compressor.inflate,
+            pt.nn.MultiheadAttention
+        )
         self.assertEqual(self.mod_dim, self.compressor.inflate.embed_dim)
         self.assertEqual(self.n_heads, self.compressor.inflate.num_heads)
         self.assertTrue(self.compressor.inflate.batch_first)
@@ -169,7 +184,7 @@ class TestDefaultAttributes(unittest.TestCase):
             self.compressor.device,
             self.compressor.inflate.in_proj_weight.device
         )
-        self.assertEqual(
+        self.assertIs(
             self.compressor.dtype,
             self.compressor.inflate.in_proj_weight.dtype
         )
@@ -179,7 +194,8 @@ class TestDefaultAttributes(unittest.TestCase):
 
     def test_norm_self_attn_inp(self):
         self.assertIsInstance(
-            self.compressor.norm_self_attn_inp, pt.nn.LayerNorm
+            self.compressor.norm_self_attn_inp,
+            pt.nn.LayerNorm
         )
         self.assertTupleEqual(
             (self.mod_dim,),
@@ -189,7 +205,7 @@ class TestDefaultAttributes(unittest.TestCase):
             self.compressor.device,
             self.compressor.norm_self_attn_inp.weight.device
         )
-        self.assertEqual(
+        self.assertIs(
             self.compressor.dtype,
             self.compressor.norm_self_attn_inp.weight.dtype
         )
@@ -205,6 +221,14 @@ class TestDefaultAttributes(unittest.TestCase):
             (self.mod_dim,),
             self.compressor.norm_cross_attn_inp.normalized_shape
         )
+        self.assertEqual(
+            self.compressor.device,
+            self.compressor.norm_cross_attn_inp.weight.device
+        )
+        self.assertIs(
+            self.compressor.dtype,
+            self.compressor.norm_cross_attn_inp.weight.dtype
+        )
 
     def test_has_norm_fwd_inp(self):
         self.assertTrue(hasattr(self.compressor, 'norm_fwd_inp'))
@@ -214,6 +238,14 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTupleEqual(
             (self.mod_dim,),
             self.compressor.norm_fwd_inp.normalized_shape
+        )
+        self.assertEqual(
+            self.compressor.device,
+            self.compressor.norm_fwd_inp.weight.device
+        )
+        self.assertIs(
+            self.compressor.dtype,
+            self.compressor.norm_fwd_inp.weight.dtype
         )
 
     def test_has_norm_self_attn_out(self):
@@ -227,6 +259,14 @@ class TestDefaultAttributes(unittest.TestCase):
             (self.mod_dim,),
             self.compressor.norm_self_attn_out.normalized_shape
         )
+        self.assertEqual(
+            self.compressor.device,
+            self.compressor.norm_self_attn_out.weight.device
+        )
+        self.assertIs(
+            self.compressor.dtype,
+            self.compressor.norm_self_attn_out.weight.dtype
+        )
 
     def test_has_norm_cross_attn_out(self):
         self.assertTrue(hasattr(self.compressor, 'norm_cross_attn_out'))
@@ -239,6 +279,14 @@ class TestDefaultAttributes(unittest.TestCase):
             (self.mod_dim,),
             self.compressor.norm_cross_attn_out.normalized_shape
         )
+        self.assertEqual(
+            self.compressor.device,
+            self.compressor.norm_cross_attn_out.weight.device
+        )
+        self.assertIs(
+            self.compressor.dtype,
+            self.compressor.norm_cross_attn_out.weight.dtype
+        )
 
     def test_has_norm_fwd_out(self):
         self.assertTrue(hasattr(self.compressor, 'norm_fwd_out'))
@@ -248,6 +296,14 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTupleEqual(
             (self.mod_dim,),
             self.compressor.norm_fwd_out.normalized_shape
+        )
+        self.assertEqual(
+            self.compressor.device,
+            self.compressor.norm_fwd_out.weight.device
+        )
+        self.assertIs(
+            self.compressor.dtype,
+            self.compressor.norm_fwd_out.weight.dtype
         )
 
     def test_has_mod_dim(self):
@@ -291,14 +347,35 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(callable(self.compressor.reset_parameters))
 
     def test_call_reset_parameters(self):
-        with (
-            patch.object(self.compressor.model, 'reset_parameters') as model,
-            patch.object(self.compressor.attend_inp, 'reset_parameters') as ai,
-            patch.object(self.compressor.attend_out, 'reset_parameters') as ao,
-            patch.object(self.compressor.forward_inp, 'reset_parameters') as fi,
-            patch.object(self.compressor.forward_out, 'reset_parameters') as fo,
-            patch.object(self.compressor.pos_enc, 'reset_parameters') as pos,
-        ):
+        with patch.object(
+            self.compressor.model, 'reset_parameters'
+        ) as model, patch.object(
+            self.compressor.attend_inp, 'reset_parameters'
+        ) as ai, patch.object(
+            self.compressor.attend_out, 'reset_parameters'
+        ) as ao, patch.object(
+            self.compressor.forward_inp, 'reset_parameters'
+        ) as fi, patch.object(
+            self.compressor.forward_out, 'reset_parameters'
+        ) as fo, patch.object(
+            self.compressor.pos_enc, 'reset_parameters'
+        ) as pos,patch.object(
+            self.compressor.compress, '_reset_parameters'
+        ) as cmp, patch.object(
+            self.compressor.inflate, '_reset_parameters'
+        ) as inf, patch.object(
+            self.compressor.norm_self_attn_inp, 'reset_parameters'
+        ) as nai, patch.object(
+            self.compressor.norm_self_attn_out, 'reset_parameters'
+        ) as nao, patch.object(
+            self.compressor.norm_cross_attn_inp, 'reset_parameters'
+        ) as nci, patch.object(
+            self.compressor.norm_cross_attn_out, 'reset_parameters'
+        ) as nco, patch.object(
+            self.compressor.norm_fwd_inp, 'reset_parameters'
+        ) as nfi, patch.object(
+            self.compressor.norm_fwd_out, 'reset_parameters'
+        ) as nfo:
             self.compressor.reset_parameters()
             model.assert_called_once_with()
             ai.assert_called_once_with()
@@ -306,6 +383,14 @@ class TestDefaultAttributes(unittest.TestCase):
             fi.assert_called_once_with()
             fo.assert_called_once_with()
             pos.assert_called_once_with()
+            cmp.assert_called_once_with()
+            inf.assert_called_once_with()
+            nai.assert_called_once_with()
+            nao.assert_called_once_with()
+            nci.assert_called_once_with()
+            nco.assert_called_once_with()
+            nfi.assert_called_once_with()
+            nfo.assert_called_once_with()
 
     def test_has_new(self):
         self.assertTrue(hasattr(self.compressor, 'new'))
@@ -323,8 +408,10 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertEqual(new.dropout, self.compressor.dropout)
         self.assertEqual(new.norm_first, self.compressor.norm_first)
         self.assertIs(new.norm_cls, self.compressor.norm_cls)
+        self.assertTupleEqual(new.args, self.compressor.args)
         self.assertEqual(new.device, self.compressor.device)
-        self.assertEqual(new.dtype, self.compressor.dtype)
+        self.assertIs(new.dtype, self.compressor.dtype)
+        self.assertDictEqual(new.kwargs, self.compressor.kwargs)
 
 
 class TestAttributes(unittest.TestCase):
@@ -338,7 +425,7 @@ class TestAttributes(unittest.TestCase):
         self.attend = MultiheadedSelfAttention(self.mod_dim, self.n_heads)
         self.forward = ActivatedBlock(self.mod_dim)
         self.pos_enc = Sinusoidal(self.mod_dim, self.context)
-        self.model = _make_model(self.mod_dim, self.n_heads, self.context)
+        self.model = make_model(self.mod_dim, self.n_heads, self.context)
         self.compressor = Compressor(
             self.model,
             self.attend,
@@ -438,7 +525,7 @@ class TestMergeMasks(unittest.TestCase):
         )
         forward = ActivatedBlock(self.mod_dim)
         self.compressor = Compressor(
-            _make_model(self.mod_dim, self.n_heads, self.context),
+            make_model(self.mod_dim, self.n_heads, self.context),
             attend,
             forward
         )
@@ -493,7 +580,11 @@ class TestMergeMasks(unittest.TestCase):
         pt.testing.assert_close(mask, expected)
 
     def test_is_not_causal_attn_mask_src_mask_unbatched(self):
-        mask = self.compressor.merge_masks(self.attn_mask, self.src_mask, False)
+        mask = self.compressor.merge_masks(
+            self.attn_mask,
+            self.src_mask,
+            False
+        )
         expected = self.src_mask.unsqueeze(0).expand(self.context, -1)
         pt.testing.assert_close(mask, expected + self.attn_mask)
 
@@ -620,7 +711,7 @@ class TestMergeMasks(unittest.TestCase):
         pt.testing.assert_close(mask, expected)
 
 
-class TestUtilityMethods(unittest.TestCase):
+class TestPad(unittest.TestCase):
 
     def setUp(self):
         self.mod_dim = 16
@@ -632,134 +723,142 @@ class TestUtilityMethods(unittest.TestCase):
         )
         forward = ActivatedBlock(self.mod_dim)
         self.compressor = Compressor(
-            _make_model(self.mod_dim, self.n_heads, self.context),
+            make_model(self.mod_dim, self.n_heads, self.context),
             attend,
             forward
         )
 
-    # _pad with even-length sequence
-
-    def test_pad_even_no_mask_seq_unchanged(self):
+    def test_even_no_mask_seq_unchanged(self):
         src = pt.rand(1, 4, self.mod_dim)
         padded, _ = self.compressor._pad(src, None)
         self.assertIs(padded, src)
 
-    def test_pad_even_no_mask_mask_unchanged(self):
+    def test_even_no_mask_mask_unchanged(self):
         src = pt.rand(1, 4, self.mod_dim)
         _, pad_mask = self.compressor._pad(src, None)
         self.assertIsNone(pad_mask)
 
-    def test_pad_even_with_mask_seq_unchanged(self):
+    def test_even_with_mask_seq_unchanged(self):
         src = pt.rand(1, 4, self.mod_dim)
         mask = pt.zeros(4, 4)
         padded, _ = self.compressor._pad(src, mask)
         self.assertIs(padded, src)
 
-    def test_pad_even_with_mask_mask_unchanged(self):
+    def test_even_with_mask_mask_unchanged(self):
         src = pt.rand(1, 4, self.mod_dim)
         mask = pt.zeros(4, 4)
         _, pad_mask = self.compressor._pad(src, mask)
         self.assertIs(pad_mask, mask)
 
-    # _pad with odd-length sequence
-
-    def test_pad_odd_no_mask_seq_shape(self):
+    def test_odd_no_mask_seq_shape(self):
         src = pt.rand(1, 5, self.mod_dim)
         padded, _ = self.compressor._pad(src, None)
         self.assertEqual(6, padded.size(-2))
 
-    def test_pad_odd_no_mask_first_token_prepended(self):
+    def test_odd_no_mask_first_token_prepended(self):
         src = pt.rand(1, 5, self.mod_dim)
         padded, _ = self.compressor._pad(src, None)
         pt.testing.assert_close(padded[..., 0, :], src[..., 0, :])
         pt.testing.assert_close(padded[..., 1:, :], src)
 
-    def test_pad_odd_no_mask_mask_is_none(self):
+    def test_odd_no_mask_mask_is_none(self):
         src = pt.rand(1, 5, self.mod_dim)
         _, pad_mask = self.compressor._pad(src, None)
         self.assertIsNone(pad_mask)
 
-    def test_pad_odd_with_mask_seq_shape(self):
+    def test_odd_with_mask_seq_shape(self):
         src = pt.rand(1, 5, self.mod_dim)
         padded, _ = self.compressor._pad(src, pt.zeros(5, 5))
         self.assertTupleEqual((1, 6, self.mod_dim), tuple(padded.shape))
 
-    def test_pad_odd_with_mask_mask_shape(self):
+    def test_odd_with_mask_mask_shape(self):
         src = pt.rand(1, 5, self.mod_dim)
         _, pad_mask = self.compressor._pad(src, pt.zeros(5, 5))
         self.assertTupleEqual((6, 6), tuple(pad_mask.shape))
 
-    def test_pad_odd_with_mask_first_row_prepended(self):
+    def test_odd_with_mask_first_row_prepended(self):
         src = pt.rand(1, 5, self.mod_dim)
         mask = pt.rand(5, 5)
         _, pad_mask = self.compressor._pad(src, mask)
         pt.testing.assert_close(pad_mask[0], pad_mask[1])
 
-    def test_pad_odd_with_mask_first_col_prepended(self):
+    def test_odd_with_mask_first_col_prepended(self):
         src = pt.rand(1, 5, self.mod_dim)
         mask = pt.rand(5, 5)
         _, pad_mask = self.compressor._pad(src, mask)
         pt.testing.assert_close(pad_mask[:, 0], pad_mask[:, 1])
 
-    # _shrink with a non-None mask
 
-    def test_shrink_with_mask_inp_not_none(self):
+class TestShrink(unittest.TestCase):
+
+    def setUp(self):
+        self.mod_dim = 16
+        self.n_heads = 2
+        self.context = 32
+        pos_enc = Sinusoidal(self.mod_dim, self.context)
+        attend = MultiheadedSelfAttention(
+            self.mod_dim, self.n_heads, pos_enc=pos_enc
+        )
+        forward = ActivatedBlock(self.mod_dim)
+        self.compressor = Compressor(
+            make_model(self.mod_dim, self.n_heads, self.context),
+            attend,
+            forward
+        )
+
+    def test_with_mask_inp_not_none(self):
         inp, _, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
         self.assertIsNotNone(inp)
 
-    def test_shrink_with_mask_shrunk_not_none(self):
+    def test_with_mask_shrunk_not_none(self):
         _, shrunk, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
         self.assertIsNotNone(shrunk)
 
-    def test_shrink_with_mask_out_not_none(self):
+    def test_with_mask_out_not_none(self):
         _, _, out = self.compressor._shrink(4, pt.zeros(4, 4), False)
         self.assertIsNotNone(out)
 
-    def test_shrink_with_mask_inp_shape(self):
+    def test_with_mask_inp_shape(self):
         inp, _, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
         self.assertTupleEqual((2, 4), tuple(inp.shape))
 
-    def test_shrink_with_mask_shrunk_shape(self):
+    def test_with_mask_shrunk_shape(self):
         _, shrunk, _ = self.compressor._shrink(4, pt.zeros(4, 4), False)
         self.assertTupleEqual((2, 2), tuple(shrunk.shape))
 
-    def test_shrink_with_mask_out_shape(self):
+    def test_with_mask_out_shape(self):
         _, _, out = self.compressor._shrink(4, pt.zeros(4, 4), False)
         self.assertTupleEqual((4, 2), tuple(out.shape))
 
-    # _shrink with is_causal=True and no mask
-
-    def test_shrink_causal_inp_not_none(self):
+    def test_causal_inp_not_none(self):
         inp, _, _ = self.compressor._shrink(4, None, True)
         self.assertIsNotNone(inp)
 
-    def test_shrink_causal_shrunk_is_none(self):
+    def test_causal_shrunk_is_none(self):
         _, shrunk, _ = self.compressor._shrink(4, None, True)
         self.assertIsNone(shrunk)
 
-    def test_shrink_causal_out_not_none(self):
+    def test_causal_out_not_none(self):
         _, _, out = self.compressor._shrink(4, None, True)
         self.assertIsNotNone(out)
 
-    def test_shrink_causal_inp_shape(self):
+    def test_causal_inp_shape(self):
         inp, _, _ = self.compressor._shrink(4, None, True)
         self.assertTupleEqual((2, 4), tuple(inp.shape))
 
-    def test_shrink_causal_out_shape(self):
+    def test_causal_out_shape(self):
         _, _, out = self.compressor._shrink(4, None, True)
         self.assertTupleEqual((4, 2), tuple(out.shape))
 
-    # _shrink with no mask and not causal
-
-    def test_shrink_not_causal_no_mask_inp_is_none(self):
+    def test_not_causal_no_mask_inp_is_none(self):
         inp, _, _ = self.compressor._shrink(4, None, False)
         self.assertIsNone(inp)
 
-    def test_shrink_not_causal_no_mask_shrunk_is_none(self):
+    def test_not_causal_no_mask_shrunk_is_none(self):
         _, shrunk, _ = self.compressor._shrink(4, None, False)
         self.assertIsNone(shrunk)
 
-    def test_shrink_not_causal_no_mask_out_is_none(self):
+    def test_not_causal_no_mask_out_is_none(self):
         _, _, out = self.compressor._shrink(4, None, False)
         self.assertIsNone(out)
 
@@ -774,7 +873,7 @@ class TestUsageNormFirst(unittest.TestCase):
         forward = ActivatedBlock(self.mod_dim)
         pos_enc = Sinusoidal(self.mod_dim, self.context)
         self.compressor = Compressor(
-            _make_model(self.mod_dim, self.n_heads, self.context),
+            make_model(self.mod_dim, self.n_heads, self.context),
             attend,
             forward,
             pos_enc
@@ -833,7 +932,10 @@ class TestUsageNormFirst(unittest.TestCase):
     def test_output_shape_2d(self):
         inp = pt.rand(self.context, self.mod_dim)
         out = self.compressor(inp)
-        self.assertTupleEqual((1, self.context, self.mod_dim), tuple(out.shape))
+        self.assertTupleEqual(
+            (1, self.context, self.mod_dim),
+            tuple(out.shape)
+        )
 
     def test_output_shape_3d_even(self):
         inp = pt.rand(8, self.context, self.mod_dim)
@@ -856,7 +958,7 @@ class TestUsageNormLast(unittest.TestCase):
         forward = ActivatedBlock(self.mod_dim)
         pos_enc = Sinusoidal(self.mod_dim, self.context)
         self.compressor = Compressor(
-            _make_model(self.mod_dim, self.n_heads, self.context),
+            make_model(self.mod_dim, self.n_heads, self.context),
             attend,
             forward,
             pos_enc,
@@ -911,7 +1013,10 @@ class TestUsageNormLast(unittest.TestCase):
     def test_output_shape_2d(self):
         inp = pt.rand(self.context, self.mod_dim)
         out = self.compressor(inp)
-        self.assertTupleEqual((1, self.context, self.mod_dim), tuple(out.shape))
+        self.assertTupleEqual(
+            (1, self.context, self.mod_dim),
+            tuple(out.shape)
+        )
 
     def test_output_shape_3d_even(self):
         inp = pt.rand(8, self.context, self.mod_dim)
