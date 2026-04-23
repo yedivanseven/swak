@@ -99,6 +99,7 @@ class Sinusoidal(PosEnc):
         encodings[:, :, 1::2] = pt.cos(angles)
         return encodings
 
+    # ToDo. Make forward accept an offset parameter. Test it!
     def forward(self, src: Tensor) -> Tensor:
         """Add sinusoidal positional encodings to a sequence of embeddings.
 

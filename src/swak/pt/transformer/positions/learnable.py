@@ -74,6 +74,7 @@ class Learnable(PosEnc):
         """Dtype of the learnable positional encodings."""
         return self.positional_encodings.dtype
 
+    # ToDo. Make forward accept an offset parameter. Test it!
     def forward(self, src: Tensor) -> Tensor:
         """Add learnable positional encodings to a sequence of embeddings.
 
