@@ -7,6 +7,7 @@ from ...types import Tensor, Attn, PosEnc
 from ...blocks import IdentityBlock
 
 
+# ToDo: Add GroupedQueryCrossAttention
 class GroupedQuerySelfAttention(Attn):
     """Grouped-query attention with optional (rotary) positional encoding.
 
@@ -250,13 +251,14 @@ class GroupedQuerySelfAttention(Attn):
             A fresh, new instance of itself.
 
         """
+        we_have_pos_enc = not isinstance(self.pos_enc, IdentityBlock)
         return self.__class__(
             self.mod_dim,
             self.n_heads,
             self.q_factor,
             self.bias,
             self.dropout,
-            self.pos_enc.new(),
+            self.pos_enc.new() if we_have_pos_enc else None,
             self.device,
             self.dtype
         )
