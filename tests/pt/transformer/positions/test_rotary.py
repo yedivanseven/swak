@@ -206,6 +206,17 @@ class TestUsage(unittest.TestCase):
         expected = self.n_heads, self.context - 5, self.head_dim
         self.assertTupleEqual(expected, actual.shape)
 
+    def test_3d_offset(self):
+        inp = pt.zeros(
+            self.n_heads,
+            self.context - 5,
+            self.head_dim,
+            device='cpu'
+        )
+        actual = self.pos_enc(inp, 3)
+        expected = self.n_heads, self.context - 5, self.head_dim
+        self.assertTupleEqual(expected, actual.shape)
+
     def test_4d(self):
         inp = pt.zeros(
             3,
@@ -227,6 +238,18 @@ class TestUsage(unittest.TestCase):
             device='cpu'
         )
         actual = self.pos_enc(inp)
+        expected = 3, self.n_heads, self.context - 6, self.head_dim
+        self.assertTupleEqual(expected, actual.shape)
+
+    def test_4d_offset(self):
+        inp = pt.zeros(
+            3,
+            self.n_heads,
+            self.context - 6,
+            self.head_dim,
+            device='cpu'
+        )
+        actual = self.pos_enc(inp, 4)
         expected = 3, self.n_heads, self.context - 6, self.head_dim
         self.assertTupleEqual(expected, actual.shape)
 
@@ -253,6 +276,19 @@ class TestUsage(unittest.TestCase):
             device='cpu'
         )
         actual = self.pos_enc(inp)
+        expected = 5, 3, self.n_heads, self.context - 6, self.head_dim
+        self.assertTupleEqual(expected, actual.shape)
+
+    def test_5d_offset(self):
+        inp = pt.zeros(
+            5,
+            3,
+            self.n_heads,
+            self.context - 6,
+            self.head_dim,
+            device='cpu'
+        )
+        actual = self.pos_enc(inp, 2)
         expected = 5, 3, self.n_heads, self.context - 6, self.head_dim
         self.assertTupleEqual(expected, actual.shape)
 

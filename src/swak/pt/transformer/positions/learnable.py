@@ -74,8 +74,7 @@ class Learnable(PosEnc):
         """Dtype of the learnable positional encodings."""
         return self.positional_encodings.dtype
 
-    # ToDo. Make forward accept an offset parameter. Test it!
-    def forward(self, src: Tensor) -> Tensor:
+    def forward(self, src: Tensor, offset: int = 0) -> Tensor:
         """Add learnable positional encodings to a sequence of embeddings.
 
         Parameters
@@ -83,6 +82,9 @@ class Learnable(PosEnc):
         src: Tensor
             Input sequence(s). Must be of dimensions (..., `S`, `mod_dim`),
             where the sequence length `S` must not exceed `context`.
+        offset: int, optional
+            Offset to add to the index of the positional encodings.
+            Defaults to 0.
 
         Returns
         -------
@@ -90,7 +92,8 @@ class Learnable(PosEnc):
             The input sequence(s) with positional encodings added.
 
         """
-        return src + self.positional_encodings[:, :src.size(-2), :]
+        window = slice(offset, offset + src.size(-2))
+        return src + self.positional_encodings[:, window, :]
 
     def reset_parameters(self) -> None:
         """Re-initialize the learnable positional encodings."""
