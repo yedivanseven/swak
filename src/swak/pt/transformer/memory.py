@@ -5,6 +5,7 @@ from torch.nn import LayerNorm, RMSNorm
 from ..types import Block, Tensor
 
 
+# ToDo: Make Hierarchical Training loop
 # ToDo: Add Memorizer
 # ToDo: Add docstrings and unit tests
 class MemorizerLayer(Block):
