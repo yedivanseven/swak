@@ -99,8 +99,7 @@ class Sinusoidal(PosEnc):
         encodings[:, :, 1::2] = pt.cos(angles)
         return encodings
 
-    # ToDo. Make forward accept an offset parameter. Test it!
-    def forward(self, src: Tensor) -> Tensor:
+    def forward(self, src: Tensor, offset: int = 0) -> Tensor:
         """Add sinusoidal positional encodings to a sequence of embeddings.
 
         Parameters
@@ -108,6 +107,9 @@ class Sinusoidal(PosEnc):
         src: Tensor
             Input sequence(s). Must be of dimensions (..., `S`, `mod_dim`),
             where the sequence length `S` must not exceed `context`.
+        offset: int, optional
+            Offset to add to the index of the positional encodings.
+            Defaults to 0.
 
         Returns
         -------
@@ -115,7 +117,8 @@ class Sinusoidal(PosEnc):
             The input sequence(s) with sinusoidal positional encodings added.
 
         """
-        return src + self.positional_encodings[:, :src.size(-2), :]
+        window = slice(offset, offset + src.size(-2))
+        return src + self.positional_encodings[:, window, :]
 
     def reset_parameters(self) -> None:
         """Does nothing because there are no internal parameters to reset."""

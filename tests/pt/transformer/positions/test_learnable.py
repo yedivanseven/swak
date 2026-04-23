@@ -129,6 +129,11 @@ class TestUsage(unittest.TestCase):
         actual = self.pos_enc(inp)
         pt.testing.assert_close(actual, self.tensor[:, :-4, :])
 
+    def test_2d_offset(self):
+        inp = pt.zeros(self.context - 4, self.mod_dim, device='cpu')
+        actual = self.pos_enc(inp, 2)
+        pt.testing.assert_close(actual, self.tensor[:, 2:-2, :])
+
     def test_3d(self):
         inp = pt.zeros(1, self.context, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
@@ -139,6 +144,11 @@ class TestUsage(unittest.TestCase):
         actual = self.pos_enc(inp)
         pt.testing.assert_close(actual, self.tensor[:, :-5, :])
 
+    def test_3d_offset(self):
+        inp = pt.zeros(1, self.context - 5, self.mod_dim, device='cpu')
+        actual = self.pos_enc(inp, 3)
+        pt.testing.assert_close(actual, self.tensor[:, 3:-2, :])
+
     def test_4d(self):
         inp = pt.zeros(3, 1, self.context, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
@@ -148,6 +158,11 @@ class TestUsage(unittest.TestCase):
         inp = pt.zeros(3, 1, self.context - 6, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
         pt.testing.assert_close(actual[0], self.tensor[:, :-6, :])
+
+    def test_4d_offset(self):
+        inp = pt.zeros(3, 1, self.context - 6, self.mod_dim, device='cpu')
+        actual = self.pos_enc(inp, 4)
+        pt.testing.assert_close(actual[0], self.tensor[:, 4:-2, :])
 
     def test_too_long_raises(self):
         inp = pt.zeros(3, 1, self.context + 1, self.mod_dim, device='cpu')

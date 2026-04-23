@@ -133,6 +133,14 @@ class TestUsage(unittest.TestCase):
             self.pos_enc.positional_encodings[:, :-4, :]
         )
 
+    def test_2d_offset(self):
+        inp = pt.zeros(self.context - 4, self.mod_dim, device='cpu')
+        actual = self.pos_enc(inp, 2)
+        pt.testing.assert_close(
+            actual,
+            self.pos_enc.positional_encodings[:, 2:-2, :]
+        )
+
     def test_3d(self):
         inp = pt.zeros(1, self.context, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
@@ -146,6 +154,14 @@ class TestUsage(unittest.TestCase):
             self.pos_enc.positional_encodings[:, :-5, :]
         )
 
+    def test_3d_offset(self):
+        inp = pt.zeros(1, self.context - 5, self.mod_dim, device='cpu')
+        actual = self.pos_enc(inp, 3)
+        pt.testing.assert_close(
+            actual,
+            self.pos_enc.positional_encodings[:, 3:-2, :]
+        )
+
     def test_4d(self):
         inp = pt.zeros(3, 1, self.context, self.mod_dim, device='cpu')
         actual = self.pos_enc(inp)
@@ -157,6 +173,14 @@ class TestUsage(unittest.TestCase):
         pt.testing.assert_close(
             actual[0],
             self.pos_enc.positional_encodings[:, :-6, :]
+        )
+
+    def test_4d_offset(self):
+        inp = pt.zeros(3, 1, self.context - 6, self.mod_dim, device='cpu')
+        actual = self.pos_enc(inp, 4)
+        pt.testing.assert_close(
+            actual[0],
+            self.pos_enc.positional_encodings[:, 4:-2, :]
         )
 
     def test_too_long_raises(self):

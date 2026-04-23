@@ -129,8 +129,7 @@ class Rotary(PosEnc):
         encodings[..., 1] = pt.sin(angles)
         return encodings
 
-    # ToDo. Make forward accept an unused offset parameter. Test it!
-    def forward(self, src: Tensor) -> Tensor:
+    def forward(self, src: Tensor, offset: int = 0) -> Tensor:
         """Apply rotary positional encodings across all heads of the input.
 
         Parameters
@@ -140,6 +139,8 @@ class Rotary(PosEnc):
             (..., `n_heads`, `S`, `head_dim`), where the sequence length `S`
             must not exceed `context` and `head_dim` is the `mod_dim` divided
             by `n_heads`.
+        offset: int, optional
+            Unused. Only for purposes of API compatibility.
 
         Returns
         -------
