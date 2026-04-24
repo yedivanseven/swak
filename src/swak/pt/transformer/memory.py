@@ -125,7 +125,7 @@ class MemorizerLayer(Block):
     def dtype(self) -> pt.dtype:
         return self.extract_update.in_proj_weight.dtype
 
-    def forward(self, src: Tensor, src_mask: Tensor | None = None, *_) -> None:
+    def _update(self, src: Tensor, src_mask: Tensor | None) -> Tensor:
         normed_last_seqs = self.norm_update(self.last_seqs)
         memory_update, _ = self.extract_update(
             self.compress.expand(self.batch_size, -1, -1),
@@ -144,21 +144,30 @@ class MemorizerLayer(Block):
         self.memory.copy_(normed_memory.detach())
         self.last_seqs = src.clone()
         self.last_mask = src_mask
+        return normed_memory
 
+    def forward(
+            self,
+            src: Tensor,
+            src_mask: Tensor | None = None,
+            update: bool = True
+    ) -> Tensor:
+        # Update at first inference call, then generate answer without
+        memory = self._update(src, src_mask) if update else self.memory
         if self.norm_first:
             normed = self.norm_src(src)
             attended, _ = self.attend_to_memory(
                 normed,
-                normed_memory,
-                normed_memory,
+                memory,
+                memory,
                 need_weights=False
             )
             return src + self.drop(attended)
         else:
             attended, _ = self.attend_to_memory(
                 src,
-                normed_memory,
-                normed_memory,
+                memory,
+                memory,
                 need_weights=False
             )
             return self.norm_src(src + self.drop(attended))
