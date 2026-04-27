@@ -5,13 +5,26 @@ import torch.nn as ptn
 from ..types import Tensor, PosEnc, Trafo
 from ..blocks import IdentityBlock
 from .layer import EncoderLayer
+from .memory import MemoryLayer
 
 
-class Encoder(Trafo):
-    """Flexible transformer encoder.
+# ToDo: Make Hierarchical Training loop
+# ToDo. Add unit tests
+class Memorizer(Trafo):
+    """Transformer encoder stack with built-in, learnable memory.
+
+    During training, an outer loop must provides a batche of long sequences
+    and an inner loop must feed chunks of these sequences to this ``Module``
+    with ``update=True``. Before each fresh batch, the :meth:`forget` method
+    must be called to reset the memory. During inference, use ``update=True``
+    on the first call, then autoregressively generate tokens one at a time
+    with ``update=False``. Return the model answer to the user, and pass
+    that answer together the user's new request again with ``update=True``.
 
     Parameters
     ----------
+    memory: MemoryLayer
+        A suitably parameterized instance of :class:`MemoryLayer`
     layer: EncoderLayer
         A suitably parameterized instance of :class:`EncoderLayer`.
     n_layers: int, optional
@@ -51,6 +64,7 @@ class Encoder(Trafo):
 
     See Also
     --------
+    MemoryLayer
     EncoderLayer
     Sinusoidal
     Learnable
@@ -59,6 +73,7 @@ class Encoder(Trafo):
 
     def __init__(
             self,
+            memory: MemoryLayer,
             layer: EncoderLayer,
             n_layers: int = 1,
             pos_enc: PosEnc | None = None,
@@ -68,6 +83,10 @@ class Encoder(Trafo):
     ) -> None:
         super().__init__()
         self.n_layers = self.__valid(n_layers)
+        self.memories = ptn.ModuleList([
+            memory.new().to(device=device, dtype=dtype)
+            for _ in range(self.n_layers)
+        ])
         self.layers = ptn.ModuleList([
             layer.new().to(device=device, dtype=dtype)
             for _ in range(self.n_layers)
@@ -76,6 +95,7 @@ class Encoder(Trafo):
         self.pos_enc = self.__check(pos_enc).to(device=device, dtype=dtype)
         self.dropout = dropout
         self.drop = ptn.Dropout(dropout)
+        self.__offset = 1
 
     @staticmethod
     def __valid(n_layers: int) -> int:
@@ -127,6 +147,11 @@ class Encoder(Trafo):
             self.layers[0].has_pos_enc or
             not isinstance(self.pos_enc, IdentityBlock)
         )
+
+    @property
+    def offset(self) -> int:
+        """The number of tokens processed so far."""
+        return self.__offset
 
     @staticmethod
     def merge_masks(
@@ -183,9 +208,10 @@ class Encoder(Trafo):
             src: Tensor,
             attn_mask: Tensor | None = None,
             src_mask: Tensor | None = None,
-            is_causal: bool = True
+            is_causal: bool = True,
+            update: bool = True
     ) -> Tensor:
-        """Forward pass through the transformer encoder with optional masking.
+        """Forward pass through the remembering transformer encoder.
 
         Parameters
         ----------
@@ -213,6 +239,11 @@ class Encoder(Trafo):
             html#torch.nn.Transformer.generate_square_subsequent_mask>`_) and
             both `attn_mask` and `src_mask` are ignored.
             Defaults to ``True``.
+        update: bool, optional
+            Whether to update the memory in the forward pass. During training,
+            for passing generated answers and user requests, this should be
+            ``True``, which is the default. Set to ``False``only when
+            autoregressively gerenating tokens one by one..
 
         Returns
         -------
@@ -225,15 +256,31 @@ class Encoder(Trafo):
 
         """
         mask = self.merge_masks(attn_mask, src_mask, is_causal)
-        out = self.drop(self.pos_enc(src))
-        for layer in self.layers:
-            out = layer(out, mask, is_causal)
+        out = self.drop(self.pos_enc(src, self.offset))
+        for layer in range(self.n_layers):
+            out = self.memories[layer](out, src_mask, update)
+            out = self.layers[layer](out, mask, is_causal)
+        self.__offset += out.size(dim=-2)
         return out
+
+    def forget(self, batch_size: int | None = None) -> None:
+        """Forget and re-initialize the memory in all layers.
+
+        Parameters
+        ----------
+        batch_size: int, optional
+            The batch size for the next (long) sequences to process.
+
+        """
+        for memory in self.memories:
+            memory.forget(batch_size)
+        self.__offset = 1
 
     def reset_parameters(self) -> None:
         """Reset all learnable parameters in all components of the model."""
-        for layer in self.layers:
-            layer.reset_parameters()
+        for layer in range(self.n_layers):
+            self.memories[layer].reset_parameters()
+            self.layers[layer].reset_parameters()
         self.pos_enc.reset_parameters()
 
     def new(self) -> Self:
@@ -247,6 +294,7 @@ class Encoder(Trafo):
         """
         we_have_pos_enc = not isinstance(self.pos_enc, IdentityBlock)
         return self.__class__(
+            self.memories[0],
             self.layers[0],
             self.n_layers,
             self.pos_enc.new() if we_have_pos_enc else None,

@@ -6,8 +6,6 @@ from torch.nn import LayerNorm, RMSNorm
 from ..types import Tensor, Block, PosEnc, Trafo, Attn
 from ..blocks import IdentityBlock
 
-__all__ = ['EncoderLayer']
-
 
 class EncoderLayer(Trafo):
     """Encoder layer (i.e., self-attention only) to use in a transformer.
