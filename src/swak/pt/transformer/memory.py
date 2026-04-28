@@ -10,10 +10,10 @@ class MemoryLayer(Block):
     """Encoder sub-layer that maintains a fixed-size, learnable memory.
 
     Incoming token sequences are enriched by cross-attending to a compressed
-    summary of all previously seen chunks. Three attention operations govern
-    the memory lifecycle: extracting an update signal from the previous chunk,
-    folding that signal into the current memory, and letting the current input
-    read from the updated memory.
+    summary of all previously seen chunks. Two attention operations govern
+    the memory lifecycle: (1) extracting an update signal from the previous
+    chunk and folding that signal into the current memory, and (2) letting the
+    current input read from the updated memory.
 
     Parameters
     ----------
@@ -21,7 +21,7 @@ class MemoryLayer(Block):
         The model dimension. Inputs are expected to be of that size in their
         last dimension.
     n_heads: int, optional
-        Number of attention heads in each of the three attention operations.
+        Number of attention heads in each of the two attention operations.
         Defaults to 1.
     bias: bool, optional
         Whether to use bias in the attention projections.
@@ -98,24 +98,8 @@ class MemoryLayer(Block):
         )
         ptn.init.xavier_uniform_(memory)
         self.register_buffer('memory', memory)
-        compress = pt.empty(
-            1,
-            mem_size,
-            mod_dim,
-            device=device,
-            dtype=dtype
-        )
-        ptn.init.xavier_uniform_(compress)
-        self.compress = ptn.Parameter(compress)
-        self.extract_update = ptn.MultiheadAttention(
-            embed_dim=mod_dim,
-            num_heads=n_heads,
-            dropout=dropout,
-            bias=bias,
-            batch_first=True,
-            device=device,
-            dtype=dtype
-        )
+        memory_mask = pt.zeros(1, mem_size, device=device, dtype=dtype)
+        self.register_buffer('memory_mask', memory_mask)
         self.update_memory = ptn.MultiheadAttention(
             embed_dim=mod_dim,
             num_heads=n_heads,
@@ -158,27 +142,28 @@ class MemoryLayer(Block):
     @property
     def device(self) -> pt.device:
         """The device all weights, biases, activations, etc. reside on."""
-        return self.extract_update.in_proj_weight.device
+        return self.update_memory.in_proj_weight.device
 
     @property
     def dtype(self) -> pt.dtype:
         """The dtype of all weights, biases, activations, and parameters."""
-        return self.extract_update.in_proj_weight.dtype
+        return self.update_memory.in_proj_weight.dtype
 
     def _update(self, src: Tensor, src_mask: Tensor | None) -> Tensor:
         """Update memory with previous chunk and store current one for next."""
-        memory_update, _ = self.extract_update(
-            self.compress.expand(self.batch_size, -1, -1),
-            self.last_seqs,
-            self.last_seqs,
-            key_padding_mask=self.last_mask,
-            need_weights=False
-        )
-        combined_memory = pt.concat([self.memory, memory_update], dim=-2)
+        combined_memory = pt.concat([self.memory, self.last_seqs], dim=-2)
+        if self.last_mask is None:
+            combined_mask = None
+        else:
+            combined_mask = pt.concat([
+                self.memory_mask.expand(self.batch_size, -1),
+                self.last_mask,
+            ], dim=-1)
         updated_memory, _ = self.update_memory(
             self.memory,
             combined_memory,
             combined_memory,
+            key_padding_mask=combined_mask,
             need_weights=False
         )
         normed_memory = self.norm_memory(updated_memory)
@@ -199,10 +184,11 @@ class MemoryLayer(Block):
         ----------
         src: Tensor
             Input sequence(s) of token embeddings with dimensions
-            (..., `S`, `D`), with sequence length `S` and model dimension `D`.
+            (`B`, `S`, `D`), with batch size `B`, sequence length `S`,
+            and model dimension `D`.
         src_mask: Tensor, optional
             Floating-point padding mask with a shape broadcastable to
-            (..., `S`). A value of 0.0 indicates that a token *should* be
+            (`B`, `S`). A value of 0.0 indicates that a token *should* be
             attended to and ``"-inf"`` that it should *not*. Stored alongside
             `src` for use in the next :meth:`forward` call.
             Defaults to ``None``.
@@ -306,8 +292,6 @@ class MemoryLayer(Block):
         self.last_seqs[:, :, 1::2] = 1.0
         self.last_mask = None
         ptn.init.xavier_uniform_(self.memory)
-        ptn.init.xavier_uniform_(self.compress)
-        self.extract_update._reset_parameters()
         self.update_memory._reset_parameters()
         self.attend_to_memory._reset_parameters()
         self.norm_src.reset_parameters()
