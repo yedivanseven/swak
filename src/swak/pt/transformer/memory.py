@@ -134,13 +134,6 @@ class MemoryLayer(Block):
             device=device,
             dtype=dtype
         )
-        self.norm_update = norm_cls(
-            mod_dim,
-            *args,
-            device=device,
-            dtype=dtype,
-            **kwargs
-        )
         self.norm_src = norm_cls(
             mod_dim,
             *args,
@@ -174,18 +167,18 @@ class MemoryLayer(Block):
 
     def _update(self, src: Tensor, src_mask: Tensor | None) -> Tensor:
         """Update memory with previous chunk and store current one for next."""
-        normed_last_seqs = self.norm_update(self.last_seqs)
         memory_update, _ = self.extract_update(
             self.compress.expand(self.batch_size, -1, -1),
-            normed_last_seqs,
-            normed_last_seqs,
+            self.last_seqs,
+            self.last_seqs,
             key_padding_mask=self.last_mask,
             need_weights=False
         )
+        combined_memory = pt.concat([self.memory, memory_update], dim=-2)
         updated_memory, _ = self.update_memory(
             self.memory,
-            memory_update,
-            memory_update,
+            combined_memory,
+            combined_memory,
             need_weights=False
         )
         normed_memory = self.norm_memory(updated_memory)
@@ -226,11 +219,9 @@ class MemoryLayer(Block):
             shape as `src`.
 
         """
-
-        # Update at first inference call, then generate answer without
-        memory = self._update(src, src_mask) if update else self.memory
         if self.norm_first:
             normed = self.norm_src(src)
+            memory = self._update(normed, src_mask) if update else self.memory
             attended, _ = self.attend_to_memory(
                 normed,
                 memory,
@@ -239,6 +230,7 @@ class MemoryLayer(Block):
             )
             return src + self.drop(attended)
         else:
+            memory = self._update(src, src_mask) if update else self.memory
             attended, _ = self.attend_to_memory(
                 src,
                 memory,
@@ -318,6 +310,5 @@ class MemoryLayer(Block):
         self.extract_update._reset_parameters()
         self.update_memory._reset_parameters()
         self.attend_to_memory._reset_parameters()
-        self.norm_update.reset_parameters()
         self.norm_src.reset_parameters()
         self.norm_memory.reset_parameters()
