@@ -13,7 +13,7 @@ from .memory import MemoryLayer
 class Memorizer(Trafo):
     """Transformer encoder stack with built-in, learnable memory.
 
-    During training, an outer loop must provides a batche of long sequences
+    During training, an outer loop must provides a batch of long sequences
     and an inner loop must feed chunks of these sequences to this ``Module``
     with ``update=True``. Before each fresh batch, the :meth:`forget` method
     must be called to reset the memory. During inference, use ``update=True``
