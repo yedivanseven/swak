@@ -15,20 +15,48 @@ class TestAttributes(unittest.TestCase):
         e = EnvParser()
         self.assertIsInstance(e.prefix, str)
 
+    def test_default_prefix_value(self):
+        e = EnvParser()
+        self.assertEqual('', e.prefix)
+
+    def test_default_has_nest(self):
+        e = EnvParser()
+        self.assertTrue(hasattr(e, 'nest'))
+
+    def test_default_nest_type(self):
+        e = EnvParser()
+        self.assertIsInstance(e.nest, bool)
+
+    def test_default_nest_value(self):
+        e = EnvParser()
+        self.assertTrue(e.nest)
+
     def test_custom_instantiation(self):
-        _ = EnvParser('PRE_')
+        _ = EnvParser('PRE_', False)
 
     def test_custom_has_prefix(self):
-        e = EnvParser('PRE_')
+        e = EnvParser('PRE_', False)
         self.assertTrue(hasattr(e, 'prefix'))
 
     def test_custom_prefix_type(self):
-        e = EnvParser('PRE_')
+        e = EnvParser('PRE_', False)
         self.assertIsInstance(e.prefix, str)
 
     def test_custom_prefix_value(self):
-        e = EnvParser('PRE_')
+        e = EnvParser('PRE_', False)
         self.assertEqual('PRE_', e.prefix)
+
+    def test_custom_has_nest(self):
+        e = EnvParser('PRE_', False)
+        self.assertTrue(hasattr(e, 'nest'))
+
+    def test_custom_nest_type(self):
+        e = EnvParser('PRE_', False)
+        self.assertIsInstance(e.nest, bool)
+
+    def test_custom_nest_value(self):
+        e = EnvParser('PRE_', False)
+        self.assertFalse(e.nest)
 
     def test_custom_prefix_stripped(self):
         e = EnvParser(' PRE_  ')
@@ -145,16 +173,38 @@ class TestParse(unittest.TestCase):
         actual = self.parse(inp)
         self.assertEqual('2023-01-13 13:26:45.123+01:00', actual['FOO'])
 
+    def test_nesting(self):
+        inp = {'FOO__BAR': '42'}
+        actual = self.parse(inp)
+        self.assertDictEqual({'FOO.BAR': 42}, actual)
+
+    def test_triple_underscore_nesting(self):
+        inp = {'FOO___BAR': '42'}
+        actual = self.parse(inp)
+        self.assertDictEqual({'FOO._BAR': 42}, actual)
+
+    def test_no_nesting(self):
+        parse = EnvParser(nest=False)
+        inp = {'FOO__BAR': '42'}
+        actual = parse(inp)
+        self.assertDictEqual({'FOO__BAR': 42}, actual)
+
+    def test_prefix_nesting(self):
+        parse = EnvParser('PREFIX__')
+        inp = {'PREFIX__FOO__BAR': '42'}
+        actual = parse(inp)
+        self.assertDictEqual({'FOO.BAR': 42}, actual)
+
 
 class TestMisc(unittest.TestCase):
 
     def test_repr_default(self):
         parser = EnvParser()
-        self.assertEqual("EnvParser('')", repr(parser))
+        self.assertEqual("EnvParser('', True)", repr(parser))
 
     def test_repr_prefix(self):
-        parser = EnvParser('PREFIX_')
-        self.assertEqual("EnvParser('PREFIX_')", repr(parser))
+        parser = EnvParser('PREFIX_', False)
+        self.assertEqual("EnvParser('PREFIX_', False)", repr(parser))
 
 
 if __name__ == '__main__':

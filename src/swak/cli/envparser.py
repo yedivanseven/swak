@@ -21,12 +21,27 @@ class EnvParser(ArgRepr):
     prefix: str, optional
         Prefix of environment variables that would otherwise be shadowed
         by existing ones. Defaults to empty string.
+    nest: bool, optional
+        If left at ``True`` (the default) then, after prefix removal, double
+        underscores in the environment-variable names will be replaced by a
+        dot ("."), indicating a nested value for use in :class:`JsonObject`.
+
+    Note
+    ----
+    To capture environment variables like, for example, "PREFIX_VALUE", the
+    `prefix` to set must explicitly include the trailing underscore, that is,
+    it should be set with ``prefix="PREFIX_"``.
+
+    See Also
+    --------
+    ~swak.jsonobject.JsonObject
 
     """
 
-    def __init__(self, prefix: str = '') -> None:
-        super().__init__(prefix)
+    def __init__(self, prefix: str = '', nest: bool = True) -> None:
+        super().__init__(prefix, nest)
         self.prefix = prefix.strip()
+        self.nest = nest
 
     def __call__(self, env: dict[str, str] | None = None) -> dict[str, Any]:
         """Parse the OS environment, resolving potentially prefixed variables.
@@ -52,10 +67,13 @@ class EnvParser(ArgRepr):
             else:
                 original[key] = env[key]
         merged = original | prefixed
-        return {key: self.__parsed(value) for key, value in merged.items()}
+        return {
+            key.replace('__', '.') if self.nest else key: self.__parse(value)
+            for key, value in merged.items()
+        }
 
     @staticmethod
-    def __parsed(value: str) -> Any:
+    def __parse(value: str) -> Any:
         """Try to parse (string) environment variables into python objects."""
         try:
             parsed = json.loads(value)
