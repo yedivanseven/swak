@@ -28,6 +28,7 @@ from .sum import Sum
 from .fallback import Fallback
 from .safe import Safe
 from .exceptions import SafeError
+from .side_effect import SideEffect
 from .misc import apply, unit, identity, to_list
 
 __all__ = [
@@ -44,6 +45,7 @@ __all__ = [
     'Fallback',
     'Safe',
     'SafeError',
+    'SideEffect',
     'apply',
     'unit',
     'identity',

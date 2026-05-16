@@ -123,7 +123,7 @@ class Pipe[**P, T](IndentRepr):
                 name = self._name(call)
                 fmt = msg.format(err_cls, name, i, self, error)
                 raise PipeError(fmt) from error
-        return  args[0] if isinstance(args, tuple) and len(args) == 1 else args
+        return args[0] if isinstance(args, tuple) and len(args) == 1 else args
 
     @staticmethod
     def __valid(calls: Call | Iterable[Call]) -> tuple[Call, ...]:

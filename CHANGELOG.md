@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - parsed env variables optionally have double underscores replaced by dot
+- explicit side effect in funcflow
 
 
 ## [1.0.4] - 2026-04-23

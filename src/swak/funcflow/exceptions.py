@@ -38,6 +38,10 @@ class FallbackErrors(ExceptionGroup):
     pass
 
 
+class SideEffectError(Exception):
+    pass
+
+
 class SafeError(Exception):
     """Special exception to wrap other exceptions.
 

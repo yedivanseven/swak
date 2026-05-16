@@ -2,7 +2,7 @@ import sys
 import json
 from json import JSONDecodeError
 from ast import literal_eval
-from argparse import ArgumentParser, RawTextHelpFormatter
+from argparse import ArgumentParser, RawTextHelpFormatter, HelpFormatter
 from typing import Any
 from itertools import takewhile, dropwhile, chain
 from .exceptions import ArgParseError
@@ -45,7 +45,7 @@ class ArgParser:
         Program description.
     epilog: str, optional
         Text displayed after the help on command-line options.
-    fmt_cls: type, optional
+    fmt_cls: HelpFormatter, optional
         Option passed on to the underlying ``argparse.ArgumentParser``.
         Defaults to ``argparse.RawTextHelpFormatter``
 
@@ -57,7 +57,7 @@ class ArgParser:
             usage: str = USAGE,
             description: str = DESCRIPTION,
             epilog: str = EPILOG,
-            fmt_cls: type = RawTextHelpFormatter
+            fmt_cls: type[HelpFormatter] = RawTextHelpFormatter
     ) -> None:
         self.default_action = default_action
         self.usage = usage
@@ -112,7 +112,6 @@ class ArgParser:
             actions = self.default_action,
         # Either way, replace dashes with underscores
         actions = (action.lower().replace('-', '_') for action in actions)
-
         # Everything after the action(s) are options (starting with "--").
         args = dropwhile(lambda arg: not arg.startswith('--'), args)
         # In case options are given as "--key=value", we split.
