@@ -42,7 +42,7 @@ class FeatureEmbedder(Bag):
     def __init__(self,
             num: NumericalEmbedder,
             cat: CategoricalEmbedder,
-            device: pt.device = 'cpu',
+            device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float,
     ) -> None:
         super().__init__()

@@ -101,7 +101,7 @@ class Compressor(Trafo):
             norm_first: bool = True,
             norm_cls: type[LayerNorm | RMSNorm] = LayerNorm,
             *args: Any,
-            device: pt.device = 'cpu',
+            device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float,
             **kwargs: Any
     ) -> None:

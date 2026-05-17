@@ -63,7 +63,7 @@ class Encoder(Trafo):
             n_layers: int = 1,
             pos_enc: PosEnc | None = None,
             dropout: float = 0.0,
-            device: pt.device = 'cpu',
+            device: pt.device | str = 'cpu',
             dtype: pt.dtype = pt.float
     ) -> None:
         super().__init__()
