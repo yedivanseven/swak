@@ -7,10 +7,10 @@ class SideEffect[*Ts](ArgRepr):
     """Route call arguments into and past a side effect.
 
     Instances of this class are callable with any number of arguments
-    (including no arguments), but must be called with exact number (and
+    (including no arguments), but must be called with the exact number (and
     types) that the wrapped side effect expects. Arguments will be forwarded
     to the side effect and routed past it to be returned. The types of the
-    arguments can be made explicit by type annotating the class.
+    arguments can be made explicit by type-annotating the class.
 
     Parameters
     ----------
