@@ -18,7 +18,7 @@ class TestDataBase(ABC):
 
     @abstractmethod
     def sample(self, batch_size: int, max_n: int | None = None) -> Batches:
-        """Interator over batches from a reproducible sample of your data.
+        """Iterator over batches from a reproducible sample of your data.
 
         Needed to consistently evaluate (and report) the train and/or test
         error after every epoch of training. Every time `sample` is called with
@@ -40,18 +40,20 @@ class TestDataBase(ABC):
 
         Returns
         -------
-        tuple
-            A tuple of input tensors to call your model with.
-        Tensor
-            The matching target values. Must have the same dimensions and sizes
-            as the output of your model.
+        iterator
+            One element yielded by the iterator is a 2-tuple. The first element
+            is again a tuple, containing the input tensor(s) to call your model
+            with. The second element of the tuple is a single tensor with
+            the matching target values. It must have the same dimensions and
+            sizes as the output of your model.
 
         Important
         ---------
-        Even if your model only takes a single tensor as input, this method
-        must return a tuple to cover the general case of your model taking
-        more than one tensor as input. If this is not the case, simple return
-        a 1-tuple of tensors.
+        Even if your model only takes a single tensor as input, the first
+        elements of the 2-tuples in the iterator returned by this method
+        must be a tuple to cover the general case of your model taking
+        more than one tensor as input. So, if this is the case, simply
+        return a 1-tuple of input tensors.
 
         """
         ...
@@ -176,8 +178,8 @@ class TrainDataBase(TestDataBase):
         Even if your model only takes a single tensor as input, the first
         element of one tuple yielded by the returned iterator must always be a
         tuple of tensors to cover the general case of your model taking more
-        than one tensor as input. If this is not the case, simple make that a
-        1-tuple of tensors!
+        than one tensor as input. So, if this is the case, simply return a
+        1-tuple of input tensors.
 
         """
         ...
