@@ -214,7 +214,7 @@ class Trainer(ArgRepr):
         Returns
         -------
         Module
-            The trained Pytorch model.
+            The trained PyTorch model.
 
         Raises
         ------
@@ -267,7 +267,7 @@ class Trainer(ArgRepr):
         Returns
         -------
         Module
-            The trained Pytorch model.
+            The trained PyTorch model.
 
         Note
         ----
