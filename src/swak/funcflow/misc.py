@@ -44,7 +44,7 @@ def identity[T](arg: T) -> T:
 
 
 @overload
-def identity[T, *Ts](arg: T, *args: *Ts) -> tuple[T, *Ts]:
+def identity[*Ts](*args: *Ts) -> tuple[*Ts]:
     ...
 
 
