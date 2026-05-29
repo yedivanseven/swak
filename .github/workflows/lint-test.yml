@@ -23,8 +23,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install ruff
         run: pip install ruff
-      - name: Run ruff
+      - name: Lint src
         run: ruff check src --verbose
+      - name: Lint tests
+        run: ruff check tests --verbose
 
   test:
     name: Unittest

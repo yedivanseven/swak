@@ -481,7 +481,7 @@ class JsonObject(metaclass=SchemaMeta):
         errors = []
 
         # Iterate over the fields in the schema
-        for item, type_cast in self.__annotations__.items():
+        for item, type_cast in self.__class__.__annotations__.items():
             try:
                 value = mapping[item]
             except KeyError:
