@@ -228,7 +228,7 @@ class JsonObject(metaclass=SchemaMeta):
 
     See Also
     --------
-    fields.Maybe
+    ~fields.Maybe
 
     """
 
