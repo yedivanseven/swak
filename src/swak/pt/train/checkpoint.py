@@ -45,6 +45,15 @@ class Checkpoint(ArgRepr):
     storage_kws: dict, optional
         Passed as keyword arguments to the fsspec file-system constructor.
 
+    Raises
+    ------
+    TypeError
+        If `path` is not a string or `chunk_size` is not a float.
+    ValueError
+        If `storage` is not among the currently supported file-system
+        schemes, the `chunk_size` is smaller than 1 (MiB), or if `path`
+        points to a file directly under the root dictionary.
+
     See Also
     --------
     ~swak.io.Storage
