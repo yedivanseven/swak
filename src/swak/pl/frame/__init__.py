@@ -12,6 +12,7 @@ from .drop_nulls import DropNulls
 from .rename import Rename
 from .pivot import Pivot
 from .vstack import VStack
+from .unique import Unique
 
 __all__ = [
     'Select',
@@ -27,5 +28,6 @@ __all__ = [
     'DropNulls',
     'Rename',
     'Pivot',
-    'VStack'
+    'VStack',
+    'Unique'
 ]

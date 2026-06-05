@@ -22,7 +22,8 @@ from .frame import (
     Rename,
     DropNulls,
     Pivot,
-    VStack
+    VStack,
+    Unique
 )
 
 __all__ = [
@@ -41,5 +42,6 @@ __all__ = [
     'Rename',
     'DropNulls',
     'Pivot',
-    'VStack'
+    'VStack',
+    'Unique'
 ]
