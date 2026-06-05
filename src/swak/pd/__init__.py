@@ -28,6 +28,7 @@ from .asfreq import AsFreq
 from .copy import Copy
 from .explode import Explode
 from .fillna import FillNA
+from .drop_duplicates import DropDuplicates
 
 __all__ = [
     'AsType',
@@ -51,5 +52,6 @@ __all__ = [
     'AsFreq',
     'Copy',
     'Explode',
-    'FillNA'
+    'FillNA',
+    'DropDuplicates'
 ]
