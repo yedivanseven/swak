@@ -43,8 +43,8 @@ class Sum[S, T](ArgRepr):
             try:
                 acc = acc + element
             except Exception as error:
-                msg = 'Error adding element #{}:\n{}\n{}:\n{}'
+                msg = '{} adding element #{}:\n{}'
                 err_cls = error.__class__.__name__
-                fmt = msg.format(i + offset, element, err_cls, error)
+                fmt = msg.format(err_cls, i + offset, error)
                 raise SumError(fmt) from error
         return acc

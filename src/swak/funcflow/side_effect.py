@@ -1,9 +1,10 @@
+from typing import overload
 from collections.abc import Callable
 from ..misc import ArgRepr
 from .exceptions import SideEffectError
 
 
-class SideEffect[*Ts](ArgRepr):
+class SideEffect(ArgRepr):
     """Route call arguments into and past a side effect.
 
     Instances of this class are callable with any number of arguments
@@ -19,11 +20,23 @@ class SideEffect[*Ts](ArgRepr):
 
     """
 
-    def __init__(self, call: Callable[[*Ts], None]) -> None:
+    def __init__(self, call: Callable[..., None | tuple[()]]) -> None:
         super().__init__(call)
         self.call = call
 
-    def __call__(self, *args: *Ts) -> tuple[*Ts]:
+    @overload
+    def __call__(self) -> tuple[()]:
+        ...
+
+    @overload
+    def __call__[T](self, args: T) -> T:
+        ...
+
+    @overload
+    def __call__[*Ts](self, *args: *Ts) -> tuple[*Ts]:
+        ...
+
+    def __call__(self, *args):
         """Call the cached side effect and return its call arguments.
 
         Parameters
@@ -42,7 +55,7 @@ class SideEffect[*Ts](ArgRepr):
         try:
             self.call(*args)
         except Exception as error:
-            msg = '\n{} calling side effect\n{}\n{}'
+            msg = '\n{} calling side effect\n{}:\n{}'
             name = self._name(self.call)
             err_cls = error.__class__.__name__
             raise SideEffectError(msg.format(err_cls, name, error))

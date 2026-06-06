@@ -57,28 +57,21 @@ class TestDefaultUsage(unittest.TestCase):
             _ = self.s(1)
 
     def test_wrong_call_raises(self):
-        expected = ("Error adding element #2:\n"
-                    "foo\n"
-                    "TypeError:\n"
+        expected = ("TypeError adding element #2:\n"
                     "unsupported operand type(s) for +: 'int' and 'str'")
         with self.assertRaises(SumError) as error:
             _ = self.s([1, 2, 'foo'])
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ("Error adding element #2:\n"
-                    "A(1)\n"
-                    "TypeError:\n"
+        expected = ("TypeError adding element #2:\n"
                     "unsupported operand type(s) for +: 'int' and 'A'")
         with self.assertRaises(SumError) as error:
             _ = self.s([1, 2, A(1)])
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ("Error adding element #2:\n"
-                    "Ind():\n"
-                    "[ 0] 1\n"
-                    "TypeError:\n"
+        expected = ("TypeError adding element #2:\n"
                     "unsupported operand type(s) for +: 'int' and 'Ind'")
         with self.assertRaises(SumError) as error:
             _ = self.s([1, 2, Ind([1])])
@@ -123,28 +116,21 @@ class TestAccUsage(unittest.TestCase):
             _ = self.s(1)
 
     def test_wrong_call_raises(self):
-        expected = ("Error adding element #2:\n"
-                    "foo\n"
-                    "TypeError:\n"
+        expected = ("TypeError adding element #2:\n"
                     "unsupported operand type(s) for +: 'int' and 'str'")
         with self.assertRaises(SumError) as error:
             _ = self.s([1, 2, 'foo'])
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ("Error adding element #2:\n"
-                    "A(1)\n"
-                    "TypeError:\n"
+        expected = ("TypeError adding element #2:\n"
                     "unsupported operand type(s) for +: 'int' and 'A'")
         with self.assertRaises(SumError) as error:
             _ = self.s([1, 2, A(1)])
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ("Error adding element #2:\n"
-                    "Ind():\n"
-                    "[ 0] 1\n"
-                    "TypeError:\n"
+        expected = ("TypeError adding element #2:\n"
                     "unsupported operand type(s) for +: 'int' and 'Ind'")
         with self.assertRaises(SumError) as error:
             _ = self.s([1, 2, Ind([1])])

@@ -66,10 +66,10 @@ class Split[S, T](ArgRepr):
             try:
                 criterion_is_fulfilled = criterion(element)
             except Exception as error:
-                msg = '\n{} calling\n{}\non element #{}:\n{}\n{}'
+                msg = '\n{} calling\n{}\non element #{}:\n{}'
                 name = self._name(criterion)
                 err_cls = error.__class__.__name__
-                fmt = msg.format(err_cls, name, i, element, error)
+                fmt = msg.format(err_cls, name, i, error)
                 raise SplitError(fmt) from error
             if criterion_is_fulfilled:
                 true.append(element)

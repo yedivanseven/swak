@@ -63,13 +63,13 @@ class TestDefaultAttributes(unittest.TestCase):
         s = Safe(f)
         self.assertIs(s.call, f)
 
-    def test_has_exceptions(self):
+    def test_has_errors(self):
         s = Safe(f)
-        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTrue(hasattr(s, 'errors'))
 
-    def test_exceptions_correct(self):
+    def test_errors_correct(self):
         s = Safe(f)
-        self.assertTupleEqual((Exception, ), s.exceptions)
+        self.assertTupleEqual((Exception, ), s.errors)
 
     def test_decorator(self):
 
@@ -80,8 +80,8 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertIsInstance(s, Safe)
         self.assertTrue(hasattr(s, 'call'))
         self.assertTrue(callable(s.call))
-        self.assertTrue(hasattr(s, 'exceptions'))
-        self.assertTupleEqual((Exception,), s.exceptions)
+        self.assertTrue(hasattr(s, 'errors'))
+        self.assertTupleEqual((Exception,), s.errors)
 
 
 class TestDefaultUsage(unittest.TestCase):
@@ -112,44 +112,65 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertIsInstance(actual, SafeError)
 
 
-class TestExceptionsAttributes(unittest.TestCase):
+class TestErrorsAttributes(unittest.TestCase):
 
     def test_empty_exceptions(self):
         s = Safe(f, [])
         self.assertTrue(hasattr(s, 'call'))
         self.assertIs(s.call, f)
-        self.assertTrue(hasattr(s, 'exceptions'))
-        self.assertTupleEqual((Exception, ), s.exceptions)
+        self.assertTrue(hasattr(s, 'errors'))
+        self.assertTupleEqual((Exception, ), s.errors)
 
-    def test_list_two_exceptions(self):
+    def test_list_two_errors(self):
         s = Safe(f, [ZeroDivisionError, StopIteration])
         self.assertTrue(hasattr(s, 'call'))
         self.assertIs(s.call, f)
-        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTrue(hasattr(s, 'errors'))
         self.assertSetEqual(
             {ZeroDivisionError, StopIteration},
-            set(s.exceptions)
+            set(s.errors)
         )
 
-    def test_list_one_exception_one_exception(self):
+    def test_list_one_error_one_error(self):
         s = Safe(f, [ZeroDivisionError], StopIteration)
         self.assertTrue(hasattr(s, 'call'))
         self.assertIs(s.call, f)
-        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTrue(hasattr(s, 'errors'))
         self.assertSetEqual(
             {ZeroDivisionError, StopIteration},
-            set(s.exceptions)
+            set(s.errors)
         )
 
-    def test_two_exceptions(self):
+    def test_two_errors(self):
         s = Safe(f, ZeroDivisionError, StopIteration)
         self.assertTrue(hasattr(s, 'call'))
         self.assertIs(s.call, f)
-        self.assertTrue(hasattr(s, 'exceptions'))
+        self.assertTrue(hasattr(s, 'errors'))
         self.assertSetEqual(
             {ZeroDivisionError, StopIteration},
-            set(s.exceptions)
+            set(s.errors)
         )
+
+    def test_wrong_list_two_errors_raises(self):
+        with self.assertRaises(TypeError):
+            Safe(f, [ZeroDivisionError, 2])
+
+    def test_list_one_wrong_error_one_error_raise(self):
+        with self.assertRaises(TypeError):
+            Safe(f, [2], StopIteration)
+
+    def test_list_one_error_one_wrong_error_raise(self):
+        with self.assertRaises(TypeError):
+            Safe(f, [ZeroDivisionError], 2)
+
+    def test_one_error_one_wrong_error_raises(self):
+        with self.assertRaises(TypeError):
+            Safe(f, ZeroDivisionError, 2)
+
+    def test_one_wrong_error_one_error_raises(self):
+        with self.assertRaises(TypeError):
+            Safe(f, 2, StopIteration)
+
 
 class TestExceptionsUsage(unittest.TestCase):
 

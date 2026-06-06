@@ -14,11 +14,11 @@ class Safe[**P, T](ArgRepr):
     ----------
     call: callable
         Callable to wrap.
-    exception: optional
-        Specific exception to catch (or an iterable of exceptions).
+    error: optional
+        Specific exception class to catch (or an iterable thereof).
         Defaults to ``Exception``.
-    *exceptions
-        Additional exceptions to catch.
+    *errors
+        Additional exception classes to catch.
 
     See Also
     --------
@@ -29,17 +29,13 @@ class Safe[**P, T](ArgRepr):
     def __init__(
             self,
             call: type[T] | Callable[P, T],
-            exception: type[Exception] | Iterable[type[Exception]] = (),
-            *exceptions: type[Exception]
+            error: type[Exception] | Iterable[type[Exception]] = (),
+            *errors: type[Exception]
     ) -> None:
         self.call = call
-        try:
-            exception = tuple(exception)
-        except TypeError:
-            exception = exception,
-        self.exceptions = tuple(set(exception + exceptions))
-        super().__init__(call, *self.exceptions)
-        self.exceptions = self.exceptions or (Exception,)
+        self.errors = self.__actual(error) + self.__actual(errors)
+        super().__init__(call, *self.errors)
+        self.errors = self.errors or (Exception,)
 
     def __call__(self, *args: P.args) -> T | SafeError:
         """Call the cached callable, catching any or all exceptions raised.
@@ -58,5 +54,25 @@ class Safe[**P, T](ArgRepr):
         """
         try:
             return self.call(*args)
-        except self.exceptions as error:
+        except self.errors as error:
             return SafeError(error, self._name(self.call), self.call, args)
+
+    @staticmethod
+    def __actual(
+            errors: type[Exception] | Iterable[type[Exception]]
+    ) -> tuple[type[Exception], ...]:
+        """Ensure that the provided errors are actually, well, errors."""
+        if isinstance(errors, type) and issubclass(errors, Exception):
+            return errors,
+        iterable = True
+        all_exceptions = False
+        try:
+            all_exceptions = all(
+                isinstance(error, type) and issubclass(error, Exception)
+                for error in errors
+            )
+        except TypeError:
+            iterable = False
+        if iterable and all_exceptions:
+            return tuple(set(errors))
+        raise TypeError('All errors must derive from Exception!')

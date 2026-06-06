@@ -131,7 +131,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'g\n'
                     'on element #2:\n'
-                    '0\n'
                     'float division by zero')
         r = Reduce(g)
         with self.assertRaises(ReduceError) as error:
@@ -142,7 +141,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'A(1)\n'
                     'on element #2:\n'
-                    '0\n'
                     'float division by zero')
         r = Reduce(A(1))
         with self.assertRaises(ReduceError) as error:
@@ -154,7 +152,6 @@ class TestDefaultUsage(unittest.TestCase):
                     'Ind():\n'
                     '[ 0] 1\n'
                     'on element #2:\n'
-                    '0\n'
                     'float division by zero')
         r = Reduce(Ind([1]))
         with self.assertRaises(ReduceError) as error:
@@ -239,7 +236,6 @@ class TestAccUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'g\n'
                     'on element #2:\n'
-                    '0\n'
                     'float division by zero')
         r = Reduce(g)
         with self.assertRaises(ReduceError) as error:
@@ -250,7 +246,6 @@ class TestAccUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'A(1)\n'
                     'on element #2:\n'
-                    '0\n'
                     'float division by zero')
         r = Reduce(A(1))
         with self.assertRaises(ReduceError) as error:
@@ -262,7 +257,6 @@ class TestAccUsage(unittest.TestCase):
                     'Ind():\n'
                     '[ 0] 1\n'
                     'on element #2:\n'
-                    '0\n'
                     'float division by zero')
         r = Reduce(Ind([1]))
         with self.assertRaises(ReduceError) as error:

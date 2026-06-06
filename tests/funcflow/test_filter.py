@@ -115,7 +115,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nTypeError calling criterion\n'
                     'bool\n'
                     'on element #2:\n'
-                    'A(1)\n'
                     'Test!')
         f = Filter()
         with self.assertRaises(FilterError) as error:
@@ -126,8 +125,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nTypeError calling criterion\n'
                     'bool\n'
                     'on element #2:\n'
-                    'Ind():\n'
-                    '[ 0] 1\n'
                     'Test!')
         f = Filter()
         with self.assertRaises(FilterError) as error:
@@ -229,7 +226,6 @@ class TestCriterionUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling criterion\n'
                     'lambda\n'
                     'on element #2:\n'
-                    '0\n'
                     'division by zero')
         f = Filter(lambda x: 1 / x)
         with self.assertRaises(FilterError) as error:
@@ -240,7 +236,6 @@ class TestCriterionUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling criterion\n'
                     'A(1)\n'
                     'on element #2:\n'
-                    '0\n'
                     'division by zero')
         f = Filter(A(1))
         with self.assertRaises(FilterError) as error:
@@ -254,7 +249,6 @@ class TestCriterionUsage(unittest.TestCase):
                     '[ 1] 2\n'
                     '[ 2] 3\n'
                     'on element #2:\n'
-                    '0\n'
                     'division by zero')
         f = Filter(Ind([1, 2, 3]))
         with self.assertRaises(FilterError) as error:

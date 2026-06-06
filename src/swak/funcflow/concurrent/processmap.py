@@ -144,11 +144,11 @@ class ProcessMap[**P, S, T](ArgRepr):
             try:
                 mapped = list(mapped)
             except Exception as error:
-                msg = ('Error calling\n{}\non one or more '
-                       'element(s) of the iterable(s)!\n{}:\n{}')
+                msg = ('{} calling\n{}\non one or more '
+                       'element(s) of the iterable(s):\n{}')
                 name = self._name(self.transform)
                 err_cls = error.__class__.__name__
-                fmt = msg.format(name, err_cls, error)
+                fmt = msg.format(err_cls, name, error)
                 raise MapError(fmt) from error
         if self.flat:
             flattened = []

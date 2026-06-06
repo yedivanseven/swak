@@ -120,7 +120,7 @@ class PassThroughStdLogger[**P](ArgRepr):
             return args[0] if len(args) == 1 else args
 
     def log(self, level: int, message: str | Callable[P, str]) -> Log:
-        """Log a message a a level, optionally depending on call arguments.
+        """Log a message at a level, optionally depending on call arguments.
 
         Parameters
         ----------

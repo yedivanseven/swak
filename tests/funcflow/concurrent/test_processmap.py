@@ -235,10 +235,9 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertListEqual([2, 4, 6], actual)
 
     def test_wrong_call_raises(self):
-        expected = ('Error calling\n'
+        expected = ('ZeroDivisionError calling\n'
                     'f\n'
-                    'on one or more element(s) of the iterable(s)!\n'
-                    'ZeroDivisionError:\n'
+                    'on one or more element(s) of the iterable(s):\n'
                     'division by zero')
         m = ProcessMap(f)
         with self.assertRaises(MapError) as error:
@@ -246,10 +245,9 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ('Error calling\n'
+        expected = ('ZeroDivisionError calling\n'
                     'A(1)\n'
-                    'on one or more element(s) of the iterable(s)!\n'
-                    'ZeroDivisionError:\n'
+                    'on one or more element(s) of the iterable(s):\n'
                     'division by zero')
         m = ProcessMap(A(1))
         with self.assertRaises(MapError) as error:
@@ -257,11 +255,10 @@ class TestDefaultUsage(unittest.TestCase):
         self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ('Error calling\n'
+        expected = ('ZeroDivisionError calling\n'
                     'Ind():\n'
                     '[ 0] 1\n'
-                    'on one or more element(s) of the iterable(s)!\n'
-                    'ZeroDivisionError:\n'
+                    'on one or more element(s) of the iterable(s):\n'
                     'division by zero')
         m = ProcessMap(Ind([1]))
         with self.assertRaises(MapError) as error:

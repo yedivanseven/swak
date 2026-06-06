@@ -187,7 +187,7 @@ class Fallback[**P, T](IndentRepr):
 
     @staticmethod
     def __actual(errors: Errors) -> Errors:
-        """Ensure that the provided errors are actually, well, errors.."""
+        """Ensure that the provided errors are actually, well, errors."""
         msg = '{} is of type {}'
         wrong = [
             TypeError(msg.format(error, type(error).__name__))

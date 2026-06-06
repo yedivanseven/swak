@@ -118,7 +118,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nTypeError calling\n'
                     'bool\n'
                     'on element #2:\n'
-                    'A(1)\n'
                     'Test!')
         s = Split()
         with self.assertRaises(SplitError) as error:
@@ -129,8 +128,6 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nTypeError calling\n'
                     'bool\n'
                     'on element #2:\n'
-                    'Ind():\n'
-                    '[ 0] 1\n'
                     'Test!')
         s = Split()
         with self.assertRaises(SplitError) as error:
@@ -232,7 +229,6 @@ class TestCriterionUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'lambda\n'
                     'on element #2:\n'
-                    '0\n'
                     'division by zero')
         s = Split(lambda x: 1 / x)
         with self.assertRaises(SplitError) as error:
@@ -243,7 +239,6 @@ class TestCriterionUsage(unittest.TestCase):
         expected = ('\nZeroDivisionError calling\n'
                     'A(1, 2, 3)\n'
                     'on element #2:\n'
-                    '0\n'
                     'division by zero')
         s = Split(A(1, 2, 3))
         with self.assertRaises(SplitError) as error:
@@ -257,7 +252,6 @@ class TestCriterionUsage(unittest.TestCase):
                     '[ 1] 2\n'
                     '[ 2] 3\n'
                     'on element #2:\n'
-                    '0\n'
                     'division by zero')
         s = Split(Ind([1, 2, 3]))
         with self.assertRaises(SplitError) as error:
