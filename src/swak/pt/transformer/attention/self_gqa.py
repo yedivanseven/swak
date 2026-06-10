@@ -23,7 +23,7 @@ class GroupedQuerySelfAttention(Attn):
         Reduce the number of attention heads for keys and values by this
         factor compared to the `n_heads` used for queries. Must integer divide
         `n_heads`. Realizes standard multi-head-attention (MHA) with
-        `q_factor`=1, multi-query attention (MQA) with `q_factor`=`n_heads`
+        `q_factor=1`, multi-query attention (MQA) with `q_factor=n_heads`
         and grouped-query attention (GQA) otherwise.
         Defaults to 1 (i.e. standard MHA).
     bias: bool, optional
