@@ -9,7 +9,7 @@ class ValuesGetter[T](ArgRepr):
     """Extract a sequence of dictionary values according to the given `keys`.
 
     Instances behave like sequences of these `keys` and can be interacted with
-    accortdingly (e.g., one can index, slice, or reverse instances).
+    accordingly (e.g., one can index, slice, or reverse instances).
 
     Parameters
     ----------
