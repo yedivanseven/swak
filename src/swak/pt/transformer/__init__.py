@@ -22,3 +22,5 @@ __all__ = [
     'Encoder',
     'Compressor'
 ]
+
+# ToDo: Leave mask merge to outermost model wrapper!

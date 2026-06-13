@@ -4,7 +4,7 @@ import torch as pt
 import pandas as pd
 import polars as pl
 import numpy as np
-from swak.pt.create import Create, AsTensor, from_dataframe, To
+from swak.pt.create import Create, AsTensor, from_dataframe, To, ToTorch
 
 
 class TestCreate(unittest.TestCase):
@@ -222,6 +222,71 @@ class TestTo(unittest.TestCase):
         mock.to = Mock(return_value=42)
         actual = self.to(mock)
         self.assertEqual(42, actual)
+
+
+class TestToTorch(unittest.TestCase):
+
+    def setUp(self):
+        self.to_torch = ToTorch()
+
+    def test_has_return_type(self):
+        self.assertTrue(hasattr(self.to_torch, 'return_type'))
+
+    def test_return_type(self):
+        self.assertEqual('tensor', self.to_torch.return_type)
+
+    def test_has_label(self):
+        self.assertTrue(hasattr(self.to_torch, 'label'))
+
+    def test_label(self):
+        self.assertIsNone(self.to_torch.label)
+
+    def test_has_features(self):
+        self.assertTrue(hasattr(self.to_torch, 'features'))
+
+    def test_features(self):
+        self.assertIsNone(self.to_torch.features)
+
+    def test_has_dtype(self):
+        self.assertTrue(hasattr(self.to_torch, 'dtype'))
+
+    def test_dtype(self):
+        self.assertIsNone(self.to_torch.dtype)
+
+    def test_custom_args(self):
+        to_torch = ToTorch('dataset', 'foo', 'bar', pl.Int32)
+        self.assertEqual('dataset', to_torch.return_type)
+        self.assertEqual('foo', to_torch.label)
+        self.assertEqual('bar', to_torch.features)
+        self.assertIs(to_torch.dtype, pl.Int32)
+
+    def test_to_torch_called_default(self):
+        mock = Mock()
+        _ = self.to_torch(mock)
+        mock.to_torch.assert_called_once_with(
+            'tensor',
+            label=None,
+            features=None,
+            dtype=None,
+        )
+
+    def test_to_torch_called_custom(self):
+        to_torch = ToTorch('dataset', 'foo', 'bar', pl.Int32)
+        mock = Mock()
+        _ = to_torch(mock)
+        mock.to_torch.assert_called_once_with(
+            'dataset',
+            label='foo',
+            features='bar',
+            dtype=pl.Int32,
+        )
+
+    def test_return_value(self):
+        mock = Mock()
+        mock.to_torch = Mock(return_value=42)
+        actual = self.to_torch(mock)
+        self.assertEqual(42, actual)
+
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ pipe of callable objects.
 
 """
 
-from .misc import FromPandas
+from .misc import FromPandas, Create, Concat
 from .groupby import GroupByAgg
 from .frame import (
     Select,
@@ -23,11 +23,15 @@ from .frame import (
     DropNulls,
     Pivot,
     VStack,
-    Unique
+    Unique,
+    Head,
+    Tail
 )
 
 __all__ = [
+    'Create',
     'FromPandas',
+    'Concat',
     'Select',
     'Filter',
     'Drop',
@@ -43,5 +47,7 @@ __all__ = [
     'DropNulls',
     'Pivot',
     'VStack',
-    'Unique'
+    'Unique',
+    'Head',
+    'Tail'
 ]
