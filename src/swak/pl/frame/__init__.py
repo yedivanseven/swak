@@ -13,6 +13,8 @@ from .rename import Rename
 from .pivot import Pivot
 from .vstack import VStack
 from .unique import Unique
+from .head import Head
+from .tail import Tail
 
 __all__ = [
     'Select',
@@ -29,7 +31,7 @@ __all__ = [
     'Rename',
     'Pivot',
     'VStack',
-    'Unique'
+    'Unique',
+    'Head',
+    'Tail'
 ]
-
-# ToDo: Add Head/Tail and Concat

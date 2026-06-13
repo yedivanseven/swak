@@ -1,9 +1,12 @@
 """Create tensors from other array-like data, and change device and type."""
 
 from typing import Any, overload
+from collections.abc import Sequence
 import torch as pt
 from pandas import DataFrame as Pandas
-from polars import DataFrame as Polars
+from polars import DataFrame as Polars, Expr
+from polars.ml.torch import PolarsDataset
+from polars._typing import TorchExportType, PolarsDataType
 from ..misc import ArgRepr
 from .types import Tensor, Module
 
@@ -11,11 +14,13 @@ __all__ = [
     'Create',
     'AsTensor',
     'from_dataframe',
+    'ToTorch',
     'To'
 ]
 
+type PolarsToTorch = Tensor | dict[str, Tensor] | PolarsDataset
 
-# ToDo: Add ToTorch
+
 class Create(ArgRepr):
     """Partial of the top-level PyTorch function ``tensor``.
 
@@ -180,3 +185,52 @@ class To(ArgRepr):
 
         """
         return inp.to(self.target, *self.args, **self.kwargs)
+
+
+class ToTorch(ArgRepr):
+    """Partial of the polar dataframe `to_torch <to_torch>`__ method.
+
+    Parameters
+    ----------
+    return_type: TorchExportType, optional
+        One of "tensor" (the default), "dataset", or "dict".
+    label: str or polars expression, optional
+        One or more column names, expressions, or selectors.
+        Defaults to ``None``.
+    features: str or polars expression, optional
+        One or more column names, expressions, or selectors.
+        Defaults to ``None``.
+    dtype: PolarsDataTyep, optional
+        Unify the dtype of all returned tensors.
+
+
+    .. _to_torch: https://docs.pola.rs/api/python/dev/reference/dataframe/
+                  api/polars.DataFrame.to_torch.html
+
+    """
+
+    def __init__(
+            self,
+            return_type: TorchExportType  = 'tensor',
+            label: str | Expr | Sequence[str | Expr] | None = None,
+            features: str | Expr | Sequence[str | Expr] | None = None,
+            dtype: PolarsDataType | None = None,
+    ) -> None:
+        super().__init__(
+            return_type,
+            label=label,
+            features=features,
+            dtype=dtype
+        )
+        self.return_type = return_type
+        self.label = label
+        self.features = features
+        self.dtype = dtype
+
+    def __call__(self, df: Polars) -> PolarsToTorch:
+        return df.to_torch(
+            self.return_type,
+            label=self.label,
+            features=self.features,
+            dtype=self.dtype
+        )
