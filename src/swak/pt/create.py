@@ -188,7 +188,7 @@ class To(ArgRepr):
 
 
 class ToTorch(ArgRepr):
-    """Partial of the polar dataframe `to_torch <to_torch>`__ method.
+    """Partial of the polar dataframe `to_torch <to_torch_>`__ method.
 
     Parameters
     ----------
