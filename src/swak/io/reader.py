@@ -1,6 +1,6 @@
 import fsspec
 from collections.abc import Generator, Mapping
-from typing import Any
+from typing import Any, IO
 from functools import cached_property
 from contextlib import contextmanager
 from fsspec.spec import AbstractFileSystem
@@ -129,7 +129,7 @@ class Reader(ArgRepr):
             self,
             uri: str,
             compression: LiteralCompression | Compression | None = None
-    ) -> Generator[AbstractFileSystem]:
+    ) -> Generator[IO]:
         """Context manager for atomic reads from the given file system."""
         if compression is not None:
             compression = str(Compression(compression))
