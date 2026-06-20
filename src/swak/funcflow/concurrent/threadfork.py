@@ -9,6 +9,8 @@ P = ParamSpec('P')
 type Call = type | Callable[P, Any]
 
 
+# ToDo: Check type annotations
+# ToDo: Number of threads should default to the number of calls!
 class ThreadFork[**P, T](IndentRepr):
     """Call multiple callables with the same argument(s) in parallel threads.
 
