@@ -53,4 +53,5 @@ __all__ = [
 ]
 
 # ToDo: Add Retry
+# ToDo. Add Timeout
 # ToDo: Add lazy sub-package

@@ -507,7 +507,7 @@ class JsonObject(metaclass=SchemaMeta):
             return cast
 
         # If not, first check if we even allow extra fields
-        extra_fields = set(mapping) - set(self.__annotations__)
+        extra_fields = set(mapping) - set(self.__class__.__annotations__)
         if extra_fields and self.__raise_extra__:
             msg = f'Fields {extra_fields} are not in the schema!'
             errors.append(ParseError(msg))
