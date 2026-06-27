@@ -16,7 +16,9 @@ dependencies = [
     "pyyaml>=6.0",
     "tomli-w>=1.1",
     "tqdm>=4.6",
-    "fsspec>=2025.5.1"
+    "fsspec>=2025.5.1",
+    "python-calamine>=0.7",
+    "fastexcel>=0.20"
 ]
 authors = [{name = "yedivanseven", email = "yedivanseven@outlook.de"}]
 description = "Swiss army knife for functional data-science projects."

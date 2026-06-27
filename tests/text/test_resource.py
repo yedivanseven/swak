@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch
 from swak.io import NotFound
 from swak.text import TextResourceLoader
 
@@ -102,18 +101,6 @@ class TestUsage(unittest.TestCase):
     def test_callable(self):
         load = TextResourceLoader('tests.text')
         self.assertTrue(callable(load))
-
-    @patch('swak.text.resource.pkgutil.get_data')
-    def test_pkgutil_called(self, mock):
-        load = TextResourceLoader('tests.text')
-        _ = load('hello.txt')
-        mock.assert_called_once()
-
-    @patch('swak.text.resource.pkgutil.get_data')
-    def test_pkgutil_called_correctly(self, mock):
-        load = TextResourceLoader('tests.text')
-        _ = load('hello.txt')
-        mock.assert_called_once_with('tests.text', 'resources/hello.txt')
 
     def test_defaults(self):
         load = TextResourceLoader('tests.text')

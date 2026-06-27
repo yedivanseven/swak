@@ -19,6 +19,8 @@ pyyaml = "*"
 tqdm = "*"
 tomli-w = "*"
 fsspec = "*"
+python-calamine = "*"
+fastexcel = "*"
 
 [dev-packages]
 jupyter = "*"
