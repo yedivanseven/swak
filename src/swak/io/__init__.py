@@ -7,7 +7,6 @@ staging, and production environments.
 
 """
 
-# ToDo: Add CSV and Excel reader with the "fast" Excel engine used by polars!
 from .writer import Writer
 from .reader import Reader
 from .parquet import DataFrame2Parquet, Parquet2DataFrame
