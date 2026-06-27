@@ -28,6 +28,18 @@ io
    :show-inheritance:
 
 
+.. autoclass:: swak.io.Csv2DataFrame
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
+.. autoclass:: swak.io.Excel2DataFrame
+   :members:
+   :special-members: __call__
+   :show-inheritance:
+
+
 .. autoclass:: swak.io.TomlWriter
    :members:
    :special-members: __call__
