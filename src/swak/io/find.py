@@ -81,6 +81,8 @@ class Find(ArgRepr):
     @property
     def prefix(self) -> str:
         """File-system specific URI prefix."""
+        if self.storage == Storage.FILE:
+            return f'{Storage.FILE}://'
         return f'{self.storage}:/'
 
     @staticmethod

@@ -46,7 +46,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.find, 'prefix'))
 
     def test_prefix(self):
-        self.assertEqual('file:/', self.find.prefix)
+        self.assertEqual('file://', self.find.prefix)
 
     def test_has_non_root(self):
         self.assertTrue(hasattr(self.find, '_non_root'))
