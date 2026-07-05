@@ -1,6 +1,8 @@
 from typing import Literal
 from collections.abc import Sequence, Hashable
 
+type LimitArea = Literal['inside', 'outside']
+type LimitDirection = Literal['forward', 'backward', 'both']
 type Axis = Literal['index', 'columns', 'rows'] | int
 type Errors = Literal['ignore', 'raise']
 type Keep = Literal['first', 'last', False]

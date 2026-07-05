@@ -9,7 +9,6 @@ P = ParamSpec('P')
 Call = type | Callable[P, Any]
 
 
-# ToDo: Number of threads should default to the number of calls!
 class ThreadFork[**P, T](IndentRepr):
     """Call multiple callables with the same argument(s) in parallel threads.
 
@@ -29,7 +28,7 @@ class ThreadFork[**P, T](IndentRepr):
     max_workers: int, optional
         Maximum number of worker threads used in the pool to call
         `calls` asynchronously. Will be forwarded to the constructor of
-        ``ThreadPoolExecutor``. Defaults to 16.
+        ``ThreadPoolExecutor``. Defaults to the number of callables.
     thread_name_prefix: str, optional
         Will be forwarded to the constructor of ``ThreadPoolExecutor``.
         Defaults to an empty string.
@@ -54,21 +53,21 @@ class ThreadFork[**P, T](IndentRepr):
             self,
             call: Call | Iterable[Call] = (),
             *calls: Call,
-            max_workers: int = 16,
+            max_workers: int | None = None,
             thread_name_prefix: str = '',
             initializer: Callable[..., Any] | None = None,
             initargs: tuple[Any, ...] = (),
             timeout: float | None = None
     ) -> None:
         self.calls = self.__valid(call) + self.__valid(calls)
-        self.max_workers = max_workers
+        self.max_workers = max(max_workers or len(self), 1)
         self.thread_name_prefix = thread_name_prefix
         self.initializer = initializer
         self.initargs = initargs
         self.timeout = timeout
         super().__init__(
             self.calls,
-            max_workers,
+            self.max_workers,
             thread_name_prefix,
             initializer,
             initargs,

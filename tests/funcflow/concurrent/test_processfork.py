@@ -370,7 +370,7 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nAttributeError executing\n'
                     'g\n'
                     'in fork 1 of\n'
-                    "ProcessFork(4, None, (), None, None):\n"
+                    "ProcessFork(2, None, (), None, None):\n"
                     '[ 0] no_return_value\n'
                     '[ 1] g\n'
                     'Test!')
@@ -383,7 +383,7 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nAttributeError executing\n'
                     'A(1)\n'
                     'in fork 0 of\n'
-                    "ProcessFork(4, None, (), None, None):\n"
+                    "ProcessFork(2, None, (), None, None):\n"
                     '[ 0] A(1)\n'
                     '[ 1] g\n'
                     'Test!')
@@ -397,7 +397,7 @@ class TestDefaultUsage(unittest.TestCase):
                     'Ind():\n'
                     '[ 0] 1\n'
                     'in fork 0 of\n'
-                    "ProcessFork(4, None, (), None, None):\n"
+                    "ProcessFork(2, None, (), None, None):\n"
                     '[ 0] Ind():\n'
                     '     [ 0] 1\n'
                     '[ 1] g\n'
@@ -635,7 +635,7 @@ class TestMisc(unittest.TestCase):
             A('foo')
         )
         expected = (
-            "ProcessFork(4, None, (), None, None):\n"
+            "ProcessFork(8, None, (), None, None):\n"
             "[ 0] lambda\n"
             "[ 1] f\n"
             "[ 2] Cls\n"
@@ -660,8 +660,8 @@ class TestMisc(unittest.TestCase):
         )
         outer = ProcessFork(fork, fork)
         expected = (
-            "ProcessFork(4, None, (), None, None):\n"
-            "[ 0] ProcessFork(4, None, (), None, None):\n"
+            "ProcessFork(2, None, (), None, None):\n"
+            "[ 0] ProcessFork(8, None, (), None, None):\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -670,7 +670,7 @@ class TestMisc(unittest.TestCase):
             "     [ 5] Cls.s\n"
             "     [ 6] Call(...)\n"
             "     [ 7] A('foo')\n"
-            "[ 1] ProcessFork(4, None, (), None, None):\n"
+            "[ 1] ProcessFork(8, None, (), None, None):\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -713,7 +713,7 @@ class TestMisc(unittest.TestCase):
 
     def test_empty_repr(self):
         fork = ProcessFork()
-        expected = "ProcessFork(4, None, (), None, None)"
+        expected = "ProcessFork(1, None, (), None, None)"
         self.assertEqual(expected, repr(fork))
 
     def test_empty_attribute_repr(self):

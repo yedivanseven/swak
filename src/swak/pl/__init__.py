@@ -25,7 +25,8 @@ from .frame import (
     VStack,
     Unique,
     Head,
-    Tail
+    Tail,
+    interpolate
 )
 
 __all__ = [
@@ -49,5 +50,6 @@ __all__ = [
     'VStack',
     'Unique',
     'Head',
-    'Tail'
+    'Tail',
+    'interpolate',
 ]

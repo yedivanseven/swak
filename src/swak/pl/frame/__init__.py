@@ -15,6 +15,7 @@ from .vstack import VStack
 from .unique import Unique
 from .head import Head
 from .tail import Tail
+from .interpolate import interpolate
 
 __all__ = [
     'Select',
@@ -33,5 +34,6 @@ __all__ = [
     'VStack',
     'Unique',
     'Head',
-    'Tail'
+    'Tail',
+    'interpolate'
 ]

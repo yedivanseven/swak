@@ -9,7 +9,6 @@ P = ParamSpec('P')
 Call = type | Callable[P, Any]
 
 
-# ToDo: Number of threads should default to the number of calls!
 class ProcessFork[**P, T](IndentRepr):
     """Call multiple callables with the same argument(s) in parallel processes.
 
@@ -29,7 +28,7 @@ class ProcessFork[**P, T](IndentRepr):
     max_workers: int, optional
         Maximum number of worker processes used in the pool to call
         `calls` asynchronously. Will be forwarded to the constructor of
-        ``ProcessPoolExecutor``. Defaults to 4.
+        ``ProcessPoolExecutor``. Defaults to the number of callables.
     initializer: callable, optional
         Called at the start of each worker process. Will be forwarded to the
         constructor of ``ProcessPoolExecutor``. Defaults to ``None``.
@@ -55,21 +54,21 @@ class ProcessFork[**P, T](IndentRepr):
             self,
             call: Call | Iterable[Call] = (),
             *calls: Call,
-            max_workers: int | None = 4,
+            max_workers: int | None = None,
             initializer: Callable[..., Any] | None = None,
             initargs: tuple[Any, ...] = (),
             max_tasks_per_child: int | None = None,
             timeout: float | None = None
     ) -> None:
         self.calls = self.__valid(call) + self.__valid(calls)
-        self.max_workers = max_workers
+        self.max_workers = max(max_workers or len(self), 1)
         self.initializer = initializer
         self.initargs = initargs
         self.max_tasks_per_child = max_tasks_per_child
         self.timeout = timeout
         super().__init__(
             self.calls,
-            max_workers,
+            self.max_workers,
             initializer,
             initargs,
             max_tasks_per_child,
