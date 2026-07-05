@@ -29,6 +29,7 @@ from .copy import Copy
 from .explode import Explode
 from .fillna import FillNA
 from .drop_duplicates import DropDuplicates
+from .interpolate import Interpolate
 
 __all__ = [
     'AsType',
@@ -53,5 +54,6 @@ __all__ = [
     'Copy',
     'Explode',
     'FillNA',
-    'DropDuplicates'
+    'DropDuplicates',
+    'Interpolate'
 ]

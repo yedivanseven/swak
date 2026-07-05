@@ -74,11 +74,40 @@ class TestUsage(unittest.TestCase):
         expected = self.df.join(self.other_series, 0)
         pd.testing.assert_frame_equal(expected, actual)
 
-    def test_join_both_index(self):
+    def test_join_list_as_single_other(self):
         join = Join()
         actual = join(self.df, [self.other_df, self.other_series])
         expected = self.df.join([self.other_df, self.other_series])
         pd.testing.assert_frame_equal(expected, actual)
+
+    def test_join_no_others(self):
+        join = Join()
+        actual = join(self.df)
+        self.assertIs(self.df, actual)
+
+    def test_join_no_others_mock_not_called(self):
+        join = Join()
+        _ = join(self.mock)
+        self.mock.join.assert_not_called()
+
+    def test_join_multiple_others_index(self):
+        join = Join()
+        actual = join(self.df, self.other_df, self.other_series)
+        expected = self.df.join((self.other_df, self.other_series))
+        pd.testing.assert_frame_equal(expected, actual)
+
+    def test_join_multiple_others_called(self):
+        obj1 = object()
+        obj2 = object()
+        join = Join(1, 2, three=3, four=4)
+        _ = join(self.mock, obj1, obj2)
+        self.mock.join.assert_called_once_with(
+            (obj1, obj2),
+            1,
+            2,
+            three=3,
+            four=4
+        )
 
 
 class TestMisc(unittest.TestCase):

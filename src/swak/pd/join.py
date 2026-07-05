@@ -2,7 +2,7 @@ from typing import Any
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 
-type Others = Series | DataFrame | list[Series | DataFrame]
+type Other = Series | DataFrame
 
 
 class Join(ArgRepr):
@@ -28,14 +28,14 @@ class Join(ArgRepr):
         self.args = args
         self.kwargs = kwargs
 
-    def __call__(self, df: DataFrame, other: Others) -> DataFrame:
+    def __call__(self, df: DataFrame, *others: Other) -> DataFrame:
         """Join a dataframe with other dataframe(s) and/or series.
 
         Parameters
         ----------
         df: DataFrame
             Source dataframe on which the ``join`` method will be called.
-        other: DataFrame, Series, or a list of any combination
+        *others: DataFrame or Series
             Index should be similar to one (or more) columns in `df`. If a
             series is passed, its name attribute must be set, and that will be
             used as the column name in the resulting joined dataframe.
@@ -46,4 +46,9 @@ class Join(ArgRepr):
             The joined dataframe.
 
         """
-        return df.join(other, *self.args, **self.kwargs)
+        if len(others) == 0:
+            return df
+        elif len(others) == 1:
+            return df.join(others[0], *self.args, **self.kwargs)
+        else:
+            return df.join(others, *self.args, **self.kwargs)

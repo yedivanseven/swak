@@ -361,7 +361,7 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nAttributeError executing\n'
                     'g\n'
                     'in fork 1 of\n'
-                    "ThreadFork(16, '', None, (), None):\n"
+                    "ThreadFork(2, '', None, (), None):\n"
                     '[ 0] lambda\n'
                     '[ 1] g\n'
                     'Test!')
@@ -374,7 +374,7 @@ class TestDefaultUsage(unittest.TestCase):
         expected = ('\nAttributeError executing\n'
                     'A(1)\n'
                     'in fork 0 of\n'
-                    "ThreadFork(16, '', None, (), None):\n"
+                    "ThreadFork(2, '', None, (), None):\n"
                     '[ 0] A(1)\n'
                     '[ 1] g\n'
                     'Test!')
@@ -388,7 +388,7 @@ class TestDefaultUsage(unittest.TestCase):
                     'Ind():\n'
                     '[ 0] 1\n'
                     'in fork 0 of\n'
-                    "ThreadFork(16, '', None, (), None):\n"
+                    "ThreadFork(2, '', None, (), None):\n"
                     '[ 0] Ind():\n'
                     '     [ 0] 1\n'
                     '[ 1] g\n'
@@ -626,7 +626,7 @@ class TestMisc(unittest.TestCase):
             A('foo')
         )
         expected = (
-            "ThreadFork(16, '', None, (), None):\n"
+            "ThreadFork(8, '', None, (), None):\n"
             "[ 0] lambda\n"
             "[ 1] f\n"
             "[ 2] Cls\n"
@@ -651,8 +651,8 @@ class TestMisc(unittest.TestCase):
         )
         outer = ThreadFork(fork, fork)
         expected = (
-            "ThreadFork(16, '', None, (), None):\n"
-            "[ 0] ThreadFork(16, '', None, (), None):\n"
+            "ThreadFork(2, '', None, (), None):\n"
+            "[ 0] ThreadFork(8, '', None, (), None):\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -661,7 +661,7 @@ class TestMisc(unittest.TestCase):
             "     [ 5] Cls.s\n"
             "     [ 6] Call(...)\n"
             "     [ 7] A('foo')\n"
-            "[ 1] ThreadFork(16, '', None, (), None):\n"
+            "[ 1] ThreadFork(8, '', None, (), None):\n"
             "     [ 0] lambda\n"
             "     [ 1] f\n"
             "     [ 2] Cls\n"
@@ -704,7 +704,7 @@ class TestMisc(unittest.TestCase):
 
     def test_empty_repr(self):
         fork = ThreadFork()
-        expected = "ThreadFork(16, '', None, (), None)"
+        expected = "ThreadFork(1, '', None, (), None)"
         self.assertEqual(expected, repr(fork))
 
     def test_empty_attribute_repr(self):
