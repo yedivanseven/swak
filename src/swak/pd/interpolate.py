@@ -28,9 +28,9 @@ class Interpolate(ArgRepr):
             restriction.
 
             * ``None``: No fill restriction.
-            * 'inside': Only fill NaNs surrounded by valid values
+            * "inside": Only fill NaNs surrounded by valid values
               (interpolate).
-            * 'outside': Only fill NaNs outside valid values (extrapolate).
+            * "outside": Only fill NaNs outside valid values (extrapolate).
 
     **kwargs : optional
         Keyword arguments to pass on to the interpolating function.
