@@ -39,7 +39,7 @@ class Interpolate(ArgRepr):
     ----
     For a full list of (keyword) arguments and their description, see the
     pandas `interpolate documentation <https://pandas.pydata.org/pandas-docs/
-    stable/reference/api/pandas.DataFrame.interpolate.html`_.
+    stable/reference/api/pandas.DataFrame.interpolate.html>`_.
 
     """
 
