@@ -212,6 +212,11 @@ class TestMethods(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = write._uri_from('file')
 
+    def test_uri_raises_on_too_few_parts(self):
+        write = Writer('/{}/{}.txt', self.storage, overwrite=True)
+        with self.assertRaises(IndexError):
+            _ = write._uri_from('file')
+
     def test_uri_from_returns_empty_if_exists_and_skip(self):
         write = Writer('/path/to/{}.txt', self.storage, skip=True)
         write.fs.touch(self.path)

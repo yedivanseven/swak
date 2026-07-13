@@ -262,7 +262,7 @@ class TomlReader(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root(path)
+        uri = self._non_root_from(path)
         try:
             with self._managed(uri) as file:
                 toml = tomllib.load(file, **self.toml_kws)

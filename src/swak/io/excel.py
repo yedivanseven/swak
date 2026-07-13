@@ -108,7 +108,7 @@ class Excel2DataFrame(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root(path)
+        uri = self._non_root_from(path)
         with self._managed(uri) as file:
             if self.bear == 'pandas':
                 df = pd.read_excel(file, **self.excel_kws)

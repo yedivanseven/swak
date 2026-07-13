@@ -167,7 +167,13 @@ class Writer(ArgRepr):
 
     def __non_root_from(self, *parts: Any) -> PurePosixPath:
         """Interpolate parts into the path and validate the result."""
-        path = self.__strip(self.path.format(*parts))
+        try:
+            path = self.path.format(*parts)
+        except IndexError as error:
+            tmp = '{} part(s) cannot fill all placeholders in path "{}"'
+            msg = tmp.format(len(parts), self.path)
+            raise IndexError(msg) from error
+        path = self.__strip(path)
         if path.count('/') < 2:
             msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(path))

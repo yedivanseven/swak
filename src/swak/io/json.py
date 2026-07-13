@@ -235,7 +235,7 @@ class JsonReader(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root(path)
+        uri = self._non_root_from(path)
         try:
             suffix = PurePosixPath(uri).suffix
             zipped = suffix == '.gz' if self.gzip is None else self.gzip

@@ -108,7 +108,7 @@ class Csv2DataFrame(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root(path)
+        uri = self._non_root_from(path)
         with self._managed(uri) as file:
             df = self.read(file, **self.csv_kws)
         return df

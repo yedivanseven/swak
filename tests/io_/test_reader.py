@@ -15,7 +15,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.read, 'path'))
 
     def test_path(self):
-        self.assertEqual('/', self.read.path)
+        self.assertEqual('{}', self.read.path)
 
     def test_has_storage(self):
         self.assertTrue(hasattr(self.read, 'storage'))
@@ -69,23 +69,19 @@ class TestAttributes(unittest.TestCase):
 
     def test_empty_path(self):
         read = Reader('', self.storage)
-        self.assertEqual('/', read.path)
+        self.assertEqual('', read.path)
 
     def test_root_path(self):
         read = Reader('/', self.storage)
-        self.assertEqual('/', read.path)
+        self.assertEqual('', read.path)
 
     def test_path(self):
         read = Reader('/path/to/another/file.txt', self.storage)
-        self.assertEqual('/path/to/another/file.txt', read.path)
+        self.assertEqual('path/to/another/file.txt', read.path)
 
     def test_path_stripped(self):
         read = Reader(' / path/ ', self.storage)
-        self.assertEqual('/path', read.path)
-
-    def test_path_prepended(self):
-        read = Reader('path / ', self.storage)
-        self.assertEqual('/path', read.path)
+        self.assertEqual('path', read.path)
 
     def test_path_raises(self):
         with self.assertRaises(TypeError):
@@ -227,51 +223,48 @@ class TestMethods(unittest.TestCase):
         with self.assertRaises(ValueError), read._managed('/a/b', 'invalid'):
                 pass
 
-    def test_has_non_root(self):
+    def test_has_non_root_from(self):
         read = Reader(self.path, self.storage)
-        self.assertTrue(hasattr(read, '_non_root'))
-        self.assertTrue(callable(read._non_root))
+        self.assertTrue(hasattr(read, '_non_root_from'))
+        self.assertTrue(callable(read._non_root_from))
 
-    def test_non_root_empty(self):
+    def test_non_root_from_empty(self):
         read = Reader(self.path, self.storage)
-        path = read._non_root()
+        path = read._non_root_from()
         self.assertIsInstance(path, str)
         self.assertEqual(self.path, path)
 
-    def test_non_root_appends(self):
-        read = Reader('/path/to/', self.storage)
-        path = read._non_root('sub/file.txt')
+    def test_non_root_from_interpolates(self):
+        read = Reader('path/to/{}', self.storage)
+        path = read._non_root_from('sub/file.txt')
         self.assertEqual('/path/to/sub/file.txt', path)
 
-    def test_non_root_strips(self):
-        read = Reader('/path/to/', self.storage)
-        path = read._non_root(' sub/file.txt / ')
+    def test_non_root_from_strips(self):
+        read = Reader('path/to/{}', self.storage)
+        path = read._non_root_from('sub/file.txt / ')
         self.assertEqual('/path/to/sub/file.txt', path)
 
-    def test_non_root_replaces(self):
-        read = Reader('/path/to/file.txt', self.storage)
-        path = read._non_root('/another/different.txt')
-        self.assertEqual('/another/different.txt', path)
-
-    def test_non_root_raises_on_root(self):
-        read = Reader('/', self.storage)
+    def test_non_root_from_raises_on_root(self):
+        read = Reader('{}', self.storage)
         with self.assertRaises(ValueError):
-            _ = read._non_root('file.txt')
+            _ = read._non_root_from('file.txt')
+
+    def test_non_root_from_raises_on_too_few_parts(self):
+        read = Reader('{}/{}/{}', self.storage)
+        with self.assertRaises(IndexError):
+            _ = read._non_root_from()
 
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.txt'
-
     def test_default_repr(self):
-        read = Reader(self.path)
-        expected = "Reader('/path/to/file.txt', 'file', 32.0, {})"
+        read = Reader()
+        expected = "Reader('{}', 'file', 32.0, {})"
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
         read = Reader(
-            self.path,
+            '/path/to/file.txt',
             'memory',
             Mode.RT,
             16,
@@ -279,12 +272,12 @@ class TestMisc(unittest.TestCase):
             'foo',
             bar='baz'
         )
-        expected = ("Reader('/path/to/file.txt', 'memory',"
+        expected = ("Reader('path/to/file.txt', 'memory',"
                     " 16.0, {'answer': 42}, 'foo', bar='baz')")
         self.assertEqual(expected, repr(read))
 
     def test_pickle_works(self):
-        read = Reader(self.path)
+        read = Reader()
         _ = pickle.loads(pickle.dumps(read))
 
 
