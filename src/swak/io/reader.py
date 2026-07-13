@@ -15,16 +15,16 @@ from .types import (
 )
 
 
-# ToDo: Adapt docstrings!
 class Reader(ArgRepr):
     """Base class for reading objects from files or blobs on any filesystem.
 
     Parameters
     ----------
     path: str, optional
-        Directory under which the file is located or full path to the file.
-        Since it (or part of it) can also be provided later, when the callable
-        instance is called, it is optional here. Defaults to an empty string.
+        The absolute path to the file to read. May contain any number of string
+        placeholders (i.e., pairs of curly brackets) that will be interpolated
+        when instances are called. Defaults to '{}', which delegates the full
+        path specification to instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -142,7 +142,7 @@ class Reader(ArgRepr):
             yield file
 
     def _non_root_from(self, *parts: str) -> str:
-        """Append/replace the path given at instantiation on instance call."""
+        """Interpolate parts into the path and validate the result."""
         try:
             uri = self.path.format(*parts)
         except IndexError as error:

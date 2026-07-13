@@ -15,9 +15,9 @@ class TestInstantiation(unittest.TestCase):
 
     @patch.object(Reader, '__init__')
     def test_reader_init_called_defaults(self, init):
-        _ = StateLoader('/path/to/file.pt')
+        _ = StateLoader()
         init.assert_called_once_with(
-            '/path/to/file.pt',
+            '{}',
             Storage.FILE,
             Mode.RB,
             32,
@@ -119,26 +119,19 @@ class TestUsage(unittest.TestCase):
         read = StateLoader(self.file, self.storage)
         self.assertTrue(callable(read))
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_default(self, non_root):
+    @patch.object(Reader, '_non_root_from')
+    def test_non_root_called_default(self, non_root_from):
         read = StateLoader(self.file, self.storage)
-        non_root.return_value = self.file
+        non_root_from.return_value = self.file
         _ = read(self.model)
-        non_root.assert_called_once_with(self.file)
+        non_root_from.assert_called_once_with()
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_custom(self, non_root):
+    @patch.object(Reader, '_non_root_from')
+    def test_non_root_called_custom(self, non_root_from):
         read = StateLoader('/some/other/path.pt', self.storage)
-        non_root.return_value = self.file
-        _ = read(self.model)
-        non_root.assert_called_once_with('/some/other/path.pt')
-
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_interpolated(self, non_root):
-        read = StateLoader('/some/{}/path.pt', self.storage)
-        non_root.return_value = self.file
-        _ = read(self.model, 'other')
-        non_root.assert_called_once_with('/some/other/path.pt')
+        non_root_from.return_value = self.file
+        _ = read(self.model, 'foo', 'bar')
+        non_root_from.assert_called_once_with('foo', 'bar')
 
     @patch.object(Reader, '_managed')
     def test_managed_called(self, managed):
@@ -298,8 +291,8 @@ class TestUsage(unittest.TestCase):
 class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
-        read = StateLoader('/path/file.pt')
-        expected = ("StateLoader('/path/file.pt', 'file', "
+        read = StateLoader()
+        expected = ("StateLoader('{}', 'file', "
                     "32.0, {}, None, True, 'raise')")
         self.assertEqual(expected, repr(read))
 
@@ -313,7 +306,7 @@ class TestMisc(unittest.TestCase):
                 False,
             'ignore'
         )
-        expected = ("StateLoader('/path/file.pt', 'memory', 16.0, "
+        expected = ("StateLoader('path/file.pt', 'memory', 16.0, "
                     "{'storage': 'kws'}, 'cpu', False, 'ignore')")
         self.assertEqual(expected, repr(read))
 

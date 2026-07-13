@@ -11,17 +11,14 @@ from swak.io import DataFrame2Parquet, Writer, Storage, Mode
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.parquet'
-
     def test_is_writer(self):
         self.assertTrue(issubclass(DataFrame2Parquet, Writer))
 
     @patch.object(Writer, '__init__')
     def test_writer_init_called_defaults(self, init):
-        _ = DataFrame2Parquet(self.path)
+        _ = DataFrame2Parquet()
         init.assert_called_once_with(
-            self.path,
+            '{}',
             Storage.FILE,
             False,
             False,
@@ -183,23 +180,23 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.parquet'
-
     def test_default_repr(self):
-        write = DataFrame2Parquet(self.path)
-        expected = ("DataFrame2Parquet('/path/file.parquet', "
+        write = DataFrame2Parquet()
+        expected = ("DataFrame2Parquet('{}', "
                     "'file', False, False, 32.0, {}, {})")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
-        write = DataFrame2Parquet(self.path, parquet_kws={'answer': 42})
-        expected = ("DataFrame2Parquet('/path/file.parquet', "
+        write = DataFrame2Parquet(
+            '/path/file.parquet',
+            parquet_kws={'answer': 42}
+        )
+        expected = ("DataFrame2Parquet('path/file.parquet', "
                     "'file', False, False, 32.0, {}, {'answer': 42})")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = DataFrame2Parquet(self.path)
+        write = DataFrame2Parquet()
         _ = pickle.loads(pickle.dumps(write))
 
 

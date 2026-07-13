@@ -17,7 +17,7 @@ class TestInstantiation(unittest.TestCase):
     def test_reader_init_called_defaults(self, init):
         _ = ModelLoader()
         init.assert_called_once_with(
-            '', Storage.FILE, Mode.RB, 32, None, None
+            '{}', Storage.FILE, Mode.RB, 32, None, None
         )
 
     @patch.object(Reader, '__init__')
@@ -71,25 +71,25 @@ class TestUsage(unittest.TestCase):
         read = ModelLoader()
         self.assertTrue(callable(read))
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_default(self, non_root):
+    @patch.object(Reader, '_non_root_from')
+    def test_non_root_called_default(self, non_root_from):
         read = ModelLoader(self.file, self.storage)
-        non_root.return_value = self.file
+        non_root_from.return_value = self.file
         _ = read()
-        non_root.assert_called_once_with('')
+        non_root_from.assert_called_once_with()
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_custom(self, non_root):
+    @patch.object(Reader, '_non_root_from')
+    def test_non_root_called_custom(self, non_root_from):
         read = ModelLoader('/some/other/path.pt', self.storage)
-        non_root.return_value = self.file
-        _ = read(self.file)
-        non_root.assert_called_once_with(self.file)
+        non_root_from.return_value = self.file
+        _ = read('foo', 'bar')
+        non_root_from.assert_called_once_with('foo', 'bar')
 
-    @patch.object(Reader, '_non_root')
+    @patch.object(Reader, '_non_root_from')
     @patch.object(Reader, '_managed')
-    def test_managed_called(self, managed, non_root):
+    def test_managed_called(self, managed, non_root_from):
         read = ModelLoader(self.file, self.storage)
-        non_root.return_value = self.file
+        non_root_from.return_value = self.file
         with self.path.open('rb') as file:
             managed.return_value = file
             _ = read()
@@ -125,7 +125,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         read = ModelLoader()
-        expected = "ModelLoader('/', 'file', 32.0, {}, None)"
+        expected = "ModelLoader('{}', 'file', 32.0, {}, None)"
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
@@ -136,7 +136,7 @@ class TestMisc(unittest.TestCase):
                 {'storage': 'kws'},
                 'cpu'
         )
-        expected = ("ModelLoader('/path/file.pt', 'memory', "
+        expected = ("ModelLoader('path/file.pt', 'memory', "
                     "16.0, {'storage': 'kws'}, 'cpu')")
         self.assertEqual(expected, repr(read))
 

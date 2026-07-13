@@ -10,17 +10,14 @@ from swak.pt.io import ModelSaver
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.pt'
-
     def test_is_writer(self):
         self.assertTrue(issubclass(ModelSaver, Writer))
 
     @patch.object(Writer, '__init__')
     def test_writer_init_called_defaults(self, init):
-        _ = ModelSaver(self.path)
+        _ = ModelSaver()
         init.assert_called_once_with(
-            self.path,
+            '{}',
             Storage.FILE,
             False,
             False,
@@ -135,12 +132,9 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.pt'
-
     def test_default_repr(self):
-        write = ModelSaver(self.path)
-        expected = ("ModelSaver('/path/file.pt', 'file',"
+        write = ModelSaver()
+        expected = ("ModelSaver('{}', 'file',"
                     " False, False, 32.0, {})")
         self.assertEqual(expected, repr(write))
 
@@ -153,12 +147,12 @@ class TestMisc(unittest.TestCase):
             16,
             {'foo': 'bar'}
         )
-        expected = ("ModelSaver('/some/other/file.pt', 'memory', "
+        expected = ("ModelSaver('some/other/file.pt', 'memory', "
                     "True, True, 16.0, {'foo': 'bar'})")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = ModelSaver(self.path)
+        write = ModelSaver()
         _ = pickle.loads(pickle.dumps(write))
 
 

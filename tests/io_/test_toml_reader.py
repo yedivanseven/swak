@@ -17,7 +17,7 @@ class TestInstantiation(unittest.TestCase):
     def test_reader_init_called_defaults(self, init):
         _ = TomlReader()
         init.assert_called_once_with(
-            '', Storage.FILE, Mode.RB, 32, None, {}, 'raise'
+            '{}', Storage.FILE, Mode.RB, 32, None, {}, 'raise'
         )
 
     @patch.object(Reader, '__init__')
@@ -129,19 +129,19 @@ class TestUsage(unittest.TestCase):
         read = TomlReader()
         self.assertTrue(callable(read))
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_default(self, non_root):
-        non_root.return_value = self.file
+    @patch.object(Reader, '_non_root_from')
+    def test_non_root_called_default(self, non_root_from):
+        non_root_from.return_value = self.file
         read = TomlReader(self.file, self.storage)
         _ = read()
-        non_root.assert_called_once_with('')
+        non_root_from.assert_called_once_with()
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_custom(self, non_root):
-        non_root.return_value = self.file
+    @patch.object(Reader, '_non_root_from')
+    def test_non_root_called_custom(self, non_root_from):
+        non_root_from.return_value = self.file
         read = TomlReader(self.file, self.storage)
-        _ = read('/some/other/file.toml')
-        non_root.assert_called_once_with('/some/other/file.toml')
+        _ = read('foo', 'bar')
+        non_root_from.assert_called_once_with('foo', 'bar')
 
     @patch.object(Reader, '_managed')
     def test_managed_called(self, managed):
@@ -212,7 +212,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         read = TomlReader()
-        expected = ("TomlReader('/', 'file',"
+        expected = ("TomlReader('{}', 'file',"
                     " 32.0, {}, {}, 'raise')")
         self.assertEqual(expected, repr(read))
 
@@ -225,7 +225,7 @@ class TestMisc(unittest.TestCase):
                 {'toml': 'kwargs'},
                 'warn'
         )
-        expected = ("TomlReader('/path/file.toml', 'memory', 16.0,"
+        expected = ("TomlReader('path/file.toml', 'memory', 16.0,"
                     " {'storage': 'kws'}, {'toml': 'kwargs'}, 'warn')")
         self.assertEqual(expected, repr(read))
 

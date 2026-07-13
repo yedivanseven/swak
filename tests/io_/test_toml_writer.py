@@ -9,17 +9,14 @@ from swak.io import TomlWriter, Writer, Storage, Mode
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.toml'
-
     def test_is_writer(self):
         self.assertTrue(issubclass(TomlWriter, Writer))
 
     @patch.object(Writer, '__init__')
     def test_writer_init_called_defaults(self, init):
-        _ = TomlWriter(self.path)
+        _ = TomlWriter()
         init.assert_called_once_with(
-            self.path,
+            '{}',
             Storage.FILE,
             False,
             False,
@@ -33,7 +30,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(Writer, '__init__')
     def test_writer_init_called_custom(self, init):
         _ = TomlWriter(
-            self.path,
+            '/path/to/file.toml',
             Storage.MEMORY,
             True,
             True,
@@ -43,7 +40,7 @@ class TestInstantiation(unittest.TestCase):
             True
         )
         init.assert_called_once_with(
-            self.path,
+            '/path/to/file.toml',
             Storage.MEMORY,
             True,
             True,
@@ -279,23 +276,24 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.toml'
-
     def test_default_repr(self):
-        write = TomlWriter(self.path)
-        expected = ("TomlWriter('/path/file.toml', 'file', "
+        write = TomlWriter()
+        expected = ("TomlWriter('{}', 'file', "
                     "False, False, 32.0, {}, {}, False)")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
-        write = TomlWriter(self.path, prune=True, toml_kws={'answer': 42})
-        expected = ("TomlWriter('/path/file.toml', 'file', False, "
+        write = TomlWriter(
+            '/path/file.toml',
+            prune=True,
+            toml_kws={'answer': 42}
+        )
+        expected = ("TomlWriter('path/file.toml', 'file', False, "
                     "False, 32.0, {}, {'answer': 42}, True)")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = TomlWriter(self.path)
+        write = TomlWriter()
         _ = pickle.loads(pickle.dumps(write))
 
 

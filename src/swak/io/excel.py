@@ -15,10 +15,10 @@ class Excel2DataFrame(Reader):
     Parameters
     ----------
     path: str, optional
-        Directory under which the excel file is located or full path to the
-        excel file. Since it (or part of it) can also be provided later,
-        when the callable instance is called, it is optional here.
-        Defaults to an empty string.
+        The absolute path to the Excel file to read. May contain any number of
+        string placeholders (i.e., pairs of curly brackets) that will be
+        interpolated when instances are called. Defaults to "{}", which
+        delegates the full path specification to instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -63,7 +63,7 @@ class Excel2DataFrame(Reader):
 
     def __init__(
             self,
-            path: str = '',
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             chunk_size: int = 32,
             storage_kws: Mapping[str, Any] | None = None,
@@ -83,16 +83,15 @@ class Excel2DataFrame(Reader):
             self.bear
         )
 
-    def __call__(self, path: str = '') -> Pandas | Polars:
-        """Read a specific excel file from the specified file system.
+    def __call__(self, *parts: str) -> Pandas | Polars:
+        """Read a specific Excel file from the specified file system.
 
         Parameters
         ----------
-        path: str
-            Path (including file name) to the excel file to read. If it
-            starts with a backslash, it will be interpreted as absolute,
-            if not, as relative to the `path` specified at instantiation.
-            Defaults to an empty string, which results in an unchanged `path`.
+        *parts: str
+            Fragments that will be interpolated into the `path` given at
+            instantiation. Obviously, there must be at least as many as
+            there are placeholders in the `path`.
 
         Returns
         -------
@@ -101,6 +100,9 @@ class Excel2DataFrame(Reader):
 
         Raises
         ------
+        IndexError
+            If the `path` given at instantiation has more string placeholders
+            that there are `parts`.
         ValueError
             If the final path is directly under root (e.g., "/file.ods")
             because, on local file system, this is not where you want to save
@@ -108,7 +110,7 @@ class Excel2DataFrame(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root_from(path)
+        uri = self._non_root_from(*parts)
         with self._managed(uri) as file:
             if self.bear == 'pandas':
                 df = pd.read_excel(file, **self.excel_kws)

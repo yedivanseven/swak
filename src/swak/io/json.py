@@ -21,11 +21,12 @@ class JsonWriter(Writer):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         The absolute path to the JSON file to save the dictionary into.
-        May include two or more forward slashes (subdirectories will be
-        created) and string placeholders (i.e., pairs of curly brackets)
-        that will be interpolated when instances are called.
+        May contain any number of string placeholders (i.e., pairs of curly
+        brackets) that will be interpolated when instances are called.
+        Defaults to "{}", which delegates the full path specification
+        to instance calls.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -69,7 +70,7 @@ class JsonWriter(Writer):
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             overwrite: bool = False,
             skip: bool = False,
@@ -139,10 +140,10 @@ class JsonReader(Reader):
     Parameters
     ----------
     path: str, optional
-        Directory under which the JSON file is located or full path to the
-        JSON file. Since it (or part of it) can also be provided later, when
-        the callable instance is called, it is optional here.
-        Defaults to an empty string.
+        The absolute path to the JSON file to read. May contain any number of
+        string placeholders (i.e., pairs of curly brackets) that will be
+        interpolated when instances are called. Defaults to "{}", which
+        delegates the full path specification to instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -185,7 +186,7 @@ class JsonReader(Reader):
 
     def __init__(
             self,
-            path: str = '',
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             chunk_size: int = 32,
             storage_kws: Mapping[str, Any] | None = None,
@@ -207,7 +208,7 @@ class JsonReader(Reader):
             self.gzip
         )
 
-    def __call__(self, path: str = '') -> Yaml:
+    def __call__(self, *parts: str) -> Yaml:
         """Read a specific JSON file from the specified file system.
 
         If `not_found` is set to "warn" or "ignore" and the file cannot be
@@ -215,11 +216,10 @@ class JsonReader(Reader):
 
         Parameters
         ----------
-        path: str
-            Path (including file name) to the JSON file to read. If it starts
-            with a backslash, it will be interpreted as absolute, if not, as
-            relative to the `path` specified at instantiation. Defaults to an
-            empty string, which results in an unchanged `path`.
+        *parts: str
+            Fragments that will be interpolated into the `path` given at
+            instantiation. Obviously, there must be at least as many as
+            there are placeholders in the `path`.
 
         Returns
         -------
@@ -228,6 +228,9 @@ class JsonReader(Reader):
 
         Raises
         ------
+        IndexError
+            If the `path` given at instantiation has more string placeholders
+            that there are `parts`.
         ValueError
             If the final path is directly under root (e.g., "/file.json")
             because, on local file system, this is not where you want to save
@@ -235,7 +238,7 @@ class JsonReader(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root_from(path)
+        uri = self._non_root_from(*parts)
         try:
             suffix = PurePosixPath(uri).suffix
             zipped = suffix == '.gz' if self.gzip is None else self.gzip
