@@ -9,17 +9,14 @@ from swak.io import JsonWriter, Writer, Storage, Mode, Compression
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.json'
-
     def test_is_writer(self):
         self.assertTrue(issubclass(JsonWriter, Writer))
 
     @patch.object(Writer, '__init__')
     def test_writer_init_called_defaults(self, init):
-        _ = JsonWriter(self.path)
+        _ = JsonWriter()
         init.assert_called_once_with(
-            self.path,
+            '{}',
             Storage.FILE,
             False,
             False,
@@ -220,23 +217,24 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.json'
-
     def test_default_repr(self):
-        write = JsonWriter(self.path)
-        expected = ("JsonWriter('/path/file.json', 'file', "
+        write = JsonWriter()
+        expected = ("JsonWriter('{}', 'file', "
                     "False, False, 32.0, {}, {}, None)")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
-        write = JsonWriter(self.path, gzip=False, json_kws={'answer': 42})
-        expected = ("JsonWriter('/path/file.json', 'file', False, "
+        write = JsonWriter(
+            '/path/file.json',
+            gzip=False,
+            json_kws={'answer': 42}
+        )
+        expected = ("JsonWriter('path/file.json', 'file', False, "
                     "False, 32.0, {}, {'answer': 42}, False)")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = JsonWriter(self.path)
+        write = JsonWriter()
         _ = pickle.loads(pickle.dumps(write))
 
 

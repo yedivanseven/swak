@@ -12,7 +12,7 @@ class TestDefaultAttributes(unittest.TestCase):
         self.assertTrue(hasattr(self.read, 'path'))
 
     def test_path(self):
-        self.assertEqual('/', self.read.path)
+        self.assertEqual('{}', self.read.path)
 
     def test_has_storage(self):
         self.assertTrue(hasattr(self.read, 'storage'))
@@ -41,23 +41,19 @@ class TestAttributes(unittest.TestCase):
 
     def test_empty_path(self):
         read = LazyReader('', self.storage)
-        self.assertEqual('/', read.path)
+        self.assertEqual('', read.path)
 
     def test_root_path(self):
         read = LazyReader('/', self.storage)
-        self.assertEqual('/', read.path)
+        self.assertEqual('', read.path)
 
     def test_path(self):
         read = LazyReader('/path/to/another/file.txt', self.storage)
-        self.assertEqual('/path/to/another/file.txt', read.path)
+        self.assertEqual('path/to/another/file.txt', read.path)
 
     def test_path_stripped(self):
         read = LazyReader(' / path/ ', self.storage)
-        self.assertEqual('/path', read.path)
-
-    def test_path_prepended(self):
-        read = LazyReader('path / ', self.storage)
-        self.assertEqual('/path', read.path)
+        self.assertEqual('path', read.path)
 
     def test_path_raises(self):
         with self.assertRaises(TypeError):
@@ -86,62 +82,59 @@ class TestMethods(unittest.TestCase):
         self.path = '/path/to/file.txt'
         self.storage = str(LazyStorage.HF)
 
-    def test_has_non_root(self):
+    def test_has_uri_from(self):
         read = LazyReader(self.path, self.storage)
-        self.assertTrue(hasattr(read, '_non_root'))
-        self.assertTrue(callable(read._non_root))
+        self.assertTrue(hasattr(read, '_uri_from'))
+        self.assertTrue(callable(read._uri_from))
 
-    def test_non_root_empty(self):
+    def test_uri_from_empty(self):
         read = LazyReader(self.path, self.storage)
-        path = read._non_root()
+        path = read._uri_from()
         self.assertIsInstance(path, str)
         self.assertEqual('hf:/' + self.path, path)
 
-    def test_non_root_appends(self):
-        read = LazyReader('/path/to/', self.storage)
-        path = read._non_root('sub/file.txt')
+    def test_uri_from_interpolates(self):
+        read = LazyReader('path/to/{}', self.storage)
+        path = read._uri_from('sub/file.txt')
         self.assertEqual('hf://path/to/sub/file.txt', path)
 
-    def test_non_root_strips(self):
-        read = LazyReader('/path/to/', self.storage)
-        path = read._non_root(' sub/file.txt / ')
+    def test_uri_from_strips(self):
+        read = LazyReader('path/to/{}', self.storage)
+        path = read._uri_from('sub/file.txt / ')
         self.assertEqual('hf://path/to/sub/file.txt', path)
 
-    def test_non_root_replaces(self):
-        read = LazyReader('/path/to/file.txt', self.storage)
-        path = read._non_root('/another/different.txt')
-        self.assertEqual('hf://another/different.txt', path)
-
-    def test_non_root_raises_on_root(self):
+    def test_uri_from_raises_on_root(self):
         read = LazyReader('/', self.storage)
         with self.assertRaises(ValueError):
-            _ = read._non_root('file.txt')
+            _ = read._uri_from('file.txt')
+
+    def test_uri_from_raises_on_too_few_parts(self):
+        read = LazyReader('{}/{}/{}', self.storage)
+        with self.assertRaises(IndexError):
+            _ = read._uri_from()
 
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.txt'
-
     def test_default_repr(self):
-        read = LazyReader(self.path)
-        expected = "LazyReader('/path/to/file.txt', 'file', {})"
+        read = LazyReader()
+        expected = "LazyReader('{}', 'file', {})"
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
         read = LazyReader(
-            self.path,
+            '/path/to/file.txt',
             'az',
             {'answer': 42},
             'foo',
             bar='baz'
         )
-        expected = ("LazyReader('/path/to/file.txt', 'az',"
+        expected = ("LazyReader('path/to/file.txt', 'az',"
                     " {'answer': 42}, 'foo', bar='baz')")
         self.assertEqual(expected, repr(read))
 
     def test_pickle_works(self):
-        read = LazyReader(self.path)
+        read = LazyReader()
         _ = pickle.loads(pickle.dumps(read))
 
 

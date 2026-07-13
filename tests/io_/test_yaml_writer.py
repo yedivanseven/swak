@@ -9,17 +9,14 @@ from swak.io import YamlWriter, Writer, Storage, Mode
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.yml'
-
     def test_is_writer(self):
         self.assertTrue(issubclass(YamlWriter, Writer))
 
     @patch.object(Writer, '__init__')
     def test_writer_init_called_defaults(self, init):
-        _ = YamlWriter(self.path)
+        _ = YamlWriter()
         init.assert_called_once_with(
-            self.path,
+            '{}',
             Storage.FILE,
             False,
             False,
@@ -167,23 +164,20 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.yml'
-
     def test_default_repr(self):
-        write = YamlWriter(self.path)
-        expected = ("YamlWriter('/path/file.yml', "
+        write = YamlWriter()
+        expected = ("YamlWriter('{}', "
                     "'file', False, False, 32.0, {}, {})")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
-        write = YamlWriter(self.path, yaml_kws={'answer': 42})
-        expected = ("YamlWriter('/path/file.yml', "
+        write = YamlWriter('/path/file.yml', yaml_kws={'answer': 42})
+        expected = ("YamlWriter('path/file.yml', "
                     "'file', False, False, 32.0, {}, {'answer': 42})")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = YamlWriter(self.path)
+        write = YamlWriter()
         _ = pickle.loads(pickle.dumps(write))
 
 

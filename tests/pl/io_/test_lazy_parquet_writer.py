@@ -10,17 +10,14 @@ from swak.pl.io import LazyFrame2Parquet, LazyWriter, LazyStorage
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.parquet'
-
     def test_is_writer(self):
         self.assertTrue(issubclass(LazyFrame2Parquet, LazyWriter))
 
     @patch.object(LazyWriter, '__init__')
     def test_writer_init_called_defaults(self, init):
-        _ = LazyFrame2Parquet(self.path)
+        _ = LazyFrame2Parquet()
         init.assert_called_once_with(
-            self.path,
+            '{}',
             LazyStorage.FILE,
             None
         )
@@ -82,7 +79,7 @@ class TestUsage(unittest.TestCase):
         _ = write(self.df, 'foo', 42)
         uri_from.assert_called_once_with('foo', 42)
 
-    def test_to_parquet_called_defaults(self):
+    def test_sink_parquet_called_defaults(self):
         write = LazyFrame2Parquet(self.file, self.storage)
         _ = write(self.df)
         self.df.sink_parquet.assert_called_once_with(
@@ -90,7 +87,7 @@ class TestUsage(unittest.TestCase):
             storage_options={}
         )
 
-    def test_to_parquet_called_custom(self):
+    def test_sink_parquet_called_custom(self):
         write = LazyFrame2Parquet(
             self.file,
             storage=LazyStorage.AZURE,
@@ -133,18 +130,18 @@ class TestMisc(unittest.TestCase):
         self.path = '/path/file.parquet'
 
     def test_default_repr(self):
-        write = LazyFrame2Parquet(self.path)
-        expected = "LazyFrame2Parquet('/path/file.parquet', 'file', {})"
+        write = LazyFrame2Parquet()
+        expected = "LazyFrame2Parquet('{}', 'file', {})"
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = LazyFrame2Parquet(
-            self.path,
+            '/path/file.parquet',
             'hf',
             storage_kws={'foo': 'bar'},
             answer=42
         )
-        expected = ("LazyFrame2Parquet('/path/file.parquet', 'hf', "
+        expected = ("LazyFrame2Parquet('path/file.parquet', 'hf', "
                     "{'foo': 'bar'}, answer=42)")
         self.assertEqual(expected, repr(write))
 

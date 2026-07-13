@@ -10,17 +10,14 @@ from swak.pt.io import StateSaver
 
 class TestInstantiation(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.pt'
-
     def test_is_writer(self):
         self.assertTrue(issubclass(StateSaver, Writer))
 
     @patch.object(Writer, '__init__')
     def test_writer_init_called_defaults(self, init):
-        _ = StateSaver(self.path)
+        _ = StateSaver()
         init.assert_called_once_with(
-            self.path,
+            '{}',
             Storage.FILE,
             False,
             False,
@@ -120,12 +117,9 @@ class TestUsage(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/file.pt'
-
     def test_default_repr(self):
-        write = StateSaver(self.path)
-        expected = ("StateSaver('/path/file.pt', 'file',"
+        write = StateSaver()
+        expected = ("StateSaver('{}', 'file',"
                     " False, False, 32.0, {})")
         self.assertEqual(expected, repr(write))
 
@@ -138,12 +132,12 @@ class TestMisc(unittest.TestCase):
             16,
             {'foo': 'bar'}
         )
-        expected = ("StateSaver('/some/other/file.pt', 'memory', "
+        expected = ("StateSaver('some/other/file.pt', 'memory', "
                     "True, True, 16.0, {'foo': 'bar'})")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = StateSaver(self.path)
+        write = StateSaver()
         _ = pickle.loads(pickle.dumps(write))
 
 

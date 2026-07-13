@@ -22,10 +22,11 @@ class Writer(ArgRepr):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         The absolute path to the file to save. May contain any number of string
         placeholders (i.e., pairs of curly brackets) that will be interpolated
-        when instances are called.
+        when instances are called. Defaults to "{}", which delegates the full
+        path specification to instance calls.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -70,7 +71,7 @@ class Writer(ArgRepr):
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             overwrite: bool = False,
             skip: bool = False,
@@ -114,7 +115,7 @@ class Writer(ArgRepr):
     def __strip(path: Any) -> str:
         """Try to normalize the path."""
         try:
-            stripped = '/' + path.strip(' /')
+            stripped = path.strip().strip(' /')
         except (AttributeError, TypeError) as error:
             cls = type(path).__name__
             msg = 'Path must be a string, not {}!'
@@ -167,14 +168,20 @@ class Writer(ArgRepr):
 
     def __non_root_from(self, *parts: Any) -> PurePosixPath:
         """Interpolate parts into the path and validate the result."""
-        path = self.__strip(self.path.format(*parts))
+        try:
+            path = self.path.format(*parts)
+        except IndexError as error:
+            tmp = '{} part(s) cannot fill all placeholders in path "{}"'
+            msg = tmp.format(len(parts), self.path)
+            raise IndexError(msg) from error
+        path = '/' + self.__strip(path)
         if path.count('/') < 2:
             msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(path))
         return PurePosixPath(path)
 
     def _uri_from(self, *parts: Any) -> str:
-        """Check skip/overwrite and create parent directories."""
+        """Interpolate parts, check skip/overwrite, and create parent dirs."""
         uri = self.__non_root_from(*parts)
         parent = str(uri.parent)
         if self.fs.exists(uri):

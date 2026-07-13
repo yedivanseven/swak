@@ -9,14 +9,13 @@ from swak.io import Writer, Storage, Mode, Compression
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/to/file.txt'
-        self.write = Writer(self.path)
+        self.write = Writer()
 
     def test_has_path(self):
         self.assertTrue(hasattr(self.write, 'path'))
 
     def test_path(self):
-        self.assertEqual(self.path, self.write.path)
+        self.assertEqual('{}', self.write.path)
 
     def test_has_storage(self):
         self.assertTrue(hasattr(self.write, 'storage'))
@@ -79,28 +78,24 @@ class TestDefaultAttributes(unittest.TestCase):
 class TestAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/to/file.txt'
+        self.path = '/path/to/{}.txt'
         self.storage = str(Storage.MEMORY)
 
     def test_empty_path(self):
         write = Writer('', self.storage)
-        self.assertEqual('/', write.path)
+        self.assertEqual('', write.path)
 
     def test_root_path(self):
         write = Writer('/', self.storage)
-        self.assertEqual('/', write.path)
+        self.assertEqual('', write.path)
 
     def test_path(self):
         write = Writer('/path/to/another/file.txt', self.storage)
-        self.assertEqual('/path/to/another/file.txt', write.path)
+        self.assertEqual('path/to/another/file.txt', write.path)
 
     def test_path_stripped(self):
         write = Writer(' / path/ ', self.storage)
-        self.assertEqual('/path', write.path)
-
-    def test_path_prepended(self):
-        write = Writer('path / ', self.storage)
-        self.assertEqual('/path', write.path)
+        self.assertEqual('path', write.path)
 
     def test_path_raises(self):
         with self.assertRaises(TypeError):
@@ -210,6 +205,11 @@ class TestMethods(unittest.TestCase):
     def test_uri_raises_on_root(self):
         write = Writer('/{}.txt', self.storage, overwrite=True)
         with self.assertRaises(ValueError):
+            _ = write._uri_from('file')
+
+    def test_uri_raises_on_too_few_parts(self):
+        write = Writer('/{}/{}.txt', self.storage, overwrite=True)
+        with self.assertRaises(IndexError):
             _ = write._uri_from('file')
 
     def test_uri_from_returns_empty_if_exists_and_skip(self):
@@ -381,18 +381,15 @@ class TestMethods(unittest.TestCase):
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.txt'
-
     def test_default_repr(self):
-        write = Writer(self.path)
-        expected = ("Writer('/path/to/file.txt', 'file', "
+        write = Writer()
+        expected = ("Writer('{}', 'file', "
                     "False, False, 32.0, {})")
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = Writer(
-            self.path,
+            '/path/to/file.txt',
             'memory',
             True,
             True,
@@ -402,12 +399,12 @@ class TestMisc(unittest.TestCase):
             'foo',
             bar='baz'
         )
-        expected = ("Writer('/path/to/file.txt', 'memory', True, True,"
+        expected = ("Writer('path/to/file.txt', 'memory', True, True,"
                     " 16.0, {'answer': 42}, 'foo', bar='baz')")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = Writer(self.path)
+        write = Writer('/path/to/file.txt')
         _ = pickle.loads(pickle.dumps(write))
 
 

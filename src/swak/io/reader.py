@@ -4,7 +4,6 @@ from typing import Any, IO
 from functools import cached_property
 from contextlib import contextmanager
 from fsspec.spec import AbstractFileSystem
-from pathlib import PurePosixPath
 from ..misc import ArgRepr
 from .types import (
     LiteralStorage,
@@ -22,9 +21,10 @@ class Reader(ArgRepr):
     Parameters
     ----------
     path: str, optional
-        Directory under which the file is located or full path to the file.
-        Since it (or part of it) can also be provided later, when the callable
-        instance is called, it is optional here. Defaults to an empty string.
+        The absolute path to the file to read. May contain any number of string
+        placeholders (i.e., pairs of curly brackets) that will be interpolated
+        when instances are called. Defaults to "{}", which delegates the full
+        path specification to instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -63,7 +63,7 @@ class Reader(ArgRepr):
 
     def __init__(
             self,
-            path: str = '',
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             mode: LiteralMode | Mode = Mode.RB,
             chunk_size: int = 32,
@@ -101,7 +101,7 @@ class Reader(ArgRepr):
     def __strip(path: Any) -> str:
         """Try to normalize the path."""
         try:
-            stripped = '/' + path.strip(' /')
+            stripped = path.strip().strip(' /')
         except (AttributeError, TypeError) as error:
             cls = type(path).__name__
             msg = 'Path must be a string, not {}!'
@@ -141,10 +141,16 @@ class Reader(ArgRepr):
         ) as file:
             yield file
 
-    def _non_root(self, path: str = '') -> str:
-        """Append/replace the path given at instantiation on instance call."""
-        uri = str(PurePosixPath(self.path) / str(path).strip().rstrip(' /'))
-        if uri.count('/') < 2:
+    def _uri_from(self, *parts: str) -> str:
+        """Interpolate parts into the path and validate the result."""
+        try:
+            uri = self.path.format(*parts)
+        except IndexError as error:
+            tmp = '{} part(s) cannot fill all placeholders in path "{}"'
+            msg = tmp.format(len(parts), self.path)
+            raise IndexError(msg) from error
+        uri = self.__strip(uri)
+        if uri.count('/') < 1:
             msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(uri))
-        return uri
+        return '/' + uri

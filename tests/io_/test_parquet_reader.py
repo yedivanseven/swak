@@ -20,7 +20,7 @@ class TestInstantiation(unittest.TestCase):
     def test_reader_init_called_defaults(self, init):
         _ = Parquet2DataFrame()
         init.assert_called_once_with(
-            '', Storage.FILE, Mode.RB, 32, None, {}, 'pandas'
+            '{}', Storage.FILE, Mode.RB, 32, None, {}, 'pandas'
         )
 
     @patch.object(Reader, '__init__')
@@ -126,19 +126,19 @@ class TestUsage(unittest.TestCase):
         read = Parquet2DataFrame()
         self.assertTrue(callable(read))
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_default(self, non_root):
-        non_root.return_value = self.file
+    @patch.object(Reader, '_uri_from')
+    def test_uri_from_called_default(self, uri_from):
+        uri_from.return_value = self.file
         read = Parquet2DataFrame(self.file, self.storage)
         _ = read()
-        non_root.assert_called_once_with('')
+        uri_from.assert_called_once_with()
 
-    @patch.object(Reader, '_non_root')
-    def test_non_root_called_custom(self, non_root):
-        non_root.return_value = self.file
+    @patch.object(Reader, '_uri_from')
+    def test_uri_from_called_custom(self, uri_from):
+        uri_from.return_value = self.file
         read = Parquet2DataFrame(self.file, self.storage)
-        _ = read('/some/other/file.parquet')
-        non_root.assert_called_once_with('/some/other/file.parquet')
+        _ = read('foo', 'bar')
+        uri_from.assert_called_once_with('foo', 'bar')
 
     @patch.object(Reader, '_managed')
     def test_managed_called(self, managed):
@@ -225,7 +225,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         read = Parquet2DataFrame()
-        expected = ("Parquet2DataFrame('/', 'file',"
+        expected = ("Parquet2DataFrame('{}', 'file',"
                     " 32.0, {}, {}, 'pandas')")
         self.assertEqual(expected, repr(read))
 
@@ -238,7 +238,7 @@ class TestMisc(unittest.TestCase):
                 {'parquet': 'kws'},
                 'polars'
         )
-        expected = ("Parquet2DataFrame('/path/file.parquet', 'memory', 16.0,"
+        expected = ("Parquet2DataFrame('path/file.parquet', 'memory', 16.0,"
                     " {'storage': 'kws'}, {'parquet': 'kws'}, 'polars')")
         self.assertEqual(expected, repr(read))
 

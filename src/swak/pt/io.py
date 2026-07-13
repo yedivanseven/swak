@@ -28,11 +28,12 @@ class StateSaver(Writer):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         The absolute path to the file to save a model's ``state_dict()`` to.
-        May include two or more forward slashes (subdirectories will be
-        created) and string placeholders (i.e., pairs of curly brackets)
-        that will be interpolated when instances are called.
+        May contain any number of string placeholders (i.e., pairs of curly
+        brackets) that will be interpolated when instances are called.
+        Defaults to "{}", which delegates the full path specification
+        to instance calls.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -67,7 +68,7 @@ class StateSaver(Writer):
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             overwrite: bool = False,
             skip: bool = False,
@@ -91,7 +92,7 @@ class StateSaver(Writer):
         ----------
         model: Module
             Model to save the state of.
-        *parts: str, optional
+        *parts: str
             Fragments that will be interpolated into the `path` string given at
             instantiation. Obviously, there must be at least as many as there
             are placeholders in the `path`.
@@ -135,11 +136,12 @@ class StateLoader(Reader):
 
     Parameters
     ----------
-    path: str
+    path: str, optional
         Full path to the file that holds the model's ``state_dict()``.
-        May include two or more forward slashes (subdirectories will be
-        created) and string placeholders (i.e., pairs of curly brackets)
-        that will be interpolated when instances are called.
+        May contain any number of string placeholders (i.e., pairs of curly
+        brackets) that will be interpolated when instances are called.
+        Defaults to "{}", which delegates the full path specification to
+        instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -182,7 +184,7 @@ class StateLoader(Reader):
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             chunk_size: int = 32,
             storage_kws: Mapping[str, Any] | None = None,
@@ -211,7 +213,7 @@ class StateLoader(Reader):
         ----------
         model: Module
             Model to load the state of.
-        *parts: str, optional
+        *parts: str
             Fragments that will be interpolated into the `path` string given at
             instantiation. Obviously, there must be at least as many as there
             are placeholders in the `path`.
@@ -223,6 +225,9 @@ class StateLoader(Reader):
 
         Raises
         ------
+        IndexError
+            If the `path` given at instantiation has more string placeholders
+            that there are `parts`.
         ValueError
             If the final path is directly under root (e.g., "/file.pt")
             because, on local file system, this is not where you want to save
@@ -234,7 +239,7 @@ class StateLoader(Reader):
             than the model.
 
         """
-        uri = self._non_root(self.path.format(*parts))
+        uri = self._uri_from(*parts)
         try:
             with self._managed(uri) as file:
                 loaded = pt.load(file, self.map_location, weights_only=True)
@@ -262,11 +267,11 @@ class ModelSaver(Writer):
 
     Parameters
     ----------
-    path: str
-        The absolute path to the file to save the model to. May include two
-        or more forward slashes (subdirectories will be created) and string
-        placeholders (i.e., pairs of curly brackets) that will be interpolated
-        when instances are called.
+    path: str, optional
+        The absolute path to the file to save the model to. May contain any
+        number of string placeholders (i.e., pairs of curly brackets) that
+        will be interpolated when instances are called. Defaults to "{}",
+        which delegates the full path specification to instance calls.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -301,7 +306,7 @@ class ModelSaver(Writer):
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             overwrite: bool = False,
             skip: bool = False,
@@ -325,7 +330,7 @@ class ModelSaver(Writer):
         ----------
         model: Module
             The model to save.
-        *parts: str, optional
+        *parts: str
             Fragments that will be interpolated into the `path` string given at
             instantiation. Obviously, there must be at least as many as there
             are placeholders in the `path`.
@@ -362,9 +367,10 @@ class ModelLoader(Reader):
     Parameters
     ----------
     path: str, optional
-        Full path to the model to load.  Since it (or part of it) can also be
-        provided later, when the callable instance is called, it is optional
-        here. Defaults to an empty string.
+        Full path to the model to load. May contain any number of string
+        placeholders (i.e., pairs of curly brackets) that will be interpolated
+        when instances are called. Defaults to "{}", which delegates the full
+        path specification to instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`Storage` enum to avoid typos.
@@ -396,7 +402,7 @@ class ModelLoader(Reader):
 
     def __init__(
             self,
-            path: str = '',
+            path: str = '{}',
             storage: LiteralStorage | Storage = Storage.FILE,
             chunk_size: int = 32,
             storage_kws: Mapping[str, Any] | None = None,
@@ -412,16 +418,15 @@ class ModelLoader(Reader):
             self.map_location
         )
 
-    def __call__(self, path: str = '') -> Module:
+    def __call__(self, *parts: str) -> Module:
         """Load a previously saved model from any supported filesystem.
 
         Parameters
         ----------
-        path: str, optional
-            Path (including file name) to the model file to load. If it starts
-            with a backslash, it will be interpreted as absolute, if not, as
-            relative to the `path` specified at instantiation. Defaults to an
-            empty string, which results in an unchanged `path`.
+        *parts: str
+            Fragments that will be interpolated into the `path` given at
+            instantiation. Obviously, there must be at least as many as
+            there are placeholders in the `path`.
 
         Returns
         -------
@@ -430,6 +435,9 @@ class ModelLoader(Reader):
 
         Raises
         ------
+        IndexError
+            If the `path` given at instantiation has more string placeholders
+            that there are `parts`.
         ValueError
             If the final path is directly under root (e.g., "/file.pt")
             because, on local file system, this is not where you want to save
@@ -437,7 +445,7 @@ class ModelLoader(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root(path)
+        uri = self._uri_from(*parts)
         with self._managed(uri) as file:
             model = pt.load(file, self.map_location, weights_only=False)
         return model.to(self.map_location) if hasattr(model, 'to') else model
