@@ -23,7 +23,7 @@ class Reader(ArgRepr):
     path: str, optional
         The absolute path to the file to read. May contain any number of string
         placeholders (i.e., pairs of curly brackets) that will be interpolated
-        when instances are called. Defaults to '{}', which delegates the full
+        when instances are called. Defaults to "{}", which delegates the full
         path specification to instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", etc.).
@@ -141,7 +141,7 @@ class Reader(ArgRepr):
         ) as file:
             yield file
 
-    def _non_root_from(self, *parts: str) -> str:
+    def _uri_from(self, *parts: str) -> str:
         """Interpolate parts into the path and validate the result."""
         try:
             uri = self.path.format(*parts)

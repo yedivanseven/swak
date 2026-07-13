@@ -239,7 +239,7 @@ class StateLoader(Reader):
             than the model.
 
         """
-        uri = self._non_root_from(*parts)
+        uri = self._uri_from(*parts)
         try:
             with self._managed(uri) as file:
                 loaded = pt.load(file, self.map_location, weights_only=True)
@@ -445,7 +445,7 @@ class ModelLoader(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root_from(*parts)
+        uri = self._uri_from(*parts)
         with self._managed(uri) as file:
             model = pt.load(file, self.map_location, weights_only=False)
         return model.to(self.map_location) if hasattr(model, 'to') else model

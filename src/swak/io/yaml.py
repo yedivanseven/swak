@@ -219,7 +219,7 @@ class YamlReader(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root_from(*parts)
+        uri = self._uri_from(*parts)
         try:
             with self._managed(uri) as file:
                 yml = yaml.load(file, self.loader)

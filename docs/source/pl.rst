@@ -47,7 +47,7 @@ Base classes
 
 .. autoclass:: swak.pl.io.LazyReader
    :members:
-   :private-members: _non_root
+   :private-members: _uri_from
    :show-inheritance:
 
 

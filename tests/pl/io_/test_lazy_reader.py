@@ -82,36 +82,36 @@ class TestMethods(unittest.TestCase):
         self.path = '/path/to/file.txt'
         self.storage = str(LazyStorage.HF)
 
-    def test_has_non_root_from(self):
+    def test_has_uri_from(self):
         read = LazyReader(self.path, self.storage)
-        self.assertTrue(hasattr(read, '_non_root_from'))
-        self.assertTrue(callable(read._non_root_from))
+        self.assertTrue(hasattr(read, '_uri_from'))
+        self.assertTrue(callable(read._uri_from))
 
-    def test_non_root_from_empty(self):
+    def test_uri_from_empty(self):
         read = LazyReader(self.path, self.storage)
-        path = read._non_root_from()
+        path = read._uri_from()
         self.assertIsInstance(path, str)
         self.assertEqual('hf:/' + self.path, path)
 
-    def test_non_root_from_interpolates(self):
+    def test_uri_from_interpolates(self):
         read = LazyReader('path/to/{}', self.storage)
-        path = read._non_root_from('sub/file.txt')
+        path = read._uri_from('sub/file.txt')
         self.assertEqual('hf://path/to/sub/file.txt', path)
 
-    def test_non_root_from_strips(self):
+    def test_uri_from_strips(self):
         read = LazyReader('path/to/{}', self.storage)
-        path = read._non_root_from('sub/file.txt / ')
+        path = read._uri_from('sub/file.txt / ')
         self.assertEqual('hf://path/to/sub/file.txt', path)
 
-    def test_non_root_from_raises_on_root(self):
+    def test_uri_from_raises_on_root(self):
         read = LazyReader('/', self.storage)
         with self.assertRaises(ValueError):
-            _ = read._non_root_from('file.txt')
+            _ = read._uri_from('file.txt')
 
-    def test_non_root_from_raises_on_too_few_parts(self):
+    def test_uri_from_raises_on_too_few_parts(self):
         read = LazyReader('{}/{}/{}', self.storage)
         with self.assertRaises(IndexError):
-            _ = read._non_root_from()
+            _ = read._uri_from()
 
 
 class TestMisc(unittest.TestCase):

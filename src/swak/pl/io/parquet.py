@@ -139,7 +139,7 @@ class Parquet2LazyFrame(LazyReader):
 
         Parameters
         ----------
-       *parts: str
+        *parts: str
             Fragments that will be interpolated into the `path` given at
             instantiation. Obviously, there must be at least as many as
             there are placeholders in the `path`.
@@ -162,7 +162,7 @@ class Parquet2LazyFrame(LazyReader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root_from(*parts)
+        uri = self._uri_from(*parts)
         return pl.scan_parquet(
             uri,
             storage_options=self.storage_kws,

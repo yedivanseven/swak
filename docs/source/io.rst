@@ -94,7 +94,7 @@ Base classes
 
 .. autoclass:: swak.io.Reader
    :members:
-   :private-members: _non_root, _managed
+   :private-members: _uri_from, _managed
    :show-inheritance:
 
 

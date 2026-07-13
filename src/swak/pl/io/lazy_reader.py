@@ -73,7 +73,7 @@ class LazyReader(ArgRepr):
             raise TypeError(f'Path must be a string, not {cls}!') from error
         return stripped
 
-    def _non_root_from(self, *parts: str) -> str:
+    def _uri_from(self, *parts: str) -> str:
         """Interpolate parts into the path and validate the result."""
         try:
             uri = self.path.format(*parts)

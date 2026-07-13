@@ -229,7 +229,7 @@ class Parquet2DataFrame(Reader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root_from(*parts)
+        uri = self._uri_from(*parts)
         with self._managed(uri) as file:
             df = self.read(file, **self.parquet_kws)
         return df

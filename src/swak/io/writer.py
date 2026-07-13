@@ -25,7 +25,7 @@ class Writer(ArgRepr):
     path: str, optional
         The absolute path to the file to save. May contain any number of string
         placeholders (i.e., pairs of curly brackets) that will be interpolated
-        when instances are called. Defaults to '{}', which delegates the full
+        when instances are called. Defaults to "{}", which delegates the full
         path specification to instance calls.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
@@ -181,7 +181,7 @@ class Writer(ArgRepr):
         return PurePosixPath(path)
 
     def _uri_from(self, *parts: Any) -> str:
-        """Check skip/overwrite and create parent directories."""
+        """Interpolate parts, check skip/overwrite, and create parent dirs."""
         uri = self.__non_root_from(*parts)
         parent = str(uri.parent)
         if self.fs.exists(uri):

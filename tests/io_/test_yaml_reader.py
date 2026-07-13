@@ -126,19 +126,19 @@ class TestUsage(unittest.TestCase):
         read = YamlReader()
         self.assertTrue(callable(read))
 
-    @patch.object(Reader, '_non_root_from')
-    def test_non_root_from_called_default(self, non_root_from):
-        non_root_from.return_value = self.file
+    @patch.object(Reader, '_uri_from')
+    def test_uri_from_called_default(self, uri_from):
+        uri_from.return_value = self.file
         read = YamlReader(self.file, self.storage)
         _ = read()
-        non_root_from.assert_called_once_with()
+        uri_from.assert_called_once_with()
 
-    @patch.object(Reader, '_non_root_from')
-    def test_non_root_from_called_custom(self, non_root_from):
-        non_root_from.return_value = self.file
+    @patch.object(Reader, '_uri_from')
+    def test_uri_from_called_custom(self, uri_from):
+        uri_from.return_value = self.file
         read = YamlReader(self.file, self.storage)
         _ = read('foo', 'bar')
-        non_root_from.assert_called_once_with('foo', 'bar')
+        uri_from.assert_called_once_with('foo', 'bar')
 
     @patch.object(Reader, '_managed')
     def test_managed_called(self, managed):
