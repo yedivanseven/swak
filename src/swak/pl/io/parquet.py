@@ -12,10 +12,11 @@ class LazyFrame2Parquet(LazyWriter):
 
     Parameters
     ----------
-    path: str
-        The absolute path to the parquet file to write. May include any number
+    path: str, optional
+        The absolute path to the parquet file to sink. May contain any number
         of string placeholders (i.e., pairs of curly brackets) that will be
-        interpolated when the instance is called.
+        interpolated when instances are called.  Defaults to "{}",
+        which delegates the full path specification to instance calls.
     storage: str, optional
         The type of file system to write to ("file", "s3", "gcs", etc.).
         Defaults to "file". Use the :class:`LazyStorage` enum to avoid typos.
@@ -47,7 +48,7 @@ class LazyFrame2Parquet(LazyWriter):
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralLazyStorage | LazyStorage = LazyStorage.FILE,
             storage_kws: Mapping[str, Any] | None = None,
             **kwargs: Any
@@ -95,9 +96,10 @@ class Parquet2LazyFrame(LazyReader):
     Parameters
     ----------
     path: str, optional
-        Base directory or full path to the parquet file. Since part of it can
-        also be provided later, when the callable instance is called, it is
-        optional here. Defaults to an empty string.
+        The absolute path to the parquet file to scan. May contain any number
+        of string placeholders (i.e., pairs of curly brackets) that will be
+        interpolated when instances are called. Defaults to "{}", which
+        delegates the full path specification to instance calls.
     storage: str, optional
         The type of file system to read from ("file", "s3", "gcs", etc.).
         Defaults to "file". Use the :class:`LazyStorage` enum to avoid typos.
@@ -124,7 +126,7 @@ class Parquet2LazyFrame(LazyReader):
 
     def __init__(
             self,
-            path: str = '',
+            path: str = '{}',
             storage: LiteralLazyStorage | LazyStorage = LazyStorage.FILE,
             storage_kws: Mapping[str, Any] | None = None,
             **kwargs: Any
@@ -132,17 +134,15 @@ class Parquet2LazyFrame(LazyReader):
         self.kwargs = kwargs
         super().__init__(path, storage, storage_kws, **kwargs)
 
-    def __call__(self, path: str = '') -> LazyFrame:
+    def __call__(self, *parts: str) -> LazyFrame:
         """Lazily scan a parquet file on the specified file system.
 
         Parameters
         ----------
-        path: str, optional
-            Path (including file name) to the parquet file to scan. If it
-            starts with a forward slash, it is interpreted as absolute;
-            otherwise, it is joined to the `path` given at instantiation.
-            Defaults to an empty string, which leaves the instantiation
-            `path` unchanged.
+       *parts: str
+            Fragments that will be interpolated into the `path` given at
+            instantiation. Obviously, there must be at least as many as
+            there are placeholders in the `path`.
 
         Returns
         -------
@@ -152,6 +152,9 @@ class Parquet2LazyFrame(LazyReader):
 
         Raises
         ------
+        IndexError
+            If the `path` given at instantiation has more string placeholders
+            that there are `parts`.
         ValueError
             If the final path is directly under root (e.g., "/file.parquet")
             because, on local file system, this is not where you want to save
@@ -159,7 +162,7 @@ class Parquet2LazyFrame(LazyReader):
             of an (existing!) bucket.
 
         """
-        uri = self._non_root(path)
+        uri = self._non_root_from(*parts)
         return pl.scan_parquet(
             uri,
             storage_options=self.storage_kws,

@@ -120,14 +120,14 @@ class TestUsage(unittest.TestCase):
         self.assertTrue(callable(read))
 
     @patch.object(Reader, '_non_root_from')
-    def test_non_root_called_default(self, non_root_from):
+    def test_non_root_from_called_default(self, non_root_from):
         read = StateLoader(self.file, self.storage)
         non_root_from.return_value = self.file
         _ = read(self.model)
         non_root_from.assert_called_once_with()
 
     @patch.object(Reader, '_non_root_from')
-    def test_non_root_called_custom(self, non_root_from):
+    def test_non_root_from_called_custom(self, non_root_from):
         read = StateLoader('/some/other/path.pt', self.storage)
         non_root_from.return_value = self.file
         _ = read(self.model, 'foo', 'bar')

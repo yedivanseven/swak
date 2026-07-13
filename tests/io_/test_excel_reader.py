@@ -119,14 +119,14 @@ class TestUsage(unittest.TestCase):
         self.assertTrue(callable(read))
 
     @patch.object(Reader, '_non_root_from')
-    def test_non_root_called_default(self, non_root_from):
+    def test_non_root_from_called_default(self, non_root_from):
         non_root_from.return_value = self.file
         read = Excel2DataFrame(self.file, self.storage)
         _ = read()
         non_root_from.assert_called_once_with()
 
     @patch.object(Reader, '_non_root_from')
-    def test_non_root_called_custom(self, non_root_from):
+    def test_non_root_from_called_custom(self, non_root_from):
         non_root_from.return_value = self.file
         read = Excel2DataFrame(self.file, self.storage)
         _ = read('foo', 'bar')

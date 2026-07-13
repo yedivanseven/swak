@@ -17,7 +17,7 @@ class TestInstantiation(unittest.TestCase):
     @patch.object(LazyReader, '__init__')
     def test_reader_init_called_defaults(self, init):
         _ = Parquet2LazyFrame()
-        init.assert_called_once_with('', LazyStorage.FILE, None)
+        init.assert_called_once_with('{}', LazyStorage.FILE, None)
 
     @patch.object(LazyReader, '__init__')
     def test_reader_init_called_custom(self, init):
@@ -52,7 +52,7 @@ class TestInstantiation(unittest.TestCase):
 
 class TestAttributes(unittest.TestCase):
 
-    def test_has_kargs(self):
+    def test_has_kwargs(self):
         read = Parquet2LazyFrame()
         self.assertTrue(hasattr(read, 'kwargs'))
 
@@ -83,19 +83,19 @@ class TestUsage(unittest.TestCase):
         read = Parquet2LazyFrame()
         self.assertTrue(callable(read))
 
-    @patch.object(LazyReader, '_non_root')
-    def test_non_root_called_default(self, non_root):
-        non_root.return_value = self.file
-        read = Parquet2LazyFrame(self.file, self.storage)
+    @patch.object(LazyReader, '_non_root_from')
+    def test_non_root_from_called_default(self, non_root_from):
+        non_root_from.return_value = self.file
+        read = Parquet2LazyFrame(storage=self.storage)
         _ = read()
-        non_root.assert_called_once_with('')
+        non_root_from.assert_called_once_with()
 
-    @patch.object(LazyReader, '_non_root')
-    def test_non_root_called_custom(self, non_root):
-        non_root.return_value = self.file
+    @patch.object(LazyReader, '_non_root_from')
+    def test_non_root_from_called_custom(self, non_root_from):
+        non_root_from.return_value = self.file
         read = Parquet2LazyFrame(self.file, self.storage)
-        _ = read('/some/other/file.parquet')
-        non_root.assert_called_once_with('/some/other/file.parquet')
+        _ = read('foo', 'bar')
+        non_root_from.assert_called_once_with('foo', 'bar')
 
     @patch('swak.pl.io.parquet.pl.scan_parquet')
     def test_scan_parquet_called_defaults(self, scan):
@@ -143,7 +143,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_repr(self):
         read = Parquet2LazyFrame()
-        expected = "Parquet2LazyFrame('/', 'file', {})"
+        expected = "Parquet2LazyFrame('{}', 'file', {})"
         self.assertEqual(expected, repr(read))
 
     def test_custom_repr(self):
@@ -153,7 +153,7 @@ class TestMisc(unittest.TestCase):
                 {'storage': 'kws'},
                 answer=42
         )
-        expected = ("Parquet2LazyFrame('/path/file.parquet', 'az',"
+        expected = ("Parquet2LazyFrame('path/file.parquet', 'az',"
                     " {'storage': 'kws'}, answer=42)")
         self.assertEqual(expected, repr(read))
 

@@ -1,6 +1,5 @@
 from collections.abc import Mapping
 from typing import Any
-from pathlib import PurePosixPath
 from ..misc import ArgRepr
 from .types import LiteralLazyStorage, LazyStorage
 
@@ -11,9 +10,10 @@ class LazyReader(ArgRepr):
     Parameters
     ----------
     path: str, optional
-        Directory under which the parquet file is located or its full path.
-        Since it (or part of it) can also be provided later, when the callable
-        instance is called, it is optional here. Defaults to an empty string.
+        The absolute path to the file to read. May contain any number
+        of string placeholders (i.e., pairs of curly brackets) that will be
+        interpolated when instances are called. Defaults to "{}", which
+        delegates the full path specification to instance calls.
     storage: str, optional
         The type of file system to scan from ("file", "s3", etc.).
         Defaults to "file". Use the :class:`LazyStorage` enum to avoid typos.
@@ -41,7 +41,7 @@ class LazyReader(ArgRepr):
 
     def __init__(
             self,
-            path: str = '',
+            path: str = '{}',
             storage: LiteralLazyStorage | LazyStorage = LazyStorage.FILE,
             storage_kws: Mapping[str, Any] | None = None,
             *args: Any,
@@ -65,18 +65,24 @@ class LazyReader(ArgRepr):
 
     @staticmethod
     def __strip(path: Any) -> str:
-        """Normalize path to an absolute POSIX-style string."""
+        """Try to normalize the path."""
         try:
-            stripped = '/' + path.strip().strip(' /')
+            stripped = path.strip().strip(' /')
         except (AttributeError, TypeError) as error:
             cls = type(path).__name__
             raise TypeError(f'Path must be a string, not {cls}!') from error
         return stripped
 
-    def _non_root(self, path: str = '') -> str:
-        """Assemble and validate the URI, raising if it points to root."""
-        uri = str(PurePosixPath(self.path) / str(path).strip().rstrip(' /'))
-        if uri.count('/') < 2:
+    def _non_root_from(self, *parts: str) -> str:
+        """Interpolate parts into the path and validate the result."""
+        try:
+            uri = self.path.format(*parts)
+        except IndexError as error:
+            tmp = '{} part(s) cannot fill all placeholders in path "{}"'
+            msg = tmp.format(len(parts), self.path)
+            raise IndexError(msg) from error
+        uri = self.__strip(uri)
+        if uri.count('/') < 1:
             msg = 'Path "{}" must not point to the root directory ("/")!'
             raise ValueError(msg.format(uri))
-        return f'{self.prefix}{uri}'
+        return f'{self.prefix}/{uri}'

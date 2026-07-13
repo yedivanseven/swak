@@ -6,21 +6,19 @@ from swak.pl.io import LazyWriter, LazyStorage
 class TestDefaultAttributes(unittest.TestCase):
 
     def setUp(self):
-        self.path = '/path/to/file.txt'
-        self.write = LazyWriter(self.path)
+        self.write = LazyWriter()
 
     def test_has_path(self):
         self.assertTrue(hasattr(self.write, 'path'))
 
     def test_path(self):
-        self.assertEqual(self.path, self.write.path)
+        self.assertEqual('{}', self.write.path)
 
     def test_has_storage(self):
         self.assertTrue(hasattr(self.write, 'storage'))
 
     def test_storage(self):
         self.assertEqual('file', self.write.storage)
-
 
     def test_has_storage_kws(self):
         self.assertTrue(hasattr(self.write, 'storage_kws'))
@@ -43,23 +41,19 @@ class TestAttributes(unittest.TestCase):
 
     def test_empty_path(self):
         write = LazyWriter('', self.storage)
-        self.assertEqual('/', write.path)
+        self.assertEqual('', write.path)
 
     def test_root_path(self):
         write = LazyWriter('/', self.storage)
-        self.assertEqual('/', write.path)
+        self.assertEqual('', write.path)
 
     def test_path(self):
         write = LazyWriter('/path/to/another/file.txt', self.storage)
-        self.assertEqual('/path/to/another/file.txt', write.path)
+        self.assertEqual('path/to/another/file.txt', write.path)
 
     def test_path_stripped(self):
         write = LazyWriter(' / path/ ', self.storage)
-        self.assertEqual('/path', write.path)
-
-    def test_path_prepended(self):
-        write = LazyWriter('path / ', self.storage)
-        self.assertEqual('/path', write.path)
+        self.assertEqual('path', write.path)
 
     def test_path_raises(self):
         with self.assertRaises(TypeError):
@@ -114,31 +108,33 @@ class TestMethods(unittest.TestCase):
         with self.assertRaises(ValueError):
             _ = write._uri_from('file')
 
+    def test_uri_raises_on_too_few_parts(self):
+        write = LazyWriter('/{}/{}.txt', self.storage, overwrite=True)
+        with self.assertRaises(IndexError):
+            _ = write._uri_from('file')
+
 
 class TestMisc(unittest.TestCase):
 
-    def setUp(self):
-        self.path = '/path/to/file.txt'
-
     def test_default_repr(self):
-        write = LazyWriter(self.path)
-        expected = "LazyWriter('/path/to/file.txt', 'file', {})"
+        write = LazyWriter()
+        expected = "LazyWriter('{}', 'file', {})"
         self.assertEqual(expected, repr(write))
 
     def test_custom_repr(self):
         write = LazyWriter(
-            self.path,
+            '/path/to/file.txt',
             'az',
             {'answer': 42},
             'foo',
             bar='baz'
         )
-        expected = ("LazyWriter('/path/to/file.txt', 'az',"
+        expected = ("LazyWriter('path/to/file.txt', 'az',"
                     " {'answer': 42}, 'foo', bar='baz')")
         self.assertEqual(expected, repr(write))
 
     def test_pickle_works(self):
-        write = LazyWriter(self.path)
+        write = LazyWriter('/path/to/file.txt')
         _ = pickle.loads(pickle.dumps(write))
 
 

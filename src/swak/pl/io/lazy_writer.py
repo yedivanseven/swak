@@ -1,6 +1,5 @@
 from collections.abc import Mapping
 from typing import Any
-from pathlib import PurePosixPath
 from ..misc import ArgRepr
 from .types import LiteralLazyStorage, LazyStorage
 
@@ -10,10 +9,11 @@ class LazyWriter(ArgRepr):
 
     Parameters
     ----------
-    path: str
-        The absolute path to the file to sink. May contain any number of string
-        placeholders (i.e., pairs of curly brackets) that will be interpolated
-        when instances are called.
+    path: str, optional
+        The absolute path to the file to sink. May contain any number
+        of string placeholders (i.e., pairs of curly brackets) that will be
+        interpolated when instances are called. Defaults to "{}", which
+        delegates the full path specification to instance calls.
     storage: str, optional
         The type of file system to write to ("file", "s3", etc.).
         Defaults to "file". Use the :class:`LazyStorage` enum to avoid typos.
@@ -42,7 +42,7 @@ class LazyWriter(ArgRepr):
 
     def __init__(
             self,
-            path: str,
+            path: str = '{}',
             storage: LiteralLazyStorage | LazyStorage = LazyStorage.FILE,
             storage_kws: Mapping[str, Any] | None = None,
             *args: Any,
@@ -66,23 +66,29 @@ class LazyWriter(ArgRepr):
 
     @staticmethod
     def __strip(path: Any) -> str:
-        """Normalize path to an absolute POSIX-style string."""
+        """Try to normalize the path."""
         try:
-            stripped = '/' + path.strip().strip(' /')
+            stripped = path.strip().strip(' /')
         except (AttributeError, TypeError) as error:
             cls = type(path).__name__
             raise TypeError(f'Path must be a string, not {cls}!') from error
         return stripped
 
-    def __non_root_from(self, *parts: Any) -> PurePosixPath:
+    def __non_root_from(self, *parts: Any) -> str:
         """Interpolate parts into the path and validate the result."""
-        interpolated = self.__strip(self.path.format(*parts))
-        if interpolated.count('/') < 2:
+        try:
+            path = self.path.format(*parts)
+        except IndexError as error:
+            tmp = '{} part(s) cannot fill all placeholders in path "{}"'
+            msg = tmp.format(len(parts), self.path)
+            raise IndexError(msg) from error
+        path = self.__strip(path)
+        if path.count('/') < 1:
             msg = 'Path "{}" must not point to the root directory ("/")!'
-            raise ValueError(msg.format(interpolated))
-        return PurePosixPath(interpolated)
+            raise ValueError(msg.format(path))
+        return path
 
     def _uri_from(self, *parts: Any) -> str:
-        """Check skip/overwrite and create parent directories."""
+        """Assemble and validate the URI."""
         path = self.__non_root_from(*parts)
-        return f'{self.prefix}{path}'
+        return f'{self.prefix}/{path}'
