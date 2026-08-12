@@ -5,6 +5,7 @@ from ..types import Module, Tensor, Block
 from ..misc import Identity
 
 
+# ToDo: Add flag for whether to scale output by 1/sqrt(2)
 class SkipConnection(Block):
     """Add a residual/skip connection around the wrapped neural-network block.
 
