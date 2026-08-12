@@ -9,7 +9,7 @@ from .memory import MemoryLayer
 
 
 # ToDo: Make Hierarchical Training loop
-# ToDo. Add unit tests
+# ToDo: Add unit tests
 class Memorizer(Trafo):
     """Transformer encoder stack with built-in, learnable memory.
 

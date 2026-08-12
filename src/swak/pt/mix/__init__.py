@@ -13,3 +13,5 @@ __all__ = [
     'CrossAttentionMixer',
     'SelfAttentionMixer',
 ]
+
+# ToDo: Don't do mean in skip connections! Do sqrt number of features!

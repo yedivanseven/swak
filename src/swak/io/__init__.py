@@ -7,7 +7,6 @@ staging, and production environments.
 
 """
 
-# ToDo: Should we maybe also interpolate with the readers?
 from .writer import Writer
 from .reader import Reader
 from .parquet import DataFrame2Parquet, Parquet2DataFrame

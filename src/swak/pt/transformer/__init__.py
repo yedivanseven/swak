@@ -24,3 +24,4 @@ __all__ = [
 ]
 
 # ToDo: Leave mask merge to outermost model wrapper!
+# ToDo: Leave (sinusoidal) positional encoding & dropout to outermost wrapper!
