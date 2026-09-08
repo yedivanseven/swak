@@ -1,0 +1,57 @@
+name: Publishing
+
+on:
+  release:
+    types: [published]
+  # pull_request:
+  #   branches:
+  #     - main
+
+jobs:
+
+  publish-package:
+    name: publish package
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+
+      - name: Build
+        run: uv build
+
+      - name: Publish
+        run: uv publish
+
+  deploy-docs:
+    # needs: publish-package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Build the Docs
+        run: |
+          uv sync --all-extras --dev --frozen
+          uv pip install sphinx sphinx_rtd_theme
+          source .venv/bin/activate
+          cd docs
+          make html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.event_name == 'release' }}
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build/
+          force_orphan: true
