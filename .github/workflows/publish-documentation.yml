@@ -29,8 +29,10 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: Install PyTorch (CPU)
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Install package
-        run: pip install .[cpu,aws,gcp]
+        run: pip install .[aws,gcp]
       - name: Install sphinx
         run: pip install sphinx sphinx-rtd-theme
       - name: Build the docs

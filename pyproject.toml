@@ -23,6 +23,8 @@ dependencies = [
 authors = [{name = "yedivanseven", email = "yedivanseven@outlook.de"}]
 description = "Swiss army knife for functional data-science projects."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = [
     "functional",
     "tools",
@@ -36,7 +38,6 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Utilities",
-    "License :: OSI Approved :: MIT License",
 ]
 
 [project.urls]
