@@ -12,6 +12,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ "3.12", "3.13" , "3.14" ]
     steps:
@@ -32,6 +33,7 @@ jobs:
     name: Unittest
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ "3.12", "3.13", "3.14" ]
     steps:
@@ -42,10 +44,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pipenv
-        run: pip install --upgrade pipenv --user
-      - name: Sync PyTorch CPU
-        run: pipenv sync --categories="packages gcp aws cpu"
+        run: pip install --upgrade pipenv
+      - name: Export locked requirements
+        run: pipenv requirements --categories="packages gcp aws" > requirements.txt
+      - name: Install PyTorch CPU
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install locked dependencies
+        run: pip install -r requirements.txt
       - name: Install package
-        run: pipenv run pip install .[aws,gcp]
+        run: pip install --no-deps .
       - name: Run unittest
-        run: pipenv run python -m unittest
+        run: python -m unittest
