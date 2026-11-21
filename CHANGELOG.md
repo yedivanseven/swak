@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Error because of spelling of pandas type import
+- Unit tests for python 3.14
 
 
 ## [1.2.0] - 2026-07-13
