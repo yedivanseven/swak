@@ -592,7 +592,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_raises_with_lambda(self):
         m = ProcessMap(lambda x: x + 2, lambda x: tuple(x))  #noqa
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(m))
 
     def test_default_lambda_repr(self):

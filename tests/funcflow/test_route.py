@@ -629,7 +629,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_raises_with_lambdas(self):
         route = Route([3, (2, 0)], lambda x: x + 1, lambda x: x**2)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(route))
 
     def test_flat_repr(self):

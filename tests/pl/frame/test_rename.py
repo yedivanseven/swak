@@ -78,9 +78,9 @@ class TestMisc(unittest.TestCase):
         rename = Rename(custom, strict=False)
         _ = pickle.loads(pickle.dumps(rename))
 
-    def test_pickle_raises_on_lambda(self):
+    def test_pickle_raises_with_lambda(self):
         rename = Rename(lambda x: 2*x, strict=False)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(rename))
 
 

@@ -63,7 +63,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_raises_with_lambda(self):
         assign = Assign({'one': lambda x: x.mean(), 'two': 2})
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(assign))
 
 

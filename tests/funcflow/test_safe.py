@@ -223,7 +223,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_raises_with_lambda(self):
         s = Safe(lambda x, y: x + y, ZeroDivisionError, StopIteration)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(s))
 
     def test_default_lambda_repr(self):

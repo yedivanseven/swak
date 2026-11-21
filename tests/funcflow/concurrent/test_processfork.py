@@ -614,7 +614,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_raises_with_lambdas(self):
         fork = ProcessFork(f, Cls, Call(), lambda x: x)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(fork))
 
     def test_type_annotation(self):
