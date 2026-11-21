@@ -136,7 +136,7 @@ class TestMisc(unittest.TestCase):
         _ = pickle.loads(pickle.dumps(Delayed(G().h, Delayed(f))))
 
     def test_pickle_raises_with_lambda(self):
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(
                 Delayed(G().h, Delayed(lambda x: x))
             ))

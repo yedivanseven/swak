@@ -13,12 +13,12 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-        name: Checkout repository
-      - uses: actions/setup-python@v6
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up python
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-        name: Set up python
       - name: Install build
         run: pip install build
       - name: Run build

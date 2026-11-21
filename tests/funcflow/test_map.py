@@ -442,7 +442,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_pickle_raises_lambda(self):
         m = Map(lambda x: x + 2)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(m))
 
     def test_wrapper_pickle_works(self):
@@ -451,12 +451,12 @@ class TestMisc(unittest.TestCase):
 
     def test_wrapper_pickle_raises_with_lambda(self):
         m = Map(plus_2, lambda x: tuple(x))  #noqa
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(m))
 
     def test_pickle_raises_with_lambda(self):
         m = Map(lambda x: x + 2, lambda x: tuple(x))  #noqa
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(m))
 
     def test_default_lambda_repr(self):

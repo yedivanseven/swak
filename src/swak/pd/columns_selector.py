@@ -1,6 +1,6 @@
 from typing import overload
 from collections.abc import Hashable
-from pandas.core.groupby import DataFrameGroupBy
+from pandas.api.typing import DataFrameGroupBy
 from pandas import DataFrame
 from ..misc import ArgRepr
 from .types import Labels

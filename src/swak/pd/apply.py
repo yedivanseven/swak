@@ -2,7 +2,7 @@ from typing import Any, Literal
 from pandas import DataFrame, Series
 from pandas.core.window.rolling import BaseWindow
 from pandas.core.groupby.groupby import BaseGroupBy
-from pandas.core.groupby import DataFrameGroupBy
+from pandas.api.typing import DataFrameGroupBy
 from pandas._typing import AggFuncType
 from ..misc import ArgRepr
 from .types import Axis

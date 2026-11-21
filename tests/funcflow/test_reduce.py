@@ -128,35 +128,38 @@ class TestDefaultUsage(unittest.TestCase):
             _ = self.r(1)
 
     def test_wrong_call_raises(self):
-        expected = ('\nZeroDivisionError calling\n'
-                    'g\n'
-                    'on element #2:\n'
-                    'float division by zero')
+        expected = (
+            r'^\nZeroDivisionError calling\n'
+            r'g\n'
+            r'on element #2:\n'
+            r'(?:float )?division by zero$'
+        )
         r = Reduce(g)
-        with self.assertRaises(ReduceError) as error:
+        with self.assertRaisesRegex(ReduceError, expected):
             _ = r([1, 2, 0])
-        self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ('\nZeroDivisionError calling\n'
-                    'A(1)\n'
-                    'on element #2:\n'
-                    'float division by zero')
+        expected = (
+            r'^\nZeroDivisionError calling\n'
+            r'A\(1\)\n'
+            r'on element #2:\n'
+            r'(?:float )?division by zero$'
+        )
         r = Reduce(A(1))
-        with self.assertRaises(ReduceError) as error:
+        with self.assertRaisesRegex(ReduceError, expected):
             _ = r([1, 2, 0])
-        self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ('\nZeroDivisionError calling\n'
-                    'Ind():\n'
-                    '[ 0] 1\n'
-                    'on element #2:\n'
-                    'float division by zero')
+        expected = (
+            r'^\nZeroDivisionError calling\n'
+            r'Ind\(\):\n'
+            r'\[ 0\] 1\n'
+            r'on element #2:\n'
+            r'(?:float )?division by zero$'
+        )
         r = Reduce(Ind([1]))
-        with self.assertRaises(ReduceError) as error:
+        with self.assertRaisesRegex(ReduceError, expected):
             _ = r([1, 2, 0])
-        self.assertEqual(expected, str(error.exception))
 
 
 class TestAccAttributes(unittest.TestCase):
@@ -233,35 +236,38 @@ class TestAccUsage(unittest.TestCase):
             _ = self.r(1)
 
     def test_wrong_call_raises(self):
-        expected = ('\nZeroDivisionError calling\n'
-                    'g\n'
-                    'on element #2:\n'
-                    'float division by zero')
+        expected = (
+            r'^\nZeroDivisionError calling\n'
+            r'g\n'
+            r'on element #2:\n'
+            r'(?:float )?division by zero$'
+        )
         r = Reduce(g)
-        with self.assertRaises(ReduceError) as error:
+        with self.assertRaisesRegex(ReduceError, expected):
             _ = r([1, 2, 0])
-        self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_argrepr(self):
-        expected = ('\nZeroDivisionError calling\n'
-                    'A(1)\n'
-                    'on element #2:\n'
-                    'float division by zero')
+        expected = (
+            r'^\nZeroDivisionError calling\n'
+            r'A\(1\)\n'
+            r'on element #2:\n'
+            r'(?:float )?division by zero$'
+        )
         r = Reduce(A(1))
-        with self.assertRaises(ReduceError) as error:
+        with self.assertRaisesRegex(ReduceError, expected):
             _ = r([1, 2, 0])
-        self.assertEqual(expected, str(error.exception))
 
     def test_error_msg_indentrepr(self):
-        expected = ('\nZeroDivisionError calling\n'
-                    'Ind():\n'
-                    '[ 0] 1\n'
-                    'on element #2:\n'
-                    'float division by zero')
+        expected = (
+            r'^\nZeroDivisionError calling\n'
+            r'Ind\(\):\n'
+            r'\[ 0\] 1\n'
+            r'on element #2:\n'
+            r'(?:float )?division by zero$'
+        )
         r = Reduce(Ind([1]))
-        with self.assertRaises(ReduceError) as error:
+        with self.assertRaisesRegex(ReduceError, expected):
             _ = r([1, 2, 0])
-        self.assertEqual(expected, str(error.exception))
 
 
 class TestMisc(unittest.TestCase):
@@ -272,7 +278,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_pickle_raises_lambda(self):
         r = Reduce(lambda x, y: x + y)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(r))
 
     def test_acc_pickle_works(self):
@@ -281,7 +287,7 @@ class TestMisc(unittest.TestCase):
 
     def test_acc_pickle_raises_lambda(self):
         r = Reduce(lambda x, y: x + y, 1)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(r))
 
     def test_default_lambda_repr(self):

@@ -1,6 +1,6 @@
 from typing import overload
 from collections.abc import Hashable
-from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
+from pandas.api.typing import DataFrameGroupBy, SeriesGroupBy
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 

@@ -74,7 +74,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_raises_with_lambda(self):
         select = RowsSelector(lambda df: df[0] > 2)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(select))
 
 

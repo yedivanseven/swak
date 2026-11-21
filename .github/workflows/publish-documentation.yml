@@ -23,24 +23,22 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-        name: Checkout repository
-      - uses: actions/setup-python@v6
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up python
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-        name: Set up python
-      - name: Install pipenv
-        run: pip install --upgrade pipenv --user
-      - name: Sync PyTorch CPU
-        run: pipenv sync --categories=cpu
-      - name: Install sphinx
-        run: pipenv run pip install sphinx sphinx-rtd-theme
+      - name: Install PyTorch (CPU)
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Install package
-        run: pipenv run pip install .[aws,gcp]
+        run: pip install .[aws,gcp]
+      - name: Install sphinx
+        run: pip install sphinx sphinx-rtd-theme
       - name: Build the docs
         run: |
           cd docs
-          pipenv run make html
+          make html
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact

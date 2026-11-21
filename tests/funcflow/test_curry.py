@@ -173,7 +173,7 @@ class TestMisc(unittest.TestCase):
 
     def test_pickle_raises_with_lambda(self):
         curry = Curry(lambda x: x, 'foo', answer=42)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(curry))
 
     def test_lambda_repr(self):

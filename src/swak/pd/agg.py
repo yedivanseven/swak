@@ -1,6 +1,6 @@
 from typing import Any, Literal, overload
 from collections.abc import Mapping
-from pandas.core.groupby import SeriesGroupBy, DataFrameGroupBy
+from pandas.api.typing import SeriesGroupBy, DataFrameGroupBy
 from pandas import DataFrame, Series
 from pandas._typing import AggFuncType
 from ..misc import ArgRepr

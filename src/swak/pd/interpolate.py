@@ -1,6 +1,6 @@
 from typing import Any, overload
 from pandas import DataFrame, Series
-from pandas.core.resample import Resampler
+from pandas.api.typing import Resampler
 from .types import Axis, LimitDirection, LimitArea
 from ..misc import ArgRepr
 

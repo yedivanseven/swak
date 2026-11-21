@@ -1,6 +1,11 @@
 from typing import overload, Any
-from pandas.core.window import Rolling, Window, RollingGroupby
-from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
+from pandas.api.typing import (
+    DataFrameGroupBy,
+    SeriesGroupBy,
+    Rolling,
+    RollingGroupby,
+    Window
+)
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 

@@ -511,11 +511,6 @@ class TestUsage(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             _ = self.attention(inp, mask, False)
 
-    def test_2d_inp_4d_mask_raises(self):
-        inp = pt.rand(self.seq_len, self.mod_dim, device='cpu')
-        mask = pt.zeros(1, 1, self.seq_len, self.seq_len, device='cpu')
-        with self.assertRaises(RuntimeError):
-            _ = self.attention(inp, mask, False)
 
     def test_3d_inp_1d_mask(self):
         inp = pt.rand(

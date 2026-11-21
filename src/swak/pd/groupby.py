@@ -3,7 +3,8 @@ from collections.abc import Callable, Hashable, Mapping
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame, Series
-from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy, Grouper
+from pandas.core.groupby import Grouper
+from pandas.api.typing import DataFrameGroupBy, SeriesGroupBy
 from ..misc import ArgRepr
 from .types import Labels
 

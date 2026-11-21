@@ -170,7 +170,7 @@ class TestMisc(unittest.TestCase):
 
     def test_raises_with_lambda(self):
         groupby = GroupBy(lambda x: x.lower())
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(groupby))
 
 

@@ -433,7 +433,7 @@ class TestMisc(unittest.TestCase):
     def test_lambda_pickle_raises(self):
         logger = PassThroughJsonLogger('default')
         log = logger.debug(lambda *_: 'msg')
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(log))
 
 
