@@ -43,15 +43,9 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pipenv
-        run: pip install --upgrade pipenv
-      - name: Export locked requirements
-        run: pipenv requirements --categories="packages gcp aws" > requirements.txt
       - name: Install PyTorch CPU
         run: pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - name: Install locked dependencies
-        run: pip install --no-deps -r requirements.txt
       - name: Install package
-        run: pip install --no-deps .
+        run: pip install .[aws,gcp]
       - name: Run unittest
         run: python -m unittest
