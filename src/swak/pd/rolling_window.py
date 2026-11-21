@@ -1,6 +1,11 @@
 from typing import overload, Any
-from pandas.core.window import Rolling, Window, RollingGroupBy
-from pandas.core.groupby import DataFrameGroupBy, SeriesGroupBy
+from pandas.api.typing import (
+    DataFrameGroupBy,
+    SeriesGroupBy,
+    Rolling,
+    RollingGroupby,
+    Window
+)
 from pandas import DataFrame, Series
 from ..misc import ArgRepr
 
@@ -37,11 +42,11 @@ class RollingWindow(ArgRepr):
         ...
 
     @overload
-    def __call__(self, df: SeriesGroupBy) -> RollingGroupBy:
+    def __call__(self, df: SeriesGroupBy) -> RollingGroupby:
         ...
 
     @overload
-    def __call__(self, df: DataFrameGroupBy) -> RollingGroupBy:
+    def __call__(self, df: DataFrameGroupBy) -> RollingGroupby:
         ...
 
     def __call__(self, df):
