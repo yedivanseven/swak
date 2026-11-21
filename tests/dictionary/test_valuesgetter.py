@@ -316,7 +316,7 @@ class TestMisc(unittest.TestCase):
         values_from = ValuesGetter(2, 3, wrapper=lambda x: list(x))  #noqa
         actual = values_from(self.d)
         self.assertListEqual([self.d[2], self.d[3]], actual)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(values_from))
 
     def test_default_representation(self):

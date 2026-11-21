@@ -658,7 +658,7 @@ class TestMisc(unittest.TestCase):
         with NamedTemporaryFile() as file:
             logger = PassThroughFileLogger(file.name)
             log = logger.debug(lambda *_: 'msg')
-            with self.assertRaises(AttributeError):
+            with self.assertRaises((AttributeError, pickle.PicklingError)):
                 _ = pickle.loads(pickle.dumps(log))
 
 

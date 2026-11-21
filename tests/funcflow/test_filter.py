@@ -387,7 +387,7 @@ class TestMisc(unittest.TestCase):
 
     def test_lambda_criterion_pickle_raises(self):
         f = Filter(lambda x: x > 3)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(f))
 
     def test_wrapper_pickle_works(self):
@@ -396,7 +396,7 @@ class TestMisc(unittest.TestCase):
 
     def test_lambda_wrapper_pickle_raises(self):
         f = Filter(g, lambda x: tuple(x))  #noqa
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(f))
 
     def test_criterion_lambda_repr(self):

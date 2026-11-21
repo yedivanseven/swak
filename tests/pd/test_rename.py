@@ -205,7 +205,7 @@ class TestMisc(unittest.TestCase):
 
     def test_raises_with_lambda(self):
         rename = Rename(lambda x: x.upper())
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(rename))
 
 

@@ -272,7 +272,7 @@ class TestMisc(unittest.TestCase):
 
     def test_default_pickle_raises_lambda(self):
         r = Reduce(lambda x, y: x + y)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(r))
 
     def test_acc_pickle_works(self):
@@ -281,7 +281,7 @@ class TestMisc(unittest.TestCase):
 
     def test_acc_pickle_raises_lambda(self):
         r = Reduce(lambda x, y: x + y, 1)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(r))
 
     def test_default_lambda_repr(self):

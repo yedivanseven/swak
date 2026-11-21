@@ -548,12 +548,12 @@ class TestMisc(unittest.TestCase):
 
     def test_lambda_call_pickle_fails(self):
         fallback = Fallback(lambda x: x, callback=cb)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(fallback))
 
     def test_lambda_callback_pickle_fails(self):
         fallback = Fallback(f, callback=lambda *xs: xs)
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((AttributeError, pickle.PicklingError)):
             _ = pickle.loads(pickle.dumps(fallback))
 
     def test_empty_default_repr(self):
